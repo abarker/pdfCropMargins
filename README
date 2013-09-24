@@ -1,0 +1,17 @@
+
+
+
+Note that Ubuntu ships with its own version of pdfcrop!!!!
+See man pdfcrop, Perl source in /usr/bin/pdfcrop.
+
+----------
+
+See also
+PDFCrop http://pdfcrop.sourceforge.net/ (different pdfcrop?, Perl and Ghostscript)
+http://willus.com/k2pdfopt/ (focused on Kindle but some general capabilities)
+
+----
+
+This program uses pyPdf, which apparently has not currently been ported to Python 3.
+But, pyPdf2 is a more recent fork which does support it!
+
