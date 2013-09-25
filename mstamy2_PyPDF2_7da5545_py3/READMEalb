@@ -1,0 +1,11 @@
+
+# __init__.py is a dummy file added by alb to make this dir a module so the import
+# of the subdirectory PyPDF2 is easy using dotted names.  This whole directory
+# was downloaded from
+#    https://github.com/mstamy2/PyPDF2/
+# and should not be modified.
+
+# This Python 3 version was created by running 2to3 a few times on the Python
+# files in the PyPDF2 directory of the regular version and then changing two
+# lines in utils.py (the lines are marked with alb).
+
