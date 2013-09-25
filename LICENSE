@@ -1,4 +1,8 @@
 
+Note that this package is distributed with a copy of the PyPDF2 package, which
+has its own (not very restrictive) LICENSE file.  The rest of the package is
+covered by the MIT license below:
+
 The MIT License (MIT)
 
 Copyright (c) 2013 Allen Barker

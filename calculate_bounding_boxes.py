@@ -8,8 +8,6 @@ Ghostscript to do it.
 
 from __future__ import print_function, division
 import sys, os, subprocess, tempfile
-# Note that PdfFileWriter is explicitly set for this module from pdfCropMargins,
-# where the correct import package is chosen.
 
 #
 # Image-processing imports.
@@ -19,15 +17,17 @@ try:
    # Note that the Pillow fork uses the same import command,
    # so this import works either way (but Pillow can't co-exist with PIL).
    from PIL import Image, ImageFilter
-   hasPIL = True # TODO use var in code below, verbose messages and code exe
+   hasPIL = True
 except ImportError:
    hasPIL = False
 
+# A few globals needed in this module after factoring it out of the main module.
 args = None # Command-line arguments; initialized in getBoundingBoxList.
 pageNumsToCrop = None # Set of pages to crop; initialized in getBoundingBoxList.
+PdfFileWriter = None # Initialized in getBoundingBoxList
 
 def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
-                                           setOfPageNumsToCrop, argparseArgs):
+                          setOfPageNumsToCrop, argparseArgs, ChosenPdfFileWriter):
    """Calculating a bounding box for each page in the document.  The first
    argument is the filename of the document's original PDF file, the second is
    the PdfFileReader for the document.  The argument fullPageBoxList is a list
@@ -35,17 +35,25 @@ def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
    in the PDF coordinates.  The setOfPageNumsToCrop argument is the set of page
    numbers to crop; it is passed so that unnecessary calculations can be
    skipped.  The argparseArgs argument should be passed the args parsed from
-   the command line by argparse.  This function returns the list of bounding
-   boxes."""
+   the command line by argparse.  The ChosenPdfFileWriter is the PdfFileWriter
+   from the pyPdf package chosen by the main program.  This function returns the
+   list of bounding boxes."""
    # TODO: reconsider --gsBbox the interface.  GS should be the default for when it works
    # and is available, since it is much faster.  When direct rendering is chosen
    # we also want to specify the program to do it (or a batch script to do it).
-   global args, pageNumsToCrop
+   global args, pageNumsToCrop, PdfFileWriter
    args = argparseArgs # Make args available to all funs in module, as a global.
    pageNumsToCrop = setOfPageNumsToCrop # Make the set of pages global, too.
+   PdfFileWriter = ChosenPdfFileWriter
    if args.gsBbox:
       bboxList = getBoundingBoxListGhostscript(inputDocFname)
    else:
+      if not hasPIL:
+         print("\nError in pdfCropMargins: No version of the PIL package (or a"
+               "\nfork like Pillow) was found.  Either install that Python"
+               "\npackage or use the Ghostscript flag '-gs' if you have"
+               "\nGhostscript installed.", file=sys.stderr)
+         sys.exit(1)
       bboxList = getBoundingBoxListRenderImage(inputDoc)
    
    # Now we need to use the full page boxes to translate for non-zero origin.
@@ -168,7 +176,6 @@ def getBoundingBoxListRenderImage(inputDoc):
       im = Image.open(tmpImageFileName)
 
       # Apply any blur or smooth operations specified by the user.
-      # TODO: never checked if the ImageFilter import succeeded.... will it always if PIL does?
       for i in range(args.numBlurs):
          im = im.filter(ImageFilter.BLUR)
       for i in range(args.numSmooths):

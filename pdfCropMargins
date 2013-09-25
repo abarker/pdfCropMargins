@@ -31,22 +31,20 @@ source directory for the text of the license.
 # in PDF files are usually defined by the lower-left point's x and y values
 # followed by the upper-right point's x and y values.  This is equivalent
 # information (since x and y is implicit in the margin names) but the
-# description is slightly different.
+# viewpoint is slightly different.
 #
 # This program (like the Ghostscript program) uses the PDF ordering convention
-# for listing margins and defining boxes.  Note that PIL uses some different
-# conventions.  The origin in PDFs is the lower left going up but the origin in
-# PIL images is the upper left going down.  Keep in mind that the program needs
-# to make the proper conversion when rendering explicitly to images.  Also, the
-# bounding box routine of PIL returns ltrb instead of lbrt.
+# (lbrt) for listing margins and defining boxes.  Note that PIL uses some
+# different conventions.  The origin in PDFs is the lower left going up but the
+# origin in PIL images is the upper left going down.  Keep in mind that the
+# program needs to make the proper conversion when rendering explicitly to
+# images.  Also, the bounding box routine of PIL returns ltrb instead of lbrt.
 # 
 # TODO Options:
 #    4) Name of a command to turn a page of PDF into an image file, taking two
 #    file arguments and a resolution.  That should greatly help portability,
 #    especially of the more advanced stuff that gs does not do.  Maybe a version
 #    which does all the pages into separate files, since some progs do that?
-# 
-#    5) Use temp files for the image files; see playList for the code.
 # 
 #    6) See pdfxchange docs for how to make it batch-process a PDF to images!?
 #
@@ -62,38 +60,45 @@ from __future__ import print_function, division
 import sys, os, shutil, subprocess, tempfile
 
 #
-# Import the correct version of PyPDF2
+# Get info about the OS we're running on.
 #
 
-pythonVersion = sys.version_info[0]
-#useLocalPyPdf2 = False
-useLocalPyPdf2 = True
+import platform
+pythonVersion = platform.python_version_tuple() # sys.version_info[0] works too
+systemOs = platform.system() # "Linux" or "Windows"; os.name works too
+if sys.maxsize > 2**32: systemBits = 64 # Supposed to work on Macs, too.
+else: systemBits = 32
 
-# TODO: maybe try the ordinary import, and use local as a fallback *unless* a
-# command-line switch was set to force using the local version?????  Would have
-# to move arg-parsing above here, though... just move import and code-running
-# but include another if __name__ == "__main__" line around the actual
-# code-running...
-if pythonVersion == 2:
-   if useLocalPyPdf2:
-      #from PyPDF2_master.PyPDF2 import PdfFileWriter, PdfFileReader 
-      #from PyPDF2_master.PyPDF2.generic import NameObject, createStringObject
+#
+# Try to import the system pyPdf.  If that fails or if the '--pyPdfLocal'
+# option was set then revert to the appropriate local version.
+#
+
+# Peek at the command line before fully parsing it later.  (Works for these
+# simple options, which are either set or not.)
+pyPdfLocal = False
+if __name__ == "__main__" and ("--pyPdfLocal" in sys.argv or "-pl" in sys.argv):
+   pyPdfLocal = True
+
+try:
+   if pyPdfLocal: raise ImportError # just to run the except code
+   from pyPdf import PdfFileWriter, PdfFileReader # the system's pyPdf
+   from pyPdf.generic import \
+         NameObject, createStringObject, RectangleObject, FloatObject
+except ImportError:
+   if not pyPdfLocal:
+      print("\nWarning from pdfCropMargins: No system pyPdf Python package was"
+            "\nfound.  Reverting to the local version packaged with this program."
+            "\nTo silence this warning, use the '--pyPdfLocal' (or '-pl') option"
+            "\non the command line.\n", file=sys.stderr)
+   if pythonVersion[0] == "2":
       from mstamy2_PyPDF2_7da5545.PyPDF2 import PdfFileWriter, PdfFileReader 
       from mstamy2_PyPDF2_7da5545.PyPDF2.generic import \
             NameObject, createStringObject, RectangleObject, FloatObject
-   else:
-      from pyPdf import PdfFileWriter, PdfFileReader # this uses system pyPdf
-      from pyPdf.generic import \
+   else: # Python 3
+      from mstamy2_PyPDF2_7da5545_py3.PyPDF2 import PdfFileWriter, PdfFileReader 
+      from mstamy2_PyPDF2_7da5545_py3.PyPDF2.generic import \
             NameObject, createStringObject, RectangleObject, FloatObject
-   # TODO: git add above dir if keep using local version, maybe add __main__.py
-   # Add note to LICENSE if so, saying separate license
-else:
-   # Ordinary pyPDF is not available here...
-   from PyPDF2_master_py3.PyPDF2 import PdfFileWriter, PdfFileReader
-   from PyPDF2_master_py3.PyPDF2.generic import \
-         NameObject, createStringObject, RectangleObject, FloatObject
-   # TODO: git add above dir if keep using local version, maybe add __main__.py
-   # Add note to LICENSE if so, saying separate license
 
 #
 # Import the general functions for calculating a list of bounding boxes.
@@ -101,10 +106,6 @@ else:
 
 import calculate_bounding_boxes
 from calculate_bounding_boxes import getBoundingBoxList
-# Explicitly set the PdfFileWriter in the calculate_bounding_boxes module to be
-# sure it is the same version as was chosen above (without repeating the
-# conditionals above again in that module).
-calculate_bounding_boxes.PdfFileWriter = PdfFileWriter
 
 #
 # Import the prettified argparse and the actual documentation text.
@@ -120,9 +121,45 @@ from manpage_data import cmdParser
 # The string which is appended to Producer metadata in cropped PDFs.
 producerModifier = " (Cropped by pdfCropMargins.)"
 
+# Executable paths for Ghostscript, one line for each system OS, with the
+# systemOs string followed by the 32 and 64 bit executable pathnames.  Will
+# use the PATH for the system.
+gsExecutables = (
+     ("Linux", "gs", "gs"),
+     ("Windows", "GSWIN32C.EXE", "GSWIN64C.EXE")
+     )
+# To find the correct path on Windows from the registry, consider this
+# http://stackoverflow.com/questions/18283574/programatically-locate-gswin32-exe
+
+
 #
 # Begin general function definitions.
 #
+
+
+def testExecutable(executables, argumentList, stringToLookFor):
+   """Try to run the executable for the current system with the given arguments
+   and look in the output for the given test string.  The executables argument
+   should be a tuple of tuples.  The internal tuples should be 3-tuples
+   containing the platform.system() value ("Windows" or "Linux") followed by
+   the 32 bit executable for that system, followed by the 64 bit executable for
+   that system.  On 64 bit machines the 32 bit version is always tried if the
+   64 bit version fails.  Returns the working executable name, or the empty
+   string if both fail."""
+   for systemPaths in executables:
+      if systemPaths[0] != platform.system(): continue
+      for executablePath in [systemPaths[2], systemPaths[1]]: # 64 bit first
+         runCommandList = [executablePath] + argumentList
+         try:
+            runOutput = subprocess.check_output(runCommandList, stderr=subprocess.STDOUT)
+            runOutput = runOutput.decode("utf-8")
+            if runOutput.find(stringToLookFor) != -1: return executablePath
+         except (subprocess.CalledProcessError, OSError):
+            # OSError if it isn't found, CalledProcessError if it runs but returns fail.
+            pass
+      return ""
+   return ""
+
 
 def generateDefaultFilename(infileName, croppedFile=True):
    """Generate the name of the default output file from the name of the input 
@@ -436,9 +473,6 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop):
 #
 ##############################################################################
 
-# TODO make sure any selected options match the system commands and imports
-# available
-
 # TODO have routine to clean all filenames and args passed in to external
 # commands, in case offered as a service we don't want attacks on system
 # by untrusted users ----> start with a do-nothing routine, good enough
@@ -501,6 +535,26 @@ if __name__ == "__main__":
             " output file with filename:\n   ", outputDocFname, file=sys.stderr)
       sys.exit(1)
 
+   gsExecutable = testExecutable(gsExecutables, ["-dSAFER", "-v"], "Ghostscript")
+   if args.gsBbox and not gsExecutable:
+      print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
+            "\nthe Ghostscript executable could not be located.  Is it in the"
+            "\nPATH for command execution?\n", file=sys.stderr)
+      sys.exit(1)
+   if args.gsfix and not gsExecutable:
+      print("\nError in pdfCropMargins: The '--gsfix' option was specified but"
+            "\nthe Ghostscript executable could not be located.  Is is in the"
+            "\nPATH for command execution?\n", file=sys.stderr)
+      sys.exit(1)
+
+   # TODO test the image-processing stuff for alternate progs to render PDF to
+   # images.  Add some option... then test only the selected ones, minimal.
+   # Pass the chosen exe strings to the calculate_ module.  Could even allow
+   # customization, with selection of a shortcut to appear in the options
+   # list... (would have to make list containing all the external progs with
+   # names and shortcuts and executable paths....)  Note that we could even
+   # move the test-argument and test-pattern stuff to that same list...
+
    #
    # Open in the input document in a PdfFileReader object.
    #
@@ -509,10 +563,6 @@ if __name__ == "__main__":
       fileObject = tempfile.NamedTemporaryFile(prefix="pdfCropMarginsTmp_", delete=False)
       fileObject.close()
       tempFileName = fileObject.name
-      gsExecutable = "/usr/bin/gs" # TODO should be global, and os-specific calculated...
-      # To find on Windows, consider this
-      # http://stackoverflow.com/questions/18283574/programatically-locate-gswin32-exe
-      # NOTE that on 64-bit the command will be gswin64.exe!!!
       gsRunCommand = [gsExecutable, "-dSAFER", "-o", tempFileName,
             "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", inputDocFname]
       gsOutput = subprocess.check_output(gsRunCommand, stderr=subprocess.STDOUT)
@@ -596,7 +646,7 @@ if __name__ == "__main__":
 
    if not args.restore:
       boundingBoxList = getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
-                                                                 pageNumsToCrop, args)
+                                                pageNumsToCrop, args, PdfFileWriter)
 
    #
    # Calculate the cropList based on the bounding box and the fullpage box.
