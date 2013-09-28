@@ -1,13 +1,15 @@
 """
 
-This module contains the routines which actually calculate the bounding boxes,
+This module contains the routines which calculate the bounding boxes,
 either directly by rendering the pages and analyzing the image or by calling
-Ghostscript to do it.
+Ghostscript to do it.  External programs from the external_program_calls
+module are called when required.
 
 """
 
 from __future__ import print_function, division
-import sys, os, subprocess, tempfile
+import sys, os
+import external_program_calls as ex
 
 #
 # Image-processing imports.
@@ -21,10 +23,17 @@ try:
 except ImportError:
    hasPIL = False
 
+#
 # A few globals needed in this module after factoring it out of the main module.
+#
+
 args = None # Command-line arguments; initialized in getBoundingBoxList.
 pageNumsToCrop = None # Set of pages to crop; initialized in getBoundingBoxList.
 PdfFileWriter = None # Initialized in getBoundingBoxList
+
+#
+# The main functions of the module.
+#
 
 def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
                           setOfPageNumsToCrop, argparseArgs, ChosenPdfFileWriter):
@@ -46,7 +55,10 @@ def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
    pageNumsToCrop = setOfPageNumsToCrop # Make the set of pages global, too.
    PdfFileWriter = ChosenPdfFileWriter
    if args.gsBbox:
-      bboxList = getBoundingBoxListGhostscript(inputDocFname)
+      if args.verbose:
+         print("\nUsing Ghostscript to calculate the bounding boxes.")
+      bboxList = ex.getBoundingBoxListGhostscript(inputDocFname, args.resX, args.resY,
+            args.fullPageBox)
    else:
       if not hasPIL:
          print("\nError in pdfCropMargins: No version of the PIL package (or a"
@@ -79,46 +91,6 @@ def correctBoundingBoxListForNonzeroOrigin(bboxList, fullBoxList):
    return correctedBoxList
 
 
-def getBoundingBoxListGhostscript(inputDocFname):
-   """Call Ghostscript to get the bounding box list.  Cannot set a threshold
-   with this method."""
-   if args.verbose:
-      print("\nUsing Ghostscript to calculate the bounding boxes.")
-   res = str(args.resX) + "x" + str(args.resY)
-   boxArg = "-dUseMediaBox"
-   if "c" in args.fullPageBox: boxArg = "-dUseCropBox"
-   if "t" in args.fullPageBox: boxArg = "-dUseTrimBox"
-   if "a" in args.fullPageBox: boxArg = "-dUseArtBox"
-   if "b" in args.fullPageBox: boxArg = "-dUseBleedBox" # may not be defined in gs
-   gsRunCommand = ["/usr/bin/gs", "-dSAFER", "-dNOPAUSE", "-dBATCH", "-sDEVICE=bbox", 
-         boxArg, "-r"+res, inputDocFname]
-   gsOutput = subprocess.check_output(gsRunCommand, stderr=subprocess.STDOUT)
-   gsOutput = gsOutput.decode("utf-8")
-   gsOutput = gsOutput.splitlines()
-   boundingBoxList = []
-   for line in gsOutput:
-      line = line.split()
-      if line[0] == r"%%HiResBoundingBox:":
-         del line[0]
-         # Note gs reports values in order left, bottom, right, top, or lower left
-         # point followed by top right point.
-         boundingBoxList.append( [ float(line[0]),
-                                   float(line[1]),
-                                   float(line[2]),
-                                   float(line[3])] )
-   return boundingBoxList
-
-
-def getTemporaryFilename(suffix):
-   """Return the string for a temporary file with the given suffix.  Caller is
-   expected to open and close it as necessary and call os.remove on it after
-   finishing with it."""
-   tmpOutputFile = tempfile.NamedTemporaryFile(delete=False,
-         prefix="pdfCropMarginsTmpPdf_", suffix=suffix, mode="wb")
-   tmpOutputFile.close()
-   return tmpOutputFile.name
-
-
 def getBoundingBoxListRenderImage(inputDoc):
    """Calculate the bounding box list by directly rendering each page of the PDF as
    an image file.  Note that the MediaBox and CropBox have already been set
@@ -148,29 +120,13 @@ def getBoundingBoxListRenderImage(inputDoc):
       tmpOutputDoc.addPage(currPage) # add current page to it
 
       # Make an output file and write the PDF to it.
-      tmpPdfFileName = getTemporaryFilename(".pdf")
+      tmpPdfFileName = ex.getTemporaryFilename(".pdf")
       tmpPdfFileObject = open(tmpPdfFileName, "wb")
       tmpOutputDoc.write(tmpPdfFileObject)
       tmpPdfFileObject.close()
       
-      # Convert the PDF file to an image and read in the image in PIL.
-      # For gs commands see http://ghostscript.com/doc/8.54/Use.htm
-      imageType = "pgm" # TODO: make an option, or maybe the image conversion program as the option
-      resX = str(args.resX)
-      resY = str(args.resY)
-      if imageType == "ppm":
-         tmpImageFileName = getTemporaryFilename(".ppm")
-         os.system("pdftoppm -rx "+resX+" -ry "+resY+" "+tmpPdfFileName+" > "+tmpImageFileName)
-      elif imageType == "pgm":
-         tmpImageFileName = getTemporaryFilename(".pgm")
-         if True:
-            os.system("pdftoppm -gray -rx "+resX+" -ry "+resY+" "+tmpPdfFileName+" > "+tmpImageFileName)
-         else:
-            # ImageMagick NOTE there is a mode to do all pages at once
-            os.system("convert -density "+xRes+"x"+yRes+" "+tmpPdfFileName+" "+tmpImageFileName) # no res
-      elif imageType == "png":
-         tmpImageFileName = getTemporaryFilename(".png")
-         os.system("gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pnggray -r"+resX+"x"+resY+" -sOutputFile="+tmpImageFileName+" "+tmpPdfFileName)
+      # Render the PDF file to a temporary image file. 
+      tmpImageFileName = renderPdfFileToImageFile(tmpPdfFileName)
 
       # Open the image in PIL.
       im = Image.open(tmpImageFileName)
@@ -202,6 +158,36 @@ def getBoundingBoxListRenderImage(inputDoc):
 
    if args.verbose: print()
    return boundingBoxList
+
+def renderPdfFileToImageFile(pdfFileName):
+   """Render the PDF file at pdfFileName to an image file in a temporary
+   filename, at the given resolution.  The image type has to be directly
+   openable by PIL.  Return the temporary file's name.  The calling program is
+   responsible for deleting the file."""
+
+   use_Ghostscript = False
+   use_pdftoppm = True
+   resX = str(args.resX)
+   resY = str(args.resY)
+   if use_Ghostscript:
+      fileExtension = ".png"
+      imageFileName = ex.getTemporaryFilename(fileExtension)
+      ex.renderPdfFileToImageFile_Ghostscript_png(pdfFileName, imageFileName, resX, resY)
+   elif use_pdftoppm:
+      use_gray = False
+      if use_gray:
+         fileExtension = ".pgm" # use graymap, not full color map
+         imageFileName = ex.getTemporaryFilename(fileExtension)
+         ex.renderPdfFileToImageFile_pdftoppm_pgm(pdfFileName, imageFileName, resX, resY)
+      else:
+         fileExtension = ".ppm"
+         imageFileName = ex.getTemporaryFilename(fileExtension)
+         ex.renderPdfFileToImageFile_pdftoppm_ppm(pdfFileName, imageFileName, resX, resY)
+   else:
+      print("Error in renderPdfFileToImageFile: Unrecognized external program.",
+            file=sys.stderr)
+      sys.exit(1)
+   return imageFileName
 
 
 def calculateBoundingBoxFromImage(im, currPage):

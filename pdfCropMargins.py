@@ -60,22 +60,12 @@ from __future__ import print_function, division
 import sys, os, shutil, subprocess, tempfile
 
 #
-# Get info about the OS we're running on.
-#
-
-import platform
-pythonVersion = platform.python_version_tuple() # sys.version_info[0] works too
-systemOs = platform.system() # "Linux" or "Windows"; os.name works too
-if sys.maxsize > 2**32: systemBits = 64 # Supposed to work on Macs, too.
-else: systemBits = 32
-
-#
 # Try to import the system pyPdf.  If that fails or if the '--pyPdfLocal'
 # option was set then revert to the appropriate local version.
 #
 
-# Peek at the command line before fully parsing it later.  (Works for these
-# simple options, which are either set or not.)
+# Peek at the command line before fully parsing it later to see if we should import
+# the local pyPdf.  (Works for simple option which are either set or not.)
 pyPdfLocal = False
 if __name__ == "__main__" and ("--pyPdfLocal" in sys.argv or "-pl" in sys.argv):
    pyPdfLocal = True
@@ -108,7 +98,13 @@ import calculate_bounding_boxes
 from calculate_bounding_boxes import getBoundingBoxList
 
 #
-# Import the prettified argparse and the actual documentation text.
+# Import the module that calls external programs.
+#
+
+import external_program_calls as ex
+
+#
+# Import the prettified argparse module and the actual documentation text.
 #
 
 from prettified_argparse import parseCommandLineArguments
@@ -121,44 +117,10 @@ from manpage_data import cmdParser
 # The string which is appended to Producer metadata in cropped PDFs.
 producerModifier = " (Cropped by pdfCropMargins.)"
 
-# Executable paths for Ghostscript, one line for each system OS, with the
-# systemOs string followed by the 32 and 64 bit executable pathnames.  Will
-# use the PATH for the system.
-gsExecutables = (
-     ("Linux", "gs", "gs"),
-     ("Windows", "GSWIN32C.EXE", "GSWIN64C.EXE")
-     )
-# To find the correct path on Windows from the registry, consider this
-# http://stackoverflow.com/questions/18283574/programatically-locate-gswin32-exe
-
 
 #
 # Begin general function definitions.
 #
-
-
-def testExecutable(executables, argumentList, stringToLookFor):
-   """Try to run the executable for the current system with the given arguments
-   and look in the output for the given test string.  The executables argument
-   should be a tuple of tuples.  The internal tuples should be 3-tuples
-   containing the platform.system() value ("Windows" or "Linux") followed by
-   the 32 bit executable for that system, followed by the 64 bit executable for
-   that system.  On 64 bit machines the 32 bit version is always tried if the
-   64 bit version fails.  Returns the working executable name, or the empty
-   string if both fail."""
-   for systemPaths in executables:
-      if systemPaths[0] != platform.system(): continue
-      for executablePath in [systemPaths[2], systemPaths[1]]: # 64 bit first
-         runCommandList = [executablePath] + argumentList
-         try:
-            runOutput = subprocess.check_output(runCommandList, stderr=subprocess.STDOUT)
-            runOutput = runOutput.decode("utf-8")
-            if runOutput.find(stringToLookFor) != -1: return executablePath
-         except (subprocess.CalledProcessError, OSError):
-            # OSError if it isn't found, CalledProcessError if it runs but returns fail.
-            pass
-      return ""
-   return ""
 
 
 def generateDefaultFilename(infileName, croppedFile=True):
@@ -363,7 +325,7 @@ def calculateCropList(fullPageBoxList, boundingBoxList, pageNumsToCrop):
 def setCroppedMetadata(inputDoc, outputDoc):
    """Set the metadata for the output document.  Mostly just copied over, but
    "Producer" has a string appended to indicate that this program modified the
-   file.  That allows for the undo operation <TODO> to make sure that this
+   file.  That allows for the undo operation to make sure that this
    program cropped the file in the first place."""
 
    # Check Producer metadata attribute to see if this program cropped document before.
@@ -386,10 +348,6 @@ def setCroppedMetadata(inputDoc, outputDoc):
    def st(item):
       if item == None: return ""
       else: return item
-
-   # Be sure to pass createStringObject unicode string literals, like
-   # u'authorName', if literals are passed as arguments (not strictly
-   # necessary, though, TODO test with Python3).
 
    outputInfoDict.update({
       NameObject('/Author'): createStringObject(st(inputInfoDict.author)),
@@ -478,7 +436,6 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop):
 # by untrusted users ----> start with a do-nothing routine, good enough
 # --> or ignore for now, not that important.
 
-#if __name__ == "__main__":
 def main():
 
    #
@@ -537,43 +494,27 @@ def main():
             " output file with filename:\n   ", outputDocFname, file=sys.stderr)
       sys.exit(1)
 
-   # TODO only run test if it is to be called...
-   gsExecutable = testExecutable(gsExecutables, ["-dSAFER", "-v"], "Ghostscript")
-   if args.gsBbox and not gsExecutable:
+   # TODO: also test pdftoppm when necessary
+   if args.gsBbox or args.gsfix: foundGs = ex.testGsExecutable()
+   if args.gsBbox and not foundGs:
       print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
             "\nthe Ghostscript executable could not be located.  Is it in the"
             "\nPATH for command execution?\n", file=sys.stderr)
       sys.exit(1)
-   if args.gsfix and not gsExecutable:
+   if args.gsfix and not foundGs:
       print("\nError in pdfCropMargins: The '--gsfix' option was specified but"
             "\nthe Ghostscript executable could not be located.  Is is in the"
             "\nPATH for command execution?\n", file=sys.stderr)
       sys.exit(1)
-
-   # TODO test the image-processing stuff for alternate progs to render PDF to
-   # images.  Add some option... then test only the selected ones, minimal.
-   # Pass the chosen exe strings to the calculate_ module.  Could even allow
-   # customization, with selection of a shortcut to appear in the options
-   # list... (would have to make list containing all the external progs with
-   # names and shortcuts and executable paths....)  Note that we could even
-   # move the test-argument and test-pattern stuff to that same list...
 
    #
    # Open in the input document in a PdfFileReader object.
    #
 
    if args.gsfix:
-      fileObject = tempfile.NamedTemporaryFile(prefix="pdfCropMarginsTmp_", delete=False)
-      fileObject.close()
-      tempFileName = fileObject.name
-      gsRunCommand = [gsExecutable, "-dSAFER", "-o", tempFileName,
-            "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", inputDocFname]
-      gsOutput = subprocess.check_output(gsRunCommand, stderr=subprocess.STDOUT)
-      gsOutput = gsOutput.decode("utf-8")
       if args.verbose:
          print("\nAttempting to fix the PDF input file before reading it...\n")
-      gsOutput = gsOutput.splitlines()
-      for line in gsOutput: print("   ", line)
+      tempFileName = ex.fixPdfWithGhostscriptToTmpFile(inputDocFname)
       inputDoc = PdfFileReader(open(tempFileName, "rb"))
       os.remove(tempFileName)
    else:
