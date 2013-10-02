@@ -24,7 +24,7 @@ except ImportError:
    hasPIL = False
 
 #
-# A few globals needed in this module after factoring it out of the main module.
+# A few globals used in this module.
 #
 
 args = None # Command-line arguments; initialized in getBoundingBoxList.
@@ -47,13 +47,10 @@ def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
    the command line by argparse.  The ChosenPdfFileWriter is the PdfFileWriter
    from the pyPdf package chosen by the main program.  This function returns the
    list of bounding boxes."""
-   # TODO: reconsider --gsBbox the interface.  GS should be the default for when it works
-   # and is available, since it is much faster.  When direct rendering is chosen
-   # we also want to specify the program to do it (or a batch script to do it).
    global args, pageNumsToCrop, PdfFileWriter
    args = argparseArgs # Make args available to all funs in module, as a global.
    pageNumsToCrop = setOfPageNumsToCrop # Make the set of pages global, too.
-   PdfFileWriter = ChosenPdfFileWriter
+   PdfFileWriter = ChosenPdfFileWriter # Be sure correct PdfFileWriter is set.
    if args.gsBbox:
       if args.verbose:
          print("\nUsing Ghostscript to calculate the bounding boxes.")
@@ -95,11 +92,17 @@ def getBoundingBoxListRenderImage(inputDoc):
    """Calculate the bounding box list by directly rendering each page of the PDF as
    an image file.  Note that the MediaBox and CropBox have already been set
    to the chosen page size before the rendering."""
-   boundingBoxList = []
+
+   programToUse="pdftoppm" # default to pdftoppm
+   if args.gsRender: programToUse="Ghostscript"
+   # TODO: maybe add option to use other programs, from command-line or hardcoded
 
    if args.verbose:
-      print("\nFinding bounding boxes using threshold", args.threshold, 
-            "for page:\n   ", end="")
+      print("\nRendering PDF to images with the", programToUse,
+            "program, using\nthe threshold " + str(args.threshold) +
+            ".  Finding the bounding box for page:\n", end="")
+
+   boundingBoxList = []
 
    for page in range(inputDoc.getNumPages()):
 
@@ -126,7 +129,7 @@ def getBoundingBoxListRenderImage(inputDoc):
       tmpPdfFileObject.close()
       
       # Render the PDF file to a temporary image file. 
-      tmpImageFileName = renderPdfFileToImageFile(tmpPdfFileName)
+      tmpImageFileName = renderPdfFileToImageFile(tmpPdfFileName, programToUse)
 
       # Open the image in PIL.
       im = Image.open(tmpImageFileName)
@@ -159,22 +162,22 @@ def getBoundingBoxListRenderImage(inputDoc):
    if args.verbose: print()
    return boundingBoxList
 
-def renderPdfFileToImageFile(pdfFileName):
+def renderPdfFileToImageFile(pdfFileName, programToUse):
    """Render the PDF file at pdfFileName to an image file in a temporary
-   filename, at the given resolution.  The image type has to be directly
-   openable by PIL.  Return the temporary file's name.  The calling program is
-   responsible for deleting the file."""
+   filename, at the given resolution.  The program programToUse, currently
+   either the string "pdftoppm" or the string "Ghostscript", will be called
+   externally.  The image type that the PDF is converted into must to be
+   directly openable by PIL.  This function returns the temporary file's name.
+   The calling program is responsible for deleting the file."""
 
-   use_Ghostscript = False
-   use_pdftoppm = True
    resX = str(args.resX)
    resY = str(args.resY)
-   if use_Ghostscript:
+   if programToUse == "Ghostscript":
       fileExtension = ".png"
       imageFileName = ex.getTemporaryFilename(fileExtension)
       ex.renderPdfFileToImageFile_Ghostscript_png(pdfFileName, imageFileName, resX, resY)
-   elif use_pdftoppm:
-      use_gray = False
+   elif programToUse == "pdftoppm":
+      use_gray = False # this is currently hardcoded, but can be changed to use pgm
       if use_gray:
          fileExtension = ".pgm" # use graymap, not full color map
          imageFileName = ex.getTemporaryFilename(fileExtension)

@@ -23,32 +23,29 @@ else: systemBits = 32
 # use the PATH for the system.
 gsExecutables = (
      ("Linux", "gs", "gs"),
-     ("Windows", "GSWIN32C.EXE", "GSWIN64C.EXE")
+     ("Windows", "GSWIN64C.EXE", "GSWIN32C.EXE")
      )
+gsExecutable = None # Will be set to the executable selected for the platform.
+
+pdftoppmExecutables = (
+     ("Linux", "pdftoppm", "pdftoppm"),
+     ("Windows", "pdftoppm.exe", "pdftoppm.exe")
+     )
+pdftoppmExecutable = None # Will be set to the executable selected for the platform.
+
 # To find the correct path on Windows from the registry, consider this
 # http://stackoverflow.com/questions/18283574/programatically-locate-gswin32-exe
 
-# TODO consider something like below, nothing more done with it so far...
-externalPrograms = (
-      ("gs", "GhostScript",
-         ("Linux",   "gs",                 "gs"),
-         ("Windows", "GSWIN32C.EXE",       "GSWIN64C.EXE")
-         ),
-      ("pp", "pdftoppm",
-         ("Linux",   "pdftoppm",            "pdftoppm"),
-         ("Windows", "",                    "")
-         )
-      )
 
-
-def getExternalSubprocessOutput(commandList, printOutput=False, indentString=""):
+def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
+                                splitLines=True):
    """Run the command and arguments in the commandList.  Will search the system
    PATH.  Returns the output as a list of lines.   If printOutput is true the
    output is echoed to stdout, indented (or otherwise prefixed) by indentString."""
    # TODO do a try on the subprocess call, like in other place in this prog...
    output = subprocess.check_output(commandList, stderr=subprocess.STDOUT)
    output = output.decode("utf-8")
-   output = output.splitlines()
+   if splitLines or printOutput: output = output.splitlines()
    if printOutput:
       print()
       for line in output:
@@ -84,26 +81,60 @@ def callExternalSubprocess(commandList,
    return
 
 
-
 def testGsExecutable():
-   return not testExecutable(gsExecutables, ["-dSAFER", "-v"], "Ghostscript") == ""
+   """Find a Ghostscript executable and test it.  If a good one is found, set
+   this module's global gsExecutable variable to that path and return True.
+   Otherwise return False."""
+   global gsExecutable
+   gsExecutable = testExecutable(gsExecutables, ["-dSAFER", "-v"], "Ghostscript")
+   return not gsExecutable == ""
+
+def testGsExecutableWithExit():
+   """Same as testGsExecutable but exits with a message on failure."""
+   if gsExecutable: return # has already been tested and set to a path
+   if not testGsExecutable():
+      print("Error in pdfCropMargins, detected in external_program_calls.py:"
+            "\nNo Ghostscript executable was found.", file=sys.stderr)
+      sys.exit(1)
+
+
+def testPdftoppmExecutable():
+   """Find a pdftoppm executable and test it.  If a good one is found, set
+   this module's global pdftoppmExecutable variable to that path and return
+   True.  Otherwise return False."""
+   global pdftoppmExecutable
+   pdftoppmExecutable = testExecutable(pdftoppmExecutables, ["-v"], "pdftoppm")
+   # TODO just check here for failsafe local!  Can have an optional argument
+   # to always prefer the local!
+   return not pdftoppmExecutable == ""
+
+def testPdftoppmExecutableWithExit():
+   """Same as testPdftoppmExecutable but exits with a message on failure."""
+   if pdftoppmExecutable: return # has already been tested and set to a path
+   if not testPdftoppmExecutable():
+      print("Error in pdfCropMargins, detected in external_program_calls.py:"
+            "\nNo pdftoppm executable was found.", file=sys.stderr)
+      sys.exit(1)
+
 
 def testExecutable(executables, argumentList, stringToLookFor):
    """Try to run the executable for the current system with the given arguments
    and look in the output for the given test string.  The executables argument
    should be a tuple of tuples.  The internal tuples should be 3-tuples
    containing the platform.system() value ("Windows" or "Linux") followed by
-   the 32 bit executable for that system, followed by the 64 bit executable for
+   the 64 bit executable for that system, followed by the 32 bit executable for
    that system.  On 64 bit machines the 32 bit version is always tried if the
    64 bit version fails.  Returns the working executable name, or the empty
-   string if both fail."""
+   string if both fail.  Ignores empty executable strings."""
    for systemPaths in executables:
       if systemPaths[0] != platform.system(): continue
-      for executablePath in [systemPaths[2], systemPaths[1]]: # 64 bit first
+      executablePaths = [systemPaths[1], systemPaths[2]]
+      if systemBits == 32: del executablePaths[1]
+      for executablePath in executablePaths:
+         if not executablePath: continue
          runCommandList = [executablePath] + argumentList
          try:
-            runOutput = subprocess.check_output(runCommandList, stderr=subprocess.STDOUT)
-            runOutput = runOutput.decode("utf-8")
+            runOutput = getExternalSubprocessOutput(runCommandList, splitLines=False)
             if runOutput.find(stringToLookFor) != -1: return executablePath
          except (subprocess.CalledProcessError, OSError, IOError):
             # OSError if it isn't found, CalledProcessError if it runs but returns fail.
@@ -111,16 +142,19 @@ def testExecutable(executables, argumentList, stringToLookFor):
       return ""
    return ""
 
+
 def fixPdfWithGhostscriptToTmpFile(inputDocFname):
+   """Attempt to fix a bad PDF file with a Ghostscript command, writing the output
+   PDF to a temporary file and returning the filename.  Caller is responsible for
+   deleting the file."""
+   testGsExecutableWithExit()
    fileObject = tempfile.NamedTemporaryFile(prefix="pdfCropMarginsTmp_", delete=False)
    fileObject.close()
    tempFileName = fileObject.name
-   gsRunCommand = ["gs", "-dSAFER", "-o", tempFileName,
+   gsRunCommand = [gsExecutable, "-dSAFER", "-o", tempFileName,
          "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", inputDocFname]
-   gsOutput = subprocess.check_output(gsRunCommand, stderr=subprocess.STDOUT)
-   gsOutput = gsOutput.decode("utf-8")
-   gsOutput = gsOutput.splitlines()
-   for line in gsOutput: print("   ", line)
+   gsOutput = getExternalSubprocessOutput(gsRunCommand, 
+                                                printOutput=True, indentString="   ")
    return tempFileName
 
 
@@ -128,13 +162,14 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
    """Call Ghostscript to get the bounding box list.  Cannot set a threshold
    with this method."""
 
+   testGsExecutableWithExit()
    res = str(resX) + "x" + str(resY)
    boxArg = "-dUseMediaBox"
    if "c" in fullPageBox: boxArg = "-dUseCropBox"
    if "t" in fullPageBox: boxArg = "-dUseTrimBox"
    if "a" in fullPageBox: boxArg = "-dUseArtBox"
    if "b" in fullPageBox: boxArg = "-dUseBleedBox" # may not be defined in gs
-   gsRunCommand = ["/usr/bin/gs", "-dSAFER", "-dNOPAUSE", "-dBATCH", "-sDEVICE=bbox", 
+   gsRunCommand = [gsExecutable, "-dSAFER", "-dNOPAUSE", "-dBATCH", "-sDEVICE=bbox", 
          boxArg, "-r"+res, inputDocFname]
    # Set printOutput to True for debugging or extra verbose with Ghostscript's output.
    gsOutput = getExternalSubprocessOutput(gsRunCommand,
@@ -188,7 +223,8 @@ def renderPdfFileToImageFile_pdftoppm_pgm(pdfFileName, imageFileName, resX=150, 
 
 def renderPdfFileToImageFile_Ghostscript_png(pdfFileName, imageFileName, resX=150, resY=150):
    # For gs commands see http://ghostscript.com/doc/8.54/Use.htm
-   command = ["gs", "-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=pnggray",
+   testGsExecutableWithExit()
+   command = [gsExecutable, "-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=pnggray",
               "-r"+resX+"x"+resY, "-sOutputFile="+imageFileName, pdfFileName]
    # For extra-verbose output printOutput can be set True.
    getExternalSubprocessOutput(command, printOutput=False, indentString="  ")

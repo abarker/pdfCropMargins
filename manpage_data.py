@@ -302,7 +302,6 @@ cmdParser.add_argument("-ns", "--numSmooths", type=int, default=0,
    operation to the resulting images this many times.  This can be useful for
    noisy images.^^n""")
 
-# DONE, but reconsidering
 cmdParser.add_argument("-gs", "--gsBbox", action="store_true", help="""
 
    Use Ghostscript to find the bounding boxes for the pages.  The alternative
@@ -312,6 +311,13 @@ cmdParser.add_argument("-gs", "--gsBbox", action="store_true", help="""
    Any resolution options are passed to the Ghostscript bbox device.  This
    option requires that Ghostscript be available in the PATH as "gs".  When
    this option is set the PIL image library for Python is not required.^^n""")
+
+cmdParser.add_argument("-gsr", "--gsRender", action="store_true", help="""
+
+   Use Ghostscript to render the PDF pages to images.  By default the pdftoppm
+   program will be preferred for the rendering, if it is found.  Note that this
+   option has no effect if '--gsBbox' is chosen, since then no explicit
+   rendering is done.^^n""")
 
 cmdParser.add_argument("-x", "--resX", type=int, default=150,
       metavar="DPI", help="""
@@ -379,7 +385,7 @@ cmdParser.add_argument("-A", "--noundosave", action="store_true", help="""
    cropping command.  (The program does not currently check for this when doing
    a restore.)^^n""")
 
-cmdParser.add_argument("--gsfix", action="store_true", help="""
+cmdParser.add_argument("--gsFix", action="store_true", help="""
 
    Attempt to repair the input PDF file with Ghostscript before it is read in
    with pyPdf.  This requires that Ghostscript be available as "/usr/bin/gs".

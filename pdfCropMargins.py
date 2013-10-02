@@ -41,14 +41,14 @@ source directory for the text of the license.
 # images.  Also, the bounding box routine of PIL returns ltrb instead of lbrt.
 # 
 # TODO Options:
-#    4) Name of a command to turn a page of PDF into an image file, taking two
+#    1) Name of a command to turn a page of PDF into an image file, taking two
 #    file arguments and a resolution.  That should greatly help portability,
 #    especially of the more advanced stuff that gs does not do.  Maybe a version
 #    which does all the pages into separate files, since some progs do that?
 # 
-#    6) See pdfxchange docs for how to make it batch-process a PDF to images!?
+#    2) See pdfxchange docs for how to make it batch-process a PDF to images!?
 #
-#    7) Have option for using an arbitrary box for saving restore data, not
+#    3) Have option for using an arbitrary box for saving restore data, not
 #    just ArtBox.  Note someone said that Adobe Illustrator actually sets
 #    the ArtBox to the size of the picture... maybe TrimBox better default??
 #    Downside of option is that we have to know which box was used, i.e., save it
@@ -65,7 +65,7 @@ import sys, os, shutil, subprocess, tempfile
 #
 
 # Peek at the command line before fully parsing it later to see if we should import
-# the local pyPdf.  (Works for simple option which are either set or not.)
+# the local pyPdf.  (This works for simple option which are either set or not.)
 pyPdfLocal = False
 if __name__ == "__main__" and ("--pyPdfLocal" in sys.argv or "-pl" in sys.argv):
    pyPdfLocal = True
@@ -494,26 +494,49 @@ def main():
             " output file with filename:\n   ", outputDocFname, file=sys.stderr)
       sys.exit(1)
 
-   # TODO: also test pdftoppm when necessary
-   if args.gsBbox or args.gsfix: foundGs = ex.testGsExecutable()
+   # If the option settings require pdftoppm, make sure we have a running
+   # version.  If '--gsBbox' isn't chosen then assume that PDF pages are to be
+   # explicitly rendered.  In that case we either need pdftoppm or gs to do the
+   # rendering.  TODO could later maybe pass an alternate executable path as an
+   # extra option.
+   if not args.gsBbox and not args.gsRender:
+      foundPdftoppm = ex.testPdftoppmExecutable()
+      if not foundPdftoppm:
+         args.gsRender = True
+         gsRenderDefaultSet = True
+         if args.verbose:
+            print("\nNo pdftoppm executable found; using Ghostscript for rendering.")
+
+   # If any options require Ghostscript, make sure it it installed.
+   if args.gsBbox or args.gsFix or args.gsRender: foundGs = ex.testGsExecutable()
    if args.gsBbox and not foundGs:
       print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
-            "\nthe Ghostscript executable could not be located.  Is it in the"
-            "\nPATH for command execution?\n", file=sys.stderr)
+            "\nthe Ghostscript executable, gs, could not be located.  Is it"
+            "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
       sys.exit(1)
-   if args.gsfix and not foundGs:
-      print("\nError in pdfCropMargins: The '--gsfix' option was specified but"
-            "\nthe Ghostscript executable could not be located.  Is is in the"
-            "\nPATH for command execution?\n", file=sys.stderr)
+   if args.gsFix and not foundGs:
+      print("\nError in pdfCropMargins: The '--gsFix' option was specified but"
+            "\nthe Ghostscript executable, gs, could not be located.  Is it"
+            "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
+      sys.exit(1)
+   if args.gsRender and not foundGs:
+      if gsRenderDefaultSet:
+         print("\nError in pdfCropMargins: Neither Ghostscript (gs) nor pdftoppm"
+               "\nwas found in the PATH for command execution.  At least one is"
+               "\nrequired.\n", file=sys.stderr)
+      else:
+         print("\nError in pdfCropMargins: The '--gsRender' option was specified but"
+               "\nthe Ghostscript executable, gs, could not be located.  Is it"
+               "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
       sys.exit(1)
 
    #
    # Open in the input document in a PdfFileReader object.
    #
 
-   if args.gsfix:
+   if args.gsFix:
       if args.verbose:
-         print("\nAttempting to fix the PDF input file before reading it...\n")
+         print("\nAttempting to fix the PDF input file before reading it...")
       tempFileName = ex.fixPdfWithGhostscriptToTmpFile(inputDocFname)
       inputDoc = PdfFileReader(open(tempFileName, "rb"))
       os.remove(tempFileName)
