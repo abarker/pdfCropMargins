@@ -279,24 +279,22 @@ cmdParser.add_argument("-g", "--pages", metavar="PAGESTR", help="""
    document are ignored.  Note that restore information is always saved for all
    the pages (in the ArtBox) unless '--noundosave' is selected.^^n""")
 
-cmdParser.add_argument("-t", "--threshold", type=int, default=191,
-      metavar="BYTEVAL", help="""
+cmdParser.add_argument("-t", "--threshold", type=int, metavar="BYTEVAL", help="""
 
    Set the threshold for determining what is background space (white).  The
    value can be from 0 to 255, with 191 the default (75 percent).  This option
    may not be available for some configurations since the PDF must be
-   internally rendered as an image of pixels.  By default, any pixel
-   value over 191 is considered to be background (white).^^n""")
+   internally rendered as an image of pixels.  In particular, it is ignored
+   when '--gsBbox' is selected.  By default, any pixel value over 191 is
+   considered to be background (white).^^n""")
 
-cmdParser.add_argument("-nb", "--numBlurs", type=int, default=0,
-      metavar="INT", help="""
+cmdParser.add_argument("-nb", "--numBlurs", type=int, metavar="INT", help="""
 
    When PDF files are explicitly rendered to image files, apply a blur
    operation to the resulting images this many times.  This can be useful for
    noisy images.^^n""")
 
-cmdParser.add_argument("-ns", "--numSmooths", type=int, default=0,
-      metavar="INT", help="""
+cmdParser.add_argument("-ns", "--numSmooths", type=int, metavar="INT", help="""
 
    When PDF files are explicitly rendered to image files, apply a smoothing
    operation to the resulting images this many times.  This can be useful for

@@ -530,6 +530,17 @@ def main():
                "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
       sys.exit(1)
 
+   # Give a warning message if incompatible option combinations have been selected.
+   if args.gsBbox and args.threshold:
+      print("\nWarning in pdfCropMargins: Threshold argument '--threshold' is ignored"
+            "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
+   if args.gsBbox and args.numBlurs:
+      print("\nWarning in pdfCropMargins: The blurring argument '--numBlurs' is ignored"
+            "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
+   if args.gsBbox and args.numSmooths:
+      print("\nWarning in pdfCropMargins: The smoothing argument '--numSmooths' is ignored"
+            "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
+
    #
    # Open in the input document in a PdfFileReader object.
    #

@@ -97,6 +97,12 @@ def getBoundingBoxListRenderImage(inputDoc):
    if args.gsRender: programToUse="Ghostscript"
    # TODO: maybe add option to use other programs, from command-line or hardcoded
 
+   # Threshold value set in range 0-255, where 0 is black, with 191 default.
+   if not args.threshold: args.threshold = 191
+   threshold = args.threshold
+   if not args.numSmooths: args.numSmooths = 0
+   if not args.numBlurs: args.numBlurs = 0
+
    if args.verbose:
       print("\nRendering PDF to images with the", programToUse,
             "program, using\nthe threshold " + str(args.threshold) +
@@ -143,7 +149,6 @@ def getBoundingBoxListRenderImage(inputDoc):
       # Convert the image to black and white, according to a threshold.
       # Make a negative image, because that works with the PIL getbbox routine.
 
-      threshold = args.threshold # value set to 0-255, where 0 is black
       if args.verbose: print(page+1, end=" ") # page num numbering from 1
       # Note: the point method calls the function on each pixel, replacing it.
       #im = im.point(lambda p: p > threshold and 255) # create a positive image
