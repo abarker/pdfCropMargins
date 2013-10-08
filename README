@@ -15,3 +15,24 @@ http://willus.com/k2pdfopt/ (focused on Kindle but some general capabilities)
 This program uses pyPdf, which apparently has not currently been ported to Python 3.
 But, pyPdf2 is a more recent fork which does support it!
 
+
+==================== Dependencies =====================
+
+The program requires the Python package pyPdf (or a fork like pyPdf2).  Note,
+though, that a version of pyPdf2 is packaged with the program and it will
+revert to that if a system version is not found (or if the command-line option
+--pyPdfLocal is set).
+
+Other dependencies depend on whether or not any options that require explicit
+rendering are to be used.
+
+   With explicit rendering the dependencies are:
+   
+       1) PIL (or some fork of it, like Pillow).
+
+       2) Either Ghostscript or pdftoppm, but on Windows the program
+       will automatically revert to a local version of an older pdftoppm.exe
+       binary which is packaged with the system.
+   
+   Without explicit rendering Ghostscript is required (but PIL is not).
+

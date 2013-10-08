@@ -1,7 +1,7 @@
 """
 
 This module contains all the function calls to external programs (Ghostscript
-and pdftoppm) and related functions.
+and pdftoppm).  All the system-specific information is also localized here.
 
 """
 
@@ -35,6 +35,48 @@ pdftoppmExecutable = None # Will be set to the executable selected for the platf
 
 # To find the correct path on Windows from the registry, consider this
 # http://stackoverflow.com/questions/18283574/programatically-locate-gswin32-exe
+
+
+#
+# General utility functions for paths and finding the directory path.
+#
+
+
+def getDirectoryLocation():
+   """Find the location of the directory where the module that runs this
+   function is located.  An empty directory_locator.py file is assumed to be in
+   the same directory as the module.  Note that there are other ways to do
+   this, but this way seems reasonably robust and portable.  (As long as
+   the directory is a package the import will always look at the current
+   directory first.)"""
+   import directory_locator
+   return getRealAbsoluteExpandedDirname(directory_locator.__file__)
+
+
+def getRealAbsoluteExpandedDirname(path):
+   return os.path.realpath( # remove any symbolic links
+          os.path.abspath( # may not be needed with realpath, to be safe
+          os.path.expanduser( # may not be needed, but to be safe
+          os.path.dirname(
+             path))))
+
+
+def getParentDirectory(path):
+   """Like os.path.dirname except it returns the absolute name of the parent
+   directory.  No symbolic link expansion (os.path.realpath) or user expansion
+   (os.path.expanduser) is done."""
+   path = os.path.dirname(path)
+   return os.path.abspath(os.path.join(path, os.path.pardir))
+
+
+# Set some additional variables that this module exposes to other modules.
+programCodeDirectory = getDirectoryLocation()
+projectRootDirectory = getParentDirectory(programCodeDirectory)
+
+
+#
+# General utility functions for running external processes.
+#
 
 
 def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
@@ -79,6 +121,22 @@ def callExternalSubprocess(commandList,
    # if stderrFilename: command += " 2> " + stderrFilename
    # os.system(command)
    return
+
+
+def getTemporaryFilename(extension=""):
+   """Return the string for a temporary file with the given extension or suffix.  For a
+   file extension like .pdf the dot should also be in the passed string.  Caller is
+   expected to open and close it as necessary and call os.remove on it after
+   finishing with it."""
+   tmpOutputFile = tempfile.NamedTemporaryFile(delete=False,
+         prefix="pdfCropMarginsTmpPdf_", suffix=extension, mode="wb")
+   tmpOutputFile.close()
+   return tmpOutputFile.name
+
+
+#
+# Functions to test whether an external program is actually there and runs.
+#
 
 
 def testGsExecutable():
@@ -142,6 +200,9 @@ def testExecutable(executables, argumentList, stringToLookFor):
       return ""
    return ""
 
+#
+# Functions that call Ghostscript to fix PDFs or get bounding boxes.
+#
 
 def fixPdfWithGhostscriptToTmpFile(inputDocFname):
    """Attempt to fix a bad PDF file with a Ghostscript command, writing the output
@@ -188,16 +249,9 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
    return boundingBoxList
 
 
-def getTemporaryFilename(extension=""):
-   """Return the string for a temporary file with the given extension or suffix.  For a
-   file extension like .pdf the dot should also be in the passed string.  Caller is
-   expected to open and close it as necessary and call os.remove on it after
-   finishing with it."""
-   tmpOutputFile = tempfile.NamedTemporaryFile(delete=False,
-         prefix="pdfCropMarginsTmpPdf_", suffix=extension, mode="wb")
-   tmpOutputFile.close()
-   return tmpOutputFile.name
-
+#
+# Functions that render PDF files to image files.
+#
 
 def renderPdfFileToImageFile_pdftoppm_ppm(pdfFileName, imageFileName, resX=150, resY=150):
    # Note that if to include the imageFileName in the command itself you need to use
@@ -229,5 +283,6 @@ def renderPdfFileToImageFile_Ghostscript_png(pdfFileName, imageFileName, resX=15
    # For extra-verbose output printOutput can be set True.
    getExternalSubprocessOutput(command, printOutput=False, indentString="  ")
    return 
+
 
 

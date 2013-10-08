@@ -35,22 +35,24 @@ PdfFileWriter = None # Initialized in getBoundingBoxList
 # The main functions of the module.
 #
 
+
 def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
                           setOfPageNumsToCrop, argparseArgs, ChosenPdfFileWriter):
-   """Calculating a bounding box for each page in the document.  The first
+   """Calculate a bounding box for each page in the document.  The first
    argument is the filename of the document's original PDF file, the second is
    the PdfFileReader for the document.  The argument fullPageBoxList is a list
-   of the full-page-size boxes which is used to correct for any nonzero origins
-   in the PDF coordinates.  The setOfPageNumsToCrop argument is the set of page
+   of the full-page-size boxes (which is used to correct for any nonzero origins
+   in the PDF coordinates).  The setOfPageNumsToCrop argument is the set of page
    numbers to crop; it is passed so that unnecessary calculations can be
    skipped.  The argparseArgs argument should be passed the args parsed from
    the command line by argparse.  The ChosenPdfFileWriter is the PdfFileWriter
-   from the pyPdf package chosen by the main program.  This function returns the
-   list of bounding boxes."""
+   class from whichever pyPdf package was chosen by the main program.  This
+   function returns the list of bounding boxes."""
    global args, pageNumsToCrop, PdfFileWriter
    args = argparseArgs # Make args available to all funs in module, as a global.
    pageNumsToCrop = setOfPageNumsToCrop # Make the set of pages global, too.
    PdfFileWriter = ChosenPdfFileWriter # Be sure correct PdfFileWriter is set.
+
    if args.gsBbox:
       if args.verbose:
          print("\nUsing Ghostscript to calculate the bounding boxes.")
@@ -60,8 +62,8 @@ def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
       if not hasPIL:
          print("\nError in pdfCropMargins: No version of the PIL package (or a"
                "\nfork like Pillow) was found.  Either install that Python"
-               "\npackage or use the Ghostscript flag '-gs' if you have"
-               "\nGhostscript installed.", file=sys.stderr)
+               "\npackage or use the Ghostscript flag '--gsBbox' (or '-gs') if you"
+               "\nhave Ghostscript installed.", file=sys.stderr)
          sys.exit(1)
       bboxList = getBoundingBoxListRenderImage(inputDoc)
    

@@ -17,7 +17,7 @@ anywhere.
 
 """
 
-from pdfCropMargins import main
+from pdfCropMargins_d.pdfCropMargins import main
 
 if __name__ == "__main__":
    main()

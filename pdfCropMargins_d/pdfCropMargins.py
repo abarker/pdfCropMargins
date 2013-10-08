@@ -60,27 +60,68 @@ from __future__ import print_function, division
 import sys, os, shutil, subprocess, tempfile
 
 #
+# Import the module that calls external programs and gets system info.
+#
+
+import external_program_calls as ex
+pythonVersion = ex.pythonVersion
+projectRootDirectory = ex.projectRootDirectory
+
+#
 # Try to import the system pyPdf.  If that fails or if the '--pyPdfLocal'
 # option was set then revert to the appropriate local version.
 #
 
-# Peek at the command line before fully parsing it later to see if we should import
-# the local pyPdf.  (This works for simple option which are either set or not.)
+"""
+#---------------------------------------------
+# debug section below
+import inspect
+print()
+for i in range(len(inspect.stack())):
+   path = inspect.stack()[i][1]
+   print("i =", i, "   ", path, "   ", os.path.realpath(path))
+   print("realpath of __file__", os.path.realpath(__file__))
+   print()
+def local_fun():
+   pass
+
+print("\nsys.path is ", sys.path, "\n")
+#sys.path.insert(0, "/home/alb/programming/python/utilities")
+sys.path.insert(0, "../../utilities")
+import utilities # gets utilities.py in the utilities dir
+print("utilities.__file__ is ", utilities.__file__)
+
+# this self-import actually works
+#import pdfCropMargins
+#print("pdfCropMargins.__file__ is ", pdfCropMargins.__file__)
+
+#os.chdir("/tmp")
+#sys.path.insert(0, ".")
+#sys.path.append(".")
+import dir_locator # may be the best solution...
+#os.chdir("..")
+print("dir_locator.__file__ is ", dir_locator.__file__)
+print()
+
+print(utilities.getFullPathOfCurrentScriptOrModule())
+print()
+print("__file__ is ", __file__)
+# debug section above
+#---------------------------------------------
+"""
+
 pyPdfLocal = False
-if __name__ == "__main__" and ("--pyPdfLocal" in sys.argv or "-pl" in sys.argv):
+# Peek at the command line (before fully parsing it later) to see if we should
+# import the local pyPdf.  This works for simple options which are either set
+# or not.  Note that importing is now dependent on sys.argv (even though it
+# shouldn't make a difference in this application).
+if "--pyPdfLocal" in sys.argv or "-pl" in sys.argv:
    pyPdfLocal = True
 
-try:
-   if pyPdfLocal: raise ImportError # just to run the except code
-   from pyPdf import PdfFileWriter, PdfFileReader # the system's pyPdf
-   from pyPdf.generic import \
-         NameObject, createStringObject, RectangleObject, FloatObject
-except ImportError:
-   if not pyPdfLocal:
-      print("\nWarning from pdfCropMargins: No system pyPdf Python package was"
-            "\nfound.  Reverting to the local version packaged with this program."
-            "\nTo silence this warning, use the '--pyPdfLocal' (or '-pl') option"
-            "\non the command line.\n", file=sys.stderr)
+def importLocalPyPdf():
+   global PdfFileWriter, PdfFileReader
+   global NameObject, createStringObject, RectangleObject, FloatObject
+   sys.path.insert(0, projectRootDirectory) # package is in project directory root
    if pythonVersion[0] == "2":
       from mstamy2_PyPDF2_7da5545.PyPDF2 import PdfFileWriter, PdfFileReader 
       from mstamy2_PyPDF2_7da5545.PyPDF2.generic import \
@@ -89,6 +130,22 @@ except ImportError:
       from mstamy2_PyPDF2_7da5545_py3.PyPDF2 import PdfFileWriter, PdfFileReader 
       from mstamy2_PyPDF2_7da5545_py3.PyPDF2.generic import \
             NameObject, createStringObject, RectangleObject, FloatObject
+   del sys.path[0] # restore the sys.path
+   return
+
+if pyPdfLocal:
+   importLocalPyPdf()
+else:
+   try:
+      from pyPdf import PdfFileWriter, PdfFileReader # the system's pyPdf
+      from pyPdf.generic import \
+            NameObject, createStringObject, RectangleObject, FloatObject
+   except ImportError:
+      print("\nWarning from pdfCropMargins: No system pyPdf Python package was"
+            "\nfound.  Reverting to the local version packaged with this program."
+            "\nTo silence this warning, use the '--pyPdfLocal' (or '-pl') option"
+            "\non the command line.\n", file=sys.stderr)
+      importLocalPyPdf()
 
 #
 # Import the general functions for calculating a list of bounding boxes.
@@ -96,12 +153,6 @@ except ImportError:
 
 import calculate_bounding_boxes
 from calculate_bounding_boxes import getBoundingBoxList
-
-#
-# Import the module that calls external programs.
-#
-
-import external_program_calls as ex
 
 #
 # Import the prettified argparse module and the actual documentation text.
@@ -532,13 +583,13 @@ def main():
 
    # Give a warning message if incompatible option combinations have been selected.
    if args.gsBbox and args.threshold:
-      print("\nWarning in pdfCropMargins: Threshold argument '--threshold' is ignored"
+      print("\nWarning in pdfCropMargins: The '--threshold' option is ignored"
             "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
    if args.gsBbox and args.numBlurs:
-      print("\nWarning in pdfCropMargins: The blurring argument '--numBlurs' is ignored"
+      print("\nWarning in pdfCropMargins: The '--numBlurs' option is ignored"
             "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
    if args.gsBbox and args.numSmooths:
-      print("\nWarning in pdfCropMargins: The smoothing argument '--numSmooths' is ignored"
+      print("\nWarning in pdfCropMargins: The '--numSmooths' option is ignored"
             "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
 
    #

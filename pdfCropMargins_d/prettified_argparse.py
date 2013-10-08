@@ -41,6 +41,9 @@ import argparse, textwrap, re
 import sys, os
 
 progName = os.path.basename(sys.argv[0])
+# Note when a directory is run as a command name it can be something like "."
+# which looks nicer expanded.  Argparse currently uses the unexpanded.
+absProgName = os.path.basename(os.path.abspath(sys.argv[0]))
 
 # These strings are directly replaced in the argparse help and usage output stream.
 # The string on the right of the tuple replaces the string on the left.
@@ -51,8 +54,8 @@ helpStringReplacementPairs = (
    ("show this help message and exit", "Show this help message and exit.^^n"),
    ("%s: error: too few arguments" % progName, textwrap.fill(
       "^^nError in arguments to %s: an input document filename is required.^^n"
-            % progName)),
-   (progName + ": error:", "Error in "+progName+":")
+            % absProgName)),
+   (progName + ": error:", "Error in "+absProgName+":")
    )
 
 
