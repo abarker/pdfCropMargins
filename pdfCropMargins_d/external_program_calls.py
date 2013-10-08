@@ -63,9 +63,9 @@ def getRealAbsoluteExpandedDirname(path):
 
 def getParentDirectory(path):
    """Like os.path.dirname except it returns the absolute name of the parent
-   directory.  No symbolic link expansion (os.path.realpath) or user expansion
-   (os.path.expanduser) is done."""
-   path = os.path.dirname(path)
+   of the dirname directory.  No symbolic link expansion (os.path.realpath)
+   or user expansion (os.path.expanduser) is done."""
+   if not os.path.isdir(path): path = os.path.dirname(path)
    return os.path.abspath(os.path.join(path, os.path.pardir))
 
 

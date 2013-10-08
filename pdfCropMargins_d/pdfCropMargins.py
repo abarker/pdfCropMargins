@@ -72,44 +72,6 @@ projectRootDirectory = ex.projectRootDirectory
 # option was set then revert to the appropriate local version.
 #
 
-"""
-#---------------------------------------------
-# debug section below
-import inspect
-print()
-for i in range(len(inspect.stack())):
-   path = inspect.stack()[i][1]
-   print("i =", i, "   ", path, "   ", os.path.realpath(path))
-   print("realpath of __file__", os.path.realpath(__file__))
-   print()
-def local_fun():
-   pass
-
-print("\nsys.path is ", sys.path, "\n")
-#sys.path.insert(0, "/home/alb/programming/python/utilities")
-sys.path.insert(0, "../../utilities")
-import utilities # gets utilities.py in the utilities dir
-print("utilities.__file__ is ", utilities.__file__)
-
-# this self-import actually works
-#import pdfCropMargins
-#print("pdfCropMargins.__file__ is ", pdfCropMargins.__file__)
-
-#os.chdir("/tmp")
-#sys.path.insert(0, ".")
-#sys.path.append(".")
-import dir_locator # may be the best solution...
-#os.chdir("..")
-print("dir_locator.__file__ is ", dir_locator.__file__)
-print()
-
-print(utilities.getFullPathOfCurrentScriptOrModule())
-print()
-print("__file__ is ", __file__)
-# debug section above
-#---------------------------------------------
-"""
-
 pyPdfLocal = False
 # Peek at the command line (before fully parsing it later) to see if we should
 # import the local pyPdf.  This works for simple options which are either set
@@ -121,7 +83,7 @@ if "--pyPdfLocal" in sys.argv or "-pl" in sys.argv:
 def importLocalPyPdf():
    global PdfFileWriter, PdfFileReader
    global NameObject, createStringObject, RectangleObject, FloatObject
-   sys.path.insert(0, projectRootDirectory) # package is in project directory root
+   sys.path.insert(0, projectRootDirectory) # package is in project root directory
    if pythonVersion[0] == "2":
       from mstamy2_PyPDF2_7da5545.PyPDF2 import PdfFileWriter, PdfFileReader 
       from mstamy2_PyPDF2_7da5545.PyPDF2.generic import \
@@ -148,14 +110,13 @@ else:
       importLocalPyPdf()
 
 #
-# Import the general functions for calculating a list of bounding boxes.
+# Import the general function for calculating a list of bounding boxes.
 #
 
-import calculate_bounding_boxes
 from calculate_bounding_boxes import getBoundingBoxList
 
 #
-# Import the prettified argparse module and the actual documentation text.
+# Import the prettified argparse module and the text of the manpage documentation.
 #
 
 from prettified_argparse import parseCommandLineArguments
@@ -476,11 +437,13 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop):
 
    return outputDoc  
 
+
 ##############################################################################
 #
 # Begin the main script.  
 #
 ##############################################################################
+
 
 # TODO have routine to clean all filenames and args passed in to external
 # commands, in case offered as a service we don't want attacks on system
@@ -562,22 +525,22 @@ def main():
    if args.gsBbox or args.gsFix or args.gsRender: foundGs = ex.testGsExecutable()
    if args.gsBbox and not foundGs:
       print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
-            "\nthe Ghostscript executable, gs, could not be located.  Is it"
+            "\nthe Ghostscript executable could not be located.  Is it"
             "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
       sys.exit(1)
    if args.gsFix and not foundGs:
       print("\nError in pdfCropMargins: The '--gsFix' option was specified but"
-            "\nthe Ghostscript executable, gs, could not be located.  Is it"
+            "\nthe Ghostscript executable could not be located.  Is it"
             "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
       sys.exit(1)
    if args.gsRender and not foundGs:
       if gsRenderDefaultSet:
-         print("\nError in pdfCropMargins: Neither Ghostscript (gs) nor pdftoppm"
+         print("\nError in pdfCropMargins: Neither Ghostscript nor pdftoppm"
                "\nwas found in the PATH for command execution.  At least one is"
                "\nrequired.\n", file=sys.stderr)
       else:
          print("\nError in pdfCropMargins: The '--gsRender' option was specified but"
-               "\nthe Ghostscript executable, gs, could not be located.  Is it"
+               "\nthe Ghostscript executable could not be located.  Is it"
                "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
       sys.exit(1)
 
@@ -626,7 +589,7 @@ def main():
    # calculations are still carried-out for all the pages in the document.
    # (There are a few optimizations for expensive operations like finding
    # bounding boxes; the rest is negligible).  This keeps the correspondence
-   # between page numbers and the positions of boxes in the lists.  The
+   # between page numbers and the positions of boxes in the box lists.  The
    # function applyCropList then just ignores the cropping information for any
    # pages which were not selected.
 
@@ -663,14 +626,14 @@ def main():
 
    #
    # Get a list with the full-page boxes for each page: (left,bottom,right,top)
-   # This also sets the MediaBox and CropBox of the pages to the chosen full-page
-   # size.
+   # This function also sets the MediaBox and CropBox of the pages to the
+   # chosen full-page size as a side-effect, saving the old boxes.
    #
 
    fullPageBoxList = getFullPageBoxList(inputDoc)
 
    #
-   # Calculate the boundingBoxList containing tight page bounds.
+   # Calculate the boundingBoxList containing tight page bounds for each page.
    #
 
    if not args.restore:
@@ -678,7 +641,7 @@ def main():
                                                 pageNumsToCrop, args, PdfFileWriter)
 
    #
-   # Calculate the cropList based on the bounding box and the fullpage box.
+   # Calculate the cropList based on the fullpage boxes and the bounding boxes.
    #
 
    if not args.restore:
@@ -697,18 +660,20 @@ def main():
    #
 
    if args.verbose: print("\nWriting the cropped PDF file.")
+
    outputDocStream = open(outputDocFname, "wb")
    outputDoc.write(outputDocStream)
    outputDocStream.close()
 
    # 
-   # Now handle the options which occur after the file is written.
+   # Now handle the options which apply after the file is written.
    #
 
    if args.preview: 
       viewer = args.preview
       if args.verbose:
          print("Previewing the output document with viewer:\n   ", viewer)   
+      # TODO move to external_programs module or at least call fun from there??
       os.system(viewer + " " + outputDocFname) # system call will wait completion
 
    # Handle the '--queryModifyOriginal' option.
