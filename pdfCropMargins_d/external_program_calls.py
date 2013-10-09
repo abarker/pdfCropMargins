@@ -156,20 +156,31 @@ def testGsExecutableWithExit():
       sys.exit(1)
 
 
-def testPdftoppmExecutable():
+def testPdftoppmExecutable(preferLocal=False):
    """Find a pdftoppm executable and test it.  If a good one is found, set
    this module's global pdftoppmExecutable variable to that path and return
    True.  Otherwise return False."""
+   # TODO can have option to always prefer the local, set from where test is run.
    global pdftoppmExecutable
-   pdftoppmExecutable = testExecutable(pdftoppmExecutables, ["-v"], "pdftoppm")
-   # TODO just check here for failsafe local!  Can have an optional argument
-   # to always prefer the local!
-   return not pdftoppmExecutable == ""
+   if not (preferLocal and systemOS == "Windows"):
+      pdftoppmExecutable = testExecutable(pdftoppmExecutables, ["-v"], "pdftoppm")
+   # If we're on Windows and no pdftoppm was found, use the local copy
+   # distributed with the project.  
+   # TODO can also be run with Wine, can test with that...
+   if systemOs == "Windows" and not pdftoppmExecutable:
+      path = os.path.join(projectRootDirectory, 
+                          "pdftoppmWindowsLocal",
+                          "xpdfbin-win-3.03")
+      if systemBits == 32:
+         return os.path.join(path, "bin32", "pdftoppm.exe")
+      else:
+         return os.path.join(path, "bin64", "pdftoppm.exe")
+   return not pdftoppmExecutable
 
-def testPdftoppmExecutableWithExit():
+def testPdftoppmExecutableWithExit(preferLocal=False):
    """Same as testPdftoppmExecutable but exits with a message on failure."""
    if pdftoppmExecutable: return # has already been tested and set to a path
-   if not testPdftoppmExecutable():
+   if not testPdftoppmExecutable(preferLocal):
       print("Error in pdfCropMargins, detected in external_program_calls.py:"
             "\nNo pdftoppm executable was found.", file=sys.stderr)
       sys.exit(1)
@@ -197,8 +208,8 @@ def testExecutable(executables, argumentList, stringToLookFor):
          except (subprocess.CalledProcessError, OSError, IOError):
             # OSError if it isn't found, CalledProcessError if it runs but returns fail.
             pass
-      return ""
-   return ""
+      return None
+   return None
 
 #
 # Functions that call Ghostscript to fix PDFs or get bounding boxes.
