@@ -1,0 +1,45 @@
+Subject: ANNOUNCE: Xpdf 3.03 - a PDF viewer for X
+
+
+Glyph & Cog, LLC is pleased to announce a new version of Xpdf, the
+open source Portable Document Format (PDF) viewer for X.  The Xpdf
+project also includes a PDF text extractor, PDF-to-PostScript
+converter, and various other utilities.
+
+Xpdf runs under the X Window System on Unix, VMS, and OS/2.  The non-X
+components (pdftops, pdftotext, etc.) also run on Win32 systems and
+should run on pretty much any system with a decent C++ compiler.
+
+Major changes:
+* Added the "fixed pitch" text extraction mode.
+* Modified "pdftops -paper match" to handle PDF files with
+  different-sized pages, i.e., it will now select the matching paper
+  size on a page-by-page basis.
+* Add ability for pdftoppm to write to stdout.
+* Added the pdfdetach tool.
+* Implemented 256-bit AES decryption.
+* Commented out the t1lib section in the configure script -- t1lib has
+  some potential security holes, and hasn't been updated in years.
+* Redesigned the font configuration xpdfrc commands: removed the
+  displayFontT1, displayFontTT, displayNamedCIDFontT1,
+  displayCIDFontT1, displayNamedCIDFontTT, displayCIDFontTT, psFont,
+  psNamedFont16, and psFont16 commands; added the fontFile,
+  fontFileCC, psResidentFont, psResidentFont16, and psResidentFontCC
+  commands.
+* Switched from GPLv2 to dual v2/v3 licensing.
+
+See the `CHANGES' file for a complete list of changes.
+
+Source (C++ and C) is available, and it should be fairly easy to
+compile for UNIX, VMS, OS/2, and Win32.
+
+More information, source code, and precompiled binaries are on the
+xpdf web page and ftp site:
+
+    http://www.foolabs.com/xpdf/
+    ftp://ftp.foolabs.com/pub/xpdf/
+
+For information on commercial licensing and consulting, please see the
+Glyph & Cog web site:
+
+    http://www.glyphandcog.com/
