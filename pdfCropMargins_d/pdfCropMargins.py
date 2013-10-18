@@ -57,7 +57,7 @@ source directory for the text of the license.
 #    Note that pdfxchange does not modify the Producer when it adds highlighting.
 
 from __future__ import print_function, division
-import sys, os, shutil, subprocess, tempfile
+import sys, os, shutil, subprocess, tempfile, time
 
 #
 # Import the module that calls external programs and gets system info.
@@ -514,7 +514,7 @@ def main():
    # rendering.  TODO could later maybe pass an alternate executable path as an
    # extra option.
    if not args.gsBbox and not args.gsRender:
-      foundPdftoppm = ex.testPdftoppmExecutable()
+      foundPdftoppm = ex.initAndTestPdftoppmExecutable()
       if not foundPdftoppm:
          args.gsRender = True
          gsRenderDefaultSet = True
@@ -522,7 +522,8 @@ def main():
             print("\nNo pdftoppm executable found; using Ghostscript for rendering.")
 
    # If any options require Ghostscript, make sure it it installed.
-   if args.gsBbox or args.gsFix or args.gsRender: foundGs = ex.testGsExecutable()
+   if args.gsBbox or args.gsFix or args.gsRender: 
+      foundGs = ex.initAndTestGsExecutable()
    if args.gsBbox and not foundGs:
       print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
             "\nthe Ghostscript executable could not be located.  Is it"
@@ -669,23 +670,29 @@ def main():
    # Now handle the options which apply after the file is written.
    #
 
-   if args.preview: 
+   def doPreview():
       viewer = args.preview
       if args.verbose:
-         print("Previewing the output document with viewer:\n   ", viewer)   
-      # TODO move to external_programs module or at least call fun from there??
-      os.system(viewer + " " + outputDocFname) # system call will wait completion
+         print("\nPreviewing the output document with viewer:\n   ", viewer, "\n")   
+      ex.showPreview(viewer, outputDocFname) # system call will wait for completion
 
    # Handle the '--queryModifyOriginal' option.
    if args.queryModifyOriginal:
-      getInput = input # Python3 raw input reading
-      try: # for Python2 compatibility
-         getInput = raw_input # Python2 raw input reading
-      except NameError:
-         pass
+      if args.preview: 
+         print("\nRunning the preview viewer on the file, will query whether or not"
+               "\nto modify the original file after the viewer is launched in the"
+               "\nbackground...\n")
+         doPreview()
+         queryWaitTime = 2 # seconds
+         time.sleep(queryWaitTime) # Give it time to start, may write junk to terminal...
+         print()
       while True:
-         queryString = "Modify the original file? [yn] "
-         queryResult = getInput(queryString).decode("utf-8")
+         queryString = "Modify the original file to the cropped file " \
+                                                    "(saving the original)? [yn] "
+         if ex.pythonVersion[0] == "2":
+            queryResult = raw_input(queryString).decode("utf-8")
+         else:
+            queryResult = input(queryString)
          if queryResult in ["y","Y"]:
             args.modifyOriginal = True
             print("Modifying the original file.")
@@ -724,6 +731,8 @@ def main():
          if args.verbose: print("Doing a file move:", outputDocFname, inputDocFname)
          shutil.move(outputDocFname, inputDocFname)
 
+   if args.preview and not args.queryModifyOriginal:
+      doPreview()
 
    if args.verbose: print("\nFinished this run of pdfCropMargins.\n")
    

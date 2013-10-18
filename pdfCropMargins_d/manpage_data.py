@@ -103,11 +103,44 @@ Description:
 
         pdfCropMargins -p 50 doc.pdf
 
-     Do the first operation:
-        pdfCropMargins doc.pdf
+     Crop off an absolute 12 points from each margin in doc.pdf.
 
-     Do the first operation:
-        pdfCropMargins doc.pdf
+        pdfCropMargins -a 12 doc.pdf
+
+     Crop doc.pdf, renaming the cropped output file to doc.pdf and backing
+     up the original file as backup_doc.pdf.
+
+        pdfCropMargins -mo -pf -su "backup" doc.pdf
+
+     Crop the margins of doc.pdf to 120% of their original size, increasing the
+     margins.  Use Ghostscript to find the bounding boxes (in general this is
+     usually faster if available and no rendering operations are needed).
+
+        pdfCropMargins -p 120 -gs doc.pdf
+
+     Crop the margins of doc.pdf ignoring the 10 largest margins on each edge
+     (over the whole document).  This is especially good for noisy documents
+     where all the pages have very similar margins, or when you want to ignore
+     marginal annotations which only occur on a few pages.
+
+        pdfCropMargins -m 10 doc.pdf
+
+     Crop doc.pdf, launch the acroread viewer on the cropped output, and then
+     query as to whether or not to rename the cropped file doc.pdf and back up
+     the original file as doc_uncropped.pdf.
+
+        pdfCropMargins -mo -q doc.pdf
+
+     Crop pages 1-100 of doc.pdf, cropping all even pages uniformly and all odd
+     pages uniformly.
+
+        pdfCropMargins -g 1-100 -e doc.pdf
+
+     Try to restore doc.pdf to its original margins, assuming it was cropped
+     with pdfCropMargins previously.  Note that the output is still in
+     doc_cropped.pdf.
+
+        pdfCropMargins -r doc.pdf
 
 ^^f
    There are many different ways to use this program.  After finding a method
@@ -130,7 +163,9 @@ Description:
         gs -o repaired.pdf -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress corrupted.pdf
 
 ^^f
-   In Windows the executable would be "gswin32c.exe" rather than "gs".
+   In Windows the executable would be "gswin32c.exe" rather than "gs".  The
+   option '--gsFix' will automatically attempt to apply this fix (provided
+   Ghostscript is available).
    
    All the command-line options to pdfCropMargins are described below.  The
    following definition is useful in precisely defining what several of the
@@ -395,37 +430,44 @@ cmdParser.add_argument("-nc", "--noclobber", action="store_true", help="""
 
    Never overwrite an existing file as the output file.^^n""")
 
-# TODO, run the preview *after* modifyOriginal ops, unless query is chosen???
 cmdParser.add_argument("-pv", "--preview", metavar="PROG", help="""
 
-   Run a PDF viewer on the cropped PDF output.  This is run after writing the
-   cropped file but before any '--modifyOriginal' move operations.  The single
-   argument should be the string for executing the chosen viewer, which is
-   assumed to take only a single PDF filename argument.  For example, on Linux
-   the Acrobat Reader could be chosen with /usr/bin/acroread (note that full
-   pathnames are not required).  A shell script or batch file can be used to
-   set any options for the viewer.  The viewer program should not run in the
-   background; the pdfCropMargins program should block and wait for it to
-   complete.  The '--preview' option works well in conjunction with the
-   '--queryModifyOriginal' option (see below).^^n""")
+   Run a PDF viewer on the cropped PDF output.  The viewer process is run in
+   the background.  The viewer is launched after pdfCropMargins has finished
+   all the other.  The only exception is when the '--queryModifyOriginal'
+   option is also selected.  In that case the viewer is launched before the
+   query so that the user can look at the output before deciding whether or not
+   to modify the original.  (Note that answering 'y' will then move the file
+   out from under the running viewer; close and re-open the file before adding
+   annotations, highlighting, etc.)  The single argument should be the path of
+   the executable file or script to run the chosen viewer.  The viewer is
+   assumed to take exactly one argument, a PDF filename.  For example, on Linux
+   the Acrobat Reader could be chosen with /usr/bin/acroread or, if it is in
+   the PATH, simply acroread.  A shell script or batch file wrapper can be used
+   to set any additional options for the viewer.^^n""")
 
 cmdParser.add_argument("-mo", "--modifyOriginal", action="store_true", help="""
 
-   This option swaps (via move operations) the name of the cropped output file
-   with the name of the original file.  Thus it effectively modifies the
-   original file and makes a backup copy of the original, unmodified file.  Any
-   prefix or suffix which would be added by this run of the program (by default
-   "_cropped") will be modified accordingly (by default to "_uncropped").  Be
-   warned that running with this option twice on the same filename will modify
-   the original file; the '-noclobberOriginal' can be used to avoid
-   that.^^n""")
+   This option moves (renames) the original file to a backup filename and then
+   moves the cropped file to the original filename.  Thus it effectively
+   modifies the original file and makes a backup copy of the original,
+   unmodified file.  The backup filename for the original document is always
+   generated from the original filename; any prefix or suffix which would be
+   added by the program to generate a filename (by default a "_cropped" suffix)
+   is modified accordingly (by default to "_uncropped").  The '--usePrefix',
+   '--stringUncropped', and '--stringSeparator' options can all be used to
+   customize the generated backup filename.  This operation is performed last,
+   so if a previous operation fails the original document will be unchanged.
+   Be warned that running pdfCropMargins twice on the same source filename will
+   modify the original file; the '-noclobberOriginal' option can be used to
+   avoid this.^^n""")
 
 cmdParser.add_argument("-q", "--queryModifyOriginal", action="store_true",
       help="""
 
-   This option selectes '--modifyOriginal' option, but queries the user about
-   whether to actually do the final move operation.  This works well with the
-   '--preview' option: if the preview looks good you can opt to modify the
+   This option selects the '--modifyOriginal' option, but queries the user
+   about whether to actually do the final move operation.  This works well with
+   the '--preview' option: if the preview looks good you can opt to modify the
    original file (keeping a copy of the original). If you decline then the
    files are not swapped (and are just as if the '--modifyOriginal' option had
    not been set).^^n""")
@@ -434,11 +476,11 @@ cmdParser.add_argument("-nco", "--noclobberOriginal", action="store_true",
       help="""
 
    If the '--modifyOriginal' option is selected, do not ever overwrite an
-   existing file as the saved copy for the original file.  This essentially
-   does the move operations for that command in noclobber mode, and prints a
-   warning if that fails.  On a fail the result is exactly as if the
-   '--modifyOriginal' option had not been selected.  This option is redundant
-   if the ordinary '--noclobber' option is also set.^^n""")
+   existing file as the backup copy for the original file.  This essentially
+   does the move operations for the '--modifyOriginal' option in noclobber
+   mode, and prints a warning if it fails.  On failure the result is exactly as
+   if the '--modifyOriginal' option had not been selected.  This option is
+   redundant if the ordinary '--noclobber' option is also set.^^n""")
 
 cmdParser.add_argument("-pf", "--usePrefix", action="store_true", help="""
 
