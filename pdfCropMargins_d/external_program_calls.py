@@ -86,7 +86,7 @@ projectRootDirectory = getParentDirectory(programCodeDirectory)
 
 
 def which(program):
-   """For future reference and modification, from stackexchange."""
+   """This function is for future reference and modification, from stackexchange."""
    import os
    def is_exe(fpath):
       return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
@@ -116,41 +116,26 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
    output is echoed to stdout, indented (or otherwise prefixed) by indentString.
    Waits for command completion."""
 
-   # Try this way for more control... can get both stdout and stderr separately
-   # or combined.
-   #
-   # Note p.communicate should be able to send and receive
-   # it returns a tuple (stdoutString, stdinString) and takes an optional stdinString
-   # argument.  Can do pipes with e.g. stdin=p.stdout.  The subprocess.PIPE
-   # specifies that the p.communicate() method applies to that I/O channel.
-   # Below currently doesn't work for pdftoppm... output is empty.
-   # TODO Add this info to the albPythonNotes file and clean up extraneous stuff.
+   # Note ghostscript bounding box output writes to stderr!!!  So we need it.
 
-
-   # Note ghostscript bounding box output writes to stderr!!!
-
-   usePopen=True # Needs to be True to ignore CalledProcessErrors.
+   usePopen=True # Needs to be True to set ignoreCalledProcessErrors True
    if usePopen:
-      #p = subprocess.Popen(commandList, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
       p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-      #p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      #p = subprocess.Popen(commandList, stdout=subprocess.PIPE)
       output, errout = p.communicate()
       returncode = p.poll()
-      #print("\np output\n", output)
-      #print("\np error\n", errout)
       if not ignoreCalledProcessErrors and returncode != 0: 
          raise subprocess.CalledProcessError(returncode, commandList, output=output)
-      #print("returncode", returncode)
    else:
       # Note this does not work correctly if shell=True.
       output = subprocess.check_output(commandList, stderr=subprocess.STDOUT,
             shell=False)
+
    output = output.decode("utf-8")
-   if splitLines or printOutput: output = output.splitlines()
+   if splitLines or printOutput: splitOutput = output.splitlines()
+   if splitLines: output = splitOutput
    if printOutput:
       print()
-      for line in output:
+      for line in splitOutput:
          print(indentString + line)
       sys.stdout.flush()
    return output
@@ -161,6 +146,7 @@ def callExternalSubprocess(commandList,
    """Run the command and arguments in the commandList.  Will search the system
    PATH for commands to execute, but no shell is started.  Redirects any selected
    outputs to the given filename.  Waits for command completion."""
+
    if stdinFilename: stdin = open(stdinFilename, "r")
    else: stdin = None
    if stdoutFilename: stdout = open(stdoutFilename, "w")
@@ -217,34 +203,36 @@ def getTemporaryDirectory():
 #
 
 
-def initAndTestGsExecutable():
+def initAndTestGsExecutable(exitOnFail=False):
    """Find a Ghostscript executable and test it.  If a good one is found, set
    this module's global gsExecutable variable to that path and return True.
    Otherwise return False."""
+
    global gsExecutable
    if gsExecutable: return True # has already been tested and set to a path
    gsExecutable = findAndTestExecutable(gsExecutables, ["-dSAFER", "-v"], "Ghostscript")
-   return bool(gsExecutable)
 
-def initAndTestGsExecutableWithExit():
-   """Same as initAndTestGsExecutable but exits with a message on failure."""
-   if not initAndTestGsExecutable():
+   retval = bool(gsExecutable)
+
+   if exitOnFail and not retval:
       print("Error in pdfCropMargins, detected in external_program_calls.py:"
             "\nNo Ghostscript executable was found.", file=sys.stderr)
       sys.exit(1)
-   return True
+
+   return retval
 
 
-def initAndTestPdftoppmExecutable(preferLocal=False):
+def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
    """Find a pdftoppm executable and test it.  If a good one is found, set
    this module's global pdftoppmExecutable variable to that path and return
    True.  Otherwise return False."""
-   # TODO can have option to always prefer the local, set from where test is run.
-   ignoreCalledProcessErrors = False # True helps in debugging .exe with wine in Linux
-   global pdftoppmExecutable
-   if pdftoppmExecutable: return True # has already been tested and set to a path
 
-   if not (preferLocal and systemOS == "Windows"):
+   ignoreCalledProcessErrors = False # True helps in debugging .exe with wine in Linux
+
+   global pdftoppmExecutable
+   if pdftoppmExecutable: return True # Has already been tested and set to a path.
+
+   if not (preferLocal and systemOs == "Windows"):
       pdftoppmExecutable = findAndTestExecutable(pdftoppmExecutables, ["-v"], "pdftoppm",
             ignoreCalledProcessErrors=ignoreCalledProcessErrors)
 
@@ -252,16 +240,23 @@ def initAndTestPdftoppmExecutable(preferLocal=False):
    # specified then use the local pdftoppm.exe distributed with the project.
    # The local pdftoppm.exe can be tested on Linux with Wine using a shell
    # script named pdftoppm in the PATH, but it isn't coded in.
-
    if systemOs == "Windows" and not pdftoppmExecutable:
+      if not preferLocal:
+         print("\nWarning from pdfCropMargins: No system pdftoppm was found."
+               "Reverting to a locally-packaged executable.  To silence this"
+               "warning use the '--pdftoppmLocal' (or '-pdl') flag.\n",
+               file=sys.stderr)
+
       path = os.path.join(projectRootDirectory, 
                           "pdftoppm_windows_local",
                           "xpdfbin-win-3.03")
+
       if systemBits == 32:
          pdftoppmExecutable = os.path.join(path, "bin32", "pdftoppm.exe")
       else:
          pdftoppmExecutable = os.path.join(path, "bin64", "pdftoppm.exe")
-      try:
+
+      try: # Test the locally-packaged version of pdftoppm.
          cmd = [pdftoppmExecutable, "-v"]
          runOutput = getExternalSubprocessOutput(cmd,
                                 ignoreCalledProcessErrors=ignoreCalledProcessErrors)
@@ -271,23 +266,21 @@ def initAndTestPdftoppmExecutable(preferLocal=False):
          return None
 
    retval = bool(pdftoppmExecutable)
-   if retval: # see if we have an ancient or more recent version of pdftoppm
+
+   if exitOnFail and not retval:
+      print("Error in pdfCropMargins, detected in external_program_calls.py:"
+            "\nNo pdftoppm executable was found.", file=sys.stderr)
+      sys.exit(1)
+
+   if retval: # Found a version of pdftoppm, see if it is ancient or more recent.
       cmd = [pdftoppmExecutable, "--help"]
       runOutput = getExternalSubprocessOutput(cmd, splitLines=False,
                                 ignoreCalledProcessErrors=ignoreCalledProcessErrors)
       if not "-singlefile " in runOutput or not "-rx " in runOutput:
          global oldPdftoppmVersion
          oldPdftoppmVersion = True
+
    return retval
-
-
-def initAndTestPdftoppmExecutableWithExit(preferLocal=False):
-   """Same as initAndTestPdftoppmExecutable but exits with a message on failure."""
-   if not initAndTestPdftoppmExecutable(preferLocal=preferLocal):
-      print("Error in pdfCropMargins, detected in external_program_calls.py:"
-            "\nNo pdftoppm executable was found.", file=sys.stderr)
-      sys.exit(1)
-   return True
 
 
 def findAndTestExecutable(executables, argumentList, stringToLookFor,
@@ -300,6 +293,7 @@ def findAndTestExecutable(executables, argumentList, stringToLookFor,
    that system.  On 64 bit machines the 32 bit version is always tried if the
    64 bit version fails.  Returns the working executable name, or the empty
    string if both fail.  Ignores empty executable strings."""
+
    for systemPaths in executables:
       if systemPaths[0] != platform.system(): continue
       executablePaths = [systemPaths[1], systemPaths[2]]
@@ -325,7 +319,8 @@ def fixPdfWithGhostscriptToTmpFile(inputDocFname):
    """Attempt to fix a bad PDF file with a Ghostscript command, writing the output
    PDF to a temporary file and returning the filename.  Caller is responsible for
    deleting the file."""
-   if not gsExecutable: initAndTestGsExecutableWithExit()
+
+   if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
    fileObject = tempfile.NamedTemporaryFile(prefix="pdfCropMarginsTmp_", delete=False)
    fileObject.close()
    tempFileName = fileObject.name
@@ -340,7 +335,7 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
    """Call Ghostscript to get the bounding box list.  Cannot set a threshold
    with this method."""
 
-   if not gsExecutable: initAndTestGsExecutableWithExit()
+   if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
    res = str(resX) + "x" + str(resY)
    boxArg = "-dUseMediaBox"
    if "c" in fullPageBox: boxArg = "-dUseCropBox"
@@ -350,6 +345,7 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
    gsRunCommand = [gsExecutable, "-dSAFER", "-dNOPAUSE", "-dBATCH", "-sDEVICE=bbox", 
          boxArg, "-r"+res, inputDocFname]
    # Set printOutput to True for debugging or extra verbose with Ghostscript's output.
+   # Note Ghostscript writes the data to stderr, so the command below must capture it.
    gsOutput = getExternalSubprocessOutput(gsRunCommand,
                                           printOutput=False, indentString="   ")
    boundingBoxList = []
@@ -372,22 +368,29 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
 
 
 def renderPdfFileToImageFile_pdftoppm_ppm(pdfFileName, imageFileName,
-                                                   resX=150, resY=150, extraArgs=[]):
-   # Note that if to include the imageFileName in the command itself you need
-   # to use the root of the filename, i.e., without the extension.  Alternately
-   # you can redirect to stdout.  Note that without -singlefile and stdout the
-   # program includes a number in filename.  TODO: ancient pdftoppm programs
-   # only take infile and outroot arguments, don't redirect, and only have -r
-   # for a single resolution.... and the -0001.ppm suffix added to the root
-   # differs in how many zeros are added.  Maybe just get a temporary
-   # directory?  Then you can just write the whole PDF and have gs or pdftoppm
-   # go through the whole thing...
-   useStdout = False
+                                                  resX=150, resY=150, extraArgs=[]):
+   """Call the pdftoppm program to convert the file pdfFileName to a .ppm image
+   file in imageFileName.  Caller is responsible for the suffix on the
+   filename.  Currently set up to do single-page PDF files (as written by
+   PdfFileWriter for each page)."""
+
+   # Note that with pdftoppm if you want to include the imageFileName in the
+   # command itself you need to use the root of the filename, i.e., without the
+   # extension, and also use -singlefile to avoid a number in the filename.
+   # Alternately, you can redirect to stdout.
+   #
+   # Old pdftoppm programs only take infile and outroot arguments, don't
+   # redirect, and only have -r for a single resolution.  The suffix
+   # "-0001.ppm" added to the root differs across versions in how many zeros
+   # are added.  A temporary directory is used in this case.
+
+   if not pdftoppmExecutable: 
+      initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=True)
+
+   useStdout = False # Redirect pdftoppm to stdout; command-line name used otherwise.
 
    if oldPdftoppmVersion:
       # We don't have -singlefile and only -r, not -rx and -ry.  Output to temp dir.
-      # TODO finish and fix.  Turn back on ignoreCalledProcessErrors and copy wine script.
-      # Make SURE not to delete the whole /tmp directory.
       tempdir = getTemporaryDirectory()
       tempfileRoot = os.path.join(tempdir, "outputImage")
       command = ["pdftoppm"] + extraArgs + ["-r", resX, pdfFileName, tempfileRoot]
@@ -398,7 +401,8 @@ def renderPdfFileToImageFile_pdftoppm_ppm(pdfFileName, imageFileName,
                "\nExiting.")
          sys.exit(1)
       shutil.move(outfile[0], imageFileName)
-      shutil.rmtree(tempdir)
+      #shutil.rmtree(tempdir)
+      os.rmdir(tempdir) # this is a little safer that rmtree, and dir is empty
 
    elif useStdout:
       command = ["pdftoppm"] + extraArgs + ["-rx", resX, "-ry", resY, 
@@ -423,8 +427,9 @@ def renderPdfFileToImageFile_pdftoppm_pgm(pdfFileName, imageFileName,
 
 
 def renderPdfFileToImageFile_Ghostscript_png(pdfFileName, imageFileName, resX=150, resY=150):
+   """Use Ghostscript to render a PDF file to a .png image."""
    # For gs commands see http://ghostscript.com/doc/8.54/Use.htm
-   if not gsExecutable: initAndTestGsExecutableWithExit()
+   if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
    command = [gsExecutable, "-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=pnggray",
               "-r"+resX+"x"+resY, "-sOutputFile="+imageFileName, pdfFileName]
    # For extra-verbose output printOutput can be set True.

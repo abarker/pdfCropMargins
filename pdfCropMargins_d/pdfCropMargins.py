@@ -30,8 +30,8 @@ source directory for the text of the license.
 # Margins are conveniently described by left, bottom, right, and top, but boxes
 # in PDF files are usually defined by the lower-left point's x and y values
 # followed by the upper-right point's x and y values.  This is equivalent
-# information (since x and y is implicit in the margin names) but the
-# viewpoint is slightly different.
+# information (since x and y is implicit in the margin names) but the viewpoint
+# is slightly different.
 #
 # This program (like the Ghostscript program) uses the PDF ordering convention
 # (lbrt) for listing margins and defining boxes.  Note that PIL uses some
@@ -40,19 +40,38 @@ source directory for the text of the license.
 # program needs to make the proper conversion when rendering explicitly to
 # images.  Also, the bounding box routine of PIL returns ltrb instead of lbrt.
 # 
-# TODO Options:
+# Possible enhancements:
+#
+#    0) TODO enhance to handle KeyboardInterrupt more gracefully, since it will
+#    commonly be used to exit from the program.  Be sure temp files are deleted.
+#
+#    0) TODO enhance to check whether the gs and pdftoppm calls fail or not --
+#    or some other way to make sure that the input file is actually a PDF file!
+#    Otherwise, get crashes, like when run on html file.
+#
+#    0) Test whether input file equals output file name????
+#
+#    0) Note that when we use --gsFix the producer metadata is changed!  So
+#    the usual way of detecting whether this program cropped us doesn't work anymore!
+#
 #    1) Name of a command to turn a page of PDF into an image file, taking two
-#    file arguments and a resolution.  That should greatly help portability,
-#    especially of the more advanced stuff that gs does not do.  Maybe a version
-#    which does all the pages into separate files, since some progs do that?
+#    file arguments and a resolution.  That would help portability, especially
+#    of the more advanced stuff that gs does not do.  But with packaged-in
+#    pdftoppm for Windows it isn't worth it.
 # 
 #    2) See pdfxchange docs for how to make it batch-process a PDF to images!?
 #
 #    3) Have option for using an arbitrary box for saving restore data, not
-#    just ArtBox.  Note someone said that Adobe Illustrator actually sets
-#    the ArtBox to the size of the picture... maybe TrimBox better default??
-#    Downside of option is that we have to know which box was used, i.e., save it
-#    in the Producer string...
+#    just ArtBox.  Note someone said that Adobe Illustrator actually sets the
+#    ArtBox to the size of the picture... maybe TrimBox better default??
+#    Downside of option is that we have to know which box was used, i.e., save
+#    it in the Producer string...
+#
+#    4) Have a routine to clean all filenames and args passed in to external
+#    commands, in case offered as a service we don't want attacks on system by
+#    untrusted users 
+#    ----> start with a do-nothing routine, good enough
+#    ----> or ignore for now, not that important.
 
 #    Note that pdfxchange does not modify the Producer when it adds highlighting.
 
@@ -105,7 +124,7 @@ else:
    except ImportError:
       print("\nWarning from pdfCropMargins: No system pyPdf Python package was"
             "\nfound.  Reverting to the local version packaged with this program."
-            "\nTo silence this warning, use the '--pyPdfLocal' (or '-pl') option"
+            "\nTo silence this warning, use the '--pyPdfLocal' (or '-pyl') option"
             "\non the command line.\n", file=sys.stderr)
       importLocalPyPdf()
 
@@ -445,10 +464,6 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop):
 ##############################################################################
 
 
-# TODO have routine to clean all filenames and args passed in to external
-# commands, in case offered as a service we don't want attacks on system
-# by untrusted users ----> start with a do-nothing routine, good enough
-# --> or ignore for now, not that important.
 
 def main():
 
@@ -465,7 +480,6 @@ def main():
       print("Warning: only one --fullPageBox value can be used with the -gs option.",
             "Ignoring all but the first one.", file=sys.stderr)
       args.fullPageBox = [args.fullPageBox[0]]
-   # what if document has no cropbox?  will below fail for gs method or not??? TODO test
    elif args.gsBbox and not args.fullPageBox: args.fullPageBox = ["c"] # gs default
    elif not args.fullPageBox: args.fullPageBox = ["m", "c"] # usual default
 
@@ -514,7 +528,7 @@ def main():
    # rendering.  TODO could later maybe pass an alternate executable path as an
    # extra option.
    if not args.gsBbox and not args.gsRender:
-      foundPdftoppm = ex.initAndTestPdftoppmExecutable()
+      foundPdftoppm = ex.initAndTestPdftoppmExecutable(preferLocal=args.pdftoppmLocal)
       if not foundPdftoppm:
          args.gsRender = True
          gsRenderDefaultSet = True

@@ -112,6 +112,11 @@ def getBoundingBoxListRenderImage(inputDoc):
 
    boundingBoxList = []
 
+   # TODO get temp dir here and use progs to dump all pages in to it,
+   # then cycle through them.  Do inside a try...except catching
+   # KeyboardInterrupt and deleting the temp dir when that happens
+   # (or think of a better way to do that).
+
    for page in range(inputDoc.getNumPages()):
 
       # Get the current page.

@@ -95,7 +95,9 @@ Description:
      Crop doc.pdf so that all the pages are set to the same size and the
      cropping amount is uniform across all the pages (this gives a nice two-up
      appearance).  The default of retaining 10% of the existing margins is
-     used.
+     used.  Note carefully that '-u' only makes the amount to be cropped uniform
+     for each page; if the pages do not have the same size to begin with they
+     will not have the same size afterward unless the '-s' option is also used.
 
         pdfCropMargins -u -s doc.pdf
 
@@ -103,7 +105,11 @@ Description:
 
         pdfCropMargins -p 50 doc.pdf
 
-     Crop off an absolute 12 points from each margin in doc.pdf.
+     Crop off an absolute 12 points from each margin in doc.pdf.  Note that for
+     difficult documents, such scanned books with noise or other "features"
+     just inside the current margins, it can sometimes be useful to first crop
+     a small absolute amount and then run the program again on the output PDF
+     document.
 
         pdfCropMargins -a 12 doc.pdf
 
@@ -156,16 +162,17 @@ Description:
    Sometimes a PDF file is corrupted or non-standard to the point where the
    routines used by this program raise an error and exit.  In that case it can
    sometimes help to repair the PDF file before attempting to crop it.  If it
-   is readable by Ghostscript then sometimes the following command will repair
+   is readable by Ghostscript then the following command will often repair
    it sufficiently:
 ^^f  
   
         gs -o repaired.pdf -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress corrupted.pdf
 
 ^^f
-   In Windows the executable would be "gswin32c.exe" rather than "gs".  The
-   option '--gsFix' will automatically attempt to apply this fix (provided
-   Ghostscript is available).
+   In Windows the executable would be something like "gswin32c.exe" rather than
+   "gs".  The option '--gsFix' (or '-gsf') will automatically attempt to apply
+   this fix, provided Ghostscript is available.  This option is helpful often
+   enough that it may be worth using it regularly, just in case.
    
    All the command-line options to pdfCropMargins are described below.  The
    following definition is useful in precisely defining what several of the
@@ -185,13 +192,13 @@ under the permissive MIT license.""")
 
 cmdParser.add_argument("pdf_input_doc", metavar="PDF_FILE", help="""
 
-   The pathname of the PDF file to crop.  If no additional filename is given
-   for the output PDF file then the cropped output version of the PDF document
-   will be written to a file with the same filename except with the suffix
-   ".pdf" replaced by "_cropped.pdf", overwriting by default if the file
-   already exists.  (An input filename with an alternative file extension or
-   without a file extension will be handled similarly).  Use quotes around any
-   file or directory name which contains a space.^^n""")
+   The pathname of the PDF file to crop.  If no filename is given for the
+   cropped PDF output file via the '-o' flag then a default output filename
+   will be generated.  By default it is the same as the source filename except
+   that the suffix ".pdf" is replaced by "_cropped.pdf", overwriting by default
+   if the file already exists.  (An input filename with an alternative file
+   extension or without a file extension will be handled similarly).  Use
+   quotes around any file or directory name which contains a space.^^n""")
 
 cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME", 
       default=[], help="""
@@ -206,17 +213,18 @@ cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
 cmdParser.add_argument("-v", "--verbose", action="store_true", help="""
 
    Print more information about the program's actions and progress.  Without
-   this switch only error messages are printed to the screen.^^n""")
+   this switch only warning and error messages are printed to the
+   screen.^^n""")
 
 cmdParser.add_argument("-p", "--percentRetain", nargs=1, type=float, 
       metavar="PCT", default=[10.0], help="""
 
    Set the percent of margin space to retain in the image.  This is a
    percentage of the original margin space.  By default the percent value is
-   set to 10.  Setting the percent to 0 gives a tight bounding box.  Percent
-   values greater than 100 will increase the margin sizes from their original
-   sizes, and negative values will decrease the margins even more than a tight
-   bounding box.^^n""")
+   set to 10.  Setting the percentage to 0 gives a tight bounding box.  Percent
+   values greater than 100 increase the margin sizes from their original sizes,
+   and negative values decrease the margins even more than a tight bounding
+   box.^^n""")
 
 cmdParser.add_argument("-pppp", "-p4", "--percentRetain4", nargs=4, type=float,
       metavar="PCT", help="""
@@ -228,17 +236,18 @@ cmdParser.add_argument("-pppp", "-p4", "--percentRetain4", nargs=4, type=float,
 cmdParser.add_argument("-a", "--absoluteOffset", nargs=1, type=float, 
       metavar="BP", default=[0.0], help="""
 
-   Increase each margin size by an absolute floating point offset value, to be
-   added to each margin.  The units are big points, bp, which is the unit used
-   in PDF files.  There are 72bp in an inch.  A single bp is approximately
-   equal to a TeX point, pt (with 72.27pt in an inch).  Negative values are
-   allowed; positive numbers always increase the margin size and negative
-   numbers always decrease it.^^n""")
+   Decrease each margin size by an absolute floating point offset value, to be
+   subtracted from each margin's size.  The units are big points, bp, which is
+   the unit used in PDF files.  There are 72 bp in an inch.  A single bp is
+   approximately equal to a TeX point, pt (with 72.27pt in an inch).  Negative
+   values are allowed; positive numbers always decrease the margin size and
+   negative numbers always increase it.  Absolute offsets are always
+   applied after any percentage change operations.^^n""")
 
 cmdParser.add_argument("-aaaa", "-a4", "--absoluteOffset4", nargs=4, type=float,
       metavar = "BP", help="""
 
-   Increase the margin sizes individually with four absolute offset values.
+   Decrease the margin sizes individually with four absolute offset values.
    The four floating point arguments should be the left, bottom, right, and top
    offset values, respectively.  See the '--absoluteOffset' option for
    information on the units.^^n""")
@@ -338,12 +347,14 @@ cmdParser.add_argument("-ns", "--numSmooths", type=int, metavar="INT", help="""
 cmdParser.add_argument("-gs", "--gsBbox", action="store_true", help="""
 
    Use Ghostscript to find the bounding boxes for the pages.  The alternative
-   is to explicitly render the PDF to an image file and calculate bounding
-   boxes from that.  This method tends to be faster, but it does not work with
-   scanned images.  It also does not allow for choosing the threshold value.
-   Any resolution options are passed to the Ghostscript bbox device.  This
-   option requires that Ghostscript be available in the PATH as "gs".  When
-   this option is set the PIL image library for Python is not required.^^n""")
+   is to explicitly render the PDF pages to image files and calculate bounding
+   boxes from the images.  This method tends to be much faster, but it does not
+   work with scanned images.  It also does not allow for choosing the threshold
+   value, applying blurs, etc.  Any resolution options are passed to the
+   Ghostscript bbox device.  This option requires that Ghostscript be available
+   in the PATH as "gswin32c.exe" or "gswin64c.exe" on Windows, or as "gs" on
+   Linux.  When this option is set the PIL image library for Python is not
+   required.^^n""")
 
 cmdParser.add_argument("-gsr", "--gsRender", action="store_true", help="""
 
@@ -418,7 +429,7 @@ cmdParser.add_argument("-A", "--noundosave", action="store_true", help="""
    cropping command.  (The program does not currently check for this when doing
    a restore.)^^n""")
 
-cmdParser.add_argument("--gsFix", action="store_true", help="""
+cmdParser.add_argument("-gsf", "--gsFix", action="store_true", help="""
 
    Attempt to repair the input PDF file with Ghostscript before it is read in
    with pyPdf.  This requires that Ghostscript be available as "/usr/bin/gs".
@@ -520,9 +531,20 @@ cmdParser.add_argument("-i", "--showImages", action="store_true", help="""
    image files that are used to find the bounding boxes.  Useful for debugging
    and for choosing some of the other parameters (such as the threshold).^^n""")
 
-cmdParser.add_argument("-pl", "--pyPdfLocal", action="store_true", help="""
+cmdParser.add_argument("-pyl", "--pyPdfLocal", action="store_true", help="""
 
    Use a local copy of pyPdf rather than the system version.  By default the
    system version is used unless the import fails.  The local version may
    or may not be newer than the system version.^^n""")
+
+cmdParser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
+
+   Use a locally-packaged pdftoppm executable rather than the system version.
+   This option is only available on Windows machines; it is ignored otherwise.
+   By default the first pdftoppm executable found in the directories in the
+   PATH environment variable is used.  On Windows the program will revert to
+   this option if PDF image-rendering is required and no system pdftoppm or
+   Ghostscript executable can be found.  The locally-packaged pdftoppm
+   executable is a few years old, but for page-cropping it only needs to get
+   the margins right.^^n""")
 
