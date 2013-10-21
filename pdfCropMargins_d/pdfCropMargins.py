@@ -42,9 +42,6 @@ source directory for the text of the license.
 # 
 # Possible enhancements:
 #
-#    0) TODO enhance to handle KeyboardInterrupt more gracefully, since it will
-#    commonly be used to exit from the program.  Be sure temp files are deleted.
-#
 #    0) TODO enhance to check whether the gs and pdftoppm calls fail or not --
 #    or some other way to make sure that the input file is actually a PDF file!
 #    Otherwise, get crashes, like when run on html file.
@@ -53,6 +50,8 @@ source directory for the text of the license.
 #
 #    0) Note that when we use --gsFix the producer metadata is changed!  So
 #    the usual way of detecting whether this program cropped us doesn't work anymore!
+#    Tested: it does indeed change the Producer metadata.... maybe there's
+#    a way to turn that off, or get around it???
 #
 #    1) Name of a command to turn a page of PDF into an image file, taking two
 #    file arguments and a resolution.  That would help portability, especially
@@ -363,7 +362,7 @@ def setCroppedMetadata(inputDoc, outputDoc):
    global producerModifier
    alreadyCroppedByThisProgram = False
    oldProducerString = inputDoc.getDocumentInfo().producer
-   if oldProducerString.endswith(producerModifier):
+   if oldProducerString and oldProducerString.endswith(producerModifier):
       if args.verbose: 
          print("\nThe document was already cropped at least once by this program.")
       alreadyCroppedByThisProgram = True
@@ -465,7 +464,7 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop):
 
 
 
-def main():
+def main2():
 
    #
    # Parse and process the command-line arguments.
@@ -503,9 +502,9 @@ def main():
 
    inputDocFname = args.pdf_input_doc
    if args.verbose: 
-      print("The input document's filename is:\n   ", inputDocFname)
+      print("\nThe input document's filename is:\n   ", inputDocFname)
    if not os.path.exists(inputDocFname):
-      print("Error in pdfCropMargins: The specified input file\n   "
+      print("\nError in pdfCropMargins: The specified input file\n   "
             + inputDocFname + "\ndoes not exist.", file=sys.stderr)
       sys.exit(1)
    
@@ -571,17 +570,22 @@ def main():
             "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
 
    #
-   # Open in the input document in a PdfFileReader object.
+   # Open the input document in a PdfFileReader object.
    #
 
    if args.gsFix:
       if args.verbose:
          print("\nAttempting to fix the PDF input file before reading it...")
-      tempFileName = ex.fixPdfWithGhostscriptToTmpFile(inputDocFname)
-      inputDoc = PdfFileReader(open(tempFileName, "rb"))
-      os.remove(tempFileName)
+      fixedInputDocFname = ex.fixPdfWithGhostscriptToTmpFile(inputDocFname)
+      #import time   # debug just to see, doesn't hurt
+      #time.sleep(2) # debug just to see, doesn't hurt
+      # TODO do delete below later, after the write, or put in global temp dir
+      #os.remove(fixedInputDocFname) # debug, but this does cause problems, so use temp dir
    else:
-      inputDoc = PdfFileReader(open(inputDocFname, "rb"))
+      fixedInputDocFname = inputDocFname
+
+   fixedInputDocFileObject = open(fixedInputDocFname, "rb")
+   inputDoc = PdfFileReader(fixedInputDocFileObject)
    
    if args.verbose:
       print("\nThe document's metadata, if set:\n")
@@ -647,13 +651,36 @@ def main():
 
    fullPageBoxList = getFullPageBoxList(inputDoc)
 
+   # TODO we really need to re-render the pdf here to use any modified box
+   # selections which the getFullPageBoxList fun might have changed.  There are
+   # apparently problems with multiple PdfFileWriters with pages from the same
+   # reader.  One such bug reported fixed on the pyPdf web page, but seem to be
+   # more.  So maybe use one writer and change pages while they're inside it,
+   # too?  Does that work?  Or create another reader?  Or remove those extra
+   # options??  Note we'd just apply the crops to the pages from Reader and
+   # then already have the Writer, and assume they change (they must)... so
+   # no Writer return below (confusing anyway).
+   #
+   # Mod the code below if choose that way... change names, etc.
+   #
+   #tmpFullOutputDoc = PdfFileWriter() # declare a tmp output
+   #for page in [ inputDoc.getPage(i) for i in range(inputDoc.getNumPages()) ]:
+   #   tmpFullOutputDoc.addPage(page) # add current page to it
+   #tmpFullPdfFileName = ex.getTemporaryFilename(".pdf")
+   #tmpFullPdfFileObject = open(tmpFullPdfFileName, "wb")
+   #if args.verbose:
+   #   print("\nWriting the PDF to a temp file with any specified box modifications.")
+   #tmpFullOutputDoc.write(tmpFullPdfFileObject)
+   #tmpFullPdfFileObject.close()
+
+
    #
    # Calculate the boundingBoxList containing tight page bounds for each page.
    #
 
    if not args.restore:
-      boundingBoxList = getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
-                                                pageNumsToCrop, args, PdfFileWriter)
+      boundingBoxList = getBoundingBoxList(fixedInputDocFname, inputDoc,
+                            fullPageBoxList, pageNumsToCrop, args, PdfFileWriter)
 
    #
    # Calculate the cropList based on the fullpage boxes and the bounding boxes.
@@ -678,7 +705,18 @@ def main():
 
    outputDocStream = open(outputDocFname, "wb")
    outputDoc.write(outputDocStream)
+   # Do below to catch when it hangs... TODO still causes bugs somehow...
+   #completed = ex.functionCallWithTimeout(outputDoc.write, [outputDocStream], secs=0)
    outputDocStream.close()
+   completed = True
+   if not completed:
+      print("Sorry, the PDF writer is taking longer than the timeout time.  Exiting.",
+                                                                   file=sys.stderr)
+      sys.exit(1)
+
+   fixedInputDocFileObject.close() # We're finally finished with this inputDoc open file now.
+   # TODO delete the file but ONLY if we got a temp version above (or use a temp dir
+   # and just delete it all).
 
    # 
    # Now handle the options which apply after the file is written.
@@ -751,6 +789,20 @@ def main():
    if args.verbose: print("\nFinished this run of pdfCropMargins.\n")
    
 
+#
+# This main is just to catch errors and do cleanup on the main2.
+#
+
+def main():
+   try: main2()
+   except KeyboardInterrupt as e:
+      print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n", file=sys.stderr)
+      ex.removeProgramTempDirectory()
+   ex.removeProgramTempDirectory()
+   return
+
+         
 if __name__ == "__main__":
    main()
+
 

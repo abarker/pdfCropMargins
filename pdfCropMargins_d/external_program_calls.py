@@ -53,6 +53,25 @@ oldPdftoppmVersion = False # Program will check version and set this if true.
 #
 
 
+def getTemporaryFilename(extension="", useProgramTempDir=True):
+   """Return the string for a temporary file with the given extension or suffix.  For a
+   file extension like .pdf the dot should also be in the passed string.  Caller is
+   expected to open and close it as necessary and call os.remove on it after
+   finishing with it.  (Note the entire programTempDir will be deleted on cleanup.)"""
+   dirName = None # uses the regular system temp dir if None
+   if useProgramTempDir: dirName = programTempDirectory
+   tmpOutputFile = tempfile.NamedTemporaryFile(delete=False,
+         prefix=tempFilePrefix, suffix=extension, dir=dirName, mode="wb")
+   tmpOutputFile.close() # this deletes the file, too, but it is empty in this case
+   return tmpOutputFile.name
+
+
+def getTemporaryDirectory():
+   """Create a temporary directory and return the name.  The caller is responsible
+   for deleting it (e.g., with shutil.rmtree) after using it."""
+   return tempfile.mkdtemp(prefix=tempDirPrefix)
+
+
 def getDirectoryLocation():
    """Find the location of the directory where the module that runs this
    function is located.  An empty directory_locator.py file is assumed to be in
@@ -83,6 +102,19 @@ def getParentDirectory(path):
 # Set some additional variables that this module exposes to other modules.
 programCodeDirectory = getDirectoryLocation()
 projectRootDirectory = getParentDirectory(programCodeDirectory)
+
+# The global directory that all temporary files are written to.  Other modules
+# all use the definition from this module.  This makes it easy to clean up all
+# the possibly large files, even on KeyboardInterrupt, by just deleting this
+# directory.
+programTempDirectory = getTemporaryDirectory()
+
+
+def removeProgramTempDirectory():
+   """Remove the global temp directory and all its contents."""
+   if os.path.exists(programTempDirectory):
+      shutil.rmtree(programTempDirectory)
+   return
 
 
 def which(program):
@@ -118,6 +150,7 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
 
    # Note ghostscript bounding box output writes to stderr!!!  So we need it.
 
+   ignoreCalledProcessErrors = True
    usePopen=True # Needs to be True to set ignoreCalledProcessErrors True
    if usePopen:
       p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -181,22 +214,41 @@ def runExternalSubprocessInBackground(commandList):
    return p # ignore returned process when not needed
 
 
-def getTemporaryFilename(extension=""):
-   """Return the string for a temporary file with the given extension or suffix.  For a
-   file extension like .pdf the dot should also be in the passed string.  Caller is
-   expected to open and close it as necessary and call os.remove on it after
-   finishing with it."""
-   tmpOutputFile = tempfile.NamedTemporaryFile(delete=False,
-         prefix=tempFilePrefix, suffix=extension, mode="wb")
-   tmpOutputFile.close() # this deletes the file, too, but it is empty in this case
-   return tmpOutputFile.name
+#
+# Run a program in Python with a time limit.
+#
 
+import time
+from multiprocessing import Process, Queue
 
-def getTemporaryDirectory():
-   """Create a temporary directory and return the name.  The caller is responsible
-   for deleting it (e.g., with shutil.rmtree) after using it."""
-   return tempfile.mkdtemp(prefix=tempDirPrefix)
+def my_function(name): # debug test
+    print("name is", name)
+    time.sleep(7)
+    print("afterward name is", name)
+    return
 
+def functionCallWithTimeout(funName, funArgs, secs=5):
+   """Run a Python function with a timeout.  No interprocess communication or
+   return values are handled.  Setting secs to 0 gives infinite timeout."""
+   p = Process(target=funName, args=tuple(funArgs))
+   p.start()
+   currSecs = 0
+   noTimeout = False
+   if secs == 0: noTimeout = True
+   else: timeout = secs
+   while p.is_alive() and not noTimeout:
+      if currSecs > timeout:
+         print("Process time has exceeded timeout, terminating it.")
+         p.terminate()
+         return False
+      time.sleep(0.1)
+      currSecs += 0.1
+   p.join() # Blocks if process hasn't terminated.
+   return True
+
+# debug test
+#funcallWithTimeout(my_function, ["bob"])
+#sys.exit(0)
 
 #
 # Functions to test whether an external program is actually there and runs.
@@ -321,9 +373,7 @@ def fixPdfWithGhostscriptToTmpFile(inputDocFname):
    deleting the file."""
 
    if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
-   fileObject = tempfile.NamedTemporaryFile(prefix="pdfCropMarginsTmp_", delete=False)
-   fileObject.close()
-   tempFileName = fileObject.name
+   tempFileName = getTemporaryFilename(extension=".pdf") # TODO could use better name, inside dir or ignore
    gsRunCommand = [gsExecutable, "-dSAFER", "-o", tempFileName,
          "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", inputDocFname]
    gsOutput = getExternalSubprocessOutput(gsRunCommand, 
@@ -362,79 +412,45 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
    return boundingBoxList
 
 
-#
-# Functions that render PDF files to image files.
-#
-
-
-def renderPdfFileToImageFile_pdftoppm_ppm(pdfFileName, imageFileName,
+def renderPdfFileToImageFiles_pdftoppm_ppm(pdfFileName, rootOutputFilePath,
                                                   resX=150, resY=150, extraArgs=[]):
-   """Call the pdftoppm program to convert the file pdfFileName to a .ppm image
-   file in imageFileName.  Caller is responsible for the suffix on the
-   filename.  Currently set up to do single-page PDF files (as written by
-   PdfFileWriter for each page)."""
-
-   # Note that with pdftoppm if you want to include the imageFileName in the
-   # command itself you need to use the root of the filename, i.e., without the
-   # extension, and also use -singlefile to avoid a number in the filename.
-   # Alternately, you can redirect to stdout.
-   #
-   # Old pdftoppm programs only take infile and outroot arguments, don't
-   # redirect, and only have -r for a single resolution.  The suffix
-   # "-0001.ppm" added to the root differs across versions in how many zeros
-   # are added.  A temporary directory is used in this case.
+   """Use the pdftoppm program to render a PDF file to .png images.  The
+   rootOutputFilePath is prepended to all the output files, which have numbers
+   and extensions added.  Return the command output."""
 
    if not pdftoppmExecutable: 
       initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=True)
 
-   useStdout = False # Redirect pdftoppm to stdout; command-line name used otherwise.
-
    if oldPdftoppmVersion:
-      # We don't have -singlefile and only -r, not -rx and -ry.  Output to temp dir.
-      tempdir = getTemporaryDirectory()
-      tempfileRoot = os.path.join(tempdir, "outputImage")
-      command = ["pdftoppm"] + extraArgs + ["-r", resX, pdfFileName, tempfileRoot]
-      getExternalSubprocessOutput(command, ignoreCalledProcessErrors=False)
-      outfile = glob.glob(tempfileRoot + "*")
-      if not outfile:
-         print("\nError in pdfCropMargins: Failed call to old version of pdftoppm."
-               "\nExiting.")
-         sys.exit(1)
-      shutil.move(outfile[0], imageFileName)
-      #shutil.rmtree(tempdir)
-      os.rmdir(tempdir) # this is a little safer that rmtree, and dir is empty
-
-   elif useStdout:
-      command = ["pdftoppm"] + extraArgs + ["-rx", resX, "-ry", resY, 
-                                                        "-singlefile", pdfFileName]
-      callExternalSubprocess(command, stdoutFilename=imageFileName)
-
+      # We only have -r, not -rx and -ry.
+      command = ["pdftoppm"] + extraArgs + ["-r", resX, pdfFileName, rootOutputFilePath]
    else:
-      imageFileNameRoot, imageFileNameExtension = os.path.splitext(imageFileName)
       command = ["pdftoppm"] + extraArgs + ["-rx", resX, "-ry", resY, 
-                                     "-singlefile", pdfFileName, imageFileNameRoot]
-      getExternalSubprocessOutput(command, printOutput=False, indentString="   ")
+                                                        pdfFileName, rootOutputFilePath]
+   commOutput = getExternalSubprocessOutput(command)
+   return commOutput
 
-   return
 
-
-def renderPdfFileToImageFile_pdftoppm_pgm(pdfFileName, imageFileName, 
+def renderPdfFileToImageFiles_pdftoppm_pgm(pdfFileName, rootOutputFilePath, 
                                                                 resX=150, resY=150):
    """Same as renderPdfFileToImageFile_pdftoppm_ppm but with -gray option for pgm."""
-   renderPdfFileToImageFile_pdftoppm_ppm(pdfFileName, imageFileName, 
+   commOutput = renderPdfFileToImageFiles_pdftoppm_ppm(pdfFileName, rootOutputFilePath, 
                                                               resX, resY, ["-gray"])
-   return
+   return commOutput
 
 
-def renderPdfFileToImageFile_Ghostscript_png(pdfFileName, imageFileName, resX=150, resY=150):
-   """Use Ghostscript to render a PDF file to a .png image."""
+def renderPdfFileToImageFiles_Ghostscript_png(pdfFileName, rootOutputFilePath,
+                                                                resX=150, resY=150):
+   """Use Ghostscript to render a PDF file to .png images.  The rootOutputFilePath
+   is prepended to all the output files, which have numbers and extensions added.
+   Return the command output."""
    # For gs commands see http://ghostscript.com/doc/8.54/Use.htm
    if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
-   command = [gsExecutable, "-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=pnggray",
-              "-r"+resX+"x"+resY, "-sOutputFile="+imageFileName, pdfFileName]
-   # For extra-verbose output printOutput can be set True.
-   getExternalSubprocessOutput(command, printOutput=False, indentString="  ")
-   return 
+   command = [gsExecutable, "-dBATCH", "-dNOPAUSE", "-sDEVICE=pnggray",
+              "-r"+resX+"x"+resY, "-sOutputFile="+rootOutputFilePath+"-%06d.png",
+                                                                      pdfFileName]
+   commOutput = getExternalSubprocessOutput(command)
+   return commOutput
 
 
 #

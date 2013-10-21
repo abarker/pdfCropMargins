@@ -8,7 +8,7 @@ module are called when required.
 """
 
 from __future__ import print_function, division
-import sys, os
+import sys, os, glob, shutil
 import external_program_calls as ex
 
 #
@@ -65,7 +65,7 @@ def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
                "\npackage or use the Ghostscript flag '--gsBbox' (or '-gs') if you"
                "\nhave Ghostscript installed.", file=sys.stderr)
          sys.exit(1)
-      bboxList = getBoundingBoxListRenderImage(inputDoc)
+      bboxList = getBoundingBoxListRenderImage(inputDocFname, inputDoc)
    
    # Now we need to use the full page boxes to translate for non-zero origin.
    bboxList = correctBoundingBoxListForNonzeroOrigin(bboxList, fullPageBoxList)
@@ -90,7 +90,7 @@ def correctBoundingBoxListForNonzeroOrigin(bboxList, fullBoxList):
    return correctedBoxList
 
 
-def getBoundingBoxListRenderImage(inputDoc):
+def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
    """Calculate the bounding box list by directly rendering each page of the PDF as
    an image file.  Note that the MediaBox and CropBox have already been set
    to the chosen page size before the rendering."""
@@ -105,47 +105,31 @@ def getBoundingBoxListRenderImage(inputDoc):
    if not args.numSmooths: args.numSmooths = 0
    if not args.numBlurs: args.numBlurs = 0
 
+   tempDir = ex.programTempDirectory # use the program default; don't delete dir!
+
+   tempImageFileRoot = os.path.join(tempDir, ex.tempFilePrefix + "PageImage")
+   if args.verbose: 
+      print("\nRendering the PDF to images using the " + programToUse + " program,"
+            "\nthis may take a while...")
+   tmpImageFileName = renderPdfFileToImageFiles(
+                                      pdfFileName, tempImageFileRoot, programToUse)
+
+   # Currently assume that the sorted output will always put them in correct order.
+   outfiles = sorted(glob.glob(tempImageFileRoot + "*"))
+
    if args.verbose:
-      print("\nRendering PDF to images with the", programToUse,
-            "program, using\nthe threshold " + str(args.threshold) +
-            ".  Finding the bounding box for page:\n", end="")
+      print("\nAnalyzing the page images with PIL to find bounding boxes,"
+            "\nusing the threshold " + str(args.threshold) + "."
+            "  Finding the bounding box for page:\n")
 
    boundingBoxList = []
 
-   # TODO get temp dir here and use progs to dump all pages in to it,
-   # then cycle through them.  Do inside a try...except catching
-   # KeyboardInterrupt and deleting the temp dir when that happens
-   # (or think of a better way to do that).
-
-   for page in range(inputDoc.getNumPages()):
-
-      # Get the current page.
-      currPage = inputDoc.getPage(page)
-
-      # Set to MediaBox if not needed for this page; don't waste time rendering, etc.
-      # Note this really isn't correct, but it won't be used and needs to be set to
-      # some values.  (Should subtract off origin if really used, so correction fixes.)
-      if page not in pageNumsToCrop:
-         boundingBox = None
-         boundingBox = [ float(currPage.mediaBox[i]) for i in range(4) ]
-         boundingBoxList.append(boundingBox)
-         continue
-   
-      # Create a temporary writer (to write the page as a PDF file).
-      tmpOutputDoc = PdfFileWriter() # declare a tmp output
-      tmpOutputDoc.addPage(currPage) # add current page to it
-
-      # Make an output file and write the PDF to it.
-      tmpPdfFileName = ex.getTemporaryFilename(".pdf")
-      tmpPdfFileObject = open(tmpPdfFileName, "wb")
-      tmpOutputDoc.write(tmpPdfFileObject)
-      tmpPdfFileObject.close()
-      
-      # Render the PDF file to a temporary image file. 
-      tmpImageFileName = renderPdfFileToImageFile(tmpPdfFileName, programToUse)
+   for pageNum, tmpImageFileName in enumerate(outfiles):
+      currPage = inputDoc.getPage(pageNum)
 
       # Open the image in PIL.
-      im = Image.open(tmpImageFileName)
+      tmpImageFile = open(tmpImageFileName) # debug added explicit open and close below
+      im = Image.open(tmpImageFile)
 
       # Apply any blur or smooth operations specified by the user.
       for i in range(args.numBlurs):
@@ -156,7 +140,7 @@ def getBoundingBoxListRenderImage(inputDoc):
       # Convert the image to black and white, according to a threshold.
       # Make a negative image, because that works with the PIL getbbox routine.
 
-      if args.verbose: print(page+1, end=" ") # page num numbering from 1
+      if args.verbose: print(pageNum+1, end=" ") # page num numbering from 1
       # Note: the point method calls the function on each pixel, replacing it.
       #im = im.point(lambda p: p > threshold and 255) # create a positive image
       im = im.point(lambda p: p < threshold and 255)  # create a negative image
@@ -167,42 +151,42 @@ def getBoundingBoxListRenderImage(inputDoc):
       boundingBox = calculateBoundingBoxFromImage(im, currPage)
       boundingBoxList.append(boundingBox)
 
-      # Clean up the temporary files for this iteration of the loop.
-      os.remove(tmpPdfFileName)
+      # Clean up the image files after they are no longer needed.
+      im = None # Not really needed, but may help garbage collector, big object.
+      tmpImageFile.close()
       os.remove(tmpImageFileName)
 
    if args.verbose: print()
    return boundingBoxList
 
-def renderPdfFileToImageFile(pdfFileName, programToUse):
-   """Render the PDF file at pdfFileName to an image file in a temporary
-   filename, at the given resolution.  The program programToUse, currently
-   either the string "pdftoppm" or the string "Ghostscript", will be called
-   externally.  The image type that the PDF is converted into must to be
-   directly openable by PIL.  This function returns the temporary file's name.
-   The calling program is responsible for deleting the file."""
+
+def renderPdfFileToImageFiles(pdfFileName, outputFilenameRoot, programToUse):
+   """Render all the pages of the PDF file at pdfFileName to image files with
+   path and filename prefix given by outputFilenameRoot.  Any directories must
+   have already been created, and the calling program is responsible for
+   deleting any directories or image files.  The program programToUse,
+   currently either the string "pdftoppm" or the string "Ghostscript", will be
+   called externally.  The image type that the PDF is converted into must to be
+   directly openable by PIL."""
 
    resX = str(args.resX)
    resY = str(args.resY)
    if programToUse == "Ghostscript":
-      fileExtension = ".png"
-      imageFileName = ex.getTemporaryFilename(fileExtension)
-      ex.renderPdfFileToImageFile_Ghostscript_png(pdfFileName, imageFileName, resX, resY)
+      ex.renderPdfFileToImageFiles_Ghostscript_png(
+                                    pdfFileName, outputFilenameRoot, resX, resY)
    elif programToUse == "pdftoppm":
       use_gray = False # this is currently hardcoded, but can be changed to use pgm
       if use_gray:
-         fileExtension = ".pgm" # use graymap, not full color map
-         imageFileName = ex.getTemporaryFilename(fileExtension)
-         ex.renderPdfFileToImageFile_pdftoppm_pgm(pdfFileName, imageFileName, resX, resY)
+         ex.renderPdfFileToImageFiles_pdftoppm_pgm(
+                                    pdfFileName, outputFilenameRoot, resX, resY)
       else:
-         fileExtension = ".ppm"
-         imageFileName = ex.getTemporaryFilename(fileExtension)
-         ex.renderPdfFileToImageFile_pdftoppm_ppm(pdfFileName, imageFileName, resX, resY)
+         ex.renderPdfFileToImageFiles_pdftoppm_ppm(
+                                    pdfFileName, outputFilenameRoot, resX, resY)
    else:
       print("Error in renderPdfFileToImageFile: Unrecognized external program.",
             file=sys.stderr)
       sys.exit(1)
-   return imageFileName
+   return
 
 
 def calculateBoundingBoxFromImage(im, currPage):
@@ -211,8 +195,8 @@ def calculateBoundingBoxFromImage(im, currPage):
    xMax, yMax = im.size
    boundingBox = im.getbbox() # note this uses ltrb convention
    if not boundingBox:
-      print("\nWarning: could not calculate a bounding box for this page."
-            "\nAn empty page is assumed.", file=sys.stderr)
+      #print("\nWarning: could not calculate a bounding box for this page."
+      #      "\nAn empty page is assumed.", file=sys.stderr)
       boundingBox = (xMax/2, yMax/2, xMax/2, yMax/2)
 
    boundingBox = list(boundingBox) # make temporarily mutable
