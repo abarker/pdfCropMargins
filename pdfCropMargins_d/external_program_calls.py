@@ -83,7 +83,16 @@ def getDirectoryLocation():
    return getRealAbsoluteExpandedDirname(directory_locator.__file__)
 
 
+def getRealAbsoluteExpandedPath(path):
+   """Get the absolute path from a possibly relative path."""
+   return os.path.realpath( # remove any symbolic links
+          os.path.abspath( # may not be needed with realpath, to be safe
+          os.path.expanduser( # may not be needed, but to be safe
+             path)))
+
+
 def getRealAbsoluteExpandedDirname(path):
+   """Get the absolute directory name from a possibly relative path."""
    return os.path.realpath( # remove any symbolic links
           os.path.abspath( # may not be needed with realpath, to be safe
           os.path.expanduser( # may not be needed, but to be safe
@@ -114,6 +123,13 @@ def removeProgramTempDirectory():
    """Remove the global temp directory and all its contents."""
    if os.path.exists(programTempDirectory):
       shutil.rmtree(programTempDirectory)
+   return
+
+
+def cleanupAndExit(exitCode):
+   """Exit the program, after cleaning up the temporary directory."""
+   removeProgramTempDirectory()
+   sys.exit(exitCode)
    return
 
 
@@ -150,7 +166,6 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
 
    # Note ghostscript bounding box output writes to stderr!!!  So we need it.
 
-   ignoreCalledProcessErrors = True
    usePopen=True # Needs to be True to set ignoreCalledProcessErrors True
    if usePopen:
       p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -248,7 +263,7 @@ def functionCallWithTimeout(funName, funArgs, secs=5):
 
 # debug test
 #funcallWithTimeout(my_function, ["bob"])
-#sys.exit(0)
+#cleanupAndExit(0)
 
 #
 # Functions to test whether an external program is actually there and runs.
@@ -269,7 +284,7 @@ def initAndTestGsExecutable(exitOnFail=False):
    if exitOnFail and not retval:
       print("Error in pdfCropMargins, detected in external_program_calls.py:"
             "\nNo Ghostscript executable was found.", file=sys.stderr)
-      sys.exit(1)
+      cleanupAndExit(1)
 
    return retval
 
@@ -322,7 +337,7 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
    if exitOnFail and not retval:
       print("Error in pdfCropMargins, detected in external_program_calls.py:"
             "\nNo pdftoppm executable was found.", file=sys.stderr)
-      sys.exit(1)
+      cleanupAndExit(1)
 
    if retval: # Found a version of pdftoppm, see if it is ancient or more recent.
       cmd = [pdftoppmExecutable, "--help"]
@@ -373,11 +388,17 @@ def fixPdfWithGhostscriptToTmpFile(inputDocFname):
    deleting the file."""
 
    if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
-   tempFileName = getTemporaryFilename(extension=".pdf") # TODO could use better name, inside dir or ignore
+   tempFileName = getTemporaryFilename(extension=".pdf")
    gsRunCommand = [gsExecutable, "-dSAFER", "-o", tempFileName,
          "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", inputDocFname]
-   gsOutput = getExternalSubprocessOutput(gsRunCommand, 
-                                                printOutput=True, indentString="   ")
+   try:
+      gsOutput = getExternalSubprocessOutput(gsRunCommand, 
+                                         printOutput=True, indentString="   ")
+   except subprocess.CalledProcessError:
+      print("\nError in pdfCropMargins:  Ghostscript returned a non-zero exit"
+            "\nstatus when attempting to fix the file:\n   ", inputDocFname,
+            file=sys.stdout)
+      cleanupAndExit(1)
    return tempFileName
 
 
@@ -394,21 +415,31 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
    if "b" in fullPageBox: boxArg = "-dUseBleedBox" # may not be defined in gs
    gsRunCommand = [gsExecutable, "-dSAFER", "-dNOPAUSE", "-dBATCH", "-sDEVICE=bbox", 
          boxArg, "-r"+res, inputDocFname]
-   # Set printOutput to True for debugging or extra verbose with Ghostscript's output.
+   # Set printOutput to True for debugging or extra-verbose with Ghostscript's output.
    # Note Ghostscript writes the data to stderr, so the command below must capture it.
    gsOutput = getExternalSubprocessOutput(gsRunCommand,
                                           printOutput=False, indentString="   ")
    boundingBoxList = []
    for line in gsOutput:
-      line = line.split()
-      if line[0] == r"%%HiResBoundingBox:":
-         del line[0]
-         # Note gs reports values in order left, bottom, right, top, or lower left
-         # point followed by top right point.
-         boundingBoxList.append( [ float(line[0]),
-                                   float(line[1]),
-                                   float(line[2]),
-                                   float(line[3])] )
+      splitLine = line.split()
+      if splitLine and splitLine[0] == r"%%HiResBoundingBox:":
+         del splitLine[0]
+         if len(splitLine) != 4:
+            print("\nWarning from pdfCropMargins: Ignoring this unparsable line"
+                  "\nwhen finding the bounding boxes with Ghostscript:",
+                  line, "\n", file=sys.stderr)
+            continue
+         # Note gs reports values in order left, bottom, right, top,
+         # i.e., lower left point followed by top right point.
+         boundingBoxList.append( [ float(splitLine[0]),
+                                   float(splitLine[1]),
+                                   float(splitLine[2]),
+                                   float(splitLine[3])] )
+
+   if not boundingBoxList:
+      print("\nError in pdfCropMargins: Ghostscript failed to find any bounding"
+            "\nboxes in the document.", file=sys.stdout)
+      cleanupAndExit(1)
    return boundingBoxList
 
 

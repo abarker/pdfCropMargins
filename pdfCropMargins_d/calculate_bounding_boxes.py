@@ -64,7 +64,7 @@ def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
                "\nfork like Pillow) was found.  Either install that Python"
                "\npackage or use the Ghostscript flag '--gsBbox' (or '-gs') if you"
                "\nhave Ghostscript installed.", file=sys.stderr)
-         sys.exit(1)
+         ex.cleanupAndExit(1)
       bboxList = getBoundingBoxListRenderImage(inputDocFname, inputDoc)
    
    # Now we need to use the full page boxes to translate for non-zero origin.
@@ -185,7 +185,7 @@ def renderPdfFileToImageFiles(pdfFileName, outputFilenameRoot, programToUse):
    else:
       print("Error in renderPdfFileToImageFile: Unrecognized external program.",
             file=sys.stderr)
-      sys.exit(1)
+      ex.cleanupAndExit(1)
    return
 
 

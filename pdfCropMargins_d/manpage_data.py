@@ -17,7 +17,9 @@ Somewhere in the program, the function should be called as:
     args = parseCommandLineArguments(cmdParser)
 
 Note that the default text formatting in the description is raw, i.e., it is
-unformatted unless the formatting directive ^^f is specified.
+unformatted unless the formatting directive ^^f is specified.  So literal
+'%' characters can be used.  The option descriptions are not raw, however,
+and so '%' characters must be escaped as '%%'.
 
 General argparse reminders and warnings:
   1) Using nargs=1 puts the single value inside a list, default doesn't.
@@ -101,17 +103,27 @@ Description:
 
         pdfCropMargins -u -s doc.pdf
 
-     Crop each page of doc.pdf individually, keeping 50% of the existing margins.
+     Crop each page of doc.pdf individually (i.e., not uniformly), keeping 50%
+     of the existing margins.
 
         pdfCropMargins -p 50 doc.pdf
 
-     Crop off an absolute 12 points from each margin in doc.pdf.  Note that for
-     difficult documents, such scanned books with noise or other "features"
-     just inside the current margins, it can sometimes be useful to first crop
-     a small absolute amount and then run the program again on the output PDF
-     document.
+     Crop doc.pdf uniformly, keeping 50% of the left margin, 20% of the bottom
+     margin, 40% of the right margin, and 10% of the top margin.
 
-        pdfCropMargins -a 12 doc.pdf
+        pdfCropMargins -u -p4 50 20 40 10 doc.pdf
+
+     Crop doc.pdf retaining 20% of the margins, and then reduce the right page
+     margins only by an absolute 12 points.
+     
+        pdfCropMargins -p 20 -a4 0 0 12 0 doc.pdf
+     
+     Pre-crop the document by 5 points on each side before computing the
+     bounding boxes.  Then crop retaining 50% of the computed margins.  This
+     can be useful for difficult documents such as scanned books with page-edge
+     noise or other "features" inside the current margins.
+
+        pdfCropMargins -ap 5 -p 50 doc.pdf
 
      Crop doc.pdf, renaming the cropped output file to doc.pdf and backing
      up the original file as backup_doc.pdf.
@@ -169,10 +181,21 @@ Description:
         gs -o repaired.pdf -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress corrupted.pdf
 
 ^^f
+   This command can also be used to convert some PostScript (.ps) files to PDF.
    In Windows the executable would be something like "gswin32c.exe" rather than
    "gs".  The option '--gsFix' (or '-gsf') will automatically attempt to apply
    this fix, provided Ghostscript is available.  See the description of that
    option for more information.
+
+   The pdfCropMargins program handles rotated pages (such as pages in landscape
+   mode versus portrait mode) as follows.  All rotated pages are un-rotated as
+   soon as they are read in.  All the cropping is then calculated.  Finally, as
+   the crops are applied to the pages, the rotation is re-applied.  This may
+   give unexpected results in documents which mix pages at different rotations,
+   especially with the '--uniform' or '--sameSize' option.  All options which
+   take four arguments, one for each margin, are shifted so the left, bottom,
+   right, and top margins correspond to the screen appearance (regardless of
+   any internal rotation).
    
    All the command-line options to pdfCropMargins are described below.  The
    following definition is useful in precisely defining what several of the
@@ -192,13 +215,14 @@ under the permissive MIT license.""")
 
 cmdParser.add_argument("pdf_input_doc", metavar="PDF_FILE", help="""
 
-   The pathname of the PDF file to crop.  If no filename is given for the
+   The pathname of the PDF file to crop.  Use quotes around any file or
+   directory name which contains a space.  If no filename is given for the
    cropped PDF output file via the '-o' flag then a default output filename
    will be generated.  By default it is the same as the source filename except
    that the suffix ".pdf" is replaced by "_cropped.pdf", overwriting by default
-   if the file already exists.  (An input filename with an alternative file
-   extension or without a file extension will be handled similarly).  Use
-   quotes around any file or directory name which contains a space.^^n""")
+   if the file already exists.  If the input file has no extension or has an
+   extension other than '.pdf' or '.PDF' then the suffix '.pdf' will be
+   appended to the existing (possibly-null) extension.^^n""")
 
 cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME", 
       default=[], help="""
@@ -206,9 +230,10 @@ cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
    An optional argument specifying the pathname of a file that the cropped
    output document should be written to.  By default any existing file with the
    same name will be silently overwritten.  If this option is not given the
-   program will generate an output filename from the input filename (by default
-   "_cropped" is appended to the input filename, keeping the same file
-   extension).^^n""")
+   program will generate an output filename from the input filename.  (By
+   default "_cropped" is appended to the input filename before the file
+   extension.  If the extension is not '.pdf' or '.PDF' then '.pdf' is appended
+   to the extension).^^n""")
 
 cmdParser.add_argument("-v", "--verbose", action="store_true", help="""
 
@@ -226,7 +251,7 @@ cmdParser.add_argument("-p", "--percentRetain", nargs=1, type=float,
    and negative values decrease the margins even more than a tight bounding
    box.^^n""")
 
-cmdParser.add_argument("-pppp", "-p4", "--percentRetain4", nargs=4, type=float,
+cmdParser.add_argument("-p4", "-pppp", "--percentRetain4", nargs=4, type=float,
       metavar="PCT", help="""
 
    Set the percent of margin space to retain in the image, individually for the
@@ -244,13 +269,30 @@ cmdParser.add_argument("-a", "--absoluteOffset", nargs=1, type=float,
    negative numbers always increase it.  Absolute offsets are always
    applied after any percentage change operations.^^n""")
 
-cmdParser.add_argument("-aaaa", "-a4", "--absoluteOffset4", nargs=4, type=float,
+cmdParser.add_argument("-a4", "-aaaa", "--absoluteOffset4", nargs=4, type=float,
       metavar = "BP", help="""
 
    Decrease the margin sizes individually with four absolute offset values.
    The four floating point arguments should be the left, bottom, right, and top
    offset values, respectively.  See the '--absoluteOffset' option for
    information on the units.^^n""")
+
+cmdParser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float, 
+      metavar="BP", default=[0.0], help="""
+
+   This option is like '--absoluteOffset' except that the changes are applied
+   before any bounding box calculations (or any other operations).  The
+   argument is the same, in units of bp.  This is essentially equivalent to
+   first cropping the document retaining 100%% of the margins but applying an
+   absolute offset and then doing any other operations on that pre-cropped
+   file.^^n""")
+
+cmdParser.add_argument("-ap4", "--absolutePreCrop4", nargs=4, type=float,
+      metavar = "BP", help="""
+
+   This is the same as '--absolutePreCrop' except that four separate arguments
+   can be given.  The four floating point arguments should be the left, bottom,
+   right, and top absolute pre-crop values, respectively.^^n""")
 
 cmdParser.add_argument("-u", "--uniform", action="store_true", help="""
 
@@ -349,12 +391,12 @@ cmdParser.add_argument("-gs", "--gsBbox", action="store_true", help="""
    Use Ghostscript to find the bounding boxes for the pages.  The alternative
    is to explicitly render the PDF pages to image files and calculate bounding
    boxes from the images.  This method tends to be much faster, but it does not
-   work with scanned images.  It also does not allow for choosing the threshold
-   value, applying blurs, etc.  Any resolution options are passed to the
-   Ghostscript bbox device.  This option requires that Ghostscript be available
-   in the PATH as "gswin32c.exe" or "gswin64c.exe" on Windows, or as "gs" on
-   Linux.  When this option is set the PIL image library for Python is not
-   required.^^n""")
+   work with scanned PDF documents.  It also does not allow for choosing the
+   threshold value, applying blurs, etc.  Any resolution options are passed to
+   the Ghostscript bbox device.  This option requires that Ghostscript be
+   available in the PATH as "gswin32c.exe" or "gswin64c.exe" on Windows, or as
+   "gs" on Linux.  When this option is set the PIL image library for Python is
+   not required.^^n""")
 
 cmdParser.add_argument("-gsr", "--gsRender", action="store_true", help="""
 
@@ -437,19 +479,21 @@ cmdParser.add_argument("-gsf", "--gsFix", action="store_true", help="""
 
    Attempt to repair the input PDF file with Ghostscript before it is read-in
    with pyPdf.  This requires that Ghostscript be available.  (See the general
-   description text above for the actual command that is run.)  The repaired
-   PDF is written to a temporary file; the original PDF file is not modified.
-   The original filename is treated as usual as far as automatic
-   name-generation, the '--modify-original' option, and so forth.  This option
-   is often helpful if the program hangs or raises an error due to a corrupted
-   PDF file.  Note that when re-cropping a file already cropped by
-   pdfCropMargins this option should not be necessary, and if it is used to
-   re-crop (at least with current versions of Ghostscript) it will reset the
-   Producer metadata which the pdfCropMargins program uses to tell if the file
-   was already cropped by the program (the '--restore' option will the restore
-   to the previous cropping, not the original cropping).  So this option is not
-   recommended as something to use by default unless you do not need to restore
-   back to the original, and you encounter many corrupted PDF files.^^n""")
+   description text above for the actual command that is run.)  This can also
+   be used to automatically convert some PostScript files (.ps) to PDF for
+   cropping.  The repaired PDF is written to a temporary file; the original PDF
+   file is not modified.  The original filename is treated as usual as far as
+   automatic name-generation, the '--modify-original' option, and so forth.
+   This option is often helpful if the program hangs or raises an error due to
+   a corrupted PDF file.  Note that when re-cropping a file already cropped by
+   pdfCropMargins this option is probably not be necessary, and if it is used
+   in a re-crop (at least with current versions of Ghostscript) it will reset
+   the Producer metadata which the pdfCropMargins program uses to tell if the
+   file was already cropped by the program (the '--restore' option will then
+   restore to the previous cropping, not the original cropping).  So this
+   option is not recommended as something to use by default unless you
+   encounter many corrupted PDF files and do not need to restore back to the
+   original margins.^^n""")
 
 cmdParser.add_argument("-nc", "--noclobber", action="store_true", help="""
 
@@ -538,6 +582,14 @@ cmdParser.add_argument("-ss", "--stringSeparator", default="_", metavar="STR",
    This option can be used to set the separator string which will be used when
    appending or prependeding string values to automatically generate filenames.
    The default value is "_".^^n""")
+
+cmdParser.add_argument("-pw", "--password", metavar="PASSWD",
+      help="""
+
+   Specify a password to be used to decrypt an encrypted PDF file.  Note that
+   decrypting with an empty password is always tried, so this option is only
+   needed for non-empty passwords.  The resulting cropped file will not be
+   encrypted, so use caution if important data is involved.^^n""")
 
 cmdParser.add_argument("-i", "--showImages", action="store_true", help="""
 
