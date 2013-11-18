@@ -25,28 +25,26 @@ RedirectHelp comment for the changes to the standard argparse formatting.
 
 """
 
-# TODO: consider modifying to allow an optional config file to set any of the
-# command-line arguments.  Then just read that and modify args before returning
-# it (but ignoring comment lines, etc.)  Note that argparse does not depopulate
-# sys.argv; even if it did, you could just save the old one, set to file vals,
-# get a parser for that, then reset and get the command-line ones.  Then you
-# would combine the args lists, with precedence to command-line.  But defaulted
-# values would have to be done specially.
+# Consider implementing an optional config file to set any of the command-line
+# arguments.  Note that argparse does not depopulate the sys.argv list.
 #
-# Better: see the top answer here:
+# See the top answer here:
 # http://stackoverflow.com/questions/6133517/parse-config-file-environment-and-command-line-arguments-to-get-a-single-coll
-
 
 import argparse, textwrap, re
 import sys, os
 
 progName = os.path.basename(sys.argv[0])
 # Note when a directory is run as a command name it can be something like "."
-# which looks nicer expanded.  Argparse currently uses the unexpanded.
+# which looks nicer expanded.  Argparse currently uses the unexpanded form.
 absProgName = os.path.basename(os.path.abspath(sys.argv[0]))
+# Improve the usage message when run from a file with a different name (such
+# as __main__.py).
+if not absProgName.startswith("pdfCropMargins"): absProgName += " (pdfCropMargins)"
 
 # These strings are directly replaced in the argparse help and usage output stream.
-# The string on the right of the tuple replaces the string on the left.
+# The string on the right of the tuple replaces the string on the left.  The
+# string directly after "Usage" is currently not changed.
 helpStringReplacementPairs = (
    ("usage: ", "^^nUsage: "),
    ("positional arguments:", "Positional arguments:^^n"),

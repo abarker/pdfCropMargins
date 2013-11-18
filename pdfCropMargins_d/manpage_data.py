@@ -192,10 +192,10 @@ Description:
    soon as they are read in.  All the cropping is then calculated.  Finally, as
    the crops are applied to the pages, the rotation is re-applied.  This may
    give unexpected results in documents which mix pages at different rotations,
-   especially with the '--uniform' or '--sameSize' option.  All options which
-   take four arguments, one for each margin, are shifted so the left, bottom,
-   right, and top margins correspond to the screen appearance (regardless of
-   any internal rotation).
+   especially with the '--uniform' or '--samePageSize' options.  The arguments
+   of all the options which take four arguments, one for each margin, are
+   shifted so the left, bottom, right, and top margins correspond to the screen
+   appearance (regardless of any internal rotation).
    
    All the command-line options to pdfCropMargins are described below.  The
    following definition is useful in precisely defining what several of the
@@ -203,8 +203,8 @@ Description:
    points, which are applied to each original page to get the final cropped
    page.  There is a delta value for each margin, on each page.  In the usual
    case where all the margin sizes decrease, all the deltas are positive.  A
-   delta value can, however, be negative when percentRetain>100 or when a
-   negative absolute offset is used.  When a delta value is negative the
+   delta value can, however, be negative (when percentRetain > 100 or when a
+   negative absolute offset is used).  When a delta value is negative the
    corresponding margin size will increase.
 ^^f
    """,
@@ -341,12 +341,13 @@ cmdParser.add_argument("-s", "--samePageSize", action="store_true", help="""
    Set all the page sizes to be equal.  This option only has an effect when the
    page sizes are different.  The pages sizes are set to the size of the union
    of all the page regions, i.e., to the smallest bounding box which contains
-   all the pages.  This operation is always done before any others.  The
-   cropping is then done as usual, but note that any margin percentages (such
-   as for '--percentRetain') are now relative to this new, possibly larger,
-   page size.  The resulting pages are still cropped independently by default,
-   and will not necessarily all have the same size unless '--uniform' is also
-   selected to force the cropping amounts to be the same for each page.^^n""")
+   all the pages.  This operation is always done before any others (except
+   '--absolutePreCrop').  The cropping is then done as usual, but note that any
+   margin percentages (such as for '--percentRetain') are now relative to this
+   new, possibly larger, page size.  The resulting pages are still cropped
+   independently by default, and will not necessarily all have the same size
+   unless '--uniform' is also selected to force the cropping amounts to be the
+   same for each page.^^n""")
 
 cmdParser.add_argument("-e", "--evenodd", action="store_true", help="""
 

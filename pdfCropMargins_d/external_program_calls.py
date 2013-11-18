@@ -47,7 +47,6 @@ oldPdftoppmVersion = False # Program will check version and set this if true.
 # To find the correct path on Windows from the registry, consider this
 # http://stackoverflow.com/questions/18283574/programatically-locate-gswin32-exe
 
-
 #
 # General utility functions for paths and finding the directory path.
 #
@@ -118,6 +117,11 @@ projectRootDirectory = getParentDirectory(programCodeDirectory)
 # directory.
 programTempDirectory = getTemporaryDirectory()
 
+# Set up an environment variable so Ghostscript will use programTempDirectory
+# for its temporary files (to be sure they get deleted).
+gsEnvironment = os.environ.copy()
+gsEnvironment["TMPDIR"] = programTempDirectory
+
 
 def removeProgramTempDirectory():
    """Remove the global temp directory and all its contents."""
@@ -158,7 +162,7 @@ def which(program):
 
 
 def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
-                                splitLines=True, ignoreCalledProcessErrors=False):
+                        splitLines=True, ignoreCalledProcessErrors=False, env=None):
    """Run the command and arguments in the commandList.  Will search the system
    PATH.  Returns the output as a list of lines.   If printOutput is true the
    output is echoed to stdout, indented (or otherwise prefixed) by indentString.
@@ -168,15 +172,17 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
 
    usePopen=True # Needs to be True to set ignoreCalledProcessErrors True
    if usePopen:
-      p = subprocess.Popen(commandList, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+      p = subprocess.Popen(commandList, stdout=subprocess.PIPE,
+                                                stderr=subprocess.STDOUT, env=env)
       output, errout = p.communicate()
       returncode = p.poll()
       if not ignoreCalledProcessErrors and returncode != 0: 
-         raise subprocess.CalledProcessError(returncode, commandList, output=output)
+         raise subprocess.CalledProcessError(returncode, commandList, output=output,
+                                                                           env=env)
    else:
       # Note this does not work correctly if shell=True.
       output = subprocess.check_output(commandList, stderr=subprocess.STDOUT,
-            shell=False)
+            shell=False, env=env)
 
    output = output.decode("utf-8")
    if splitLines or printOutput: splitOutput = output.splitlines()
@@ -190,7 +196,8 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
 
 
 def callExternalSubprocess(commandList, 
-                  stdinFilename=None, stdoutFilename=None, stderrFilename=None):
+                  stdinFilename=None, stdoutFilename=None, stderrFilename=None,
+                  env=None):
    """Run the command and arguments in the commandList.  Will search the system
    PATH for commands to execute, but no shell is started.  Redirects any selected
    outputs to the given filename.  Waits for command completion."""
@@ -202,7 +209,8 @@ def callExternalSubprocess(commandList,
    if stderrFilename: stderr = open(stderrFilename, "w")
    else: stderr = None
 
-   subprocess.check_call(commandList, stdin=stdin, stdout=stdout, stderr=stderr)
+   subprocess.check_call(commandList, stdin=stdin, stdout=stdout, stderr=stderr,
+                                                                           env=env)
 
    if stdinFilename: stdin.close()
    if stdoutFilename: stdout.close()
@@ -217,15 +225,15 @@ def callExternalSubprocess(commandList,
    return
 
 
-def runExternalSubprocessInBackground(commandList):
+def runExternalSubprocessInBackground(commandList, env=None):
    """Runs the command and arguments in the list as a background process."""
    if systemOs == "Windows":
       DETACHED_PROCESS = 0x00000008
       p = subprocess.Popen(commandList, shell=False, stdin=None, stdout=None,
-            stderr=None, close_fds=True, creationflags=DETACHED_PROCESS)
+            stderr=None, close_fds=True, creationflags=DETACHED_PROCESS, env=env)
    else:
       p = subprocess.Popen(commandList, shell=False, stdin=None, stdout=None,
-            stderr=None, close_fds=True)
+            stderr=None, close_fds=True, env=env)
    return p # ignore returned process when not needed
 
 
@@ -393,7 +401,7 @@ def fixPdfWithGhostscriptToTmpFile(inputDocFname):
          "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", inputDocFname]
    try:
       gsOutput = getExternalSubprocessOutput(gsRunCommand, 
-                                         printOutput=True, indentString="   ")
+                          printOutput=True, indentString="   ", env=gsEnvironment)
    except subprocess.CalledProcessError:
       print("\nError in pdfCropMargins:  Ghostscript returned a non-zero exit"
             "\nstatus when attempting to fix the file:\n   ", inputDocFname,
@@ -408,7 +416,7 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
 
    if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
    res = str(resX) + "x" + str(resY)
-   boxArg = "-dUseMediaBox"
+   boxArg = "-dUseMediaBox" # should be default, but set anyway
    if "c" in fullPageBox: boxArg = "-dUseCropBox"
    if "t" in fullPageBox: boxArg = "-dUseTrimBox"
    if "a" in fullPageBox: boxArg = "-dUseArtBox"
@@ -418,7 +426,7 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
    # Set printOutput to True for debugging or extra-verbose with Ghostscript's output.
    # Note Ghostscript writes the data to stderr, so the command below must capture it.
    gsOutput = getExternalSubprocessOutput(gsRunCommand,
-                                          printOutput=False, indentString="   ")
+                        printOutput=False, indentString="   ", env=gsEnvironment)
    boundingBoxList = []
    for line in gsOutput:
       splitLine = line.split()
@@ -480,7 +488,7 @@ def renderPdfFileToImageFiles_Ghostscript_png(pdfFileName, rootOutputFilePath,
    command = [gsExecutable, "-dBATCH", "-dNOPAUSE", "-sDEVICE=pnggray",
               "-r"+resX+"x"+resY, "-sOutputFile="+rootOutputFilePath+"-%06d.png",
                                                                       pdfFileName]
-   commOutput = getExternalSubprocessOutput(command)
+   commOutput = getExternalSubprocessOutput(command, env=gsEnvironment)
    return commOutput
 
 

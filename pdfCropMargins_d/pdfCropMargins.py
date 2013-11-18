@@ -42,12 +42,20 @@ source directory for the text of the license.
 # 
 # Possible enhancements:
 #
-#    0) Ghostscript uses environment variable TMPDIR to find the temporary
-#    directory.... can we set that to the program temp dir?
-#
 #    0) Consider the method discussed here, which uses Ghostscript but doesn't
 #    just modify the CropBox, etc.
 #    http://stackoverflow.com/questions/10417151/pdf-remove-white-margins
+#    Also how to translate with Ghostscript:
+#    http://stackoverflow.com/questions/12484353/how-to-crop-a-section-of-a-pdf-file-to-png-using-ghostscript/12485020#12485020
+#
+#    0) These pages discuss how to use pyPdf with translations and rotations.
+#    For page objects you can create blank pages, merge transformed/rotated
+#    pages, etc.  There is also the addTransformation() method, which applies a
+#    transformation matrix to a page, and there is a matrix multiply routine in
+#    utils.  There is also a method for scaling pages.  Could add various
+#    features using these capabilities.
+#    http://stackoverflow.com/questions/6041244/how-to-merge-two-landscape-pdf-pages-using-pypdf
+#    http://sourcecodebrowser.com/python-pypdf/1.13/classpy_pdf_1_1pdf_1_1_page_object.html
 #
 #    1) Name of a command to turn a page of PDF into an image file, taking two
 #    file arguments and a resolution.  That would help portability, especially
@@ -590,9 +598,10 @@ def main2():
    inputDocFname = args.pdf_input_doc
    if args.verbose: 
       print("\nThe input document's filename is:\n   ", inputDocFname)
-   if not os.path.exists(inputDocFname):
+   if not os.path.isfile(inputDocFname):
       print("\nError in pdfCropMargins: The specified input file\n   "
-            + inputDocFname + "\ndoes not exist.", file=sys.stderr)
+            + inputDocFname + "\nis not a file or does not exist.",
+            file=sys.stderr)
       ex.cleanupAndExit(1)
    
    if not args.outfile:
@@ -943,24 +952,25 @@ def main2():
       origArchivedName = generateDefaultFilename(inputDocFname, croppedFile=False)
       
       # Remove any existing file with the name origArchivedName unless a
-      # relevant noclobber option is set.
+      # relevant noclobber option is set or it isn't a file.
       if os.path.exists(origArchivedName):
-         if not args.noclobberOriginal and not args.noclobber:
+         if os.path.isfile(origArchivedName) \
+                   and not args.noclobberOriginal and not args.noclobber:
             if args.verbose: print("\nRemoving the file\n   ", origArchivedName)
-            os.remove(origArchivedName)
+            os.remove(origArchivedName) # TODO may want try-except on this; permissions
          else:
-            print("\nA noclobber option is set; refusing to overwrite file:\n   ",
+            print("\nA noclobber option is set or not a file; refusing to overwrite:\n   ",
                   origArchivedName, 
                   "\nFiles are as if option '--modifyOriginal' were not set.",
                   file=sys.stderr)
       
-      # Move (noclob) the original file to the name for uncropped files.
+      # Move (noclobber) the original file to the name for uncropped files.
       if not os.path.exists(origArchivedName):
          if args.verbose: print("\nDoing a file move:\n   ", inputDocFname,
                                              "\nmoving to\n   ", origArchivedName)
          shutil.move(inputDocFname, origArchivedName)
 
-      # Move (noclob) the cropped file to the original file's name.
+      # Move (noclobber) the cropped file to the original file's name.
       if not os.path.exists(inputDocFname):
          if args.verbose: print("\nDoing a file move:\n   ", outputDocFname,
                                              "\nmoving to\n   ", inputDocFname)
