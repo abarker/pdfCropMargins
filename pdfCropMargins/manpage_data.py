@@ -33,9 +33,9 @@ General argparse reminders and warnings:
 
 import argparse
 cmdParser = argparse.ArgumentParser(
-                 formatter_class=argparse.RawDescriptionHelpFormatter,
-                 description=
-"""
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=
+    """
 Description:
 
 ^^f
@@ -44,11 +44,11 @@ Description:
    the document is printed or displayed on a screen -- because the font appears
    larger.  Margin-cropping is also sometimes useful when a PDF file is
    included in a document as a graphic.
-   
+
    By default 10% of the existing margins will be retained; the rest will be
    eliminated.  There are many options which can be set, however, including the
    percentage of existing margins to retain.
-   
+
    Here is a simple example of cropping a file named document.pdf and writing
    the cropped output-document to a file named croppedDocument.pdf:
 
@@ -63,11 +63,11 @@ Description:
    be automatically generated from the name of the source file (see below).
 
    The pdfCropMargins program works by changing the page sizes which are stored
-   in the PDF file (and are interpreted by programs like Acrobat Reader).  
+   in the PDF file (and are interpreted by programs like Acrobat Reader).
    Both the CropBox and the MediaBox are set to the newly-computed cropped
    size.  After this the view of the document in most programs will be the new,
    cropped view.
-   
+
    When cropping a file not produced by the pdfCropMargins program the default
    is also to save the intersection of the MediaBox and any existing CropBox in
    the ArtBox.  This saves the "usual" view of the original document in
@@ -78,7 +78,7 @@ Description:
    though, that this assumes the ArtBox is unused (it is very rarely used).
    Most users should find these default settings convenient, but several
    options are available to change the default behavior.
-  
+
    These defaults are designed to reduce the number of copies of a document
    which need to be saved.  This is especially useful if annotations,
    highlighting, etc., are to be added to the document.  Suppose a document is
@@ -87,7 +87,7 @@ Description:
    re-cropped versions are saved.  It is nevertheless still possible to recover
    at least an approximate version of the original document's margin-formatting
    from these cropped versions by using the '--restore' option.
-   
+
    Below are several examples using more of the command-line options, each
    applied to an input file called doc.pdf.  The output filename is unspecified
    in these examples, so the program will automatically generate the filename
@@ -115,9 +115,9 @@ Description:
 
      Crop doc.pdf retaining 20% of the margins, and then reduce the right page
      margins only by an absolute 12 points.
-     
+
         pdfCropMargins -p 20 -a4 0 0 12 0 doc.pdf
-     
+
      Pre-crop the document by 5 points on each side before computing the
      bounding boxes.  Then crop retaining 50% of the computed margins.  This
      can be useful for difficult documents such as scanned books with page-edge
@@ -170,14 +170,14 @@ Description:
    use options such as "Fit to Printable Area".  It may also be necessary to
    fine-tune the size of the retained margins if the edges of the text are
    being cut off.
-   
+
    Sometimes a PDF file is corrupted or non-standard to the point where the
    routines used by this program raise an error and exit.  In that case it can
    sometimes help to repair the PDF file before attempting to crop it.  If it
    is readable by Ghostscript then the following command will often repair
    it sufficiently:
-^^f  
-  
+^^f
+
         gs -o repaired.pdf -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress corrupted.pdf
 
 ^^f
@@ -196,7 +196,7 @@ Description:
    of all the options which take four arguments, one for each margin, are
    shifted so the left, bottom, right, and top margins correspond to the screen
    appearance (regardless of any internal rotation).
-   
+
    All the command-line options to pdfCropMargins are described below.  The
    following definition is useful in precisely defining what several of the
    options do.  Let the delta values be the absolute reduction lengths, in
@@ -209,8 +209,8 @@ Description:
 ^^f
    """,
 
-   epilog=
-"""The pdfCropMargins program is Copyright (c) 2013 by Allen Barker.  Released
+    epilog=
+    """The pdfCropMargins program is Copyright (c) 2013 by Allen Barker.  Released
 under the permissive MIT license.""")
 
 cmdParser.add_argument("pdf_input_doc", metavar="PDF_FILE", help="""
@@ -224,8 +224,8 @@ cmdParser.add_argument("pdf_input_doc", metavar="PDF_FILE", help="""
    extension other than '.pdf' or '.PDF' then the suffix '.pdf' will be
    appended to the existing (possibly-null) extension.^^n""")
 
-cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME", 
-      default=[], help="""
+cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
+                       default=[], help="""
 
    An optional argument specifying the pathname of a file that the cropped
    output document should be written to.  By default any existing file with the
@@ -241,8 +241,8 @@ cmdParser.add_argument("-v", "--verbose", action="store_true", help="""
    this switch only warning and error messages are printed to the
    screen.^^n""")
 
-cmdParser.add_argument("-p", "--percentRetain", nargs=1, type=float, 
-      metavar="PCT", default=[10.0], help="""
+cmdParser.add_argument("-p", "--percentRetain", nargs=1, type=float,
+                       metavar="PCT", default=[10.0], help="""
 
    Set the percent of margin space to retain in the image.  This is a
    percentage of the original margin space.  By default the percent value is
@@ -252,14 +252,14 @@ cmdParser.add_argument("-p", "--percentRetain", nargs=1, type=float,
    box.^^n""")
 
 cmdParser.add_argument("-p4", "-pppp", "--percentRetain4", nargs=4, type=float,
-      metavar="PCT", help="""
+                       metavar="PCT", help="""
 
    Set the percent of margin space to retain in the image, individually for the
    left, bottom, right, and top margins, respectively.  The four arguments
    should be percent values.^^n""")
 
-cmdParser.add_argument("-a", "--absoluteOffset", nargs=1, type=float, 
-      metavar="BP", default=[0.0], help="""
+cmdParser.add_argument("-a", "--absoluteOffset", nargs=1, type=float,
+                       metavar="BP", default=[0.0], help="""
 
    Decrease each margin size by an absolute floating point offset value, to be
    subtracted from each margin's size.  The units are big points, bp, which is
@@ -270,15 +270,15 @@ cmdParser.add_argument("-a", "--absoluteOffset", nargs=1, type=float,
    applied after any percentage change operations.^^n""")
 
 cmdParser.add_argument("-a4", "-aaaa", "--absoluteOffset4", nargs=4, type=float,
-      metavar = "BP", help="""
+                       metavar="BP", help="""
 
    Decrease the margin sizes individually with four absolute offset values.
    The four floating point arguments should be the left, bottom, right, and top
    offset values, respectively.  See the '--absoluteOffset' option for
    information on the units.^^n""")
 
-cmdParser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float, 
-      metavar="BP", default=[0.0], help="""
+cmdParser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float,
+                       metavar="BP", default=[0.0], help="""
 
    This option is like '--absoluteOffset' except that the changes are applied
    before any bounding box calculations (or any other operations).  The
@@ -288,7 +288,7 @@ cmdParser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float,
    file.^^n""")
 
 cmdParser.add_argument("-ap4", "--absolutePreCrop4", nargs=4, type=float,
-      metavar = "BP", help="""
+                       metavar="BP", help="""
 
    This is the same as '--absolutePreCrop' except that four separate arguments
    can be given.  The four floating point arguments should be the left, bottom,
@@ -309,7 +309,7 @@ cmdParser.add_argument("-u", "--uniform", action="store_true", help="""
    option to force all pages to be the same size after cropping.^^n""")
 
 cmdParser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
-      default=[], metavar="INT", help="""
+                       default=[], metavar="INT", help="""
 
    Choosing this option implies the '--uniform' option, but the smallest delta
    value over all the pages is no longer chosen.  Instead, for each margin the
@@ -323,8 +323,8 @@ cmdParser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
    either increases the cropping amount or leaves it unchanged.  Some
    trial-and-error may be needed to choose the best number.^^n""")
 
-cmdParser.add_argument("-mp", "--uniformOrderPercent", nargs=1, type=float, 
-      default=[], metavar="INT", help="""
+cmdParser.add_argument("-mp", "--uniformOrderPercent", nargs=1, type=float,
+                       default=[], metavar="INT", help="""
 
    This option is the same as '--uniformOrderStat' except that the order number
    n is automatically set to a given percentage of the number of pages which
@@ -407,21 +407,21 @@ cmdParser.add_argument("-gsr", "--gsRender", action="store_true", help="""
    rendering is done.^^n""")
 
 cmdParser.add_argument("-x", "--resX", type=int, default=150,
-      metavar="DPI", help="""
+                       metavar="DPI", help="""
 
    The x-resolution in dots per inch to use when the image is rendered to find
    the bounding boxes.  The default is 150.  Higher values produce more precise
    bounding boxes.^^n""")
 
 cmdParser.add_argument("-y", "--resY", type=int, default=150,
-      metavar="DPI", help="""
+                       metavar="DPI", help="""
 
    The y-resolution in dots per inch to use when the image is rendered to find
    the bounding boxes.  The default is 150.  Higher values produce more precise
    bounding boxes.^^n""")
 
-cmdParser.add_argument("-b", "--boxesToSet", choices=["m","c","t","a","b"], 
-      metavar="[m|c|t|a|b]", action="append", default=[], help="""
+cmdParser.add_argument("-b", "--boxesToSet", choices=["m", "c", "t", "a", "b"],
+                       metavar="[m|c|t|a|b]", action="append", default=[], help="""
 
    By default the pdfCropMargins program sets both the MediaBox and the CropBox
    for each page of the cropped PDF document to the new, cropped page size.
@@ -432,8 +432,8 @@ cmdParser.add_argument("-b", "--boxesToSet", choices=["m","c","t","a","b"],
    overrides the default and can be repeated multiple times to set several box
    types.^^n""")
 
-cmdParser.add_argument("-f", "--fullPageBox", choices=["m","c","t","a","b"], 
-      metavar="[m|c|t|a|b]", action="append", default=[], help="""
+cmdParser.add_argument("-f", "--fullPageBox", choices=["m", "c", "t", "a", "b"],
+                       metavar="[m|c|t|a|b]", action="append", default=[], help="""
 
    By default the program first (before any cropping is calculated) sets the
    MediaBox and CropBox of each page in (a copy of) the document to its
@@ -533,7 +533,7 @@ cmdParser.add_argument("-mo", "--modifyOriginal", action="store_true", help="""
    avoid this.^^n""")
 
 cmdParser.add_argument("-q", "--queryModifyOriginal", action="store_true",
-      help="""
+                       help="""
 
    This option selects the '--modifyOriginal' option, but queries the user
    about whether to actually do the final move operation.  This works well with
@@ -542,8 +542,8 @@ cmdParser.add_argument("-q", "--queryModifyOriginal", action="store_true",
    files are not swapped (and are just as if the '--modifyOriginal' option had
    not been set).^^n""")
 
-cmdParser.add_argument("-nco", "--noclobberOriginal", action="store_true", 
-      help="""
+cmdParser.add_argument("-nco", "--noclobberOriginal", action="store_true",
+                       help="""
 
    If the '--modifyOriginal' option is selected, do not ever overwrite an
    existing file as the backup copy for the original file.  This essentially
@@ -563,14 +563,14 @@ cmdParser.add_argument("-pf", "--usePrefix", action="store_true", help="""
    (instead of to the default filename "document_cropped.pdf").^^n""")
 
 cmdParser.add_argument("-sc", "--stringCropped", default="cropped",
-      metavar="STR", help="""
+                       metavar="STR", help="""
 
    This option can be used to set the string which will be appended (or
    prepended) to the document filename when automatically generating the output
    filename for a cropped file.  The default value is "cropped".^^n""")
 
 cmdParser.add_argument("-su", "--stringUncropped", default="uncropped",
-      metavar="STR", help="""
+                       metavar="STR", help="""
 
    This option can be used to set the string which will be appended (or
    prepended) to the document filename when automatically generating the output
@@ -578,14 +578,14 @@ cmdParser.add_argument("-su", "--stringUncropped", default="uncropped",
    "uncropped".^^n""")
 
 cmdParser.add_argument("-ss", "--stringSeparator", default="_", metavar="STR",
-      help="""
+                       help="""
 
    This option can be used to set the separator string which will be used when
    appending or prependeding string values to automatically generate filenames.
    The default value is "_".^^n""")
 
 cmdParser.add_argument("-pw", "--password", metavar="PASSWD",
-      help="""
+                       help="""
 
    Specify a password to be used to decrypt an encrypted PDF file.  Note that
    decrypting with an empty password is always tried, so this option is only

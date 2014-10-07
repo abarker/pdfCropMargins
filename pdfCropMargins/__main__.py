@@ -10,5 +10,4 @@ but it doesn't hurt.
 from pdfCropMargins import main
 
 if __name__ == "__main__":
-   main()
-
+    main()

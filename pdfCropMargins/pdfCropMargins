@@ -9,5 +9,5 @@ be executed simply by calling pdfCropMargins, without the .py extension.
 from pdfCropMargins import main
 
 if __name__ == "__main__":
-   main()
+    main()
 
