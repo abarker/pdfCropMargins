@@ -558,6 +558,8 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop, alreadyCroppedByThisProgra
 
 
 def main2():
+    """This function does the real work.  It is called by main in pdfCropMargins.py,
+    which just handles catching errors."""
 
     ##
     ## Parse and process the command-line arguments.
@@ -995,52 +997,4 @@ def main2():
     if args.verbose: print("\nFinished this run of pdfCropMargins.\n")
 
     return
-
-
-##
-## This main is just to catch errors and clean up after main2, which does the real work.
-##
-
-
-def main():
-    """Run main2, catching any exceptions and cleaning up the temp directories."""
-    def cleanupIgnoringKeyboardInterrupt():
-        """Some people like to hit multiple ^C chars; ignore them and call again."""
-        try:
-            ex.cleanupAndExit(exitCode)
-        except KeyboardInterrupt: # Some people hit multiple ^C chars, kills cleanup.
-            cleanupIgnoringKeyboardInterrupt()
-        except SystemExit:
-            pass
-
-    exitCode = 0
-    try:
-        ex.initExternalProgramsModule() # creates the temp dir
-        main2()
-    except KeyboardInterrupt:
-        print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
-              file=sys.stderr)
-    except SystemExit:
-        print()
-    except:
-        # Echo back the unexpected error so the user can see it.
-        print("Unexpected error: ", sys.exc_info()[0], file=sys.stderr)
-        print("Error message   : ", sys.exc_info()[1], file=sys.stderr)
-        print()
-        import traceback
-        traceback.print_tb(sys.exc_info()[2])
-        exitCode = 1
-        #raise # Re-raise the error.
-    finally:
-        cleanupIgnoringKeyboardInterrupt()
-    return
-
-
-##
-## Run as a script.
-##
-
-
-if __name__ == "__main__":
-    main()
 

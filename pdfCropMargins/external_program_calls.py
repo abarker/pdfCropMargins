@@ -2,10 +2,7 @@
 
 This module contains all the function calls to external programs (Ghostscript
 and pdftoppm).  All the system-specific information is also localized here.
-Note that you MUST call initExternalProgramsModule() before using this module,
-since it creates a temp directory and sets some variables.  The condition is
-not currently checked for, but will raise an exception when the temp directory
-is None.
+Note for cleanup that this module creates a temp dir at time of initialization.
 
 """
 
@@ -127,24 +124,12 @@ projectRootDirectory = getParentDirectory(programCodeDirectory)
 # all use the definition from this module.  This makes it easy to clean up all
 # the possibly large files, even on KeyboardInterrupt, by just deleting this
 # directory.
-programTempDirectory = None
+programTempDirectory = getTemporaryDirectory()
 
 # Set up an environment variable so Ghostscript will use programTempDirectory
 # for its temporary files (to be sure they get deleted).
 gsEnvironment = os.environ.copy()
-
-
-def initExternalProgramsModule():
-    """Initialize this module.  Currently just creates the temporary directory,
-    sets the module-level global programTempDirectory, and sets a value in
-    gsEnvironment.  This code could be run on initialization, but the explicit
-    initialization call allows the creation of the temp directory to be deferred
-    and run inside the main try-except block.  This helps ensure that any temp
-    directory is cleaned up if exceptions are caught."""
-    global programTempDirectory
-    programTempDirectory = getTemporaryDirectory()
-    gsEnvironment["TMPDIR"] = programTempDirectory
-    return
+gsEnvironment["TMPDIR"] = programTempDirectory
 
 
 def removeProgramTempDirectory():
