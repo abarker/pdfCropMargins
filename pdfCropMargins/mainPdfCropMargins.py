@@ -133,9 +133,9 @@ else:
         from pyPdf.utils import PdfReadError
     except ImportError:
         print("\nWarning from pdfCropMargins: No system pyPdf Python package was"
-              "\nfound.  Reverting to the local version packaged with this program."
-              "\nTo silence this warning, use the '--pyPdfLocal' (or '-pyl') option"
-              "\non the command line.\n", file=sys.stderr)
+              "\nfound.  Reverting to an older, local version packaged with this"
+              "\nprogram.  To silence this warning, use the '--pyPdfLocal'"
+              "\n(or '-pyl') option on the command line.\n", file=sys.stderr)
         importLocalPyPdf()
 
 ##
@@ -348,7 +348,9 @@ def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCro
     # Handle the '--evenodd' option if it was selected.
     if args.evenodd:
         evenPageNumsToCrop = {pNum for pNum in pageNumsToCrop if pNum % 2 == 0}
+        evenAngleList = [angleList[i] for i in range(len(angleList)) if i % 2 != 0]
         oddPageNumsToCrop = {pNum for pNum in pageNumsToCrop if pNum % 2 != 0}
+        oddAngleList = [angleList[i] for i in range(len(angleList)) if i % 2 == 0]
 
         if args.uniform: uniformSetWithEvenOdd = True
         else: uniformSetWithEvenOdd = False
@@ -358,9 +360,9 @@ def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCro
         args.evenodd = False # avoid infinite recursion
         args.uniform = True  # --evenodd implies uniform, just on each separate group
         evenCropList = calculateCropList(
-            fullPageBoxList, boundingBoxList, evenPageNumsToCrop)
+                       fullPageBoxList, boundingBoxList, evenAngleList, evenPageNumsToCrop)
         oddCropList = calculateCropList(
-            fullPageBoxList, boundingBoxList, oddPageNumsToCrop)
+                       fullPageBoxList, boundingBoxList, oddAngleList, oddPageNumsToCrop)
 
         # Recombine the even and odd pages
         combineEvenOdd = []
@@ -445,8 +447,8 @@ def setCroppedMetadata(inputDoc, outputDoc, inputMetadataInfo):
 
     # Setting metadata with pyPdf requires low-level pyPdf operations, see
     # http://stackoverflow.com/questions/2574676/change-metadata-of-pdf-file-with-pypdf
-    if not inputMetadataInfo:
-        class inputMetadataInfo:
+    if not inputMetadataInfo: # In case it's null, just set values to empty strings.
+        class inputMetadataInfo(object):
             pass
         inputMetadataInfo.author = ""
         inputMetadataInfo.creator = ""
@@ -469,17 +471,17 @@ def setCroppedMetadata(inputDoc, outputDoc, inputMetadataInfo):
     # Note that all None metadata attributes are currently set to the empty string
     # when passing along the metadata information.
     def st(item):
-        if item == None: return ""
+        if item is None: return ""
         else: return item
 
     outputInfoDict.update({
-                          NameObject("/Author"): createStringObject(st(inputMetadataInfo.author)),
-                          NameObject("/Creator"): createStringObject(st(inputMetadataInfo.creator)),
-                          NameObject("/Producer"): createStringObject(st(inputMetadataInfo.producer)
-                                                                      + producerModifier),
-                          NameObject("/Subject"): createStringObject(st(inputMetadataInfo.subject)),
-                          NameObject("/Title"): createStringObject(st(inputMetadataInfo.title))
-                          })
+          NameObject("/Author"): createStringObject(st(inputMetadataInfo.author)),
+          NameObject("/Creator"): createStringObject(st(inputMetadataInfo.creator)),
+          NameObject("/Producer"): createStringObject(st(inputMetadataInfo.producer)
+                                                                 + producerModifier),
+          NameObject("/Subject"): createStringObject(st(inputMetadataInfo.subject)),
+          NameObject("/Title"): createStringObject(st(inputMetadataInfo.title))
+          })
 
     return alreadyCroppedByThisProgram
 
@@ -557,16 +559,17 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop, alreadyCroppedByThisProgra
 ##############################################################################
 
 
-def main2():
-    """This function does the real work.  It is called by main in pdfCropMargins.py,
-    which just handles catching errors."""
+# Parse the command-line arguments and set the variable args.
+args = parseCommandLineArguments(cmdParser)
+
+
+def mainCrop():
+    """This function does the real work.  It is called by main() in
+    pdfCropMargins.py, which just handles catching exceptions and cleaning up."""
 
     ##
-    ## Parse and process the command-line arguments.
+    ## Process some of the command-line arguments.
     ##
-
-    global args
-    args = parseCommandLineArguments(cmdParser)
 
     if args.verbose: print("\nProcessing the PDF with pdfCropMargins...")
 
@@ -970,8 +973,8 @@ def main2():
                           # TODO may want try-except on this; permissions
             else:
                 print(
-                    "\nA noclobber option is set or not a file; refusing to overwrite:\n   ",
-                    origArchivedName,
+                    "\nA noclobber option is set or not a file; refusing to"
+                    " overwrite:\n   ", origArchivedName,
                     "\nFiles are as if option '--modifyOriginal' were not set.",
                     file=sys.stderr)
 

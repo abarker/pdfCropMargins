@@ -174,14 +174,14 @@ def which(program):
 def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
                       splitLines=True, ignoreCalledProcessErrors=False, env=None):
     """Run the command and arguments in the commandList.  Will search the system
-    PATH.  Returns the output as a list of lines.   If printOutput is true the
+    PATH.  Returns the output as a list of lines.   If printOutput is True the
     output is echoed to stdout, indented (or otherwise prefixed) by indentString.
     Waits for command completion."""
 
     # Note ghostscript bounding box output writes to stderr!!!  So we need it.
 
     usePopen = True # Needs to be True to set ignoreCalledProcessErrors True
-    if usePopen:
+    if usePopen: # Use lower-level Popen call.
         p = subprocess.Popen(commandList, stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT, env=env)
         output, errout = p.communicate()
@@ -189,14 +189,17 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
         if not ignoreCalledProcessErrors and returncode != 0:
             raise subprocess.CalledProcessError(returncode, commandList, output=output,
                                                 env=env)
-    else:
+    else: # Use a check_output call.
         # Note this does not work correctly if shell=True.
         output = subprocess.check_output(commandList, stderr=subprocess.STDOUT,
                                          shell=False, env=env)
 
     output = output.decode("utf-8")
-    if splitLines or printOutput: splitOutput = output.splitlines()
-    if splitLines: output = splitOutput
+
+    if splitLines or printOutput:
+        splitOutput = output.splitlines()
+    if splitLines:
+        output = splitOutput
     if printOutput:
         print()
         for line in splitOutput:
@@ -333,9 +336,9 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
     if systemOs == "Windows" and not pdftoppmExecutable:
         if not preferLocal:
             print("\nWarning from pdfCropMargins: No system pdftoppm was found."
-                  "Reverting to a locally-packaged executable.  To silence this"
-                  "warning use the '--pdftoppmLocal' (or '-pdl') flag.\n",
-                  file=sys.stderr)
+                  "\nReverting to an older, locally-packaged executable.  To silence"
+                  "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.\n",
+                  file=sys.stdout)
 
         path = os.path.join(projectRootDirectory,
                             "pdftoppm_windows_local",
@@ -352,7 +355,7 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
                                    ignoreCalledProcessErrors=ignoreCalledProcessErrors)
         except (subprocess.CalledProcessError, OSError, IOError) as e:
             print("\nWarning from pdfCropMargins: The local pdftoppm.exe program failed"
-                  "\nto execute correctly.\n", file=sys.stderr)
+                  "\nto execute correctly.\n", file=sys.stdout)
             return None
 
     retval = bool(pdftoppmExecutable)
@@ -423,7 +426,7 @@ def fixPdfWithGhostscriptToTmpFile(inputDocFname):
     except subprocess.CalledProcessError:
         print("\nError in pdfCropMargins:  Ghostscript returned a non-zero exit"
               "\nstatus when attempting to fix the file:\n   ", inputDocFname,
-              file=sys.stdout)
+              file=sys.stderr)
         cleanupAndExit(1)
     except UnicodeDecodeError:
         print("\nWarning in pdfCropMargins:  In attempting to repair the PDF file"
@@ -448,8 +451,16 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
                     boxArg, "-r"+res, inputDocFname]
     # Set printOutput to True for debugging or extra-verbose with Ghostscript's output.
     # Note Ghostscript writes the data to stderr, so the command below must capture it.
-    gsOutput = getExternalSubprocessOutput(gsRunCommand,
+    try:
+       gsOutput = getExternalSubprocessOutput(gsRunCommand,
                           printOutput=False, indentString="   ", env=gsEnvironment)
+    except UnicodeDecodeError:
+        print("\nError in pdfCropMargins:  In attempting to get the bounding boxes"
+              "\nGhostscript encountered characters which cannot be decoded by the"
+              "\n'utf-8' codec.",
+              file=sys.stderr)
+        cleanupAndExit(1)
+
     boundingBoxList = []
     for line in gsOutput:
         splitLine = line.split()
@@ -458,7 +469,7 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
             if len(splitLine) != 4:
                 print("\nWarning from pdfCropMargins: Ignoring this unparsable line"
                       "\nwhen finding the bounding boxes with Ghostscript:",
-                      line, "\n", file=sys.stderr)
+                      line, "\n", file=sys.stdout)
                 continue
             # Note gs reports values in order left, bottom, right, top,
             # i.e., lower left point followed by top right point.
