@@ -74,6 +74,9 @@ source directory for the text of the license.
 #    commands, in case offered as a service we don't want attacks on system by
 #    untrusted users ----> start with a do-nothing routine, good enough ---->
 #    or ignore for now, not that important.
+#
+#    5) Allow for multiple PDF file arguments, and crop each one with the
+#    same settings.
 
 #    Note that pdfxchange does not modify the Producer when it adds highlighting.
 
@@ -348,9 +351,7 @@ def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCro
     # Handle the '--evenodd' option if it was selected.
     if args.evenodd:
         evenPageNumsToCrop = {pNum for pNum in pageNumsToCrop if pNum % 2 == 0}
-        evenAngleList = [angleList[i] for i in range(len(angleList)) if i % 2 != 0]
         oddPageNumsToCrop = {pNum for pNum in pageNumsToCrop if pNum % 2 != 0}
-        oddAngleList = [angleList[i] for i in range(len(angleList)) if i % 2 == 0]
 
         if args.uniform: uniformSetWithEvenOdd = True
         else: uniformSetWithEvenOdd = False
@@ -360,9 +361,9 @@ def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCro
         args.evenodd = False # avoid infinite recursion
         args.uniform = True  # --evenodd implies uniform, just on each separate group
         evenCropList = calculateCropList(
-                       fullPageBoxList, boundingBoxList, evenAngleList, evenPageNumsToCrop)
+                       fullPageBoxList, boundingBoxList, angleList, evenPageNumsToCrop)
         oddCropList = calculateCropList(
-                       fullPageBoxList, boundingBoxList, oddAngleList, oddPageNumsToCrop)
+                       fullPageBoxList, boundingBoxList, angleList, oddPageNumsToCrop)
 
         # Recombine the even and odd pages
         combineEvenOdd = []
@@ -378,26 +379,31 @@ def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCro
                               for box in combineEvenOdd]
         return combineEvenOdd
 
-    # Calculate the list of deltas to be used to modify the original page sizes.
-    # Basically, a delta is the absolute diff between the full and
+    # Before calculating the crops we modify the percentRetain and
+    # absoluteOffset values for all the pages according to any specified
+    # rotations for the pages.  This is so, for example, uniform cropping is 
+    # relative to what the user actually sees.
+    rotatedPercentRetain = [modBoxForRotation(args.percentRetain, angleList[i])
+                                                         for i in range(numPages)]
+    rotatedAbsoluteOffset = [modBoxForRotation(args.absoluteOffset, angleList[i])
+                                                         for i in range(numPages)]
+
+    # Calculate the list of deltas to be used to modify the original page
+    # sizes.  Basically, a delta is the absolute diff between the full and
     # tight-bounding boxes, scaled according to the user's percentRetain, with
     # any absolute offset then added (lb) or subtracted (tr) as appropriate.
     #
     # The deltas are all positive unless absoluteOffset changes that or
     # percent>100.  They are added (lb) or subtracted (tr) as appropriate.
 
-    args.percentRetain = [modBoxForRotation(args.percentRetain, angleList[i])
-                          for i in range(numPages)]
-    args.absoluteOffset = [modBoxForRotation(args.absoluteOffset, angleList[i])
-                           for i in range(numPages)]
 
     deltaList = []
     for pNum, tBox, fBox in zip(list(range(len(fullPageBoxList))),
-                                boundingBoxList, fullPageBoxList):
+                                               boundingBoxList, fullPageBoxList):
         deltas = [abs(tBox[i] - fBox[i]) for i in range(4)]
-        adjDeltas = [deltas[i] * (100.0-args.percentRetain[pNum][i]) / 100.0
+        adjDeltas = [deltas[i] * (100.0-rotatedPercentRetain[pNum][i]) / 100.0
                      for i in range(4)]
-        adjDeltas = [adjDeltas[i] + args.absoluteOffset[pNum][i] for i in range(4)]
+        adjDeltas = [adjDeltas[i] + rotatedAbsoluteOffset[pNum][i] for i in range(4)]
         deltaList.append(adjDeltas)
 
     # Handle the '--uniform' options if one was selected.
