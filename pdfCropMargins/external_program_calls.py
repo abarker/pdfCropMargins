@@ -187,8 +187,7 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
         output, errout = p.communicate()
         returncode = p.poll()
         if not ignoreCalledProcessErrors and returncode != 0:
-            raise subprocess.CalledProcessError(returncode, commandList, output=output,
-                                                env=env)
+            raise subprocess.CalledProcessError(returncode, commandList, output=output)
     else: # Use a check_output call.
         # Note this does not work correctly if shell=True.
         output = subprocess.check_output(commandList, stderr=subprocess.STDOUT,

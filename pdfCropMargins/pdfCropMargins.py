@@ -1,11 +1,14 @@
 #!/usr/bin/python
-
+# -*- coding: utf-8 -*-
+# Note that using the shebang "usr/bin/env python" does not set the process
+# name to pdfCropMargins in Linux (for things like top, ps, and killall).
 """
 
- This is the initial starting script, but it is just calls mainCrop, which does
- the real work.  Its only purpose is to handle errors and make sure that any
- temp directories are cleaned up.  It tries to gracefully handle ^C characters
- from the user (KeyboardInterrupt) to stop the program and clean up.
+ This is the initial starting script, but it just calls mainCrop from
+ mainPdfCropMargins.py, which does the real work.  Its only purpose is to
+ handle errors and make sure that any temp directories are cleaned up.  It
+ tries to gracefully handle ^C characters from the user (KeyboardInterrupt) to
+ stop the program and clean up.
 
 """
 

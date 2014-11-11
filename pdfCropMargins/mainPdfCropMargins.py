@@ -1,7 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-# Note that using the shebang "usr/bin/env python" does not set the process
-# name to pdfCropMargins in Linux (for things like top, ps, and killall).
 """
 
 pdfCropMargins -- crop the margins of a PDF file
@@ -612,6 +608,9 @@ def mainCrop():
               " are:\n   ", args.absoluteOffset)
 
     inputDocFname = args.pdf_input_doc
+    if not inputDocFname.endswith((".pdf",".PDF")):
+        print("\nWarning in pdfCropMargins: The file extension is neither '.pdf'"
+              "\nnor '.PDF'; continuing anyway.\n", file=sys.stderr)
     if args.verbose:
         print("\nThe input document's filename is:\n   ", inputDocFname)
     if not os.path.isfile(inputDocFname):
