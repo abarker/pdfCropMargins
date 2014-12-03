@@ -1,6 +1,25 @@
 """
 
-pdfCropMargins -- crop the margins of a PDF file
+pdfCropMargins -- a program to crop the margins of PDF files
+Copyright (C) 2014 Allen Barker (Allen.L.Barker@gmail.com)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Project web site: https://abarker.github.io/pdfCropMargins
+Source code site: https://github.com/abarker/pdfCropMargins
+
+=====================================================================
 
 A command-line application to crop the margins of PDF files.  Cropping the
 margins can make it easier to read the pages of a PDF document -- whether it
@@ -12,12 +31,6 @@ To see the formatted documentation, run
    pdfCropMargins -h | more
 or
    python pdfCropMargins -h | more
-
-Copyright (c) 2013 Allen Barker, released under the MIT licence.
-Project web site: <TODO, list project github>
-Source code site: <TODO>
-See http://opensource.org/licenses/MIT or the file LICENSE in the
-source directory for the text of the license.
 
 """
 

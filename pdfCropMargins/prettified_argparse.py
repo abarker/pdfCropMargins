@@ -1,5 +1,26 @@
 """
 
+pdfCropMargins -- a program to crop the margins of PDF files
+Copyright (C) 2014 Allen Barker (Allen.L.Barker@gmail.com)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Project web site: https://abarker.github.io/pdfCropMargins
+Source code site: https://github.com/abarker/pdfCropMargins
+
+=====================================================================
+
 This module defines classes for redirecting sys.stdout and sys.stderr in order
 to postprocess (prettify) the help and usage messages from the argparse class.
 It also defines a self-flushing output stream to avoid having to explicitly run

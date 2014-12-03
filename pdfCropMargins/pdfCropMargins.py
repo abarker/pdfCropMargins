@@ -4,11 +4,32 @@
 # name to pdfCropMargins in Linux (for things like top, ps, and killall).
 """
 
- This is the initial starting script, but it just calls mainCrop from
- mainPdfCropMargins.py, which does the real work.  Its only purpose is to
- handle errors and make sure that any temp directories are cleaned up.  It
- tries to gracefully handle ^C characters from the user (KeyboardInterrupt) to
- stop the program and clean up.
+pdfCropMargins -- a program to crop the margins of PDF files
+Copyright (C) 2014 Allen Barker (Allen.L.Barker@gmail.com)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Project web site: https://abarker.github.io/pdfCropMargins
+Source code site: https://github.com/abarker/pdfCropMargins
+
+=====================================================================
+
+This is the initial starting script, but it just calls mainCrop from
+mainPdfCropMargins.py, which does the real work.  Its only purpose is to handle
+errors and make sure that any temp directories are cleaned up.  It tries to
+gracefully handle ^C characters from the user (KeyboardInterrupt) to stop the
+program and clean up.
 
 """
 

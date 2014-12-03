@@ -1,12 +1,33 @@
 """
 
+pdfCropMargins -- a program to crop the margins of PDF files
+Copyright (C) 2014 Allen Barker (Allen.L.Barker@gmail.com)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Project web site: https://abarker.github.io/pdfCropMargins
+Source code site: https://github.com/abarker/pdfCropMargins
+
+=====================================================================
+
 This module contains all the function calls to external programs (Ghostscript
 and pdftoppm).  All the system-specific information is also localized here.
 Note for cleanup that this module creates a temp dir at time of initialization.
 
 """
 
-# TODO: why are errors and warnings all written to stdout and not stderr???
+# TODO: why are errors and warnings all written to stdout in this file, and not stderr???
 
 from __future__ import print_function, division
 import sys
