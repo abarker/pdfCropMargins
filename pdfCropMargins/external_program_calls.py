@@ -59,6 +59,10 @@ else: systemBits = 32
 # Executable paths for Ghostscript, one line for each system OS, with the
 # systemOs string followed by the 32 and 64 bit executable pathnames.  Will
 # use the PATH for the system.
+# TODO does Cygwin Python use the same gs as Linux?  Probably, but test.
+# How to detect Cygwin Python from program:
+# http://stackoverflow.com/questions/1387222/reliably-detect-windows-in-python
+# If so, then just check os.name and look for 'posix' for both, maybe...
 gsExecutables = (
     ("Linux", "gs", "gs"),
     ("Windows", "GSWIN64C.EXE", "GSWIN32C.EXE")
@@ -69,9 +73,8 @@ pdftoppmExecutables = (
     ("Linux", "pdftoppm", "pdftoppm"),
     ("Windows", "pdftoppm.exe", "pdftoppm.exe")
 )
-
 pdftoppmExecutable = None # Will be set to the executable selected for the platform.
-oldPdftoppmVersion = False # Program will check version and set this if true.
+oldPdftoppmVersion = False # Program will check the version and set this if true.
 
 # To find the correct path on Windows from the registry, consider this
 # http://stackoverflow.com/questions/18283574/programatically-locate-gswin32-exe
@@ -168,7 +171,8 @@ def cleanupAndExit(exitCode):
 
 
 def which(program):
-    """This function is for future reference and modification, from stackexchange."""
+    """This function is for possible future reference and modification, from
+    stackexchange.  Not currently used."""
     # import os # already imported
 
     def is_exe(fpath):
@@ -315,14 +319,37 @@ def functionCallWithTimeout(funName, funArgs, secs=5):
 ##
 
 
-def initAndTestGsExecutable(exitOnFail=False):
+def setGsExecutableToString(gsExecutablePath):
+    """Used to simply set the value to whatever the user asks for.  The path
+    is not tested first, and takes priority over all other settings."""
+    # TODO: at least test that it's executable
+    global gsExecutable
+    gsExecutable = gsExecutablePath
+    return
+
+
+def initAndTestGsExecutable(setFromCommandLine=False, exitOnFail=False):
     """Find a Ghostscript executable and test it.  If a good one is found, set
     this module's global gsExecutable variable to that path and return True.
-    Otherwise return False."""
+    Otherwise return False.  Any path string set from the command line gets
+    priority, and is not tested."""
 
     global gsExecutable
-    if gsExecutable: return True # has already been tested and set to a path
+    if gsExecutable: return True # Has already been set to a path.
+
+    # First try basic names against the PATH.
     gsExecutable = findAndTestExecutable(gsExecutables, ["-dSAFER", "-v"], "Ghostscript")
+
+    # If that fails, on Windows look in the Program Files gs directory for it.
+    if not gsExecutable and systemOs == "Windows":
+        gs64 = glob.glob("C:/Program Files*/gs/gs*/bin/GSWIN64C.EXE")
+        if gs64: gs64 = gs64[0] # just take the first one for now
+        else: gs64 = ""
+        gs32 = glob.glob("C:/Program Files*/gs/gs*/bin/GSWIN32C.EXE")
+        if gs32: gs32 = gs32[0] # just take the first one for now
+        else: gs32 = ""
+        gsExecs = ("Windows", gs64, gs32)
+        gsExecutable = findAndTestExecutable(gsExecs, ["-dSAFER", "-v"], "Ghostscript")
 
     retval = bool(gsExecutable)
 
@@ -334,15 +361,26 @@ def initAndTestGsExecutable(exitOnFail=False):
     return retval
 
 
-def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
+def setPdftoppmExecutableToString(pdftoppmExecutablePath):
+    """Used to simply set the value to whatever the user asks for.  The path
+    is not tested first, and takes priority over all other settings."""
+    # TODO: at least test that it's executable
+    global pdftoppmExecutable
+    pdftoppmExecutable = pdftoppmExecutablePath
+    return
+
+
+def initAndTestPdftoppmExecutable(setFromCommandLine=False, preferLocal=False,
+                                  exitOnFail=False):
     """Find a pdftoppm executable and test it.  If a good one is found, set
     this module's global pdftoppmExecutable variable to that path and return
-    True.  Otherwise return False."""
+    True.  Otherwise return False.  Any path string set from the command line
+    gets priority, and is not tested."""
 
     ignoreCalledProcessErrors = False # True helps in debugging .exe with wine in Linux
 
     global pdftoppmExecutable
-    if pdftoppmExecutable: return True # Has already been tested and set to a path.
+    if pdftoppmExecutable: return True # Has already been set to a path.
 
     if not (preferLocal and systemOs == "Windows"):
         pdftoppmExecutable = findAndTestExecutable(
@@ -403,14 +441,18 @@ def findAndTestExecutable(executables, argumentList, stringToLookFor,
     should be a tuple of tuples.  The internal tuples should be 3-tuples
     containing the platform.system() value ("Windows" or "Linux") followed by
     the 64 bit executable for that system, followed by the 32 bit executable for
-    that system.  On 64 bit machines the 32 bit version is always tried if the
-    64 bit version fails.  Returns the working executable name, or the empty
-    string if both fail.  Ignores empty executable strings."""
+    that system.  For example,
+       ("Windows", "GSWIN64C.EXE", "GSWIN32C.EXE")
+    Note that the paths can be full paths or relative commands to be run with
+    respect to the relevant PATH environment variable.  On 64 bit machines the
+    32 bit version is always tried if the 64 bit version fails.  Returns the
+    working executable name, or the empty string if both fail.  Ignores empty
+    executable strings."""
 
     for systemPaths in executables:
         if systemPaths[0] != platform.system(): continue
         executablePaths = [systemPaths[1], systemPaths[2]]
-        if systemBits == 32: del executablePaths[1]
+        if systemBits == 32: del executablePaths[1] # 64 bit won't run
         for executablePath in executablePaths:
             if not executablePath: continue
             runCommandList = [executablePath] + argumentList
@@ -519,9 +561,10 @@ def renderPdfFileToImageFiles_pdftoppm_ppm(pdfFileName, rootOutputFilePath,
 
     if oldPdftoppmVersion:
         # We only have -r, not -rx and -ry.
-        command = ["pdftoppm"] + extraArgs + ["-r", resX, pdfFileName, rootOutputFilePath]
+        command = [pdftoppmExecutable] + extraArgs + ["-r", resX, pdfFileName,
+                                              rootOutputFilePath]
     else:
-        command = ["pdftoppm"] + extraArgs + ["-rx", resX, "-ry", resY,
+        command = [pdftoppmExecutable] + extraArgs + ["-rx", resX, "-ry", resY,
                                               pdfFileName, rootOutputFilePath]
     commOutput = getExternalSubprocessOutput(command)
     return commOutput

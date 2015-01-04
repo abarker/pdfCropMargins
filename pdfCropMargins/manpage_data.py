@@ -176,8 +176,8 @@ Description:
         pdfCropMargins -g 1-100 -e doc.pdf
 
      Try to restore doc.pdf to its original margins, assuming it was cropped
-     with pdfCropMargins previously.  Note that the output is still in
-     doc_cropped.pdf.
+     with pdfCropMargins previously.  Note that the default output filename is
+     still named doc_cropped.pdf.
 
         pdfCropMargins -r doc.pdf
 
@@ -241,9 +241,10 @@ cmdParser.add_argument("pdf_input_doc", metavar="PDF_FILE", help="""
    cropped PDF output file via the '-o' flag then a default output filename
    will be generated.  By default it is the same as the source filename except
    that the suffix ".pdf" is replaced by "_cropped.pdf", overwriting by default
-   if the file already exists.  If the input file has no extension or has an
-   extension other than '.pdf' or '.PDF' then the suffix '.pdf' will be
-   appended to the existing (possibly-null) extension.^^n""")
+   if the file already exists.  The file will be written to the working
+   directory at the time when the program was run.  If the input file has no
+   extension or has an extension other than '.pdf' or '.PDF' then the suffix
+   '.pdf' will be appended to the existing (possibly-null) extension.^^n""")
 
 cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
                        default=[], help="""
@@ -635,4 +636,16 @@ cmdParser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
    Ghostscript executable can be found.  The locally-packaged pdftoppm
    executable is a few years old, but for page-cropping it only needs to get
    the margins right.^^n""")
+
+cmdParser.add_argument("-gsp", "--ghostscriptPath", type=str, metavar="PATH",
+                       default="", help="""
+
+   Pass in a pathname to the ghostscript executable that the program should
+   use.  Useful when the program is in a nonstandard location.^^n""")
+
+cmdParser.add_argument("-ppp", "--pdftoppmPath", type=str, metavar="PATH",
+                       default="", help="""
+
+   Pass in a pathname to the pdftoppm executable that the program should
+   use.  Useful when the program is in a nonstandard location.^^n""")
 

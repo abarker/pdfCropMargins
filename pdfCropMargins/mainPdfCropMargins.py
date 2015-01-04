@@ -176,21 +176,23 @@ producerModifier = " (Cropped by pdfCropMargins.)"
 ##
 
 
-def generateDefaultFilename(infileName, croppedFile=True):
+def generateDefaultFilename(infilePath, croppedFile=True):
     """Generate the name of the default output file from the name of the input
     file.  The croppedFile boolean is used to determine which
-    filename-modification string is used.  Assumes args is set by argparse."""
+    filename-modification string is used.  Function assumes that args has
+    been set by argparse."""
 
     if croppedFile: suffix = prefix = args.stringCropped
     else: suffix = prefix = args.stringUncropped
 
-    basename, extension = os.path.splitext(infileName)
+    fileName = os.path.basename(infilePath) # will write to CWD by default
+    nameBeforeExtension, extension = os.path.splitext(fileName)
     if extension not in {".pdf", ".PDF"}:
         extension += ".pdf"
 
     sep = args.stringSeparator
-    if args.usePrefix: name = prefix + sep + basename + extension
-    else: name = basename + sep + suffix + extension
+    if args.usePrefix: name = prefix + sep + nameBeforeExtension + extension
+    else: name = nameBeforeExtension + sep + suffix + extension
 
     return name
 
@@ -650,6 +652,9 @@ def mainCrop():
         print("\nError in pdfCropMargins: The full input file path is the same as"
               "\nthe full output file path.\n", file=sys.stderr)
         ex.cleanupAndExit(1)
+
+    if args.pdftoppmPath: ex.setPdftoppmExecutableToString(args.pdftoppmPath)
+    if args.ghostscriptPath: ex.setGsExecutableToString(args.ghostscriptPath)
 
     # If the option settings require pdftoppm, make sure we have a running
     # version.  If '--gsBbox' isn't chosen then assume that PDF pages are to be
