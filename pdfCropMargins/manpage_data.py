@@ -244,7 +244,8 @@ cmdParser.add_argument("pdf_input_doc", metavar="PDF_FILE", help="""
    if the file already exists.  The file will be written to the working
    directory at the time when the program was run.  If the input file has no
    extension or has an extension other than '.pdf' or '.PDF' then the suffix
-   '.pdf' will be appended to the existing (possibly-null) extension.^^n""")
+   '.pdf' will be appended to the existing (possibly-null) extension.  Globbing
+   of wildcards is performed on Windows systems.^^n""")
 
 cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
                        default=[], help="""
@@ -255,7 +256,7 @@ cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
    program will generate an output filename from the input filename.  (By
    default "_cropped" is appended to the input filename before the file
    extension.  If the extension is not '.pdf' or '.PDF' then '.pdf' is appended
-   to the extension).^^n""")
+   to the extension).  Globbing of wildcards is performed on Windows systems.^^n""")
 
 cmdParser.add_argument("-v", "--verbose", action="store_true", help="""
 
@@ -641,11 +642,13 @@ cmdParser.add_argument("-gsp", "--ghostscriptPath", type=str, metavar="PATH",
                        default="", help="""
 
    Pass in a pathname to the ghostscript executable that the program should
-   use.  Useful when the program is in a nonstandard location.^^n""")
+   use.  No globbing is done.  Useful when the program is in a nonstandard
+   location.^^n""")
 
 cmdParser.add_argument("-ppp", "--pdftoppmPath", type=str, metavar="PATH",
                        default="", help="""
 
-   Pass in a pathname to the pdftoppm executable that the program should
-   use.  Useful when the program is in a nonstandard location.^^n""")
+   Pass in a pathname to the pdftoppm executable that the program should use.
+   No globbing is done.  Useful when the program is in a nonstandard
+   location.^^n""")
 

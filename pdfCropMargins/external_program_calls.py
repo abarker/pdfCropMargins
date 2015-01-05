@@ -51,6 +51,12 @@ pythonVersion = platform.python_version_tuple() # sys.version_info works too
 
 # Get the system OS type as a string such as "Linux" or "Windows".
 systemOs = platform.system() # os.name works too
+if systemOs[:5].lower() == "cygwin":
+    systemOs = "Cygwin"
+# TODO remove debugs below
+print("debug System OS is", systemOs)
+print("debug os.name is", os.name)
+
 
 # Find the number of bits the OS supports.
 if sys.maxsize > 2**32: systemBits = 64 # Supposed to work on Macs, too.
@@ -112,24 +118,29 @@ def getDirectoryLocation():
     the directory is a package the import will always look at the current
     directory first.)"""
     import directory_locator
-    return getRealAbsoluteExpandedDirname(directory_locator.__file__)
+    return getCanonicalAbsolueExpandedDirname(directory_locator.__file__)
 
 
-def getRealAbsoluteExpandedPath(path):
-    """Get the absolute path from a possibly relative path."""
-    return os.path.realpath( # remove any symbolic links
-        os.path.abspath( # may not be needed with realpath, to be safe
-            os.path.expanduser( # may not be needed, but to be safe
-                path)))
+def getCanonicalAbsoluteExpandedPath(path):
+    """Get the canonical form of the absolute path from a possibly relative path
+    (which may have symlinks, etc.)"""
+    return os.path.normcase(
+               os.path.normpath(
+                   os.path.realpath( # remove any symbolic links
+                       os.path.abspath( # may not be needed with realpath, to be safe
+                           os.path.expanduser(path)))))
 
 
-def getRealAbsoluteExpandedDirname(path):
+def getCanonicalAbsolueExpandedDirname(path):
     """Get the absolute directory name from a possibly relative path."""
-    return os.path.realpath( # remove any symbolic links
-        os.path.abspath( # may not be needed with realpath, to be safe
-            os.path.expanduser( # may not be needed, but to be safe
-                os.path.dirname(
-                    path))))
+    return os.path.dirname(getCanonicalAbsoluteExpandedPath(path))
+
+
+def samefile(path1, path2):
+    """Test if paths refer to the same file or directory."""
+    if systemOs == "Linux": return os.path.samefile(path1, path2)
+    return (getCanonicalAbsoluteExpandedPath(path1) == 
+            getCanonicalAbsoluteExpandedPath(path2))
 
 
 def getParentDirectory(path):
@@ -140,6 +151,25 @@ def getParentDirectory(path):
     return os.path.abspath(os.path.join(path, os.path.pardir))
 
 
+def globIfWindowsOs(path, exactNumArgs=False):
+    """Expands any globbing if systemOs is Windows (DOS doesn't do it).  The
+    argument exactNumFiles can be set to an integer to check for an exact
+    number of matching files.  Returns a list."""
+    if systemOs != "Windows": return [path]
+    globbed = glob.glob(path)
+    if not globbed:
+        print("\nWarning in pdfCropMargins: The wildcards in the path\n   "
+              + inputDocFname + "\nfailed to expand.  Treating as literal.",
+              file=sys.stderr)
+        globbed = [path]
+    if exactNumArgs and len(globbed) != exactNumArgs:
+        print("\nError in pdfCropMargins: The wildcards in the path\n   "
+              + inputDocFname + "\nexpand to the wrong number of files.",
+              file=sys.stderr)
+        ex.cleanupAndExit(1)
+    return globbed
+
+    
 # Set some additional variables that this module exposes to other modules.
 programCodeDirectory = getDirectoryLocation()
 projectRootDirectory = getParentDirectory(programCodeDirectory)
@@ -348,14 +378,16 @@ def initAndTestGsExecutable(setFromCommandLine=False, exitOnFail=False):
         gs32 = glob.glob("C:/Program Files*/gs/gs*/bin/GSWIN32C.EXE")
         if gs32: gs32 = gs32[0] # just take the first one for now
         else: gs32 = ""
-        gsExecs = ("Windows", gs64, gs32)
+        gsExecs = (("Windows", gs64, gs32),)
         gsExecutable = findAndTestExecutable(gsExecs, ["-dSAFER", "-v"], "Ghostscript")
 
     retval = bool(gsExecutable)
 
     if exitOnFail and not retval:
-        print("Error in pdfCropMargins, detected in external_program_calls.py:"
-              "\nNo Ghostscript executable was found.", file=sys.stderr)
+        print("Error in pdfCropMargins (detected in external_program_calls.py):"
+              "\nNo Ghostscript executable was found.  Be sure your PATH is"
+              "\nset properly.  You can use the `--ghostscriptPath` option to"
+              "\nexplicitly set the path from the command line.", file=sys.stderr)
         cleanupAndExit(1)
 
     return retval
@@ -412,15 +444,18 @@ def initAndTestPdftoppmExecutable(setFromCommandLine=False, preferLocal=False,
             runOutput = getExternalSubprocessOutput(cmd,
                                    ignoreCalledProcessErrors=ignoreCalledProcessErrors)
         except (subprocess.CalledProcessError, OSError, IOError) as e:
+            # TODO: this exception happening on Windows 8 DOS
             print("\nWarning from pdfCropMargins: The local pdftoppm.exe program failed"
                   "\nto execute correctly.\n", file=sys.stdout)
-            return None
+            return False
 
     retval = bool(pdftoppmExecutable)
 
     if exitOnFail and not retval:
-        print("Error in pdfCropMargins, detected in external_program_calls.py:"
-              "\nNo pdftoppm executable was found.", file=sys.stderr)
+        print("Error in pdfCropMargins (detected in external_program_calls.py):"
+              "\nNo pdftoppm executable was found.  Be sure your PATH is set"
+              "\ncorrectly.  You can explicitly set the path from the command"
+              "\nline with the `--pdftoppmPath` option.", file=sys.stderr)
         cleanupAndExit(1)
 
     if retval: # Found a version of pdftoppm, see if it is ancient or more recent.
@@ -442,7 +477,7 @@ def findAndTestExecutable(executables, argumentList, stringToLookFor,
     containing the platform.system() value ("Windows" or "Linux") followed by
     the 64 bit executable for that system, followed by the 32 bit executable for
     that system.  For example,
-       ("Windows", "GSWIN64C.EXE", "GSWIN32C.EXE")
+       (("Windows", "GSWIN64C.EXE", "GSWIN32C.EXE"),)
     Note that the paths can be full paths or relative commands to be run with
     respect to the relevant PATH environment variable.  On 64 bit machines the
     32 bit version is always tried if the 64 bit version fails.  Returns the

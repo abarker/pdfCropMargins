@@ -622,7 +622,7 @@ def mainCrop():
         print("\nThe absolute offsets to be applied to each margin, in units of bp,"
               " are:\n   ", args.absoluteOffset)
 
-    inputDocFname = args.pdf_input_doc
+    inputDocFname = ex.globIfWindowsOs(args.pdf_input_doc, exactNumArgs=1)[0]
     if not inputDocFname.endswith((".pdf",".PDF")):
         print("\nWarning in pdfCropMargins: The file extension is neither '.pdf'"
               "\nnor '.PDF'; continuing anyway.\n", file=sys.stderr)
@@ -638,19 +638,19 @@ def mainCrop():
         if args.verbose: print("\nUsing the default-generated output filename.")
         outputDocFname = generateDefaultFilename(inputDocFname)
     else:
-        outputDocFname = args.outfile[0]
+        outputDocFname = ex.globIfWindowsOs(args.outfile[0], exactNumArgs=1)[0]
     if args.verbose:
         print("\nThe output document's filename will be:\n   ", outputDocFname)
 
-    if os.path.exists(outputDocFname) and args.noclobber:
+    if os.path.lexists(outputDocFname) and args.noclobber:
         print("\nOption '--noclobber' is set, refusing to overwrite an existing"
               "\nfile with filename:\n   ", outputDocFname, file=sys.stderr)
         ex.cleanupAndExit(1)
 
-    if ex.getRealAbsoluteExpandedPath(
-            inputDocFname) == ex.getRealAbsoluteExpandedPath(outputDocFname):
-        print("\nError in pdfCropMargins: The full input file path is the same as"
-              "\nthe full output file path.\n", file=sys.stderr)
+    if os.path.lexists(outputDocFname) and ex.samefile(inputDocFname,
+                                                                outputDocFname):
+        print("\nError in pdfCropMargins: The input file is the same as"
+              "\nthe output file.\n", file=sys.stderr)
         ex.cleanupAndExit(1)
 
     if args.pdftoppmPath: ex.setPdftoppmExecutableToString(args.pdftoppmPath)
