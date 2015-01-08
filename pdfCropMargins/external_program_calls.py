@@ -36,6 +36,7 @@ import subprocess
 import tempfile
 import glob
 import shutil
+import time
 
 tempFilePrefix = "pdfCropMarginsTmp_"     # prefixed to all temporary filenames
 tempDirPrefix = "pdfCropMarginsTmpDir_"   # prefixed to all temporary dirnames
@@ -338,7 +339,6 @@ def runExternalSubprocessInBackground(commandList, env=None):
 ##
 
 
-import time
 from multiprocessing import Process, Queue
 
 

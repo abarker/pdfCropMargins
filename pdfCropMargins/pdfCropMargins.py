@@ -57,7 +57,7 @@ def main():
     try:
         import external_program_calls as ex # Creates the tmp dir as side effect.
         cleanupAndExit = ex.cleanupAndExit # Now delete temp dir, too.
-        import mainPdfCropMargins # Imports external_program_calls, don't do first.
+        import main_pdfCropMargins # Imports external_program_calls, don't do first.
         mainPdfCropMargins.mainCrop() # Run the actual program.
     except KeyboardInterrupt:
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
