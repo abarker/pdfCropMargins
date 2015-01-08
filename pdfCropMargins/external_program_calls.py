@@ -49,14 +49,12 @@ import platform
 #  Get the version as a tuple of strings: (major, minor, patchlevel)
 pythonVersion = platform.python_version_tuple() # sys.version_info works too
 
-# Get the system OS type as a string such as "Linux" or "Windows".
-systemOs = platform.system() # os.name works too
-if systemOs[:5].lower() == "cygwin":
+# Get the system OS type from platform.system as a string such as "Linux",
+# "Windows", or "CYGWIN*".  Note that os.name instead returns something like
+# "nt" for Windows and "posix" for Linux and Cygwin.
+systemOs = platform.system()
+if systemOs[:6].lower() == "cygwin":
     systemOs = "Cygwin"
-# TODO remove debugs below
-print("debug System OS is", systemOs)
-print("debug os.name is", os.name)
-
 
 # Find the number of bits the OS supports.
 if sys.maxsize > 2**32: systemBits = 64 # Supposed to work on Macs, too.
@@ -71,12 +69,14 @@ else: systemBits = 32
 # If so, then just check os.name and look for 'posix' for both, maybe...
 gsExecutables = (
     ("Linux", "gs", "gs"),
-    ("Windows", "GSWIN64C.EXE", "GSWIN32C.EXE")
+    ("Cygwin", "gs", "gs"),
+    ("Windows", "gswin64c.exe", "gswin32c.exe")
 )
 gsExecutable = None # Will be set to the executable selected for the platform.
 
 pdftoppmExecutables = (
     ("Linux", "pdftoppm", "pdftoppm"),
+    ("Cygwin", "pdftoppm", "pdftoppm"),
     ("Windows", "pdftoppm.exe", "pdftoppm.exe")
 )
 pdftoppmExecutable = None # Will be set to the executable selected for the platform.
@@ -138,7 +138,8 @@ def getCanonicalAbsolueExpandedDirname(path):
 
 def samefile(path1, path2):
     """Test if paths refer to the same file or directory."""
-    if systemOs == "Linux": return os.path.samefile(path1, path2)
+    if systemOs == "Linux" or systemOs == "Cygwin":
+        return os.path.samefile(path1, path2)
     return (getCanonicalAbsoluteExpandedPath(path1) == 
             getCanonicalAbsoluteExpandedPath(path2))
 
@@ -159,17 +160,29 @@ def globIfWindowsOs(path, exactNumArgs=False):
     globbed = glob.glob(path)
     if not globbed:
         print("\nWarning in pdfCropMargins: The wildcards in the path\n   "
-              + inputDocFname + "\nfailed to expand.  Treating as literal.",
+              + path + "\nfailed to expand.  Treating as literal.",
               file=sys.stderr)
         globbed = [path]
     if exactNumArgs and len(globbed) != exactNumArgs:
         print("\nError in pdfCropMargins: The wildcards in the path\n   "
-              + inputDocFname + "\nexpand to the wrong number of files.",
+              + path + "\nexpand to the wrong number of files.",
               file=sys.stderr)
-        ex.cleanupAndExit(1)
+        cleanupAndExit(1)
     return globbed
 
-    
+
+def convertWindowsPathToCygwin(path):
+    """Convert a Windows path to a Cygwin path.  Just handles the basic case."""
+    # TODO move up with similar funs and make constant a const at top if works
+    cygwinFullPathPrefix = "/cygdrive"
+    if len(path) > 2 and path[1] == ":" and path[2] == "\\":
+        newpath = cygwinFullPathPrefix + "/" + path[0]
+        if len(path) > 3: newpath += "/" + path[3:]
+        path = newpath
+    path = path.replace("\\", "/")
+    return path
+
+
 # Set some additional variables that this module exposes to other modules.
 programCodeDirectory = getDirectoryLocation()
 projectRootDirectory = getParentDirectory(programCodeDirectory)
@@ -189,7 +202,16 @@ gsEnvironment["TMPDIR"] = programTempDirectory
 def removeProgramTempDirectory():
     """Remove the global temp directory and all its contents."""
     if os.path.exists(programTempDirectory):
-        shutil.rmtree(programTempDirectory)
+        maxRetries = 5
+        currRetries = 0
+        timeBetweenRetries = 1
+        while True:
+            try:
+                shutil.rmtree(programTempDirectory)
+            except IOError:
+                currRetries += 1
+                if currRetries > maxRetries: raise # re-raise the exception
+                time.sleep(timeBetweenRetries)
     return
 
 
@@ -231,9 +253,16 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
     """Run the command and arguments in the commandList.  Will search the system
     PATH.  Returns the output as a list of lines.   If printOutput is True the
     output is echoed to stdout, indented (or otherwise prefixed) by indentString.
-    Waits for command completion."""
+    Waits for command completion.  Called process errors can be set to be
+    ignored if necessary."""
 
     # Note ghostscript bounding box output writes to stderr!!!  So we need it.
+
+    printOutput = True # debug
+    
+    # TODO remove lines if works
+    #if systemOs == "Windows" or systemOs == "Cygwin":
+    #    ignoreCalledProcessErrors = True
 
     usePopen = True # Needs to be True to set ignoreCalledProcessErrors True
     if usePopen: # Use lower-level Popen call.
@@ -305,7 +334,7 @@ def runExternalSubprocessInBackground(commandList, env=None):
 
 
 ##
-## Run a program in Python with a time limit (experimental).
+## Run a program in Python with a time limit (experimental, not currently used).
 ##
 
 
@@ -345,7 +374,7 @@ def functionCallWithTimeout(funName, funArgs, secs=5):
 
 
 ##
-## Functions to test whether an external program is actually there and runs.
+## Functions to find and test whether an external program is there and runs.
 ##
 
 
@@ -364,22 +393,31 @@ def initAndTestGsExecutable(setFromCommandLine=False, exitOnFail=False):
     Otherwise return False.  Any path string set from the command line gets
     priority, and is not tested."""
 
+    print("debug entering initAndTestGsExecutable")
     global gsExecutable
     if gsExecutable: return True # Has already been set to a path.
 
     # First try basic names against the PATH.
     gsExecutable = findAndTestExecutable(gsExecutables, ["-dSAFER", "-v"], "Ghostscript")
+    print("After first try in initAndTestGsExecutable gsExecutable is", gsExecutable)
 
-    # If that fails, on Windows look in the Program Files gs directory for it.
-    if not gsExecutable and systemOs == "Windows":
-        gs64 = glob.glob("C:/Program Files*/gs/gs*/bin/GSWIN64C.EXE")
+    # If that fails, on Windows or Cygwin look in the Program Files gs directory for it.
+    if not gsExecutable and (systemOs == "Windows" or systemOs == "Cygwin"):
+        # TODO when this works, maybe move strings to top as module settable strings
+        gs64 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin64c.exe")
         if gs64: gs64 = gs64[0] # just take the first one for now
         else: gs64 = ""
-        gs32 = glob.glob("C:/Program Files*/gs/gs*/bin/GSWIN32C.EXE")
+        gs32 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin32c.exe")
         if gs32: gs32 = gs32[0] # just take the first one for now
         else: gs32 = ""
-        gsExecs = (("Windows", gs64, gs32),)
+        cmddebug = [gs32, "-v"]
+        print("debug XXXXXXXXXXXXXX test subprocess below with", cmddebug)
+        print(subprocess.check_output(cmddebug))
+        gsExecs = (("Windows", gs64, gs32), ("Cygwin", 
+                  convertWindowsPathToCygwin(gs64), convertWindowsPathToCygwin(gs32)))
         gsExecutable = findAndTestExecutable(gsExecs, ["-dSAFER", "-v"], "Ghostscript")
+        print("After backup try in initAndTestGsExecutable gsExecutable is", gsExecutable)
+        print("Tested were:", gsExecs)
 
     retval = bool(gsExecutable)
 
@@ -414,7 +452,7 @@ def initAndTestPdftoppmExecutable(setFromCommandLine=False, preferLocal=False,
     global pdftoppmExecutable
     if pdftoppmExecutable: return True # Has already been set to a path.
 
-    if not (preferLocal and systemOs == "Windows"):
+    if not preferLocal or (systemOs != "Windows" and systemOs != "Cygwin"):
         pdftoppmExecutable = findAndTestExecutable(
             pdftoppmExecutables, ["-v"], "pdftoppm",
             ignoreCalledProcessErrors=ignoreCalledProcessErrors)
@@ -423,7 +461,7 @@ def initAndTestPdftoppmExecutable(setFromCommandLine=False, preferLocal=False,
     # specified then use the local pdftoppm.exe distributed with the project.
     # The local pdftoppm.exe can be tested on Linux with Wine using a shell
     # script named pdftoppm in the PATH, but it isn't coded in.
-    if systemOs == "Windows" and not pdftoppmExecutable:
+    if not pdftoppmExecutable and (systemOs == "Windows" or systemOs == "Cygwin"):
         if not preferLocal:
             print("\nWarning from pdfCropMargins: No system pdftoppm was found."
                   "\nReverting to an older, locally-packaged executable.  To silence"
@@ -439,6 +477,7 @@ def initAndTestPdftoppmExecutable(setFromCommandLine=False, preferLocal=False,
         else:
             pdftoppmExecutable = os.path.join(path, "bin64", "pdftoppm.exe")
 
+        print("debug local pdftoppm constructed path to try is", pdftoppmExecutable)
         try: # Test the locally-packaged version of pdftoppm.
             cmd = [pdftoppmExecutable, "-v"]
             runOutput = getExternalSubprocessOutput(cmd,
@@ -477,7 +516,7 @@ def findAndTestExecutable(executables, argumentList, stringToLookFor,
     containing the platform.system() value ("Windows" or "Linux") followed by
     the 64 bit executable for that system, followed by the 32 bit executable for
     that system.  For example,
-       (("Windows", "GSWIN64C.EXE", "GSWIN32C.EXE"),)
+       (("Windows", "gswin64c.exe", "gswin32c.exe"),)
     Note that the paths can be full paths or relative commands to be run with
     respect to the relevant PATH environment variable.  On 64 bit machines the
     32 bit version is always tried if the 64 bit version fails.  Returns the
@@ -485,12 +524,13 @@ def findAndTestExecutable(executables, argumentList, stringToLookFor,
     executable strings."""
 
     for systemPaths in executables:
-        if systemPaths[0] != platform.system(): continue
+        if systemPaths[0] != systemOs: continue
         executablePaths = [systemPaths[1], systemPaths[2]]
-        if systemBits == 32: del executablePaths[1] # 64 bit won't run
+        if systemBits == 32: del executablePaths[0] # 64 bit won't run
         for executablePath in executablePaths:
-            if not executablePath: continue
+            if not executablePath: continue # ignore empty strings
             runCommandList = [executablePath] + argumentList
+            print("System is", systemPaths[0], "debug run-testing command:", runCommandList)
             try:
                 runOutput = getExternalSubprocessOutput(runCommandList, splitLines=False,
                                        ignoreCalledProcessErrors=ignoreCalledProcessErrors)
@@ -549,7 +589,7 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
     # Set printOutput to True for debugging or extra-verbose with Ghostscript's output.
     # Note Ghostscript writes the data to stderr, so the command below must capture it.
     try:
-       gsOutput = getExternalSubprocessOutput(gsRunCommand,
+        gsOutput = getExternalSubprocessOutput(gsRunCommand,
                           printOutput=False, indentString="   ", env=gsEnvironment)
     except UnicodeDecodeError:
         print("\nError in pdfCropMargins:  In attempting to get the bounding boxes"
@@ -588,7 +628,7 @@ def renderPdfFileToImageFiles_pdftoppm_ppm(pdfFileName, rootOutputFilePath,
     rootOutputFilePath is prepended to all the output files, which have numbers
     and extensions added.  Extra arguments can be passed as a list in extraArgs.
     Return the command output."""
-    
+
     if extraArgs is None: extraArgs = []
 
     if not pdftoppmExecutable:

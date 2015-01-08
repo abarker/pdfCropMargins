@@ -26,7 +26,7 @@ revert to that if a system version is not found (or if the command-line option
 Other dependencies depend on whether or not any options that require explicit
 rendering are to be used.
 
-   With explicit rendering the dependencies are:
+   For selected options requiring explicit rendering the dependencies are:
    
        1) PIL (or some fork of it, like Pillow).
 
@@ -34,5 +34,13 @@ rendering are to be used.
        will automatically revert to a local version of an older pdftoppm.exe
        binary which is packaged with the system.
    
-   Without explicit rendering Ghostscript is required (but PIL is not).
+   For selected options not explicit requiring rendering Ghostscript is
+   required (but PIL is not).
+
+Ghostscript is standard in most Linux distributions, and is easy to install
+on Windows and in Cygwin.
+
+The pdftoppm program is standard in most Linux distributions, and is easy
+to install in Windows and Cygwin.  It is currently part of the Poppler
+pdf tools, so that package should be installed.
 

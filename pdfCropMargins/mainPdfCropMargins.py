@@ -588,7 +588,9 @@ def mainCrop():
     ## Process some of the command-line arguments.
     ##
 
-    if args.verbose: print("\nProcessing the PDF with pdfCropMargins...")
+    if args.verbose:
+        print("\nProcessing the PDF with pdfCropMargins...\nSystem type:",
+              ex.systemOs)
 
     if args.gsBbox and len(args.fullPageBox) > 1:
         print("\nWarning: only one --fullPageBox value can be used with the -gs option.",
@@ -659,8 +661,7 @@ def mainCrop():
     # If the option settings require pdftoppm, make sure we have a running
     # version.  If '--gsBbox' isn't chosen then assume that PDF pages are to be
     # explicitly rendered.  In that case we either need pdftoppm or gs to do the
-    # rendering.  TODO could later maybe pass an alternate executable path as an
-    # extra option.
+    # rendering.
     if not args.gsBbox and not args.gsRender:
         foundPdftoppm = ex.initAndTestPdftoppmExecutable(preferLocal=args.pdftoppmLocal)
         if not foundPdftoppm:
@@ -671,6 +672,7 @@ def mainCrop():
 
     # If any options require Ghostscript, make sure it it installed.
     if args.gsBbox or args.gsFix or args.gsRender:
+        print("debug calling ex.initAndTestGsExecutable from main")
         foundGs = ex.initAndTestGsExecutable()
     if args.gsBbox and not foundGs:
         print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
