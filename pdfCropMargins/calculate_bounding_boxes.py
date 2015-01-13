@@ -33,6 +33,7 @@ import sys
 import os
 import glob
 import shutil
+import time
 import external_program_calls as ex
 
 #
@@ -121,7 +122,6 @@ def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
 
     programToUse = "pdftoppm" # default to pdftoppm
     if args.gsRender: programToUse = "Ghostscript"
-    # TODO: maybe add option to use other programs, from command-line or hardcoded
 
     # Threshold value set in range 0-255, where 0 is black, with 191 default.
     if not args.threshold: args.threshold = 191
@@ -152,10 +152,29 @@ def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
     for pageNum, tmpImageFileName in enumerate(outfiles):
         currPage = inputDoc.getPage(pageNum)
 
-        # Open the image in PIL.
-        tmpImageFile = open(tmpImageFileName) # debug added explicit open and close below
-        im = Image.open(tmpImageFile)
-
+        # Open the image in PIL.  Retry a few times on fail in case race conditions.
+        maxNumTries = 3
+        timeBetweenTries = 1
+        currNumTries = 0
+        while True:
+            try:
+                # PIL for some reason fails in Python 3.4 if you open the image
+                # from a file you opened yourself.  Works in Python 2 and earlier
+                # Python 3.  So original code is commented out, and path passed.
+                #
+                # tmpImageFile = open(tmpImageFileName)
+                # im = Image.open(tmpImageFile)
+                im = Image.open(tmpImageFileName)
+                break
+            except (IOError, UnicodeDecodeError) as e:
+                currNumTries += 1
+                if args.verbose:
+                    print("Warning: Exception opening image", tmpImageFileName,
+                          "on try", currNumTries, "\nError is", e, file=sys.stderr)
+                # tmpImageFile.close() # see above comment
+                if currNumTries > maxNumTries: raise # re-raise exception
+                time.sleep(timeBetweenTries)
+        
         # Apply any blur or smooth operations specified by the user.
         for i in range(args.numBlurs):
             im = im.filter(ImageFilter.BLUR)
@@ -177,8 +196,7 @@ def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
         boundingBoxList.append(boundingBox)
 
         # Clean up the image files after they are no longer needed.
-        im = None # Not really needed, but may help garbage collector, big object.
-        tmpImageFile.close()
+        # tmpImageFile.close() # see above comment
         os.remove(tmpImageFileName)
 
     if args.verbose: print()
@@ -197,8 +215,12 @@ def renderPdfFileToImageFiles(pdfFileName, outputFilenameRoot, programToUse):
     resX = str(args.resX)
     resY = str(args.resY)
     if programToUse == "Ghostscript":
-        ex.renderPdfFileToImageFiles_Ghostscript_png(
-            pdfFileName, outputFilenameRoot, resX, resY)
+        if ex.systemOs == "Windows": # Windows PIL is more likely to know BMP
+            ex.renderPdfFileToImageFiles_Ghostscript_bmp(
+                                  pdfFileName, outputFilenameRoot, resX, resY)
+        else: # Linux and Cygwin should be fine with PNG
+            ex.renderPdfFileToImageFiles_Ghostscript_png(
+                                  pdfFileName, outputFilenameRoot, resX, resY)
     elif programToUse == "pdftoppm":
         use_gray = False # this is currently hardcoded, but can be changed to use pgm
         if use_gray:

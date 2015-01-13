@@ -37,10 +37,39 @@ rendering are to be used.
    For selected options not explicit requiring rendering Ghostscript is
    required (but PIL is not).
 
+==================
+
+# gs
+
 Ghostscript is standard in most Linux distributions, and is easy to install
-on Windows and in Cygwin.
+on Windows and in Cygwin.  The Windows install page is at
+   http://www.ghostscript.com/download/gsdnld.html
+and the non-commercial GPL version should work fine for most people.
+
+# pdftoppm
 
 The pdftoppm program is standard in most Linux distributions, and is easy
-to install in Windows and Cygwin.  It is currently part of the Poppler
+to install in Cygwin.  It is currently part of the Poppler
 pdf tools, so that package should be installed.
+
+In Windows pdftoppm is not as easy to install, but a local version of pdftoppm
+comes packaged the pdfCropMargins program.  It should be automatically detected
+on Windows Python.  Note that the local version only runs when pdfCropMargins
+is run with Windows Python.  It does not work when pdfCropMargins is run from
+Cygwin Python (but Poppler is easy to install in Cygwin).  It does work from
+Windows Python when launched from either a Windows command prompt or from a
+Cygwin command prompt.
+
+# Python
+
+For Cygwin Python, be sure to install the package with Python Imaging Library
+(PIL or Pillow).  A recent pyPdf (or a compatible fork) would be good, too, but
+there is a local version packaged with the program.  If the import fails the
+program will revert to the local version.
+
+For Windows Python, be sure to install the Python Imaging Library (PIL or
+Pillow) or use a package like Python(x,y) where you can easily add it as a
+plugin.  A recent pyPdf (or a compatible fork) would be good, too, but there
+is a local version packaged with the program.  If the import fails the program
+will revert to the local version.
 

@@ -26,7 +26,7 @@ Source code site: https://github.com/abarker/pdfCropMargins
 =====================================================================
 
 This is the initial starting script, but it just calls mainCrop from
-mainPdfCropMargins.py, which does the real work.  Its only purpose is to handle
+main_pdfCropMargins.py, which does the real work.  Its only purpose is to handle
 errors and make sure that any temp directories are cleaned up.  It tries to
 gracefully handle ^C characters from the user (KeyboardInterrupt) to stop the
 program and clean up.
@@ -39,26 +39,27 @@ import sys
 
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
-    def cleanupIgnoringKeyboardInterrupt():
+
+    def cleanupIgnoringKeyboardInterrupt(exitCode):
         """Some people like to hit multiple ^C chars; ignore them and call again."""
         for i in range(20): # Give up after 20 tries.
             try:
-                cleanupAndExit(exitCode) # Use the global one for now TODO
+                cleanupAndExit(exitCode)
             except KeyboardInterrupt: # Some people hit multiple ^C chars, kills cleanup.
                 continue
             except SystemExit:
                 pass
 
-    cleanupAndExit = sys.exit # Function to do cleanup and exit.
+    cleanupAndExit = sys.exit # Function to do cleanup and exit before the import.
     exitCode = 0
 
     # Imports are done here inside the try block so some ugly (and useless)
     # traceback info is avoided on user's ^C (KeyboardInterrupt).
     try:
         import external_program_calls as ex # Creates the tmp dir as side effect.
-        cleanupAndExit = ex.cleanupAndExit # Now delete temp dir, too.
+        cleanupAndExit = ex.cleanupAndExit # Switch to the real one, deletes temp dir.
         import main_pdfCropMargins # Imports external_program_calls, don't do first.
-        mainPdfCropMargins.mainCrop() # Run the actual program.
+        main_pdfCropMargins.mainCrop() # Run the actual program.
     except KeyboardInterrupt:
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
               file=sys.stderr)
@@ -66,15 +67,18 @@ def main():
         print()
     except:
         # Echo back the unexpected error so the user can see it.
+        print("Caught an unexpected exception in the pdfCropMargins program",
+                                                               file=sys.stderr)
         print("Unexpected error: ", sys.exc_info()[0], file=sys.stderr)
         print("Error message   : ", sys.exc_info()[1], file=sys.stderr)
         print()
-        import traceback
-        traceback.print_tb(sys.exc_info()[2])
         exitCode = 1
-        #raise # Re-raise the error.
+        import traceback
+        maxTracebackLength = 30
+        traceback.print_tb(sys.exc_info()[2], limit=maxTracebackLength)
+        # raise # Re-raise the error.
     finally:
-        cleanupIgnoringKeyboardInterrupt()
+        cleanupIgnoringKeyboardInterrupt(exitCode)
     return
 
 

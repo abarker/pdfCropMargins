@@ -22,8 +22,8 @@ Source code site: https://github.com/abarker/pdfCropMargins
 =====================================================================
 
 A command-line application to crop the margins of PDF files.  Cropping the
-margins can make it easier to read the pages of a PDF document -- whether it
-the document printed or displayed on a screen -- because the font appears
+margins can make it easier to read the pages of a PDF document -- whether the
+document is printed or displayed on a screen -- because the fonts appear
 larger.  Margin-cropping is also useful at times when one PDF is included in
 another as a graphic.  Many options are available.
 
@@ -53,41 +53,22 @@ or
 #
 #    0) Consider the method discussed here, which uses Ghostscript but doesn't
 #    just modify the CropBox, etc.
-#    http://stackoverflow.com/questions/10417151/pdf-remove-white-margins
-#    Also how to translate with Ghostscript:
+#    http://stackoverflow.com/questions/10417151/pdf-remove-white-margins Also
+#    how to translate with Ghostscript:
 #    http://stackoverflow.com/questions/12484353/how-to-crop-a-section-of-a-pdf-file-to-png-using-ghostscript/12485020#12485020
 #
-#    0) These pages discuss how to use pyPdf with translations and rotations.
-#    For page objects you can create blank pages, merge transformed/rotated
-#    pages, etc.  There is also the addTransformation() method, which applies a
-#    transformation matrix to a page, and there is a matrix multiply routine in
-#    utils.  There is also a method for scaling pages.  Could add various
-#    features using these capabilities.
-#    http://stackoverflow.com/questions/6041244/how-to-merge-two-landscape-pdf-pages-using-pypdf
-#    http://sourcecodebrowser.com/python-pypdf/1.13/classpy_pdf_1_1pdf_1_1_page_object.html
+#    1) See pdfxchange docs for how to make it batch-process a PDF to images?
 #
-#    1) Name of a command to turn a page of PDF into an image file, taking two
-#    file arguments and a resolution.  That would help portability, especially
-#    of the more advanced stuff that gs does not do.  But with packaged-in
-#    pdftoppm for Windows it isn't worth it.
+#    2) Have option for using an arbitrary box for saving restore data, not
+#    just ArtBox.  Downside of option is that we have to know which box was
+#    used, i.e., save it in the Producer string...
 #
-#    2) See pdfxchange docs for how to make it batch-process a PDF to images!?
+#    3) Have a routine to check all filenames and args passed in to external
+#    commands.  Could start with a do-nothing routine, but ignore for now, not
+#    that important.
 #
-#    3) Have option for using an arbitrary box for saving restore data, not
-#    just ArtBox.  Note someone said that Adobe Illustrator actually sets the
-#    ArtBox to the size of the picture... maybe TrimBox better default??
-#    Downside of option is that we have to know which box was used, i.e., save
-#    it in the Producer string...
-#
-#    4) Have a routine to clean all filenames and args passed in to external
-#    commands, in case offered as a service we don't want attacks on system by
-#    untrusted users ----> start with a do-nothing routine, good enough ---->
-#    or ignore for now, not that important.
-#
-#    5) Allow for multiple PDF file arguments, and crop each one with the
+#    4) Maybe allow for multiple PDF file arguments, and crop each one with the
 #    same settings.
-
-#    Note that pdfxchange does not modify the Producer when it adds highlighting.
 
 from __future__ import print_function, division
 import sys
@@ -122,18 +103,28 @@ def importLocalPyPdf():
     global PdfFileWriter, PdfFileReader
     global NameObject, createStringObject, RectangleObject, FloatObject
     sys.path.insert(0, projectRootDirectory) # package is in project root directory
-    if pythonVersion[0] == "2":
-        from mstamy2_PyPDF2_7da5545.PyPDF2 import PdfFileWriter, PdfFileReader
-        from mstamy2_PyPDF2_7da5545.PyPDF2.generic import \
+    oldLocal = False
+    if oldLocal:
+        if pythonVersion[0] == "2":
+            from mstamy2_PyPDF2_7da5545.PyPDF2 import PdfFileWriter, PdfFileReader
+            from mstamy2_PyPDF2_7da5545.PyPDF2.generic import \
+                NameObject, createStringObject, RectangleObject, FloatObject
+            from mstamy2_PyPDF2_7da5545.PyPDF2.utils import PdfReadError
+        else: # Python 3
+            from mstamy2_PyPDF2_7da5545_py3.PyPDF2 import PdfFileWriter, PdfFileReader
+            from mstamy2_PyPDF2_7da5545_py3.PyPDF2.generic import \
+                NameObject, createStringObject, RectangleObject, FloatObject
+            from mstamy2_PyPDF2_7da5545_py3.PyPDF2.utils import PdfReadError
+    else: # newer version, runs with both Python 2 and 3
+        from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2 import \
+                PdfFileWriter, PdfFileReader
+        from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2.generic import \
             NameObject, createStringObject, RectangleObject, FloatObject
-        from mstamy2_PyPDF2_7da5545.PyPDF2.utils import PdfReadError
-    else: # Python 3
-        from mstamy2_PyPDF2_7da5545_py3.PyPDF2 import PdfFileWriter, PdfFileReader
-        from mstamy2_PyPDF2_7da5545_py3.PyPDF2.generic import \
-            NameObject, createStringObject, RectangleObject, FloatObject
-        from mstamy2_PyPDF2_7da5545_py3.PyPDF2.utils import PdfReadError
+        from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2.utils import \
+                PdfReadError
     del sys.path[0] # restore the sys.path
     return
+
 
 if pyPdfLocal:
     importLocalPyPdf()
@@ -176,19 +167,19 @@ producerModifier = " (Cropped by pdfCropMargins.)"
 ##
 
 
-def generateDefaultFilename(infilePath, croppedFile=True):
+def generateDefaultFilename(infilePath, isCroppedFile=True):
     """Generate the name of the default output file from the name of the input
-    file.  The croppedFile boolean is used to determine which
-    filename-modification string is used.  Function assumes that args has
-    been set by argparse."""
+    file.  The isCroppedFile boolean is used to indicate that the file has been
+    (or will be) cropped, to determine which filename-modification string to
+    use.  Function assumes that args has been set globally by argparse."""
 
-    if croppedFile: suffix = prefix = args.stringCropped
+    if isCroppedFile: suffix = prefix = args.stringCropped
     else: suffix = prefix = args.stringUncropped
 
-    fileName = os.path.basename(infilePath) # will write to CWD by default
+    # Use modified basename as output path; program writes default output to CWD.
+    fileName = os.path.basename(infilePath)
     nameBeforeExtension, extension = os.path.splitext(fileName)
-    if extension not in {".pdf", ".PDF"}:
-        extension += ".pdf"
+    if extension not in {".pdf", ".PDF"}: extension += ".pdf"
 
     sep = args.stringSeparator
     if args.usePrefix: name = prefix + sep + nameBeforeExtension + extension
@@ -662,18 +653,20 @@ def mainCrop():
     # version.  If '--gsBbox' isn't chosen then assume that PDF pages are to be
     # explicitly rendered.  In that case we either need pdftoppm or gs to do the
     # rendering.
+    gsRenderFallbackSet = False # Set True if we switch to gs option as a fallback.
     if not args.gsBbox and not args.gsRender:
         foundPdftoppm = ex.initAndTestPdftoppmExecutable(preferLocal=args.pdftoppmLocal)
+        if args.verbose: print("\nFound pdftoppm program at:", foundPdftoppm)
         if not foundPdftoppm:
             args.gsRender = True
-            gsRenderDefaultSet = True
+            gsRenderFallbackSet = True
             if args.verbose:
                 print("\nNo pdftoppm executable found; using Ghostscript for rendering.")
 
     # If any options require Ghostscript, make sure it it installed.
     if args.gsBbox or args.gsFix or args.gsRender:
-        print("debug calling ex.initAndTestGsExecutable from main")
         foundGs = ex.initAndTestGsExecutable()
+        if args.verbose: print("\nFound Ghostscript program at:", foundGs)
     if args.gsBbox and not foundGs:
         print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
               "\nthe Ghostscript executable could not be located.  Is it"
@@ -685,7 +678,7 @@ def mainCrop():
               "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
         ex.cleanupAndExit(1)
     if args.gsRender and not foundGs:
-        if gsRenderDefaultSet:
+        if gsRenderFallbackSet:
             print("\nError in pdfCropMargins: Neither Ghostscript nor pdftoppm"
                   "\nwas found in the PATH for command execution.  At least one is"
                   "\nrequired.\n", file=sys.stderr)
@@ -986,7 +979,7 @@ def mainCrop():
 
     # Handle the '--modifyOriginal' option.
     if args.modifyOriginal:
-        origArchivedName = generateDefaultFilename(inputDocFname, croppedFile=False)
+        origArchivedName = generateDefaultFilename(inputDocFname, isCroppedFile=False)
 
         # Remove any existing file with the name origArchivedName unless a
         # relevant noclobber option is set or it isn't a file.
