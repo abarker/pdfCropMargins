@@ -1,7 +1,9 @@
 
 Note that this package is distributed with a copy of the PyPDF2 package, which
-has its own (not very restrictive) LICENSE file.  The rest of the package is
-covered by the GNU GPL license, version 3 or later. 
+has its own (not very restrictive) LICENSE file.  This package is also
+distributed with a version of pdftoppm which is covered by the GNU General
+Public License (GPL), version 2.  Everything else is covered by the GNU GPL
+license, version 3 or later. 
 
 =======================================================================
 
