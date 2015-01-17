@@ -104,7 +104,7 @@ def importLocalPyPdf():
     global NameObject, createStringObject, RectangleObject, FloatObject
     sys.path.insert(0, projectRootDirectory) # package is in project root directory
     oldLocal = False
-    if oldLocal:
+    if oldLocal: # soon to be deleted if no bugs in newer version in further testing
         if pythonVersion[0] == "2":
             from mstamy2_PyPDF2_7da5545.PyPDF2 import PdfFileWriter, PdfFileReader
             from mstamy2_PyPDF2_7da5545.PyPDF2.generic import \
