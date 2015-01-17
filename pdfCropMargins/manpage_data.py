@@ -62,9 +62,9 @@ Description:
 ^^f
    A command-line application to crop the margins of PDF files.  Cropping the
    margins can make it easier to read the pages of a PDF document -- whether
-   the document is printed or displayed on a screen -- because the font appears
-   larger.  Margin-cropping is also sometimes useful when a PDF file is
-   included in a document as a graphic.
+   the document is printed or displayed on a screen -- because the display
+   fonts are larger.  Margin-cropping is also sometimes useful when a PDF file
+   is included in a document as a graphic.
 
    By default 10% of the existing margins will be retained; the rest will be
    eliminated.  There are many options which can be set, however, including the
@@ -103,11 +103,13 @@ Description:
    These defaults are designed to reduce the number of copies of a document
    which need to be saved.  This is especially useful if annotations,
    highlighting, etc., are to be added to the document.  Suppose a document is
-   cropped and only the cropped version is saved.  Suppose also that at some
-   later times the document is again cropped with pdfCropMargins and only the
-   re-cropped versions are saved.  It is nevertheless still possible to recover
-   at least an approximate version of the original document's margin-formatting
-   from these cropped versions by using the '--restore' option.
+   cropped and only the cropped version is saved.  Suppose that at some later
+   times the document is again cropped with pdfCropMargins and only the
+   re-cropped versions are saved.  It is still possible to recover at least an
+   approximate version of the original document's margin-formatting from these
+   cropped versions by using the '--restore' option (although the intermediate
+   cropping is lost).  Programs which change the "Producer" string in the PDF
+   may interfere with this feature.
 
    Below are several examples using more of the command-line options, each
    applied to an input file called doc.pdf.  The output filename is unspecified
@@ -185,7 +187,8 @@ Description:
    There are many different ways to use this program.  After finding a method
    which works well for a particular task or workflow pattern it is often
    convenient to make a simple shell script (batch file) which invokes the
-   program with those particular options and settings.
+   program with those particular options and settings.  A simple script for
+   Bash is packaged with the program, in the bin directory.
 
    When printing a document with closely-cropped pages it may be necessary to
    use options such as "Fit to Printable Area".  It may also be necessary to
