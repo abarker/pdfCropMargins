@@ -104,7 +104,8 @@ def importLocalPyPdf():
     global NameObject, createStringObject, RectangleObject, FloatObject
     sys.path.insert(0, projectRootDirectory) # package is in project root directory
     oldLocal = False
-    if oldLocal: # soon to be deleted if no bugs in newer version in further testing
+    if oldLocal: 
+        # TODO remove this if branch after more testing
         if pythonVersion[0] == "2":
             from mstamy2_PyPDF2_7da5545.PyPDF2 import PdfFileWriter, PdfFileReader
             from mstamy2_PyPDF2_7da5545.PyPDF2.generic import \
@@ -924,7 +925,7 @@ def mainCrop():
               "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
               "\noption (assuming you are not already using it).", file=sys.stderr)
         ex.cleanupAndExit(1)
-    # Do below to catch when it hangs... experimental.TODO still causes bugs somehow...
+    # Experimental test in line below to catch if it hangs... still causes bugs...
     #completed = ex.functionCallWithTimeout(outputDoc.write, [outputDocStream], secs=0)
     outputDocStream.close()
     completed = True
@@ -979,28 +980,30 @@ def mainCrop():
 
     # Handle the '--modifyOriginal' option.
     if args.modifyOriginal:
-        origArchivedName = generateDefaultFilename(inputDocFname, isCroppedFile=False)
+        generatedUncroppedFilename = generateDefaultFilename(
+                                                  inputDocFname, isCroppedFile=False)
 
-        # Remove any existing file with the name origArchivedName unless a
+        # Remove any existing file with the name generatedUncroppedFilename unless a
         # relevant noclobber option is set or it isn't a file.
-        if os.path.exists(origArchivedName):
-            if os.path.isfile(origArchivedName) \
+        if os.path.exists(generatedUncroppedFilename):
+            if os.path.isfile(generatedUncroppedFilename) \
                     and not args.noclobberOriginal and not args.noclobber:
-                if args.verbose: print("\nRemoving the file\n   ", origArchivedName)
-                os.remove(origArchivedName)
-                          # TODO may want try-except on this; permissions
+                if args.verbose:
+                    print("\nRemoving the file\n   ", generatedUncroppedFilename)
+                # TODO may want try-except on this; permissions
+                os.remove(generatedUncroppedFilename)
             else:
                 print(
                     "\nA noclobber option is set or not a file; refusing to"
-                    " overwrite:\n   ", origArchivedName,
+                    " overwrite:\n   ", generatedUncroppedFilename,
                     "\nFiles are as if option '--modifyOriginal' were not set.",
                     file=sys.stderr)
 
         # Move (noclobber) the original file to the name for uncropped files.
-        if not os.path.exists(origArchivedName):
+        if not os.path.exists(generatedUncroppedFilename):
             if args.verbose: print("\nDoing a file move:\n   ", inputDocFname,
-                                   "\nmoving to\n   ", origArchivedName)
-            shutil.move(inputDocFname, origArchivedName)
+                                   "\nmoving to\n   ", generatedUncroppedFilename)
+            shutil.move(inputDocFname, generatedUncroppedFilename)
 
         # Move (noclobber) the cropped file to the original file's name.
         if not os.path.exists(inputDocFname):

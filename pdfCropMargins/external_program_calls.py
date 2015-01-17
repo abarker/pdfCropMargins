@@ -27,8 +27,6 @@ Note for cleanup that this module creates a temp dir at time of initialization.
 
 """
 
-# TODO: why are errors and warnings all written to stdout in this file, and not stderr???
-
 from __future__ import print_function, division
 import sys
 import os
@@ -80,8 +78,6 @@ pdftoppmExecutables = (
 )
 pdftoppmExecutable = None # Will be set to the executable selected for the platform.
 oldPdftoppmVersion = False # Program will check the version and set this if true.
-
-usingLocalPdftoppm = False # Global to be set by initAndTestPdftoppmExecutable.
 
 # To find the correct path on Windows from the registry, consider this
 # http://stackoverflow.com/questions/18283574/programatically-locate-gswin32-exe
@@ -259,12 +255,6 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
     # Note ghostscript bounding box output writes to stderr!  So we need to
     # be sure to capture the stderr along with the stdout.
 
-    # The local pdftoppm returns 99 when it works.  It is easier to just set this
-    # here based on the global than it is to pass in the flag each time. 
-    # Update: Current version works only on Windows Python, not Cygwin Python, and
-    # doesn't need this.  It *does* need it in the testing routine, though.
-    # if usingLocalPdftoppm: ignoreCalledProcessErrors = True
-
     printOutput = False # Useful for debugging to set True.
     
     usePopen = True # Needs to be True to set ignoreCalledProcessErrors True
@@ -403,7 +393,7 @@ def initAndTestGsExecutable(exitOnFail=False):
 
     # If that fails, on Windows or Cygwin look in the Program Files gs directory for it.
     if not gsExecutable and (systemOs == "Windows" or systemOs == "Cygwin"):
-        # TODO when this works, maybe move strings to top as module settable strings
+        # TODO maybe move these strings to top as module settable strings
         gs64 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin64c.exe")
         if gs64: gs64 = gs64[0] # just take the first one for now
         else: gs64 = ""
@@ -452,20 +442,20 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
     # specified then use the local pdftoppm.exe distributed with the project.
     # The local pdftoppm.exe can be tested on Linux with Wine using a shell
     # script named pdftoppm in the PATH, but it isn't coded in.
-    # TODO remove all Cygwin references below if local one won't run from that Python
-    if preferLocal or (not pdftoppmExecutable and
-                               (systemOs == "Windows" or systemOs == "Cygwin")):
+    if preferLocal or (not pdftoppmExecutable and systemOs == "Windows"):
         if not preferLocal:
             print("\nWarning from pdfCropMargins: No system pdftoppm was found."
                   "\nReverting to an older, locally-packaged executable.  To silence"
                   "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.",
-                  file=sys.stdout)
+                  file=sys.stderr)
 
         path = os.path.join(projectRootDirectory, "pdftoppm_windows_local",
                                                                 "xpdfbin-win-3.04")
 
         pdftoppmExecutable32 = os.path.join(path, "bin32", "pdftoppm.exe")
         pdftoppmExecutable64 = os.path.join(path, "bin64", "pdftoppm.exe")
+        # Cygwin is not needed below for now, but left in case something gets fixed
+        # to allow the local version to run from there.
         pdftoppmLocalExecs = (("Windows", pdftoppmExecutable64, pdftoppmExecutable32),
                               ("Cygwin",  pdftoppmExecutable64, pdftoppmExecutable32),)
 
@@ -475,11 +465,8 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
                                    ignoreCalledProcessErrors=ignoreCalledProcessErrors)
         if not localPdftoppmExecutable:
             print("\nWarning from pdfCropMargins: The local pdftoppm.exe program failed"
-                  "\nto execute correctly or was not found.", file=sys.stdout)
+                  "\nto execute correctly or was not found.", file=sys.stderr)
         else:
-            # TODO can remove this global later if no longer necessary.
-            global usingLocalPdftoppm
-            usingLocalPdftoppm = True
             pdftoppmExecutable = localPdftoppmExecutable
 
     if exitOnFail and not pdftoppmExecutable:
@@ -560,7 +547,7 @@ def fixPdfWithGhostscriptToTmpFile(inputDocFname):
         print("\nWarning in pdfCropMargins:  In attempting to repair the PDF file"
               "\nGhostscript produced a message containing characters which cannot"
               "\nbe decoded by the 'utf-8' codec.  Ignoring and hoping for the best.",
-              file=sys.stdout)
+              file=sys.stderr)
     return tempFileName
 
 
@@ -597,7 +584,7 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
             if len(splitLine) != 4:
                 print("\nWarning from pdfCropMargins: Ignoring this unparsable line"
                       "\nwhen finding the bounding boxes with Ghostscript:",
-                      line, "\n", file=sys.stdout)
+                      line, "\n", file=sys.stderr)
                 continue
             # Note gs reports values in order left, bottom, right, top,
             # i.e., lower left point followed by top right point.
@@ -608,7 +595,7 @@ def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
 
     if not boundingBoxList:
         print("\nError in pdfCropMargins: Ghostscript failed to find any bounding"
-              "\nboxes in the document.", file=sys.stdout)
+              "\nboxes in the document.", file=sys.stderr)
         cleanupAndExit(1)
     return boundingBoxList
 

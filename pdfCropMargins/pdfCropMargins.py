@@ -42,7 +42,7 @@ def main():
 
     def cleanupIgnoringKeyboardInterrupt(exitCode):
         """Some people like to hit multiple ^C chars; ignore them and call again."""
-        for i in range(20): # Give up after 20 tries.
+        for i in range(30): # Give up after 30 tries.
             try:
                 cleanupAndExit(exitCode)
             except KeyboardInterrupt: # Some people hit multiple ^C chars, kills cleanup.

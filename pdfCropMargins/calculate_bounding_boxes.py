@@ -41,8 +41,8 @@ import external_program_calls as ex
 #
 
 try:
-    # Note that the Pillow fork uses the same import command,
-    # so this import works either way (but Pillow can't co-exist with PIL).
+    # The Pillow fork uses the same import command, so this import works either
+    # way (but Pillow can't co-exist with PIL).
     from PIL import Image, ImageFilter
     hasPIL = True
 except ImportError:
@@ -52,7 +52,7 @@ except ImportError:
 # A few globals used in this module.
 #
 
-args = None # Command-line arguments; initialized in getBoundingBoxList.
+args = None # Command-line arguments; set in getBoundingBoxList.
 pageNumsToCrop = None # Set of pages to crop; initialized in getBoundingBoxList.
 PdfFileWriter = None # Initialized in getBoundingBoxList
 
@@ -71,7 +71,7 @@ def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
     numbers to crop; it is passed so that unnecessary calculations can be
     skipped.  The argparseArgs argument should be passed the args parsed from
     the command line by argparse.  The ChosenPdfFileWriter is the PdfFileWriter
-    class from whichever pyPdf package was chosen by the main program.  This
+    class from whichever pyPdf package was chosen by the main program.  The
     function returns the list of bounding boxes."""
     global args, pageNumsToCrop, PdfFileWriter
     args = argparseArgs # Make args available to all funs in module, as a global.
@@ -117,8 +117,8 @@ def correctBoundingBoxListForNonzeroOrigin(bboxList, fullBoxList):
 
 def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
     """Calculate the bounding box list by directly rendering each page of the PDF as
-    an image file.  Note that the MediaBox and CropBox have already been set
-    to the chosen page size before the rendering."""
+    an image file.  The MediaBox and CropBox values in inputDoc should have
+    already been set to the chosen page size before the rendering."""
 
     programToUse = "pdftoppm" # default to pdftoppm
     if args.gsRender: programToUse = "Ghostscript"
