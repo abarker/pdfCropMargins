@@ -116,6 +116,7 @@ function afterThenBeforeDisplay {
    # The after version is displayed first so if the displayer is opening separate
    # windows it will put the before on top of the after version.
    "$PDF_READER" $PDF_OPTIONS "$1" &
+   sleep 0.5
    "$PDF_READER" $PDF_OPTIONS "$2"
    wait
    sleep 1

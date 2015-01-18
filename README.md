@@ -15,6 +15,7 @@ Perl script pdfcrop except with many more options.
   two-up).
 - Works on Linux, Windows and Cygwin.
 - Works with either the pdftoppm program or with Ghostscript.
+- A version of pdftoppm for Windows is included.
 - Renders and analyzes the images, which allows it to deal with noisy images.
 - Ghostscript can optionally be used to find the bounding boxes directly.
 - Can automatically apply a Ghostscript repair operation to attempt to fix
@@ -86,6 +87,20 @@ revert to that if a system version is not found (or if the command-line option
 
 This depencency holds in all cases *except* when Ghostscript is available and
 the '-gs' option is selected to let Ghostscript find the bounding boxes.
+
+## Installing
+
+Unzip the program directory somewhere and run the script:
+```
+python PATH_TO_PROGRAM_DIR/pdfCropMargins-master/pdfCropMargins/pdfCropMargins.py 
+```
+You can put a small shell script or batch file in your bin directory (or
+somewhere else in your PATH) to run the program simply from the command line.
+Template Linux and Windows scripts called `crop` are included in the project's
+bin directory.  Alternately, you can define an alias in your shell.
+
+To uninstall just delete the program directory and any shell scripts you
+created.
 
 ## Documentation
 
