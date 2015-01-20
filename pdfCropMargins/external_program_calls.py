@@ -637,7 +637,9 @@ def renderPdfFileToImageFiles_Ghostscript_png(pdfFileName, rootOutputFilePath,
     """Use Ghostscript to render a PDF file to .png images.  The rootOutputFilePath
     is prepended to all the output files, which have numbers and extensions added.
     Return the command output."""
-    # For gs commands see http://ghostscript.com/doc/8.54/Use.htm
+    # For gs commands see
+    # http://ghostscript.com/doc/current/Devices.htm#File_formats
+    # http://ghostscript.com/doc/current/Devices.htm#PNG
     if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
     command = [gsExecutable, "-dBATCH", "-dNOPAUSE", "-sDEVICE=pnggray",
                "-r"+resX+"x"+resY, "-sOutputFile="+rootOutputFilePath+"-%06d.png",
@@ -651,7 +653,11 @@ def renderPdfFileToImageFiles_Ghostscript_bmp(pdfFileName, rootOutputFilePath,
     """Use Ghostscript to render a PDF file to .bmp images.  The rootOutputFilePath
     is prepended to all the output files, which have numbers and extensions added.
     Return the command output."""
-    # For gs commands see http://ghostscript.com/doc/8.54/Use.htm
+    # For gs commands see
+    # http://ghostscript.com/doc/current/Devices.htm#File_formats
+    # http://ghostscript.com/doc/current/Devices.htm#BMP
+    # These are the BMP devices:
+    #    bmpmono bmpgray bmpsep1 bmpsep8 bmp16 bmp256 bmp16m bmp32b 
     if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
     command = [gsExecutable, "-dBATCH", "-dNOPAUSE", "-sDEVICE=bmpgray",
                "-r"+resX+"x"+resY, "-sOutputFile="+rootOutputFilePath+"-%06d.bmp",

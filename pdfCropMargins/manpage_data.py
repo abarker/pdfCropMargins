@@ -187,8 +187,8 @@ Description:
    There are many different ways to use this program.  After finding a method
    which works well for a particular task or workflow pattern it is often
    convenient to make a simple shell script (batch file) which invokes the
-   program with those particular options and settings.  A simple script for
-   Bash is packaged with the program, in the bin directory.
+   program with those particular options and settings.  Simple template scripts
+   for Bash and Windows are packaged with the program, in the bin directory.
 
    When printing a document with closely-cropped pages it may be necessary to
    use options such as "Fit to Printable Area".  It may also be necessary to

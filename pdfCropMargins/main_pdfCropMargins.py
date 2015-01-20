@@ -94,7 +94,7 @@ pyPdfLocal = False
 # import the local pyPdf.  This works for simple options which are either set
 # or not.  Note that importing is now dependent on sys.argv (even though it
 # shouldn't make a difference in this application).
-if "--pyPdfLocal" in sys.argv or "-pl" in sys.argv:
+if "--pyPdfLocal" in sys.argv or "-pdl" in sys.argv:
     pyPdfLocal = True
 
 

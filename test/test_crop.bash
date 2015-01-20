@@ -4,14 +4,16 @@
 # Text descriptions are echoed and then visual inspection must be used to
 # verify the result.
 #
-# Note that the PDF files themselves are written by other people and so are not
-# distributed with this program.  To use this script you need to create a
-# directory of PDF test files, where each file's prefix determines what options
-# will be tested on the file.  At least one file should have a space in the
-# filename.  Exactly one file should have the prefix "single"; that file will
-# be used to test options (like naming the output file) which only need to be
-# tested for one PDF file.  Set the variable TEST_PDFS_DIR below to the name of
-# the directory containing these PDFs.
+# Test coverage is currently just basic features.
+#
+# Note that the PDF test files themselves are written by other people and so
+# are not distributed with this program.  To use this script you need to create
+# a directory of PDF test files, where each file's prefix determines what
+# options will be tested on the file.  At least one file should have a space in
+# the filename.  Exactly one file should have the prefix "single"; that file
+# will be used to test options (like naming of the output file) which only need
+# to be tested for a single PDF file.  Set the variable TEST_PDFS_DIR below to
+# the name of the directory containing these PDFs.
 #
 # regular_* -- regular text PDF files
 # regular_arxiv* -- regular text file from archive.org with date in the margin
@@ -20,8 +22,9 @@
 # samesize_* -- documents with different sized pages, test making all the same, '-s'
 #
 # Note that on Windows the testing script is assumed to be run from Cygwin.
-# The Cygwin versin of pdftoppm is currently (Jan 2015) in the poppler package.
-# Poppler is also available as a Windows package.
+# When PYTHON_OS is set to "Windows", though, the Windows version of Python is
+# invoked to run pdfCropMargins.py.  The Cygwin versin of pdftoppm is currently
+# (Jan 2015) in the poppler package.
 
 OPTS="-v" # Extra pdfCropMargins options to pass in.
 PYTHON_OS="Linux" # Can be Linux, Windows, or Cygwin; the version of Python to test.
@@ -43,7 +46,7 @@ if [ "$PYTHON_OS" == "Windows" ]; then
    PYTHON2="/cygdrive/c/Python27/python.exe"
    PYTHON3="/cygdrive/c/Python3?/python.exe" # globs to any 3?, assume just one
    PDF_READER="/cygdrive/c/Program Files*/Adobe/Reader 11.0/Reader/AcroRd32.exe"
-   PDF_READER=$(echo $PDF_READER) # expand glob
+   PDF_READER=$(echo $PDF_READER) # expands glob
    PDF_OPTIONS="/n /s"
    PROG_PATH=$(cygpath -w "$PROG_PATH") # convert argument to a Windows path
    TEST_PDFS_DIR=$(cygpath -w "$TEST_PDFS_DIR") # convert another argument
@@ -51,7 +54,7 @@ elif [ "$PYTHON_OS" == "Cygwin" ]; then
    PYTHON2="python2"
    PYTHON3="python3"
    PDF_READER="/cygdrive/c/Program Files*/Adobe/Reader 11.0/Reader/AcroRd32.exe"
-   PDF_READER=$(echo $PDF_READER) # expand glob
+   PDF_READER=$(echo $PDF_READER) # expands glob
    PDF_OPTIONS="/n /s"
 elif [ "$PYTHON_OS" == "Linux" ]; then
    PYTHON2="python2"
@@ -69,7 +72,6 @@ IFS="$(printf ' \n\t')" # Restore IFS
 # Utility functions.
 #
 
-
 useColors=true
 # These colors are for a dark background, like the default Cygwin Bash window.
 if $useColors; then
@@ -86,7 +88,7 @@ else
 fi
 
 
-indentLevel="" # global indent level, to echo indented levels
+indentLevel="" # the global indent level, to echo at indented levels
 
 function echoInfo {
    echo -e "$indentLevel${cInfo}${1}${cEnd}"
@@ -112,9 +114,10 @@ function get_test_pdf_files {
 
 function afterThenBeforeDisplay {
    # Usage: afterThenBeforeDisplay <afterPDF> <beforePDF>
-   # 
-   # The after version is displayed first so if the displayer is opening separate
-   # windows it will put the before on top of the after version.
+   #
+   # The after-cropping version is displayed first so if the displayer is
+   # opening separate windows it will put the before on top of the after
+   # version.
    "$PDF_READER" $PDF_OPTIONS "$1" &
    sleep 0.5
    "$PDF_READER" $PDF_OPTIONS "$2"
@@ -140,6 +143,9 @@ function returnToContinue {
 # Testing functions.
 #
 
+# The man page excerpts below are included roughly with the function that tests
+# those features.  After the function definitions there is a loop for running
+# them with various setups.
 
 function testRegularAndScanned {
    #   PDF_FILE              The pathname of the PDF file to crop. Use quotes
