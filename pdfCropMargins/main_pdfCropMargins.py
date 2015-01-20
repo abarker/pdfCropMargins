@@ -48,27 +48,6 @@ or
 # origin in PIL images is the upper left going down.  Also, the bounding box
 # routine of PIL returns ltrb instead of lbrt.  Keep in mind that the program
 # needs to make these conversions when rendering explicitly to images.
-#
-# Possible enhancements:
-#
-#    0) Consider the method discussed here, which uses Ghostscript but doesn't
-#    just modify the CropBox, etc.
-#    http://stackoverflow.com/questions/10417151/pdf-remove-white-margins Also
-#    how to translate with Ghostscript:
-#    http://stackoverflow.com/questions/12484353/how-to-crop-a-section-of-a-pdf-file-to-png-using-ghostscript/12485020#12485020
-#
-#    1) See pdfxchange docs for how to make it batch-process a PDF to images?
-#
-#    2) Have option for using an arbitrary box for saving restore data, not
-#    just ArtBox.  Downside of option is that we have to know which box was
-#    used, i.e., save it in the Producer string...
-#
-#    3) Have a routine to check all filenames and args passed in to external
-#    commands.  Could start with a do-nothing routine, but ignore for now, not
-#    that important.
-#
-#    4) Maybe allow for multiple PDF file arguments, and crop each one with the
-#    same settings.
 
 from __future__ import print_function, division
 import sys
@@ -103,26 +82,12 @@ def importLocalPyPdf():
     global PdfFileWriter, PdfFileReader
     global NameObject, createStringObject, RectangleObject, FloatObject
     sys.path.insert(0, projectRootDirectory) # package is in project root directory
-    oldLocal = False
-    if oldLocal: 
-        # TODO remove this if branch after more testing
-        if pythonVersion[0] == "2":
-            from mstamy2_PyPDF2_7da5545.PyPDF2 import PdfFileWriter, PdfFileReader
-            from mstamy2_PyPDF2_7da5545.PyPDF2.generic import \
-                NameObject, createStringObject, RectangleObject, FloatObject
-            from mstamy2_PyPDF2_7da5545.PyPDF2.utils import PdfReadError
-        else: # Python 3
-            from mstamy2_PyPDF2_7da5545_py3.PyPDF2 import PdfFileWriter, PdfFileReader
-            from mstamy2_PyPDF2_7da5545_py3.PyPDF2.generic import \
-                NameObject, createStringObject, RectangleObject, FloatObject
-            from mstamy2_PyPDF2_7da5545_py3.PyPDF2.utils import PdfReadError
-    else: # newer version, runs with both Python 2 and 3
-        from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2 import \
-                PdfFileWriter, PdfFileReader
-        from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2.generic import \
-            NameObject, createStringObject, RectangleObject, FloatObject
-        from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2.utils import \
-                PdfReadError
+    from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2 import \
+            PdfFileWriter, PdfFileReader
+    from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2.generic import \
+        NameObject, createStringObject, RectangleObject, FloatObject
+    from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2.utils import \
+            PdfReadError
     del sys.path[0] # restore the sys.path
     return
 
