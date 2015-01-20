@@ -35,7 +35,7 @@ Perl script pdfcrop except with many more options.
 
 There are only a few hard dependencies.
 
-1. Python version 2.7 or later.
+##### 1. Python version 2.7 or later.
 
    On **Linux** Python should be standard in most distributions.  The
    python-imaging package may need to be installed to get PIL or Pillow (which
@@ -58,20 +58,20 @@ There are only a few hard dependencies.
    with the program.  If the import fails the program will revert to the local
    version.
 
-2. Either pdftoppm or Ghostscript (though a locally-packaged pdftoppm
-executable should automatically work on Windows Python as a fallback).
+##### 2. Either pdftoppm or Ghostscript (though a locally-packaged pdftoppm
+##### executable should automatically work on Windows Python as a fallback).
 
-   #### Ghostscript
+   **Ghostscript**
 
    Ghostscript is standard in most Linux distributions, and is easy to install
    on Windows and in Cygwin.  The Windows install page is at
-   http://www.ghostscript.com/download/gsdnld.html The non-commercial GPL
+   http://www.ghostscript.com/download/gsdnld.html and the non-commercial GPL
    version should work fine for most people.
 
-   #### pdftoppm
+   **pdftoppm**
 
    The pdftoppm program is standard in most Linux distributions, and is easy to
-   install in Cygwin.  It is currently part of the Poppler pdf tools, so that
+   install in Cygwin.  It is currently part of the Poppler PDF tools, so that
    package should be installed.
 
    In Windows pdftoppm is not as easy to install, but a local version of
@@ -85,11 +85,6 @@ executable should automatically work on Windows Python as a fallback).
    If you never use Windows or the locally-packaged Windows version of pdftoppm
    you can remove the entire `pdftoppm_windows_local` directory to save around
    4M of space.
-
-3. Options that require direct rendering of the PDF need PIL or Pillow.
-
-   This depencency holds in all cases *except* when Ghostscript is available
-   and the '-gs' option is selected to let Ghostscript find the bounding boxes.
 
 ## Installing
 
