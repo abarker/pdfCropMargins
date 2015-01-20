@@ -73,11 +73,11 @@ Description:
    Here is a simple example of cropping a file named document.pdf and writing
    the cropped output-document to a file named croppedDocument.pdf:
 
-   \a\a\apdfCropMargins document.pdf -o croppedDocument.pdf
+   \a\a\apdfCropMargins.py document.pdf -o croppedDocument.pdf
 
    or
 
-   \a\a\apython pdfCropMargins document.pdf -o croppedDocument.pdf
+   \a\a\apython pdfCropMargins.py document.pdf -o croppedDocument.pdf
 
    The latter form is necessary if your system does not automatically recognize
    and execute Python programs.  If no destination is provided a filename will
@@ -96,25 +96,21 @@ Description:
    pdfCropMargins do not by default alter the ArtBox.  This allows for an
    approximate "restore to original margin-sizes" option ('--restore') which
    simply copies the saved values back to the MarginBox and CropBox.  Note,
-   though, that this assumes the ArtBox is unused (it is very rarely used).
-   Most users should find these default settings convenient, but several
-   options are available to change the default behavior.
+   though, that this assumes the ArtBox is unused (it is rarely used, and this
+   feature can be turned off with the -A option).
 
    These defaults are designed to reduce the number of copies of a document
    which need to be saved.  This is especially useful if annotations,
-   highlighting, etc., are to be added to the document.  Suppose a document is
-   cropped and only the cropped version is saved.  Suppose that at some later
-   times the document is again cropped with pdfCropMargins and only the
-   re-cropped versions are saved.  It is still possible to recover at least an
-   approximate version of the original document's margin-formatting from these
-   cropped versions by using the '--restore' option (although the intermediate
-   cropping is lost).  Programs which change the "Producer" string in the PDF
-   may interfere with this feature.
+   highlighting, etc., are added to the document.  If a document is cropped
+   twice with this program it still stores the original margin settings.  At
+   least an approximate version of the original document's margin-formatting
+   can be recovered by using the '--restore' option.  Programs which change the
+   "Producer" string in the PDF may interfere with this feature.
 
    Below are several examples using more of the command-line options, each
    applied to an input file called doc.pdf.  The output filename is unspecified
    in these examples, so the program will automatically generate the filename
-   (an output filename can always be explicitly provided):
+   (or an output filename can always be explicitly provided):
 ^^f
 
      Crop doc.pdf so that all the pages are set to the same size and the
@@ -148,14 +144,15 @@ Description:
 
         pdfCropMargins -ap 5 -p 50 doc.pdf
 
-     Crop doc.pdf, renaming the cropped output file to doc.pdf and backing
-     up the original file as backup_doc.pdf.
+     Crop doc.pdf, re-naming the cropped output file doc.pdf and backing
+     up the original file in a file named backup_doc.pdf.
 
         pdfCropMargins -mo -pf -su "backup" doc.pdf
 
      Crop the margins of doc.pdf to 120% of their original size, increasing the
      margins.  Use Ghostscript to find the bounding boxes (in general this is
-     usually faster if available and no rendering operations are needed).
+     often faster if Ghostscript is available and no rendering operations are
+     needed).
 
         pdfCropMargins -p 120 -gs doc.pdf
 
@@ -179,7 +176,7 @@ Description:
 
      Try to restore doc.pdf to its original margins, assuming it was cropped
      with pdfCropMargins previously.  Note that the default output filename is
-     still named doc_cropped.pdf.
+     still named doc_cropped.pdf, even though it is the recovered file.
 
         pdfCropMargins -r doc.pdf
 
