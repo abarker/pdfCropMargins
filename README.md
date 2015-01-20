@@ -37,55 +37,55 @@ There are only a few hard dependencies.
 
 1. Python version 2.7 or later.
 
-On *Linux* Python should be standard in most distributions, but the
-python-imaging package may need to be installed to get PIL or Pillow.  A recent
-pyPdf (or a compatible fork) would be good, too, but there is a local version
-packaged with the program.  If the import fails the program will revert to the
-local version.
+   On *Linux* Python should be standard in most distributions, but the
+   python-imaging package may need to be installed to get PIL or Pillow.  A
+   recent pyPdf (or a compatible fork) would be good, too, but there is a local
+   version packaged with the program.  If the import fails the program will
+   revert to the local version.
 
-For *Windows* Python, be sure to install the Python Imaging Library (PIL or
-Pillow) or use a package like Python(x,y) where you can easily add it as a
-plugin.  A recent pyPdf (or a compatible fork) would be good, too, but there
-is a local version packaged with the program.  If the import fails the program
-will revert to the local version.
+   For *Windows* Python, be sure to install the Python Imaging Library (PIL or
+   Pillow) or use a package like Python(x,y) where you can easily add it as a
+   plugin.  A recent pyPdf (or a compatible fork) would be good, too, but there
+   is a local version packaged with the program.  If the import fails the
+   program will revert to the local version.
 
-For *Cygwin* Python, be sure to install the python-imaging package with Python
-Imaging Library (PIL or Pillow).  A recent pyPdf (or a compatible fork) would
-be good, too, but there is a local version packaged with the program.  If the
-import fails the program will revert to the local version.
+   For *Cygwin* Python, be sure to install the python-imaging package with
+   Python Imaging Library (PIL or Pillow).  A recent pyPdf (or a compatible
+   fork) would be good, too, but there is a local version packaged with the
+   program.  If the import fails the program will revert to the local version.
 
 2. Either pdftoppm or Ghostscript (though a locally-packaged pdftoppm
 executable should automatically work on Windows Python as a fallback).
 
-### Ghostscript
+   #### Ghostscript
 
-Ghostscript is standard in most Linux distributions, and is easy to install
-on Windows and in Cygwin.  The Windows install page is at
-   http://www.ghostscript.com/download/gsdnld.html
-The non-commercial GPL version should work fine for most people.
+   Ghostscript is standard in most Linux distributions, and is easy to install
+   on Windows and in Cygwin.  The Windows install page is at
+   http://www.ghostscript.com/download/gsdnld.html The non-commercial GPL
+   version should work fine for most people.
 
-### pdftoppm
+   #### pdftoppm
 
-The pdftoppm program is standard in most Linux distributions, and is easy to
-install in Cygwin.  It is currently part of the Poppler pdf tools, so that
-package should be installed.
+   The pdftoppm program is standard in most Linux distributions, and is easy to
+   install in Cygwin.  It is currently part of the Poppler pdf tools, so that
+   package should be installed.
 
-In Windows pdftoppm is not as easy to install, but a local version of pdftoppm
-comes packaged the pdfCropMargins program.  It should be automatically detected
-on Windows Python.  Note that the local version only runs when pdfCropMargins
-is run with Windows Python.  It does not work when pdfCropMargins is run from
-Cygwin Python (but Poppler is easy to install in Cygwin).  It does work from
-Windows Python when launched from either a Windows command prompt or from a
-Cygwin command prompt.
+   In Windows pdftoppm is not as easy to install, but a local version of
+   pdftoppm comes packaged the pdfCropMargins program.  It should be
+   automatically detected on Windows Python.  Note that the local version only
+   runs when pdfCropMargins is run with Windows Python.  It does not work when
+   pdfCropMargins is run from Cygwin Python (but Poppler is easy to install in
+   Cygwin).  It does work from Windows Python when launched from either a
+   Windows command prompt or from a Cygwin command prompt.
 
-If you never use Windows or the locally-packaged Windows version of pdftoppm
-you can remove the entire `pdftoppm_windows_local` directory to save around 4M
-of space.
+   If you never use Windows or the locally-packaged Windows version of pdftoppm
+   you can remove the entire `pdftoppm_windows_local` directory to save around
+   4M of space.
 
 3. Options that require direct rendering of the PDF need PIL or Pillow.
 
-This depencency holds in all cases *except* when Ghostscript is available and
-the '-gs' option is selected to let Ghostscript find the bounding boxes.
+   This depencency holds in all cases *except* when Ghostscript is available
+   and the '-gs' option is selected to let Ghostscript find the bounding boxes.
 
 ## Installing
 
