@@ -35,7 +35,7 @@ Perl script pdfcrop except with many more options.
 
 There are only a few hard dependencies.
 
-**1**. **Python version 2.7 or later.**
+1. **Python version 2.7 or later.**
 
    On **Linux** Python should be standard in most distributions.  The
    python-imaging package may need to be installed to get PIL or Pillow (which
@@ -58,7 +58,7 @@ There are only a few hard dependencies.
    with the program.  If the import fails the program will revert to the local
    version.
 
-**2**. **Either pdftoppm or Ghostscript (though a locally-packaged pdftoppm
+2. **Either pdftoppm or Ghostscript (though a locally-packaged pdftoppm
    executable should automatically work on Windows Python as a fallback).**
 
    **Ghostscript**
