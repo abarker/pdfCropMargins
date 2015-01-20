@@ -35,7 +35,7 @@ Perl script pdfcrop except with many more options.
 
 There are only a few hard dependencies.
 
-1. **Python version 2.7 or later.**
+**1. Python version 2.7 or later.**
 
    On **Linux** Python should be standard in most distributions.  The
    python-imaging package may need to be installed to get PIL or Pillow (which
@@ -58,7 +58,7 @@ There are only a few hard dependencies.
    with the program.  If the import fails the program will revert to the local
    version.
 
-2. **Either pdftoppm or Ghostscript (though a locally-packaged pdftoppm
+**2. Either pdftoppm or Ghostscript (though a locally-packaged pdftoppm
    executable should automatically work on Windows Python as a fallback).**
 
    **Ghostscript**
@@ -88,17 +88,20 @@ There are only a few hard dependencies.
 
 ## Installing
 
-Unzip the program directory somewhere and run the script:
+Unzip the program directory somewhere.  You can then run the program with
+this command (change `PATH_TO_PROGRAM_DIR` to the path for your system):
 ```
 python PATH_TO_PROGRAM_DIR/pdfCropMargins-master/pdfCropMargins/pdfCropMargins.py 
 ```
-You can put a small shell script or batch file in your bin directory (or
-somewhere else in your PATH) to run the program simply from the command line.
-Template Linux and Windows scripts called `crop` are included in the project's
-bin directory.  Alternately, you can define an alias in your shell.
 
-To uninstall just delete the program directory and any shell scripts you
-created.
+For convenience you can put a small shell script or batch file in your bin
+directory (or somewhere else in your PATH) to easily run the program from the
+command line.  Template Linux and Windows scripts called `crop` are included in
+the project's bin directory -- just change the path in the script and copy it.
+Alternately, you can define an alias in your shell.
+
+To uninstall just delete the program directory (and any shell scripts you
+created).
 
 ## Documentation
 
