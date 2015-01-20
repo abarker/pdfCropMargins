@@ -37,22 +37,26 @@ There are only a few hard dependencies.
 
 1. Python version 2.7 or later.
 
-   On *Linux* Python should be standard in most distributions, but the
-   python-imaging package may need to be installed to get PIL or Pillow.  A
-   recent pyPdf (or a compatible fork) would be good, too, but there is a local
-   version packaged with the program.  If the import fails the program will
+   On **Linux** Python should be standard in most distributions.  The
+   python-imaging package may need to be installed to get PIL or Pillow (which
+   is not needed when the `-gs` option is used with Ghostscript).  A recent
+   version of pyPdf (or a compatible fork) would be good, too, but a local
+   version is packaged with the program.  If the import fails the program will
    revert to the local version.
 
-   For *Windows* Python, be sure to install the Python Imaging Library (PIL or
-   Pillow) or use a package like Python(x,y) where you can easily add it as a
-   plugin.  A recent pyPdf (or a compatible fork) would be good, too, but there
-   is a local version packaged with the program.  If the import fails the
-   program will revert to the local version.
+   For **Windows** Python, be sure to install the Python Imaging Library (PIL
+   or Pillow) or use a package like Python(x,y) where you can easily add it as
+   a plugin.  If using Ghostscript with the `-gs` option then PIL is not
+   required.  A recent version of pyPdf (or a compatible fork) would be good,
+   too, but a local version is packaged with the program.  If the import fails
+   the program will revert to the local version.
 
-   For *Cygwin* Python, be sure to install the python-imaging package with
-   Python Imaging Library (PIL or Pillow).  A recent pyPdf (or a compatible
-   fork) would be good, too, but there is a local version packaged with the
-   program.  If the import fails the program will revert to the local version.
+   For **Cygwin** Python, be sure to also install the python-imaging package
+   with Python Imaging Library (PIL or Pillow).  PIL is not needed when
+   Ghostscript is being used with the `-gs` option.  A recent version of pyPdf
+   (or a compatible fork) would be good, too, but a local version is packaged
+   with the program.  If the import fails the program will revert to the local
+   version.
 
 2. Either pdftoppm or Ghostscript (though a locally-packaged pdftoppm
 executable should automatically work on Windows Python as a fallback).
@@ -251,7 +255,9 @@ Description:
      There are many different ways to use this program. After finding a
      method which works well for a particular task or workflow pattern it is
      often convenient to make a simple shell script (batch file) which
-     invokes the program with those particular options and settings.
+     invokes the program with those particular options and settings. Simple
+     template scripts for Bash and Windows are packaged with the program, in
+     the bin directory.
 
      When printing a document with closely-cropped pages it may be necessary
      to use options such as "Fit to Printable Area". It may also be
