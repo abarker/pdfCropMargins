@@ -3,3 +3,6 @@ From: http://www.foolabs.com/xpdf/download.html
 
 About redistributing: http://www.foolabs.com/xpdf/about.html
 
+Note that several different PDF manipulation utilities come with the package,
+but all the binaries except pdftoppm have been deleted here to save space.
+

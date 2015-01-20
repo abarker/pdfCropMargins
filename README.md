@@ -78,10 +78,9 @@ Cygwin Python (but Poppler is easy to install in Cygwin).  It does work from
 Windows Python when launched from either a Windows command prompt or from a
 Cygwin command prompt.
 
-The program requires the Python package pyPdf (or a fork like pyPdf2).  Note,
-though, that a version of pyPdf2 is packaged with the program and it will
-revert to that if a system version is not found (or if the command-line option
---pyPdfLocal is set).
+If you never use Windows or the locally-packaged Windows version of pdftoppm
+you can remove the entire `pdftoppm_windows_local` directory to save around 4M
+of space.
 
 3. Options that require direct rendering of the PDF need PIL or Pillow.
 
