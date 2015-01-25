@@ -10,13 +10,14 @@ Perl script pdfcrop except with many more options.
 
 ## Features
 
-- Automatically detects the margins, and can crop a given percentage of them.
-- Can crop all the pages equally to give a uniform appearance (such as in
-  two-up).
+- Automatically detects the margins and can crop a given percentage of them.
+- Can crop all the pages to the same size to give a uniform appearance (such as
+  in two-up).
 - Works on Linux, Windows and Cygwin.
 - Works with either the pdftoppm program or with Ghostscript.
 - A version of pdftoppm for Windows is included.
-- Renders and analyzes the images, which allows it to deal with noisy images.
+- Renders and analyzes page images to find the bounding boxes, which allows it
+  to deal with noisy images.
 - Ghostscript can optionally be used to find the bounding boxes directly.
 - Can automatically apply a Ghostscript repair operation to attempt to fix
   corrupt PDF files.
@@ -48,7 +49,7 @@ There are only a few hard dependencies.
    or Pillow) or use a package like Python(x,y) where you can easily add it as
    a plugin.  If using Ghostscript with the `-gs` option then PIL is not
    required, but some options will not be available.  A recent version of pyPdf
-   (or a compatible fork) would be good, too, but a local  version of PyPDF2 is
+   (or a compatible fork) would be good, too, but a local version of PyPDF2 is
    packaged with the program.  If the import fails the program will revert to
    the local version.
 
@@ -56,7 +57,7 @@ There are only a few hard dependencies.
    with Python Imaging Library (PIL or Pillow).  PIL is not needed when
    Ghostscript is used with the `-gs` option, but some options will not be
    available.  A recent version of pyPdf (or a compatible fork) would be good,
-   too, but a local  version of PyPDF2 is packaged with the program.  If the
+   too, but a local version of PyPDF2 is packaged with the program.  If the
    import fails the program will revert to the local version.
 
 2. **Either pdftoppm or Ghostscript (though a locally-packaged pdftoppm
