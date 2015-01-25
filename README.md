@@ -74,10 +74,12 @@ There are only a few hard dependencies.
 
    The pdftoppm program is standard in most Linux distributions, and is easy to
    install in Cygwin.  It is currently part of the Poppler PDF tools, so that
-   package should be installed.
+   package should be installed on Linux and Cygwin.
 
-   In Windows pdftoppm is not as easy to install, but a local version of
-   pdftoppm comes packaged with the pdfCropMargins program.  It should be
+   In Windows pdftoppm is not as easy to install, but a collection of PDF tools
+   can be found at http://www.foolabs.com/xpdf/download.html which include
+   pdftoppm.  A local version of the pdftoppm Windows executable from that
+   collection comes packaged with the pdfCropMargins program.  It should be
    automatically detected on Windows Python.  Note that the local version only
    runs when pdfCropMargins is run with Windows Python.  It does not work when
    pdfCropMargins is run from Cygwin Python (but Poppler is easy to install in
