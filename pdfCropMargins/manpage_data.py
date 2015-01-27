@@ -502,7 +502,7 @@ cmdParser.add_argument("-A", "--noundosave", action="store_true", help="""
 cmdParser.add_argument("-gsf", "--gsFix", action="store_true", help="""
 
    Attempt to repair the input PDF file with Ghostscript before it is read-in
-   with pyPdf.  This requires that Ghostscript be available.  (See the general
+   with PyPdf.  This requires that Ghostscript be available.  (See the general
    description text above for the actual command that is run.)  This can also
    be used to automatically convert some PostScript files (.ps) to PDF for
    cropping.  The repaired PDF is written to a temporary file; the original PDF
@@ -623,7 +623,7 @@ cmdParser.add_argument("-i", "--showImages", action="store_true", help="""
 
 cmdParser.add_argument("-pyl", "--pyPdfLocal", action="store_true", help="""
 
-   Use a local copy of pyPdf rather than the system version.  By default the
+   Use a local copy of PyPdf rather than the system version.  By default the
    system version is used unless the import fails.  The local version may
    or may not be newer than the system version.^^n""")
 

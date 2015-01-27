@@ -41,14 +41,14 @@ There are only a few hard dependencies.
    On **Linux** Python should be standard in most distributions.  The
    python-imaging package may need to be installed to get PIL or Pillow.  If
    using Ghostscript with the `-gs` option then PIL is not required, but some
-   options will not be available.  A recent version of pyPdf (or a compatible
+   options will not be available.  A recent version of PyPdf (or a compatible
    fork) would be good, too, but a local version of PyPDF2 is packaged with the
    program.  If the import fails the program will revert to the local version.
 
    For **Windows** Python, be sure to install the Python Imaging Library (PIL
    or Pillow) or use a package like Python(x,y) where you can easily add it as
    a plugin.  If using Ghostscript with the `-gs` option then PIL is not
-   required, but some options will not be available.  A recent version of pyPdf
+   required, but some options will not be available.  A recent version of PyPdf
    (or a compatible fork) would be good, too, but a local version of PyPDF2 is
    packaged with the program.  If the import fails the program will revert to
    the local version.
@@ -56,7 +56,7 @@ There are only a few hard dependencies.
    For **Cygwin** Python, be sure to also install the python-imaging package
    with Python Imaging Library (PIL or Pillow).  PIL is not needed when
    Ghostscript is used with the `-gs` option, but some options will not be
-   available.  A recent version of pyPdf (or a compatible fork) would be good,
+   available.  A recent version of PyPdf (or a compatible fork) would be good,
    too, but a local version of PyPDF2 is packaged with the program.  If the
    import fails the program will revert to the local version.
 
