@@ -936,7 +936,8 @@ def mainCrop():
                 print("\nModifying the original file.")
                 break
             elif queryResult in ["n", "N"]:
-                print("\nNot modifying the original file.")
+                print("\nNot modifying the original file.  The cropped file is saved"
+                      " as:\n   {0}".format(outputDocFname))
                 args.modifyOriginal = False
                 break
             else:
