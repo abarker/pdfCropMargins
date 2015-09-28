@@ -968,13 +968,13 @@ def mainCrop():
         # Move (noclobber) the original file to the name for uncropped files.
         if not os.path.exists(generatedUncroppedFilename):
             if args.verbose: print("\nDoing a file move:\n   ", inputDocFname,
-                                   "\nmoving to\n   ", generatedUncroppedFilename)
+                                   "\nis moving to:\n   ", generatedUncroppedFilename)
             shutil.move(inputDocFname, generatedUncroppedFilename)
 
         # Move (noclobber) the cropped file to the original file's name.
         if not os.path.exists(inputDocFname):
             if args.verbose: print("\nDoing a file move:\n   ", outputDocFname,
-                                   "\nmoving to\n   ", inputDocFname)
+                                   "\nis moving to:\n   ", inputDocFname)
             shutil.move(outputDocFname, inputDocFname)
 
     # Handle any previewing which still needs to be done.
