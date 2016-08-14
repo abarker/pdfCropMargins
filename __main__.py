@@ -24,9 +24,9 @@ anywhere.
 import sys, os
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0, os.path.join(dir_path, "src"))
+sys.path.insert(0, os.path.join(dir_path, "src", "pdfCropMargins"))
 
-from pdfCropMargins.pdfCropMargins import main
+from pdfCropMargins import main
 
 if __name__ == "__main__":
    main()

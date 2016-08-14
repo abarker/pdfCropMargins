@@ -1,3 +1,4 @@
+
 # pdfCropMargins
 
 ## Description
@@ -95,7 +96,7 @@ There are only a few hard dependencies.
 Unzip the program directory somewhere.  You can then run the program with
 this command (change `PATH_TO_PROGRAM_DIR` to the path for your system):
 ```
-python PATH_TO_PROGRAM_DIR/pdfCropMargins-master/pdfCropMargins/pdfCropMargins.py 
+python PATH_TO_PROGRAM_DIR/pdfCropMargins-master/src/pdfCropMargins
 ```
 
 For convenience you can put a small shell script or batch file in your bin

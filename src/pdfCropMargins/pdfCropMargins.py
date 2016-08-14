@@ -25,30 +25,27 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 =====================================================================
 
+A command-line application to crop the margins of PDF files.  Cropping the
+margins can make it easier to read the pages of a PDF document -- whether the
+document is printed or displayed on a screen -- because the fonts appear
+larger.  Margin-cropping is also useful at times when one PDF is included in
+another as a graphic.  Many options are available.
+
+To see the formatted documentation, run
+   pdfCropMargins -h | more
+or
+   python pdfCropMargins -h | more
+
 This is the initial starting script, but it just calls mainCrop from
-main_pdfCropMargins.py, which does the real work.  Its only purpose is to handle
-errors and make sure that any temp directories are cleaned up.  It tries to
-gracefully handle ^C characters from the user (KeyboardInterrupt) to stop the
-program and clean up.
+main_pdfCropMargins.py, which does the real work.  Its only purpose is to
+handle errors and make sure that any temp directories are cleaned up.  It tries
+to gracefully handle ^C characters from the user (KeyboardInterrupt) to stop
+the program and clean up.
 
 """
 
-# TODO:
-#
-# 1) Make a separate src directory and convert to use setuptools and pip.  The
-#    option to bundle in the Windows binary of the cropper should be an extra
-#    option to pip (if it's not hard to set up like that).
-# 
-# 2) Define a command-line option which will print out either a bash script
-#    or a dos script that they can modify and use.  Note that you can probably
-#    detect the location of the program from within the program, and write the
-#    shell script to call it!
-#
-# 3) Put up on PyPI.
- 
 from __future__ import print_function, division
 import sys
-
 
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
@@ -69,7 +66,7 @@ def main():
     # Imports are done here inside the try block so some ugly (and useless)
     # traceback info is avoided on user's ^C (KeyboardInterrupt).
     try:
-        import external_program_calls as ex # Creates the tmp dir as side effect.
+        import external_program_calls as ex # Creates tmp dir as side effect.
         cleanupAndExit = ex.cleanupAndExit # Switch to the real one, deletes temp dir.
         import main_pdfCropMargins # Imports external_program_calls, don't do first.
         main_pdfCropMargins.mainCrop() # Run the actual program.
@@ -94,12 +91,11 @@ def main():
         cleanupIgnoringKeyboardInterrupt(exitCode)
     return
 
-
-##
-## Run as a script.
-##
-
+#
+# Run when invoked as a script.
+#
 
 if __name__ == "__main__":
+
     main()
 

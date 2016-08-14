@@ -14,7 +14,7 @@
 # -pf            use 'cropped_' as a prefix (not suffix) on default output files
 # "$@"           pass along any other command-line options unchanged
 
-python ~/SET_THIS_PATH_TO_THE_LOCATION_ON_YOUR_SYSTEM/pdfCropMargins/pdfCropMargins.py \
+python ~/SET_THIS_PATH_TO_THE_LOCATION_ON_YOUR_SYSTEM/src/pdfCropMargins \
    -v \
    -pv acroread \
    -u -s \

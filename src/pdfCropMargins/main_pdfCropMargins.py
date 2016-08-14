@@ -21,16 +21,14 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 =====================================================================
 
-A command-line application to crop the margins of PDF files.  Cropping the
-margins can make it easier to read the pages of a PDF document -- whether the
-document is printed or displayed on a screen -- because the fonts appear
-larger.  Margin-cropping is also useful at times when one PDF is included in
-another as a graphic.  Many options are available.
+This script is not the starting point script.  The starting point for the
+pdfCropMargins program is to run the the pdfCropMargins.py script.
+Equivalently, import the main() function from that script and run it.  The
+source directory and the project root directories have __main__.py files which
+do this automatically when Python is invoked on their directories.
 
-To see the formatted documentation, run
-   pdfCropMargins -h | more
-or
-   python pdfCropMargins -h | more
+Note that this application is not a package, just a bunch of scripts in a
+directory without any __init__.py file.
 
 """
 

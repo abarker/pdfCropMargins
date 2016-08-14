@@ -11,7 +11,7 @@ REM You can add any extra options that you always use in the final line where
 REM the script is executed.  Currently the options -v, -u, -s, and -pf are
 REM selected.
 
-set PROGPATH="C:\INSERT_PATH_HERE\pdfCropMargins-master\pdfCropMargins\pdfCropMargins.py"
+set PROGPATH="C:\INSERT_PATH_HERE\pdfCropMargins-master\src\pdfCropMargins"
 set PYEXE="python"
 
 %PYEXE% %PROGPATH% -v -u -s -pf %*
