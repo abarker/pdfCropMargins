@@ -180,7 +180,7 @@ def convertWindowsPathToCygwin(path):
 
 # Set some additional variables that this module exposes to other modules.
 programCodeDirectory = getDirectoryLocation()
-projectRootDirectory = getParentDirectory(programCodeDirectory)
+projectSrcDirectory = getParentDirectory(programCodeDirectory)
 
 # The global directory that all temporary files are written to.  Other modules
 # all use the definition from this module.  This makes it easy to clean up all
@@ -449,7 +449,7 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
                   "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.",
                   file=sys.stderr)
 
-        path = os.path.join(projectRootDirectory, "pdftoppm_windows_local",
+        path = os.path.join(projectSrcDirectory, "pdftoppm_windows_local",
                                                                 "xpdfbin-win-3.04")
 
         pdftoppmExecutable32 = os.path.join(path, "bin32", "pdftoppm.exe")

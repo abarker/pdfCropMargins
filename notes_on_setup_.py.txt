@@ -1,0 +1,35 @@
+
+"""
+Currently just notes for using.
+
+See 
+https://packaging.python.org/distributing/#setup-args
+
+To include a data file (presumably executable counts) you can use this:
+
+    package_data={
+        'sample': ['package_data.dat'],
+        },
+
+    Detailed info:
+       https://setuptools.readthedocs.io/en/latest/setuptools.html#including-data-files
+
+To include an executable script in a path, use this:
+
+    console_scripts
+
+        entry_points={
+            'console_scripts': [
+                'sample=sample:main',
+            ],
+        },
+
+    Use “console_script” entry points to register your script interfaces. You
+    can then let the toolchain handle the work of turning these interfaces into
+    actual scripts [2]. The scripts will be generated during the install of
+    your distribution.
+
+    For more information, see Automatic Script Creation from the setuptools
+    docs.
+    https://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation
+

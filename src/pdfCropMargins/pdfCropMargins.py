@@ -33,6 +33,19 @@ program and clean up.
 
 """
 
+# TODO:
+#
+# 1) Make a separate src directory and convert to use setuptools and pip.  The
+#    option to bundle in the Windows binary of the cropper should be an extra
+#    option to pip (if it's not hard to set up like that).
+# 
+# 2) Define a command-line option which will print out either a bash script
+#    or a dos script that they can modify and use.  Note that you can probably
+#    detect the location of the program from within the program, and write the
+#    shell script to call it!
+#
+# 3) Put up on PyPI.
+ 
 from __future__ import print_function, division
 import sys
 

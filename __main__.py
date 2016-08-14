@@ -21,6 +21,9 @@ anywhere.
 
 """
 
+import sys
+sys.path.insert(0, "./src")
+
 from pdfCropMargins.pdfCropMargins import main
 
 if __name__ == "__main__":

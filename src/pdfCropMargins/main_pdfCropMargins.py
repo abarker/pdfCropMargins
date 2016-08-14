@@ -34,6 +34,10 @@ or
 
 """
 
+# Possible useful feature to add: Have -ea and -oa options that do absolute
+# crops on even and odd differently.  Similarly, -ea4 and -oa4 for individual
+# margins.  Similarly -eap and -oap for even vs. odd absolute pre-crops.
+
 # Some general notes, useful for reading the code.
 #
 # Margins are conveniently described as left, bottom, right, and top, but boxes
@@ -61,7 +65,7 @@ import time
 
 import external_program_calls as ex
 pythonVersion = ex.pythonVersion
-projectRootDirectory = ex.projectRootDirectory
+projectSrcDirectory = ex.projectSrcDirectory
 
 ##
 ## Try to import the system pyPdf.  If that fails or if the '--pyPdfLocal'
@@ -81,7 +85,7 @@ def importLocalPyPdf():
     """Import the pyPdf package that is locally bundled with the program."""
     global PdfFileWriter, PdfFileReader
     global NameObject, createStringObject, RectangleObject, FloatObject
-    sys.path.insert(0, projectRootDirectory) # package is in project root directory
+    sys.path.insert(0, projectSrcDirectory) # package is in project root directory
     from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2 import \
             PdfFileWriter, PdfFileReader
     from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2.generic import \

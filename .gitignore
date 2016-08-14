@@ -1,5 +1,38 @@
+# See 'man gitignore'.
+#
+# Note that if a file or dir is already being tracked in git and you put it
+# in this file you still need to remove the tracking with:
+#    git rm --cache <filename>
+# or
+#    git rm -r --cache <dirname>
+# You can use regular rm, too, but it will remove the file or dir on the drive.
+# Use this command to see what files are being tracked:
+#    git ls-files
 
-*.pyc
-*.pyo
+# Rope
 .ropeproject
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Sphinx documentation build directory.
+_build
+
+# Setuptools stuff.
+*.egg-info
+
+# Cache for py.test.
+.cache
+
+# Vim swap.
+*.swp
+
+# Installer logs.
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Distribution directory from setup.py sdist.
+/dist
+!*/dist # Needed for older versions of git (don't ignore dist deeper than root level).
 
