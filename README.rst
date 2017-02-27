@@ -2,9 +2,6 @@
 pdfCropMargins
 ==============
 
-Description
------------
-
 The pdfCropMargins program is a command-line application to automatically crop
 the margins of PDF files.  Cropping the margins can make it easier to read the
 pages of a PDF document -- whether the document is printed or displayed on a
@@ -75,8 +72,8 @@ The ``pip`` program should be installed with Python.  You can run ``python -m
 ensurepip`` if it is not, or install from the repos in Linux.
 
 The package can also be run directly from its source code directory.  In that
-case the ``PyPDF2`` Python package must be installed.  The ``pillow`` imaging
-package is also necessary if ``Ghostscript`` is unavailable as well as for
+case the PyPDF2 Python package must be installed.  The Pillow imaging
+package is also necessary if Ghostscript is unavailable as well as for
 certain advanced features that use explicit image analysis.
 
 Running
