@@ -42,7 +42,7 @@ py_modules = [os.path.splitext(
 
 # Get the long description from the README.rst file.
 current_dir = os.path.abspath(os.path.dirname(__file__))
-with codecs.open(os.path.join(current_dir, "README.md"), encoding="utf-8") as f:
+with codecs.open(os.path.join(current_dir, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
