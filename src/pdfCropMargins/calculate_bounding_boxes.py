@@ -34,7 +34,7 @@ import os
 import glob
 import shutil
 import time
-import external_program_calls as ex
+from . import external_program_calls as ex
 
 #
 # Image-processing imports.
@@ -174,7 +174,7 @@ def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
                 # tmpImageFile.close() # see above comment
                 if currNumTries > maxNumTries: raise # re-raise exception
                 time.sleep(timeBetweenTries)
-        
+
         # Apply any blur or smooth operations specified by the user.
         for i in range(args.numBlurs):
             im = im.filter(ImageFilter.BLUR)

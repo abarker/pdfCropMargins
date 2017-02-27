@@ -6,7 +6,7 @@ be executed by running Python on the directory containing it.
 
 """
 
-from pdfCropMargins import main
+from .pdfCropMargins import main
 
 main()
 

@@ -66,9 +66,9 @@ def main():
     # Imports are done here inside the try block so some ugly (and useless)
     # traceback info is avoided on user's ^C (KeyboardInterrupt).
     try:
-        import external_program_calls as ex # Creates tmp dir as side effect.
+        from . import external_program_calls as ex # Creates tmp dir as side effect.
         cleanupAndExit = ex.cleanupAndExit # Switch to the real one, deletes temp dir.
-        import main_pdfCropMargins # Imports external_program_calls, don't do first.
+        from . import main_pdfCropMargins # Imports external_program_calls, don't do first.
         main_pdfCropMargins.mainCrop() # Run the actual program.
     except KeyboardInterrupt:
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",

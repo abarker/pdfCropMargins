@@ -28,7 +28,8 @@ source directory and the project root directories have __main__.py files which
 do this automatically when Python is invoked on their directories.
 
 Note that this application is not a package, just a bunch of scripts in a
-directory without any __init__.py file.
+directory but it has an __init__.py file to make it easy for setuptools
+to find the startup module.
 
 """
 
@@ -61,7 +62,7 @@ import time
 ## Import the module that calls external programs and gets system info.
 ##
 
-import external_program_calls as ex
+from . import external_program_calls as ex
 pythonVersion = ex.pythonVersion
 projectSrcDirectory = ex.projectSrcDirectory
 
@@ -70,16 +71,18 @@ projectSrcDirectory = ex.projectSrcDirectory
 ## option was set then revert to the appropriate local version.
 ##
 
-pyPdfLocal = False
+pyPdfLocal = False # TODO delete cleanup
 # Peek at the command line (before fully parsing it later) to see if we should
 # import the local pyPdf.  This works for simple options which are either set
 # or not.  Note that importing is now dependent on sys.argv (even though it
 # shouldn't make a difference in this application).
 if "--pyPdfLocal" in sys.argv or "-pdl" in sys.argv:
-    pyPdfLocal = True
+    #pyPdfLocal = True
+    pyPdfLocal = False # NEVER USE LOCAL
 
 
 def importLocalPyPdf():
+    raise Exception("Local PyPDF copy is no longer provided.  Install from pip.")
     """Import the pyPdf package that is locally bundled with the program."""
     global PdfFileWriter, PdfFileReader
     global NameObject, createStringObject, RectangleObject, FloatObject
@@ -98,29 +101,29 @@ if pyPdfLocal:
     importLocalPyPdf()
 else:
     try:
-        from pyPdf import PdfFileWriter, PdfFileReader # the system's pyPdf
-        from pyPdf.generic import \
+        from PyPDF2 import PdfFileWriter, PdfFileReader # the system's pyPdf
+        from PyPDF2.generic import \
             NameObject, createStringObject, RectangleObject, FloatObject
-        from pyPdf.utils import PdfReadError
+        from PyPDF2.utils import PdfReadError
     except ImportError:
         print("\nWarning from pdfCropMargins: No system pyPdf Python package was"
               "\nfound.  Reverting to an older, local version packaged with this"
               "\nprogram.  To silence this warning, use the '--pyPdfLocal'"
               "\n(or '-pyl') option on the command line.\n", file=sys.stderr)
-        importLocalPyPdf()
+        importLocalPyPdf() # TODO delete cleanup local stuff
 
 ##
 ## Import the general function for calculating a list of bounding boxes.
 ##
 
-from calculate_bounding_boxes import getBoundingBoxList
+from .calculate_bounding_boxes import getBoundingBoxList
 
 ##
 ## Import the prettified argparse module and the text of the manpage documentation.
 ##
 
-from prettified_argparse import parseCommandLineArguments
-from manpage_data import cmdParser
+from .prettified_argparse import parseCommandLineArguments
+from .manpage_data import cmdParser
 
 ##
 ## Some general strings used by the program.
@@ -351,7 +354,7 @@ def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCro
 
     # Before calculating the crops we modify the percentRetain and
     # absoluteOffset values for all the pages according to any specified
-    # rotations for the pages.  This is so, for example, uniform cropping is 
+    # rotations for the pages.  This is so, for example, uniform cropping is
     # relative to what the user actually sees.
     rotatedPercentRetain = [modBoxForRotation(args.percentRetain, angleList[i])
                                                          for i in range(numPages)]

@@ -57,6 +57,8 @@ systemOs = platform.system()
 if systemOs[:6].lower() == "cygwin":
     systemOs = "Cygwin"
 
+systemOs = "Windows" # Uncomment ONLY to test Windows on Linux with Wine.
+
 # Find the number of bits the OS supports.
 if sys.maxsize > 2**32: systemBits = 64 # Supposed to work on Macs, too.
 else: systemBits = 32
@@ -114,7 +116,7 @@ def getDirectoryLocation():
     this, but this way seems reasonably robust and portable.  (As long as
     the directory is a package the import will always look at the current
     directory first.)"""
-    import directory_locator
+    from . import directory_locator
     return getCanonicalAbsolueExpandedDirname(directory_locator.__file__)
 
 
@@ -137,7 +139,7 @@ def samefile(path1, path2):
     """Test if paths refer to the same file or directory."""
     if systemOs == "Linux" or systemOs == "Cygwin":
         return os.path.samefile(path1, path2)
-    return (getCanonicalAbsoluteExpandedPath(path1) == 
+    return (getCanonicalAbsoluteExpandedPath(path1) ==
             getCanonicalAbsoluteExpandedPath(path2))
 
 
@@ -256,7 +258,7 @@ def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
     # be sure to capture the stderr along with the stdout.
 
     printOutput = False # Useful for debugging to set True.
-    
+
     usePopen = True # Needs to be True to set ignoreCalledProcessErrors True
     if usePopen: # Use lower-level Popen call.
         p = subprocess.Popen(commandList, stdout=subprocess.PIPE,
@@ -400,7 +402,7 @@ def initAndTestGsExecutable(exitOnFail=False):
         gs32 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin32c.exe")
         if gs32: gs32 = gs32[0] # just take the first one for now
         else: gs32 = ""
-        gsExecs = (("Windows", gs64, gs32), ("Cygwin", 
+        gsExecs = (("Windows", gs64, gs32), ("Cygwin",
                   convertWindowsPathToCygwin(gs64), convertWindowsPathToCygwin(gs32)))
         gsExecutable = findAndTestExecutable(gsExecs, ["-dSAFER", "-v"], "Ghostscript")
 
@@ -440,8 +442,8 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
 
     # If we're on Windows and either no pdftoppm was found or preferLocal was
     # specified then use the local pdftoppm.exe distributed with the project.
-    # The local pdftoppm.exe can be tested on Linux with Wine using a shell
-    # script named pdftoppm in the PATH, but it isn't coded in.
+    # The local pdftoppm.exe can be tested on Linux with Wine.  Just hardcode
+    # the system type to "Windows" and it automatically runs Wine on the exe.
     if preferLocal or (not pdftoppmExecutable and systemOs == "Windows"):
         if not preferLocal:
             print("\nWarning from pdfCropMargins: No system pdftoppm was found."
@@ -449,8 +451,9 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
                   "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.",
                   file=sys.stderr)
 
-        path = os.path.join(projectSrcDirectory, "pdftoppm_windows_local",
-                                                                "xpdfbin-win-3.04")
+        #path = os.path.join(projectSrcDirectory, "pdftoppm_windows_local",
+        #                                                        "xpdfbin-win-3.04")
+        path = os.path.join(projectSrcDirectory, "pdfCropMargins", "xpdfbin-win-3.04")
 
         pdftoppmExecutable32 = os.path.join(path, "bin32", "pdftoppm.exe")
         pdftoppmExecutable64 = os.path.join(path, "bin64", "pdftoppm.exe")
@@ -458,6 +461,13 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
         # to allow the local version to run from there.
         pdftoppmLocalExecs = (("Windows", pdftoppmExecutable64, pdftoppmExecutable32),
                               ("Cygwin",  pdftoppmExecutable64, pdftoppmExecutable32),)
+
+        if not (os.path.exists(pdftoppmExecutable32) and
+                    os.path.exists(pdftoppmExecutable64)):
+            print("Error in pdfCropMargins: The locally packaged executable files were"
+                  " not found.", file=sys.stderr)
+            if exitOnFail:
+                cleanupAndExit(1)
 
         ignoreCalledProcessErrors = True # Local Windows pdftoppm returns code 99 but works.
         localPdftoppmExecutable = findAndTestExecutable(
@@ -657,7 +667,7 @@ def renderPdfFileToImageFiles_Ghostscript_bmp(pdfFileName, rootOutputFilePath,
     # http://ghostscript.com/doc/current/Devices.htm#File_formats
     # http://ghostscript.com/doc/current/Devices.htm#BMP
     # These are the BMP devices:
-    #    bmpmono bmpgray bmpsep1 bmpsep8 bmp16 bmp256 bmp16m bmp32b 
+    #    bmpmono bmpgray bmpsep1 bmpsep8 bmp16 bmp256 bmp16m bmp32b
     if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
     command = [gsExecutable, "-dBATCH", "-dNOPAUSE", "-sDEVICE=bmpgray",
                "-r"+resX+"x"+resY, "-sOutputFile="+rootOutputFilePath+"-%06d.bmp",
