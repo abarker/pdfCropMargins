@@ -47,7 +47,7 @@ with codecs.open(os.path.join(current_dir, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="pdfCropMargins",
-    version="0.1.1", # major version, minor version, patch (see PEP440)
+    version="0.1.0", # major version, minor version, patch (see PEP440)
     description="A command-line program to crop the margins of PDF files, with many options.",
     keywords=["pdf", "crop", "margins", "resize"],
     install_requires=["wheel", "pillow", "PyPDF2"], # EITHER Pillow or PIL, NOT BOTH.
