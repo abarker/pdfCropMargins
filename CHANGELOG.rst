@@ -6,6 +6,11 @@ History
 0.1.1 (2017-02-27)
 ------------------
 
+* Minor edits to documentation.
+
+0.1.0 (2017-02-27)
+------------------
+
 New Features: None.
 
 Bug Fixes: None.
@@ -18,7 +23,7 @@ Other Changes:
 
 * Local PyPDF2 is no longer packaged with it.
 
-0.1.0 (before pip)
+0.0.0 (before pip)
 ------------------
 
 Initial release.

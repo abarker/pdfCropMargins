@@ -75,13 +75,8 @@ Description:
 
    \a\a\apdf-crop-margins document.pdf -o croppedDocument.pdf
 
-   or
-
-   \a\a\apython pdf-crop-margins document.pdf -o croppedDocument.pdf
-
-   The latter form is necessary if your system does not automatically recognize
-   and execute Python programs.  If no destination is provided a filename will
-   be automatically generated from the name of the source file (see below).
+   If no destination is provided a filename will be automatically generated
+   from the name of the source file (see below).
 
    The pdfCropMargins program works by changing the page sizes which are stored
    in the PDF file (and are interpreted by programs like Acrobat Reader).
