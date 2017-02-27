@@ -1,0 +1,14 @@
+
+This is included in the same directory as pdfCropMargins only so setup.py can
+treat it as package_data.  The __init__.py files are similarly added so that
+these data files are part of the package and can be package_data.
+
+This code is originally from:
+   http://www.foolabs.com/xpdf/download.html
+
+About redistributing:
+   http://www.foolabs.com/xpdf/about.html
+
+Note that several different PDF manipulation utilities come with the package,
+but all the binaries except pdftoppm have been deleted here to save space.
+

@@ -1,0 +1,92 @@
+pdfdetach(1)                                                      pdfdetach(1)
+
+
+
+NAME
+       pdfdetach  -  Portable  Document  Format  (PDF)  document embedded file
+       extractor (version 3.04)
+
+SYNOPSIS
+       pdfdetach [options] [PDF-file]
+
+DESCRIPTION
+       Pdfdetach lists or extracts embedded files (attachments) from a  Porta-
+       ble Document Format (PDF) file.
+
+CONFIGURATION FILE
+       Pdfdetach  reads  a  configuration  file at startup.  It first tries to
+       find the user's private config file, ~/.xpdfrc.  If that doesn't exist,
+       it looks for a system-wide config file, typically /usr/local/etc/xpdfrc
+       (but this location can be changed when  pdfinfo  is  built).   See  the
+       xpdfrc(5) man page for details.
+
+OPTIONS
+       Some  of  the following options can be set with configuration file com-
+       mands.  These are listed in square brackets with the description of the
+       corresponding command line option.
+
+       -list  List  all of the embedded files in the PDF file.  File names are
+              converted to the text encoding specified by the "-enc" switch.
+
+       -save number
+              Save the specified embedded file.  By  default,  this  uses  the
+              file  name  associated with the embedded file (as printed by the
+              "-list" switch); the file name can  be  changed  with  the  "-o"
+              switch.
+
+       -saveall
+              Save  all of the embedded files.  This uses the file names asso-
+              ciated with the  embedded  files  (as  printed  by  the  "-list"
+              switch).   By default, the files are saved in the current direc-
+              tory; this can be changed with the "-o" switch.
+
+       -o path
+              Set the file name used when saving an  embedded  file  with  the
+              "-save" switch, or the directory used by "-saveall".
+
+       -enc encoding-name
+              Sets  the encoding to use for text output (embedded file names).
+              The encoding-name must be defined with  the  unicodeMap  command
+              (see xpdfrc(5)).  This defaults to "Latin1" (which is a built-in
+              encoding).  [config file: textEncoding]
+
+       -opw password
+              Specify the owner password for the  PDF  file.   Providing  this
+              will bypass all security restrictions.
+
+       -upw password
+              Specify the user password for the PDF file.
+
+       -cfg config-file
+              Read config-file in place of ~/.xpdfrc or the system-wide config
+              file.
+
+       -v     Print copyright and version information.
+
+       -h     Print usage information.  (-help and --help are equivalent.)
+
+EXIT CODES
+       The Xpdf tools use the following exit codes:
+
+       0      No error.
+
+       1      Error opening a PDF file.
+
+       2      Error opening an output file.
+
+       3      Error related to PDF permissions.
+
+       99     Other error.
+
+AUTHOR
+       The pdfinfo software and documentation are copyright 1996-2014 Glyph  &
+       Cog, LLC.
+
+SEE ALSO
+       xpdf(1),   pdftops(1),  pdftotext(1),  pdftohtml(1),  pdfinfo(1),  pdf-
+       fonts(1), pdftoppm(1), pdftopng(1), pdfimages(1), xpdfrc(5)
+       http://www.foolabs.com/xpdf/
+
+
+
+                                  28 May 2014                     pdfdetach(1)
