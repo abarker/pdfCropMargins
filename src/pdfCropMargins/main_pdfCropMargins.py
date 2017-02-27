@@ -80,37 +80,15 @@ if "--pyPdfLocal" in sys.argv or "-pdl" in sys.argv:
     #pyPdfLocal = True
     pyPdfLocal = False # NEVER USE LOCAL
 
-
-def importLocalPyPdf():
-    raise Exception("Local PyPDF copy is no longer provided.  Install from pip.")
-    """Import the pyPdf package that is locally bundled with the program."""
-    global PdfFileWriter, PdfFileReader
-    global NameObject, createStringObject, RectangleObject, FloatObject
-    sys.path.insert(0, projectSrcDirectory) # package is in project root directory
-    from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2 import \
-            PdfFileWriter, PdfFileReader
-    from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2.generic import \
+try:
+    from PyPDF2 import PdfFileWriter, PdfFileReader # the system's pyPdf
+    from PyPDF2.generic import \
         NameObject, createStringObject, RectangleObject, FloatObject
-    from PyPDF2_master_latest_commit_41d90b4d14Jan2015.PyPDF2.utils import \
-            PdfReadError
-    del sys.path[0] # restore the sys.path
-    return
-
-
-if pyPdfLocal:
-    importLocalPyPdf()
-else:
-    try:
-        from PyPDF2 import PdfFileWriter, PdfFileReader # the system's pyPdf
-        from PyPDF2.generic import \
-            NameObject, createStringObject, RectangleObject, FloatObject
-        from PyPDF2.utils import PdfReadError
-    except ImportError:
-        print("\nWarning from pdfCropMargins: No system pyPdf Python package was"
-              "\nfound.  Reverting to an older, local version packaged with this"
-              "\nprogram.  To silence this warning, use the '--pyPdfLocal'"
-              "\n(or '-pyl') option on the command line.\n", file=sys.stderr)
-        importLocalPyPdf() # TODO delete cleanup local stuff
+    from PyPDF2.utils import PdfReadError
+except ImportError:
+    print("\nError in pdfCropMargins: No system pyPdf Python package"
+          " was found.\n", file=sys.stderr)
+    raise
 
 ##
 ## Import the general function for calculating a list of bounding boxes.

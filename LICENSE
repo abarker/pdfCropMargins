@@ -1,9 +1,10 @@
 
-Note that this package is distributed with a copy of the PyPDF2 package, which
-has its own (not very restrictive) LICENSE file.  This package is also
-distributed with a version of pdftoppm which is covered by the GNU General
-Public License (GPL), version 2.  Everything else is covered by the GNU GPL
-license, version 3 or later. 
+Note that this package is distributed with a a version of pdftoppm (Windows
+executable) which is covered by the GNU General Public License (GPL), version
+2.  Directory is in the pdfCropMargins directory so pip/setup.py can set it up
+as package_data.
+
+Everything else is covered by the GNU GPL license, version 3 or later. 
 
 =======================================================================
 

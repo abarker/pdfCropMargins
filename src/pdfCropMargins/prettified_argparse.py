@@ -24,8 +24,10 @@ Source code site: https://github.com/abarker/pdfCropMargins
 This module defines classes for redirecting sys.stdout and sys.stderr in order
 to postprocess (prettify) the help and usage messages from the argparse class.
 It also defines a self-flushing output stream to avoid having to explicitly run
-Python with the '-u' option in Cygwin windows.  It provides the function
+Python with the '-u' option in Cygwin windows.  It provides the function ::
+
    parseCommandLineArguments
+
 which applies the prettifier to an argparse parser and resets sys.stdout to
 an automatic-flushing version.
 

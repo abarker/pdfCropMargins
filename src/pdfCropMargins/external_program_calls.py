@@ -57,7 +57,7 @@ systemOs = platform.system()
 if systemOs[:6].lower() == "cygwin":
     systemOs = "Cygwin"
 
-systemOs = "Windows" # Uncomment ONLY to test Windows on Linux with Wine.
+#systemOs = "Windows" # Uncomment ONLY to test Windows on Linux with Wine.
 
 # Find the number of bits the OS supports.
 if sys.maxsize > 2**32: systemBits = 64 # Supposed to work on Macs, too.
@@ -451,9 +451,9 @@ def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
                   "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.",
                   file=sys.stderr)
 
-        #path = os.path.join(projectSrcDirectory, "pdftoppm_windows_local",
-        #                                                        "xpdfbin-win-3.04")
-        path = os.path.join(projectSrcDirectory, "pdfCropMargins", "xpdfbin-win-3.04")
+        path = os.path.join(projectSrcDirectory, "pdfCropMargins", "pdftoppm_windows_local",
+                                                                "xpdfbin_win_3_04")
+        #path = os.path.join(projectSrcDirectory, "pdfCropMargins", "xpdfbin_win_3_04")
 
         pdftoppmExecutable32 = os.path.join(path, "bin32", "pdftoppm.exe")
         pdftoppmExecutable64 = os.path.join(path, "bin64", "pdftoppm.exe")

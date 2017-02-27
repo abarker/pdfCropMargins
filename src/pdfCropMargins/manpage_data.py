@@ -621,12 +621,6 @@ cmdParser.add_argument("-i", "--showImages", action="store_true", help="""
    image files that are used to find the bounding boxes.  Useful for debugging
    and for choosing some of the other parameters (such as the threshold).^^n""")
 
-cmdParser.add_argument("-pyl", "--pyPdfLocal", action="store_true", help="""
-
-   Use a local copy of PyPdf rather than the system version.  By default the
-   system version is used unless the import fails.  The local version may
-   or may not be newer than the system version.^^n""")
-
 cmdParser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
 
    Use a locally-packaged pdftoppm executable rather than the system version.
