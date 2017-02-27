@@ -519,7 +519,6 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop, alreadyCroppedByThisProgra
 # Parse the command-line arguments and set the variable args.
 args = parseCommandLineArguments(cmdParser)
 
-
 def mainCrop():
     """This function does the real work.  It is called by main() in
     pdfCropMargins.py, which just handles catching exceptions and cleaning up."""
