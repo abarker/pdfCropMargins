@@ -229,7 +229,7 @@ Description:
     """The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.  Released
 under the GNU GPL license, version 3 or later.""")
 
-cmdParser.add_argument("pdf_input_doc", metavar="PDF_FILE", help="""
+cmdParser.add_argument("pdf_input_doc", nargs="+", metavar="PDF_FILE", help="""
 
    The pathname of the PDF file to crop.  Use quotes around any file or
    directory name which contains a space.  If no filename is given for the

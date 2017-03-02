@@ -563,7 +563,14 @@ def mainCrop():
         print("\nThe absolute offsets to be applied to each margin, in units of bp,"
               " are:\n   ", args.absoluteOffset)
 
-    inputDocFname = ex.globIfWindowsOs(args.pdf_input_doc, exactNumArgs=1)[0]
+    if len(args.pdf_input_doc) > 1:
+        print("\nError in pdfCropMargins: Only one input PDF document is allowed."
+              "\nFound more than one on the command line:", file=sys.stderr)
+        for f in args.pdf_input_doc:
+            print("   ", f, file=sys.stderr)
+        ex.cleanupAndExit(1)
+
+    inputDocFname = ex.globIfWindowsOs(args.pdf_input_doc[0], exactNumArgs=1)[0]
     if not inputDocFname.endswith((".pdf",".PDF")):
         print("\nWarning in pdfCropMargins: The file extension is neither '.pdf'"
               "\nnor '.PDF'; continuing anyway.\n", file=sys.stderr)
