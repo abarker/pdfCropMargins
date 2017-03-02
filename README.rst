@@ -72,9 +72,9 @@ The ``pip`` program should be installed with Python.  You can run ``python -m
 ensurepip`` if it is not, or install from the repos in Linux.
 
 The package can also be run directly from its source code directory.  In that
-case the PyPDF2 Python package must be installed.  The Pillow imaging
-package is also necessary if Ghostscript is unavailable as well as for
-certain advanced features that use explicit image analysis.
+case the PyPDF2 Python package must be installed.  The Pillow imaging package
+is also necessary if Ghostscript is unavailable as well as for certain advanced
+features which use explicit image analysis.
 
 Running
 =======
@@ -86,6 +86,9 @@ After installation the program can be run with a command such as::
 For help, run::
 
    pdf-crop-margins -h | more
+
+On Windows you may need to put the Python ``Scripts`` directory into your
+environment ``PATH`` in order to avoid having to use the full pathname.
 
 Documentation
 =============
