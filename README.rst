@@ -81,7 +81,7 @@ Running
 
 After installation the program can be run with a command such as::
 
-   pdf-crop-margins -v -u your-file.pdf
+   pdf-crop-margins -v -s -u your-file.pdf
 
 For help, run::
 

@@ -267,7 +267,8 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False):
     return full_page_box_list, rotation_list
 
 
-def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list, page_nums_to_crop):
+def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
+                                                               page_nums_to_crop):
     """Given a list of full-page boxes (media boxes) and a list of tight
     bounding boxes for each page, calculate and return another list giving the
     list of bounding boxes to crop down to."""
@@ -311,10 +312,10 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list, page_
         if args.verbose: print("\nRecursively calculating crops for even and odd pages.")
         args.evenodd = False # avoid infinite recursion
         args.uniform = True  # --evenodd implies uniform, just on each separate group
-        even_crop_list = calculate_crop_list(
-                       full_page_box_list, bounding_box_list, angle_list, even_page_nums_to_crop)
-        odd_crop_list = calculate_crop_list(
-                       full_page_box_list, bounding_box_list, angle_list, odd_page_nums_to_crop)
+        even_crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
+                                             angle_list, even_page_nums_to_crop)
+        odd_crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
+                                            angle_list, odd_page_nums_to_crop)
 
         # Recombine the even and odd pages
         combine_even_odd = []
@@ -347,7 +348,6 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list, page_
     # The deltas are all positive unless absoluteOffset changes that or
     # percent>100.  They are added (lb) or subtracted (tr) as appropriate.
 
-
     delta_list = []
     for p_num, t_box, f_box in zip(list(range(len(full_page_box_list))),
                                                bounding_box_list, full_page_box_list):
@@ -365,18 +365,22 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list, page_
         args.uniformOrderStat = [int(round(num_pages_to_crop * percent_val / 100.0))]
 
     if args.uniform or args.uniformOrderStat:
-        if args.verbose: print("\nAll the selected pages will be uniformly cropped.")
+        if args.verbose:
+            print("\nAll the selected pages will be uniformly cropped.")
         # Only look at the deltas which correspond to pages selected for cropping.
         # They will then be sorted for each margin and selected.
         crop_delta_list = [delta_list[j] for j in page_range if j in page_nums_to_crop]
 
-        i = 0 # Let i be the index value into the sorted delta list.
-        if args.uniformOrderStat: i = args.uniformOrderStat[0]
+        i = 0 # For order stats, let i be the index value into the sorted delta list.
+        if args.uniformOrderStat:
+            i = args.uniformOrderStat[0]
         if i < 0 or i >= num_pages_to_crop:
             print("\nWarning: The selected order statistic is out of range.",
                   "Setting to closest value.", file=sys.stderr)
-            if i >= num_pages_to_crop: i = num_pages_to_crop - 1
-            if i < 0: i = 0
+            if i >= num_pages_to_crop:
+                i = num_pages_to_crop - 1
+            if i < 0:
+                i = 0
         if args.verbose and (args.uniformOrderStat or args.uniformOrderPercent):
             print("\nThe " + str(i) +
                   " smallest delta values over the selected pages will be ignored"
@@ -385,13 +389,14 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list, page_
         lower_vals = sorted([box[1] for box in crop_delta_list])
         right_vals = sorted([box[2] for box in crop_delta_list])
         upper_vals = sorted([box[3] for box in crop_delta_list])
-        delta_list = [[left_vals[i], lower_vals[i], right_vals[i], upper_vals[i]]] * num_pages
+        delta_list = [[left_vals[i], lower_vals[i],
+                      right_vals[i], upper_vals[i]]] * num_pages
 
     # Apply the delta modifications to the full boxes to get the final sizes.
     final_crop_list = []
     for f_box, deltas in zip(full_page_box_list, delta_list):
         final_crop_list.append((f_box[0] + deltas[0], f_box[1] + deltas[1],
-                              f_box[2] - deltas[2], f_box[3] - deltas[3]))
+                                f_box[2] - deltas[2], f_box[3] - deltas[3]))
 
     return final_crop_list
 
@@ -443,7 +448,8 @@ def set_cropped_metadata(input_doc, output_doc, InputMetadataInfo):
     return already_cropped_by_this_program
 
 
-def apply_crop_list(crop_list, input_doc, page_nums_to_crop, already_cropped_by_this_program):
+def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
+                                                       already_cropped_by_this_program):
     """Apply the crop list to the pages of the input PdfFileReader object."""
 
     if args.restore and not already_cropped_by_this_program:
@@ -497,7 +503,8 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop, already_cropped_by_
         if args.verbose:
             print("\t"+str(pageNum+1)+"\t", new_cropped_box) # page numbering from 1
 
-        if not args.boxesToSet: args.boxesToSet = ["m", "c"]
+        if not args.boxesToSet:
+            args.boxesToSet = ["m", "c"]
 
         # Now set any boxes which were selected to be set via the --boxesToSet option.
         if "m" in args.boxesToSet: curr_page.mediaBox = new_cropped_box
@@ -610,7 +617,8 @@ def main_crop():
     # rendering.
     gs_render_fallback_set = False # Set True if we switch to gs option as a fallback.
     if not args.gsBbox and not args.gsRender:
-        found_pdftoppm = ex.init_and_test_pdftoppm_executable(prefer_local=args.pdftoppmLocal)
+        found_pdftoppm = ex.init_and_test_pdftoppm_executable(
+                                                   prefer_local=args.pdftoppmLocal)
         if args.verbose: print("\nFound pdftoppm program at:", found_pdftoppm)
         if not found_pdftoppm:
             args.gsRender = True
@@ -810,7 +818,8 @@ def main_crop():
 
     if not args.restore:
         doc_with_crop_and_media_boxes_name = ex.get_temporary_filename(".pdf")
-        doc_with_crop_and_media_boxes_object = open(doc_with_crop_and_media_boxes_name, "wb")
+        doc_with_crop_and_media_boxes_object = open(
+                                     doc_with_crop_and_media_boxes_name, "wb")
 
         if args.verbose:
             print("\nWriting out the PDF with the CropBox and MediaBox redefined.")
@@ -840,8 +849,8 @@ def main_crop():
     ##
 
     if not args.restore:
-        bounding_box_list = get_bounding_box_list(doc_with_crop_and_media_boxes_name, input_doc,
-                             full_page_box_list, page_nums_to_crop, args, PdfFileWriter)
+        bounding_box_list = get_bounding_box_list(doc_with_crop_and_media_boxes_name,
+                input_doc, full_page_box_list, page_nums_to_crop, args, PdfFileWriter)
         if args.verbose:
             print("\nThe bounding boxes are:")
             for pNum, b in enumerate(bounding_box_list):
@@ -855,14 +864,15 @@ def main_crop():
         crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
                                      rotation_list, page_nums_to_crop)
     else:
-        crop_list = None # not needed in this case
+        crop_list = None # Restore, not needed in this case.
 
     ##
     ## Apply the calculated crops to the pages of the PdfFileReader input_doc.
     ## This also modifies the same pages in the PdfFileWriter output_doc.
     ##
 
-    apply_crop_list(crop_list, input_doc, page_nums_to_crop, already_cropped_by_this_program)
+    apply_crop_list(crop_list, input_doc, page_nums_to_crop,
+                                          already_cropped_by_this_program)
 
     ##
     ## Write the final PDF out to a file.
