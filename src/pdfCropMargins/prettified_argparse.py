@@ -26,7 +26,7 @@ to postprocess (prettify) the help and usage messages from the argparse class.
 It also defines a self-flushing output stream to avoid having to explicitly run
 Python with the '-u' option in Cygwin windows.  It provides the function ::
 
-   parseCommandLineArguments
+   parse_command_line_arguments
 
 which applies the prettifier to an argparse parser and resets sys.stdout to
 an automatic-flushing version.
@@ -34,13 +34,13 @@ an automatic-flushing version.
 This file can be copied inline when you really want a single-file script.
 Otherwise, the usage is:
 
-   from prettified_argparse import parseCommandLineArguments
+   from prettified_argparse import parse_command_line_arguments
    from manpage_data import cmdParser
 
 The actual argparse parser and documentation text are in manpage_data.py.
 Somewhere in the calling program, the imported function should be called as:
 
-    args = parseCommandLineArguments(cmdParser)
+    args = parse_command_line_arguments(cmdParser)
 
 Note that the standard TextWrapper fill and wrap routines used in argparse
 do not strip out multiple whitespace like many fill programs do.  See the
@@ -59,26 +59,26 @@ import re
 import sys
 import os
 
-progName = os.path.basename(sys.argv[0])
+prog_name = os.path.basename(sys.argv[0])
 # Note when a directory is run as a command name it can be something like "."
 # which looks nicer expanded.  Argparse currently uses the unexpanded form.
-absProgName = os.path.basename(os.path.abspath(sys.argv[0]))
+abs_prog_name = os.path.basename(os.path.abspath(sys.argv[0]))
 # Improve the usage message when run from a file with a different name (such
 # as __main__.py).
-if not absProgName.startswith("pdfCropMargins"): absProgName += " (pdfCropMargins)"
+if not abs_prog_name.startswith("pdfCropMargins"): abs_prog_name += " (pdfCropMargins)"
 
 # These strings are directly replaced in the argparse help and usage output stream.
 # The string on the right of the tuple replaces the string on the left.  The
 # string directly after "Usage" is currently not changed.
-helpStringReplacementPairs = (
+help_string_replacement_pairs = (
     ("usage: ", "^^nUsage: "),
     ("positional arguments:", "Positional arguments:^^n"),
     ("optional arguments:", "Optional arguments:^^n"),
     ("show this help message and exit", "Show this help message and exit.^^n"),
-    ("%s: error: too few arguments" % progName, textwrap.fill(
+    ("%s: error: too few arguments" % prog_name, textwrap.fill(
      "^^nError in arguments to %s: an input document filename is required.^^n"
-     % absProgName)),
-    (progName + ": error:", "Error in "+absProgName+":")
+     % abs_prog_name)),
+    (prog_name + ": error:", "Error in "+abs_prog_name+":")
 )
 
 
@@ -87,7 +87,7 @@ class RedirectHelp(object):
     """This class allows us to redirect stdout in order to prettify the output
     of argparse's help and usage messages (via a postprocessor).  The
     postprocessor does a string replacement for all the pairs defined in the
-    user-defined sequence helpStringReplacementPairs.  It also adds the following
+    user-defined sequence help_string_replacement_pairs.  It also adds the following
     directives to the formatting language:
        ^^s          replaced with a space, correctly preserved by ^^f format
        \a           the bell control char is also replaced with preserved space
@@ -99,42 +99,42 @@ class RedirectHelp(object):
     paragraphs is line-wrapped with a new indent level.
     """
 
-    def __init__(self, outstream, helpStringReplacementPairs,
-                 initIndent=5, subsIndent=5, lineWidth=76):
+    def __init__(self, outstream, help_string_replacement_pairs,
+                 init_indent=5, subs_indent=5, line_width=76):
         """Will usually be passed sys.stdout or sys.stderr as an outstream
-        argument.  The pairs in the variable helpStringReplacementPairs variable
+        argument.  The pairs in the variable help_string_replacement_pairs variable
         are all applied to the any returned text as postprocessor string
         replacements.  The initial indent of formatted sections is set to
-        initIndent, and subsequent indents are set to subsIndent.  The line width
-        in formatted sections is set to lineWidth."""
+        init_indent, and subsequent indents are set to subs_indent.  The line width
+        in formatted sections is set to line_width."""
         self.outstream = outstream
-        self.helpStringReplacementPairs = helpStringReplacementPairs
-        self.initIndent = initIndent
-        self.subsIndent = subsIndent
-        self.lineWidth = lineWidth
+        self.help_string_replacement_pairs = help_string_replacement_pairs
+        self.init_indent = init_indent
+        self.subs_indent = subs_indent
+        self.line_width = line_width
 
     def write(self, s):
-        prettyStr = s
-        for pair in self.helpStringReplacementPairs:
-            prettyStr = prettyStr.replace(pair[0], pair[1])
+        pretty_str = s
+        for pair in self.help_string_replacement_pairs:
+            pretty_str = pretty_str.replace(pair[0], pair[1])
         # Define ^^s as the bell control char for now, so fill will treat it right.
-        prettyStr = prettyStr.replace("^^s", "\a")
+        pretty_str = pretty_str.replace("^^s", "\a")
 
-        def doFill(matchObj):
+        def do_fill(match_obj):
             """Fill function for regexp to apply to ^^f matches."""
-            st = prettyStr[matchObj.start()+3:matchObj.end()-3] # get substring
+            st = pretty_str[match_obj.start()+3:match_obj.end()-3] # get substring
             st = re.sub("\n\s*\n", "^^p", st).split("^^p") # multi-new to para
             st = [" ".join(s.split()) for s in st] # multi-whites to single
             wrapper = textwrap.TextWrapper( # indent formatted paras
-                initial_indent=" "*self.initIndent,
-                subsequent_indent=" "*self.subsIndent,
-                width=self.lineWidth)
+                initial_indent=" "*self.init_indent,
+                subsequent_indent=" "*self.subs_indent,
+                width=self.line_width)
             return "\n\n".join([wrapper.fill(s) for s in st]) # wrap each para
         # do the fill on all the fill sections
-        prettyStr = re.sub(r"\^\^f.*?\^\^f", doFill, prettyStr, flags=re.DOTALL)
-        prettyStr = prettyStr.replace("\a", " ") # bell character back to space
-        prettyStr = prettyStr.replace("^^n", "\n") # replace ^^n with newline
-        self.outstream.write(prettyStr)
+        pretty_str = re.sub(r"\^\^f.*?\^\^f", do_fill, pretty_str, flags=re.DOTALL)
+        pretty_str = pretty_str.replace("\a", " ") # bell character back to space
+        pretty_str = pretty_str.replace("^^n", "\n") # replace ^^n with newline
+        self.outstream.write(pretty_str)
         self.outstream.flush() # automatically flush each write
 
     def __getattr__(self, attr):
@@ -159,19 +159,19 @@ class SelfFlushingOutstream(object):
         return getattr(self.outstream, attr)
 
 
-def parseCommandLineArguments(argparseParser, initIndent=5, subsIndent=5, lineWidth=76):
+def parse_command_line_arguments(argparse_parser, init_indent=5, subs_indent=5, line_width=76):
     """Main routine to call to execute the command parsing.  Returns an object
     from argparse's parse_args() routine."""
     # Redirect stdout and stderr to prettify help or usage output from argparse.
     old_stdout = sys.stdout # save stdout
     old_stderr = sys.stderr # save stderr
-    sys.stdout = RedirectHelp(sys.stdout, helpStringReplacementPairs,
-            initIndent, subsIndent, lineWidth) # redirect stdout to add postprocessor
-    sys.stderr = RedirectHelp(sys.stderr, helpStringReplacementPairs,
-            initIndent, subsIndent, lineWidth) # redirect stderr to add postprocessor
+    sys.stdout = RedirectHelp(sys.stdout, help_string_replacement_pairs,
+            init_indent, subs_indent, line_width) # redirect stdout to add postprocessor
+    sys.stderr = RedirectHelp(sys.stderr, help_string_replacement_pairs,
+            init_indent, subs_indent, line_width) # redirect stderr to add postprocessor
 
     # Run the actual argument-parsing operation via argparse.
-    args = argparseParser.parse_args()
+    args = argparse_parser.parse_args()
 
     # The argparse class has finished its argument-processing, so now no more
     # usage or help messages will be printed.  So restore stdout and stderr

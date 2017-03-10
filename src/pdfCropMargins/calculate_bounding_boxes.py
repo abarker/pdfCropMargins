@@ -52,36 +52,36 @@ except ImportError:
 # A few globals used in this module.
 #
 
-args = None # Command-line arguments; set in getBoundingBoxList.
-pageNumsToCrop = None # Set of pages to crop; initialized in getBoundingBoxList.
-PdfFileWriter = None # Initialized in getBoundingBoxList
+args = None # Command-line arguments; set in get_bounding_box_list.
+page_nums_to_crop = None # Set of pages to crop; initialized in get_bounding_box_list.
+PdfFileWriter = None # Initialized in get_bounding_box_list
 
 #
 # The main functions of the module.
 #
 
 
-def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
-                       setOfPageNumsToCrop, argparseArgs, ChosenPdfFileWriter):
+def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
+                       set_of_page_nums_to_crop, argparse_args, chosen_PdfFileWriter):
     """Calculate a bounding box for each page in the document.  The first
     argument is the filename of the document's original PDF file, the second is
-    the PdfFileReader for the document.  The argument fullPageBoxList is a list
+    the PdfFileReader for the document.  The argument full_page_box_list is a list
     of the full-page-size boxes (which is used to correct for any nonzero origins
-    in the PDF coordinates).  The setOfPageNumsToCrop argument is the set of page
+    in the PDF coordinates).  The set_of_page_nums_to_crop argument is the set of page
     numbers to crop; it is passed so that unnecessary calculations can be
-    skipped.  The argparseArgs argument should be passed the args parsed from
-    the command line by argparse.  The ChosenPdfFileWriter is the PdfFileWriter
+    skipped.  The argparse_args argument should be passed the args parsed from
+    the command line by argparse.  The chosen_PdfFileWriter is the PdfFileWriter
     class from whichever pyPdf package was chosen by the main program.  The
     function returns the list of bounding boxes."""
-    global args, pageNumsToCrop, PdfFileWriter
-    args = argparseArgs # Make args available to all funs in module, as a global.
-    pageNumsToCrop = setOfPageNumsToCrop # Make the set of pages global, too.
-    PdfFileWriter = ChosenPdfFileWriter # Be sure correct PdfFileWriter is set.
+    global args, page_nums_to_crop, PdfFileWriter
+    args = argparse_args # Make args available to all funs in module, as a global.
+    page_nums_to_crop = set_of_page_nums_to_crop # Make the set of pages global, too.
+    PdfFileWriter = chosen_PdfFileWriter # Be sure correct PdfFileWriter is set.
 
     if args.gsBbox:
         if args.verbose:
             print("\nUsing Ghostscript to calculate the bounding boxes.")
-        bboxList = ex.getBoundingBoxListGhostscript(inputDocFname, args.resX, args.resY,
+        bbox_list = ex.get_bounding_box_list_ghostscript(input_doc_fname, args.resX, args.resY,
                                                     args.fullPageBox)
     else:
         if not hasPIL:
@@ -89,16 +89,16 @@ def getBoundingBoxList(inputDocFname, inputDoc, fullPageBoxList,
                   "\nfork like Pillow) was found.  Either install that Python"
                   "\npackage or use the Ghostscript flag '--gsBbox' (or '-gs') if you"
                   "\nhave Ghostscript installed.", file=sys.stderr)
-            ex.cleanupAndExit(1)
-        bboxList = getBoundingBoxListRenderImage(inputDocFname, inputDoc)
+            ex.cleanup_and_exit(1)
+        bbox_list = get_bounding_box_list_render_image(input_doc_fname, input_doc)
 
     # Now we need to use the full page boxes to translate for non-zero origin.
-    bboxList = correctBoundingBoxListForNonzeroOrigin(bboxList, fullPageBoxList)
+    bbox_list = correct_bounding_box_list_for_nonzero_origin(bbox_list, full_page_box_list)
 
-    return bboxList
+    return bbox_list
 
 
-def correctBoundingBoxListForNonzeroOrigin(bboxList, fullBoxList):
+def correct_bounding_box_list_for_nonzero_origin(bbox_list, full_box_list):
     """The bounding box calculated from an image has coordinates relative to the
     lower-left point in the PDF being at zero.  Similarly, Ghostscript reports a
     bounding box relative to a zero lower-left point.  If the MediaBox (or full
@@ -106,22 +106,22 @@ def correctBoundingBoxListForNonzeroOrigin(bboxList, fullBoxList):
     document, then we need to correct the bounding box by an additive
     translation on all the points."""
 
-    correctedBoxList = []
-    for bbox, fullBox in zip(bboxList, fullBoxList):
-        leftX = fullBox[0]
-        lowerY = fullBox[1]
-        correctedBoxList.append([bbox[0]+leftX, bbox[1]+lowerY,
-                                 bbox[2]+leftX, bbox[3]+lowerY])
-    return correctedBoxList
+    corrected_box_list = []
+    for bbox, fullBox in zip(bbox_list, full_box_list):
+        left_x = fullBox[0]
+        lower_y = fullBox[1]
+        corrected_box_list.append([bbox[0]+left_x, bbox[1]+lower_y,
+                                 bbox[2]+left_x, bbox[3]+lower_y])
+    return corrected_box_list
 
 
-def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
+def get_bounding_box_list_render_image(pdf_file_name, input_doc):
     """Calculate the bounding box list by directly rendering each page of the PDF as
-    an image file.  The MediaBox and CropBox values in inputDoc should have
+    an image file.  The MediaBox and CropBox values in input_doc should have
     already been set to the chosen page size before the rendering."""
 
-    programToUse = "pdftoppm" # default to pdftoppm
-    if args.gsRender: programToUse = "Ghostscript"
+    program_to_use = "pdftoppm" # default to pdftoppm
+    if args.gsRender: program_to_use = "Ghostscript"
 
     # Threshold value set in range 0-255, where 0 is black, with 191 default.
     if not args.threshold: args.threshold = 191
@@ -129,33 +129,33 @@ def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
     if not args.numSmooths: args.numSmooths = 0
     if not args.numBlurs: args.numBlurs = 0
 
-    tempDir = ex.programTempDirectory # use the program default; don't delete dir!
+    temp_dir = ex.program_temp_directory # use the program default; don't delete dir!
 
-    tempImageFileRoot = os.path.join(tempDir, ex.tempFilePrefix + "PageImage")
+    temp_image_file_root = os.path.join(temp_dir, ex.temp_file_prefix + "PageImage")
     if args.verbose:
-        print("\nRendering the PDF to images using the " + programToUse + " program,"
+        print("\nRendering the PDF to images using the " + program_to_use + " program,"
               "\nthis may take a while...")
 
     # Do the rendering of all the files.
-    renderPdfFileToImageFiles(pdfFileName, tempImageFileRoot, programToUse)
+    render_pdf_file_to_image_files(pdf_file_name, temp_image_file_root, program_to_use)
 
     # Currently assuming that sorting the output will always put them in correct order.
-    outfiles = sorted(glob.glob(tempImageFileRoot + "*"))
+    outfiles = sorted(glob.glob(temp_image_file_root + "*"))
 
     if args.verbose:
         print("\nAnalyzing the page images with PIL to find bounding boxes,"
               "\nusing the threshold " + str(args.threshold) + "."
               "  Finding the bounding box for page:\n")
 
-    boundingBoxList = []
+    bounding_box_list = []
 
     for pageNum, tmpImageFileName in enumerate(outfiles):
-        currPage = inputDoc.getPage(pageNum)
+        curr_page = input_doc.getPage(pageNum)
 
         # Open the image in PIL.  Retry a few times on fail in case race conditions.
-        maxNumTries = 3
-        timeBetweenTries = 1
-        currNumTries = 0
+        max_num_tries = 3
+        time_between_tries = 1
+        curr_num_tries = 0
         while True:
             try:
                 # PIL for some reason fails in Python 3.4 if you open the image
@@ -167,13 +167,13 @@ def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
                 im = Image.open(tmpImageFileName)
                 break
             except (IOError, UnicodeDecodeError) as e:
-                currNumTries += 1
+                curr_num_tries += 1
                 if args.verbose:
                     print("Warning: Exception opening image", tmpImageFileName,
-                          "on try", currNumTries, "\nError is", e, file=sys.stderr)
+                          "on try", curr_num_tries, "\nError is", e, file=sys.stderr)
                 # tmpImageFile.close() # see above comment
-                if currNumTries > maxNumTries: raise # re-raise exception
-                time.sleep(timeBetweenTries)
+                if curr_num_tries > max_num_tries: raise # re-raise exception
+                time.sleep(time_between_tries)
 
         # Apply any blur or smooth operations specified by the user.
         for i in range(args.numBlurs):
@@ -192,79 +192,79 @@ def getBoundingBoxListRenderImage(pdfFileName, inputDoc):
         if args.showImages: im.show() # usually for debugging or param-setting
 
         # Calculate the bounding box of the negative image, and append to list.
-        boundingBox = calculateBoundingBoxFromImage(im, currPage)
-        boundingBoxList.append(boundingBox)
+        bounding_box = calculate_bounding_box_from_image(im, curr_page)
+        bounding_box_list.append(bounding_box)
 
         # Clean up the image files after they are no longer needed.
         # tmpImageFile.close() # see above comment
         os.remove(tmpImageFileName)
 
     if args.verbose: print()
-    return boundingBoxList
+    return bounding_box_list
 
 
-def renderPdfFileToImageFiles(pdfFileName, outputFilenameRoot, programToUse):
-    """Render all the pages of the PDF file at pdfFileName to image files with
-    path and filename prefix given by outputFilenameRoot.  Any directories must
+def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_to_use):
+    """Render all the pages of the PDF file at pdf_file_name to image files with
+    path and filename prefix given by output_filename_root.  Any directories must
     have already been created, and the calling program is responsible for
-    deleting any directories or image files.  The program programToUse,
+    deleting any directories or image files.  The program program_to_use,
     currently either the string "pdftoppm" or the string "Ghostscript", will be
     called externally.  The image type that the PDF is converted into must to be
     directly openable by PIL."""
 
-    resX = str(args.resX)
-    resY = str(args.resY)
-    if programToUse == "Ghostscript":
-        if ex.systemOs == "Windows": # Windows PIL is more likely to know BMP
-            ex.renderPdfFileToImageFiles_Ghostscript_bmp(
-                                  pdfFileName, outputFilenameRoot, resX, resY)
+    res_x = str(args.resX)
+    res_y = str(args.resY)
+    if program_to_use == "Ghostscript":
+        if ex.system_os == "Windows": # Windows PIL is more likely to know BMP
+            ex.render_pdf_file_to_image_files__ghostscript_bmp(
+                                  pdf_file_name, output_filename_root, res_x, res_y)
         else: # Linux and Cygwin should be fine with PNG
-            ex.renderPdfFileToImageFiles_Ghostscript_png(
-                                  pdfFileName, outputFilenameRoot, resX, resY)
-    elif programToUse == "pdftoppm":
+            ex.render_pdf_file_to_image_files__ghostscript_png(
+                                  pdf_file_name, output_filename_root, res_x, res_y)
+    elif program_to_use == "pdftoppm":
         use_gray = False # this is currently hardcoded, but can be changed to use pgm
         if use_gray:
-            ex.renderPdfFileToImageFiles_pdftoppm_pgm(
-                pdfFileName, outputFilenameRoot, resX, resY)
+            ex.render_pdf_file_to_image_files_pdftoppm_pgm(
+                pdf_file_name, output_filename_root, res_x, res_y)
         else:
-            ex.renderPdfFileToImageFiles_pdftoppm_ppm(
-                pdfFileName, outputFilenameRoot, resX, resY)
+            ex.render_pdf_file_to_image_files_pdftoppm_ppm(
+                pdf_file_name, output_filename_root, res_x, res_y)
     else:
         print("Error in renderPdfFileToImageFile: Unrecognized external program.",
               file=sys.stderr)
-        ex.cleanupAndExit(1)
+        ex.cleanup_and_exit(1)
     return
 
 
-def calculateBoundingBoxFromImage(im, currPage):
+def calculate_bounding_box_from_image(im, curr_page):
     """This function uses a PIL routine to get the bounding box of the rendered
     image."""
-    xMax, yMax = im.size
-    boundingBox = im.getbbox() # note this uses ltrb convention
-    if not boundingBox:
+    xMax, y_max = im.size
+    bounding_box = im.getbbox() # note this uses ltrb convention
+    if not bounding_box:
         #print("\nWarning: could not calculate a bounding box for this page."
         #      "\nAn empty page is assumed.", file=sys.stderr)
-        boundingBox = (xMax/2, yMax/2, xMax/2, yMax/2)
+        bounding_box = (xMax/2, y_max/2, xMax/2, y_max/2)
 
-    boundingBox = list(boundingBox) # make temporarily mutable
+    bounding_box = list(bounding_box) # make temporarily mutable
 
     # Compensate for reversal of the image y convention versus PDF.
-    boundingBox[1] = yMax - boundingBox[1]
-    boundingBox[3] = yMax - boundingBox[3]
+    bounding_box[1] = y_max - bounding_box[1]
+    bounding_box[3] = y_max - bounding_box[3]
 
-    fullPageBox = currPage.mediaBox # should have been set already to chosen box
+    full_page_box = curr_page.mediaBox # should have been set already to chosen box
 
     # Convert pixel units to PDF's bp units.
-    convertX = float(fullPageBox.getUpperRight_x()
-                     - fullPageBox.getLowerLeft_x()) / xMax
-    convertY = float(fullPageBox.getUpperRight_y()
-                     - fullPageBox.getLowerLeft_y()) / yMax
+    convert_x = float(full_page_box.getUpperRight_x()
+                     - full_page_box.getLowerLeft_x()) / xMax
+    convert_y = float(full_page_box.getUpperRight_y()
+                     - full_page_box.getLowerLeft_y()) / y_max
 
     # Get final box; note conversion to lower-left point, upper-right point format.
-    finalBox = [
-        boundingBox[0] * convertX,
-        boundingBox[3] * convertY,
-        boundingBox[2] * convertX,
-        boundingBox[1] * convertY]
+    final_box = [
+        bounding_box[0] * convert_x,
+        bounding_box[3] * convert_y,
+        bounding_box[2] * convert_x,
+        bounding_box[1] * convert_y]
 
-    return finalBox
+    return final_box

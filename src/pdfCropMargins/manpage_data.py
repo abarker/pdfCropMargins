@@ -21,7 +21,7 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 =====================================================================
 
-This module sets up an argparse command-line parser, named cmdParser, meant for
+This module sets up an argparse command-line parser, named cmd_parser, meant for
 use with the prettifying routines in prettified_argparse.py.  The command-line
 arguments, flags, and their descriptions are all defined here.  The formatting
 used here assumes that the prettified formatting directives from
@@ -31,11 +31,11 @@ This file can be copied inline when you really want a single-file script.
 Otherwise, the usage is:
 
    from prettified_argparse import parseCommandLineArguments
-   from manpage_data import cmdParser
+   from manpage_data import cmd_parser
 
 Somewhere in the program, the function should be called as:
 
-    args = parseCommandLineArguments(cmdParser)
+    args = parseCommandLineArguments(cmd_parser)
 
 Note that the default text formatting in the description is raw, i.e., it is
 unformatted unless the formatting directive ^^f is specified.  So literal
@@ -53,7 +53,7 @@ General argparse reminders and warnings:
 """
 
 import argparse
-cmdParser = argparse.ArgumentParser(
+cmd_parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
     description=
     """
@@ -229,7 +229,7 @@ Description:
     """The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.  Released
 under the GNU GPL license, version 3 or later.""")
 
-cmdParser.add_argument("pdf_input_doc", nargs="+", metavar="PDF_FILE", help="""
+cmd_parser.add_argument("pdf_input_doc", nargs="+", metavar="PDF_FILE", help="""
 
    The pathname of the PDF file to crop.  Use quotes around any file or
    directory name which contains a space.  If no filename is given for the
@@ -242,7 +242,7 @@ cmdParser.add_argument("pdf_input_doc", nargs="+", metavar="PDF_FILE", help="""
    '.pdf' will be appended to the existing (possibly-null) extension.  Globbing
    of wildcards is performed on Windows systems.^^n""")
 
-cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
+cmd_parser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
                        default=[], help="""
 
    An optional argument specifying the pathname of a file that the cropped
@@ -253,13 +253,13 @@ cmdParser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
    extension.  If the extension is not '.pdf' or '.PDF' then '.pdf' is appended
    to the extension).  Globbing of wildcards is performed on Windows systems.^^n""")
 
-cmdParser.add_argument("-v", "--verbose", action="store_true", help="""
+cmd_parser.add_argument("-v", "--verbose", action="store_true", help="""
 
    Print more information about the program's actions and progress.  Without
    this switch only warning and error messages are printed to the
    screen.^^n""")
 
-cmdParser.add_argument("-p", "--percentRetain", nargs=1, type=float,
+cmd_parser.add_argument("-p", "--percentRetain", nargs=1, type=float,
                        metavar="PCT", default=[10.0], help="""
 
    Set the percent of margin space to retain in the image.  This is a
@@ -269,14 +269,14 @@ cmdParser.add_argument("-p", "--percentRetain", nargs=1, type=float,
    and negative values decrease the margins even more than a tight bounding
    box.^^n""")
 
-cmdParser.add_argument("-p4", "-pppp", "--percentRetain4", nargs=4, type=float,
+cmd_parser.add_argument("-p4", "-pppp", "--percentRetain4", nargs=4, type=float,
                        metavar="PCT", help="""
 
    Set the percent of margin space to retain in the image, individually for the
    left, bottom, right, and top margins, respectively.  The four arguments
    should be percent values.^^n""")
 
-cmdParser.add_argument("-a", "--absoluteOffset", nargs=1, type=float,
+cmd_parser.add_argument("-a", "--absoluteOffset", nargs=1, type=float,
                        metavar="BP", default=[0.0], help="""
 
    Decrease each margin size by an absolute floating point offset value, to be
@@ -287,7 +287,7 @@ cmdParser.add_argument("-a", "--absoluteOffset", nargs=1, type=float,
    negative numbers always increase it.  Absolute offsets are always
    applied after any percentage change operations.^^n""")
 
-cmdParser.add_argument("-a4", "-aaaa", "--absoluteOffset4", nargs=4, type=float,
+cmd_parser.add_argument("-a4", "-aaaa", "--absoluteOffset4", nargs=4, type=float,
                        metavar="BP", help="""
 
    Decrease the margin sizes individually with four absolute offset values.
@@ -295,7 +295,7 @@ cmdParser.add_argument("-a4", "-aaaa", "--absoluteOffset4", nargs=4, type=float,
    offset values, respectively.  See the '--absoluteOffset' option for
    information on the units.^^n""")
 
-cmdParser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float,
+cmd_parser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float,
                        metavar="BP", default=[0.0], help="""
 
    This option is like '--absoluteOffset' except that the changes are applied
@@ -305,14 +305,14 @@ cmdParser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float,
    absolute offset and then doing any other operations on that pre-cropped
    file.^^n""")
 
-cmdParser.add_argument("-ap4", "--absolutePreCrop4", nargs=4, type=float,
+cmd_parser.add_argument("-ap4", "--absolutePreCrop4", nargs=4, type=float,
                        metavar="BP", help="""
 
    This is the same as '--absolutePreCrop' except that four separate arguments
    can be given.  The four floating point arguments should be the left, bottom,
    right, and top absolute pre-crop values, respectively.^^n""")
 
-cmdParser.add_argument("-u", "--uniform", action="store_true", help="""
+cmd_parser.add_argument("-u", "--uniform", action="store_true", help="""
 
    Crop all the pages uniformly.  This forces the magnitude of margin-cropping
    (absolute, not relative) to be the same on each page.  This option is
@@ -326,7 +326,7 @@ cmdParser.add_argument("-u", "--uniform", action="store_true", help="""
    size.  The '--sameSize' option can also be used in combination with this
    option to force all pages to be the same size after cropping.^^n""")
 
-cmdParser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
+cmd_parser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
                        default=[], metavar="INT", help="""
 
    Choosing this option implies the '--uniform' option, but the smallest delta
@@ -341,7 +341,7 @@ cmdParser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
    either increases the cropping amount or leaves it unchanged.  Some
    trial-and-error may be needed to choose the best number.^^n""")
 
-cmdParser.add_argument("-mp", "--uniformOrderPercent", nargs=1, type=float,
+cmd_parser.add_argument("-mp", "--uniformOrderPercent", nargs=1, type=float,
                        default=[], metavar="INT", help="""
 
    This option is the same as '--uniformOrderStat' except that the order number
@@ -354,7 +354,7 @@ cmdParser.add_argument("-mp", "--uniformOrderPercent", nargs=1, type=float,
    setting the percent to 50 gives the median (for odd numbers of
    pages).^^n""")
 
-cmdParser.add_argument("-s", "--samePageSize", action="store_true", help="""
+cmd_parser.add_argument("-s", "--samePageSize", action="store_true", help="""
 
    Set all the page sizes to be equal.  This option only has an effect when the
    page sizes are different.  The pages sizes are set to the size of the union
@@ -367,7 +367,7 @@ cmdParser.add_argument("-s", "--samePageSize", action="store_true", help="""
    unless '--uniform' is also selected to force the cropping amounts to be the
    same for each page.^^n""")
 
-cmdParser.add_argument("-e", "--evenodd", action="store_true", help="""
+cmd_parser.add_argument("-e", "--evenodd", action="store_true", help="""
 
    Crop all the odd pages uniformly, and all the even pages uniformly.  The
    largest amount of cropping that works for all the pages in each group is
@@ -375,7 +375,7 @@ cmdParser.add_argument("-e", "--evenodd", action="store_true", help="""
    vertical cropping will be uniform over all the pages and only the
    horizontal cropping will differ between even and odd pages.^^n""")
 
-cmdParser.add_argument("-g", "--pages", metavar="PAGESTR", help="""
+cmd_parser.add_argument("-g", "--pages", metavar="PAGESTR", help="""
 
    Apply the cropping operation only to the selected pages.  The argument
    should be a list of the usual form such as "2-4,5,9,20-30".  The
@@ -384,7 +384,7 @@ cmdParser.add_argument("-g", "--pages", metavar="PAGESTR", help="""
    document are ignored.  Note that restore information is always saved for all
    the pages (in the ArtBox) unless '--noundosave' is selected.^^n""")
 
-cmdParser.add_argument("-t", "--threshold", type=int, metavar="BYTEVAL", help="""
+cmd_parser.add_argument("-t", "--threshold", type=int, metavar="BYTEVAL", help="""
 
    Set the threshold for determining what is background space (white).  The
    value can be from 0 to 255, with 191 the default (75 percent).  This option
@@ -393,19 +393,19 @@ cmdParser.add_argument("-t", "--threshold", type=int, metavar="BYTEVAL", help=""
    when '--gsBbox' is selected.  By default, any pixel value over 191 is
    considered to be background (white).^^n""")
 
-cmdParser.add_argument("-nb", "--numBlurs", type=int, metavar="INT", help="""
+cmd_parser.add_argument("-nb", "--numBlurs", type=int, metavar="INT", help="""
 
    When PDF files are explicitly rendered to image files, apply a blur
    operation to the resulting images this many times.  This can be useful for
    noisy images.^^n""")
 
-cmdParser.add_argument("-ns", "--numSmooths", type=int, metavar="INT", help="""
+cmd_parser.add_argument("-ns", "--numSmooths", type=int, metavar="INT", help="""
 
    When PDF files are explicitly rendered to image files, apply a smoothing
    operation to the resulting images this many times.  This can be useful for
    noisy images.^^n""")
 
-cmdParser.add_argument("-gs", "--gsBbox", action="store_true", help="""
+cmd_parser.add_argument("-gs", "--gsBbox", action="store_true", help="""
 
    Use Ghostscript to find the bounding boxes for the pages.  The alternative
    is to explicitly render the PDF pages to image files and calculate bounding
@@ -417,28 +417,28 @@ cmdParser.add_argument("-gs", "--gsBbox", action="store_true", help="""
    "gs" on Linux.  When this option is set the PIL image library for Python is
    not required.^^n""")
 
-cmdParser.add_argument("-gsr", "--gsRender", action="store_true", help="""
+cmd_parser.add_argument("-gsr", "--gsRender", action="store_true", help="""
 
    Use Ghostscript to render the PDF pages to images.  By default the pdftoppm
    program will be preferred for the rendering, if it is found.  Note that this
    option has no effect if '--gsBbox' is chosen, since then no explicit
    rendering is done.^^n""")
 
-cmdParser.add_argument("-x", "--resX", type=int, default=150,
+cmd_parser.add_argument("-x", "--resX", type=int, default=150,
                        metavar="DPI", help="""
 
    The x-resolution in dots per inch to use when the image is rendered to find
    the bounding boxes.  The default is 150.  Higher values produce more precise
    bounding boxes.^^n""")
 
-cmdParser.add_argument("-y", "--resY", type=int, default=150,
+cmd_parser.add_argument("-y", "--resY", type=int, default=150,
                        metavar="DPI", help="""
 
    The y-resolution in dots per inch to use when the image is rendered to find
    the bounding boxes.  The default is 150.  Higher values produce more precise
    bounding boxes.^^n""")
 
-cmdParser.add_argument("-b", "--boxesToSet", choices=["m", "c", "t", "a", "b"],
+cmd_parser.add_argument("-b", "--boxesToSet", choices=["m", "c", "t", "a", "b"],
                        metavar="[m|c|t|a|b]", action="append", default=[], help="""
 
    By default the pdfCropMargins program sets both the MediaBox and the CropBox
@@ -450,7 +450,7 @@ cmdParser.add_argument("-b", "--boxesToSet", choices=["m", "c", "t", "a", "b"],
    overrides the default and can be repeated multiple times to set several box
    types.^^n""")
 
-cmdParser.add_argument("-f", "--fullPageBox", choices=["m", "c", "t", "a", "b"],
+cmd_parser.add_argument("-f", "--fullPageBox", choices=["m", "c", "t", "a", "b"],
                        metavar="[m|c|t|a|b]", action="append", default=[], help="""
 
    By default the program first (before any cropping is calculated) sets the
@@ -467,7 +467,7 @@ cmdParser.add_argument("-f", "--fullPageBox", choices=["m", "c", "t", "a", "b"],
    the '-gs' option since Ghostscript does its own internal rendering when
    finding bounding boxes.  The default with '-gs' is the CropBox.^^n""")
 
-cmdParser.add_argument("-r", "--restore", action="store_true", help="""
+cmd_parser.add_argument("-r", "--restore", action="store_true", help="""
 
    By default, whenever this program crops a file for the first time it saves
    the MediaBox intersected with the CropBox as the new ArtBox (since the
@@ -485,7 +485,7 @@ cmdParser.add_argument("-r", "--restore", action="store_true", help="""
 
 # TODO maybe later option to choose which box to save to, or none, not just
 # turn off ArtBox.
-cmdParser.add_argument("-A", "--noundosave", action="store_true", help="""
+cmd_parser.add_argument("-A", "--noundosave", action="store_true", help="""
 
    Do not save any restore data in the ArtBox.  This option will need to be
    selected if the document actually uses the ArtBox for anything important
@@ -494,7 +494,7 @@ cmdParser.add_argument("-A", "--noundosave", action="store_true", help="""
    cropping command.  (The program does not currently check for this when doing
    a restore.)^^n""")
 
-cmdParser.add_argument("-gsf", "--gsFix", action="store_true", help="""
+cmd_parser.add_argument("-gsf", "--gsFix", action="store_true", help="""
 
    Attempt to repair the input PDF file with Ghostscript before it is read-in
    with PyPdf.  This requires that Ghostscript be available.  (See the general
@@ -514,11 +514,11 @@ cmdParser.add_argument("-gsf", "--gsFix", action="store_true", help="""
    encounter many corrupted PDF files and do not need to restore back to the
    original margins.^^n""")
 
-cmdParser.add_argument("-nc", "--noclobber", action="store_true", help="""
+cmd_parser.add_argument("-nc", "--noclobber", action="store_true", help="""
 
    Never overwrite an existing file as the output file.^^n""")
 
-cmdParser.add_argument("-pv", "--preview", metavar="PROG", help="""
+cmd_parser.add_argument("-pv", "--preview", metavar="PROG", help="""
 
    Run a PDF viewer on the cropped PDF output.  The viewer process is run in
    the background.  The viewer is launched after pdfCropMargins has finished
@@ -534,7 +534,7 @@ cmdParser.add_argument("-pv", "--preview", metavar="PROG", help="""
    the PATH, simply acroread.  A shell script or batch file wrapper can be used
    to set any additional options for the viewer.^^n""")
 
-cmdParser.add_argument("-mo", "--modifyOriginal", action="store_true", help="""
+cmd_parser.add_argument("-mo", "--modifyOriginal", action="store_true", help="""
 
    This option moves (renames) the original file to a backup filename and then
    moves the cropped file to the original filename.  Thus it effectively
@@ -550,7 +550,7 @@ cmdParser.add_argument("-mo", "--modifyOriginal", action="store_true", help="""
    modify the original file; the '-noclobberOriginal' option can be used to
    avoid this.^^n""")
 
-cmdParser.add_argument("-q", "--queryModifyOriginal", action="store_true",
+cmd_parser.add_argument("-q", "--queryModifyOriginal", action="store_true",
                        help="""
 
    This option selects the '--modifyOriginal' option, but queries the user
@@ -560,7 +560,7 @@ cmdParser.add_argument("-q", "--queryModifyOriginal", action="store_true",
    files are not swapped (and are just as if the '--modifyOriginal' option had
    not been set).^^n""")
 
-cmdParser.add_argument("-nco", "--noclobberOriginal", action="store_true",
+cmd_parser.add_argument("-nco", "--noclobberOriginal", action="store_true",
                        help="""
 
    If the '--modifyOriginal' option is selected, do not ever overwrite an
@@ -570,7 +570,7 @@ cmdParser.add_argument("-nco", "--noclobberOriginal", action="store_true",
    if the '--modifyOriginal' option had not been selected.  This option is
    redundant if the ordinary '--noclobber' option is also set.^^n""")
 
-cmdParser.add_argument("-pf", "--usePrefix", action="store_true", help="""
+cmd_parser.add_argument("-pf", "--usePrefix", action="store_true", help="""
 
    Prepend a prefix-string when generating default file names rather than
    appending a suffix-string.  The same string value is used, either the
@@ -580,14 +580,14 @@ cmdParser.add_argument("-pf", "--usePrefix", action="store_true", help="""
    "document.pdf" to be written to the file named "cropped_document.pdf"
    (instead of to the default filename "document_cropped.pdf").^^n""")
 
-cmdParser.add_argument("-sc", "--stringCropped", default="cropped",
+cmd_parser.add_argument("-sc", "--stringCropped", default="cropped",
                        metavar="STR", help="""
 
    This option can be used to set the string which will be appended (or
    prepended) to the document filename when automatically generating the output
    filename for a cropped file.  The default value is "cropped".^^n""")
 
-cmdParser.add_argument("-su", "--stringUncropped", default="uncropped",
+cmd_parser.add_argument("-su", "--stringUncropped", default="uncropped",
                        metavar="STR", help="""
 
    This option can be used to set the string which will be appended (or
@@ -595,14 +595,14 @@ cmdParser.add_argument("-su", "--stringUncropped", default="uncropped",
    filename for the original, uncropped file.  The default value is
    "uncropped".^^n""")
 
-cmdParser.add_argument("-ss", "--stringSeparator", default="_", metavar="STR",
+cmd_parser.add_argument("-ss", "--stringSeparator", default="_", metavar="STR",
                        help="""
 
    This option can be used to set the separator string which will be used when
    appending or prependeding string values to automatically generate filenames.
    The default value is "_".^^n""")
 
-cmdParser.add_argument("-pw", "--password", metavar="PASSWD",
+cmd_parser.add_argument("-pw", "--password", metavar="PASSWD",
                        help="""
 
    Specify a password to be used to decrypt an encrypted PDF file.  Note that
@@ -610,13 +610,13 @@ cmdParser.add_argument("-pw", "--password", metavar="PASSWD",
    needed for non-empty passwords.  The resulting cropped file will not be
    encrypted, so use caution if important data is involved.^^n""")
 
-cmdParser.add_argument("-i", "--showImages", action="store_true", help="""
+cmd_parser.add_argument("-i", "--showImages", action="store_true", help="""
 
    When explicitly rendering PDF files to image files, display the inverse
    image files that are used to find the bounding boxes.  Useful for debugging
    and for choosing some of the other parameters (such as the threshold).^^n""")
 
-cmdParser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
+cmd_parser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
 
    Use a locally-packaged pdftoppm executable rather than the system version.
    This option is only available on Windows machines; it is ignored otherwise.
@@ -627,14 +627,14 @@ cmdParser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
    executable is a few years old, but for page-cropping it only needs to get
    the margins right.^^n""")
 
-cmdParser.add_argument("-gsp", "--ghostscriptPath", type=str, metavar="PATH",
+cmd_parser.add_argument("-gsp", "--ghostscriptPath", type=str, metavar="PATH",
                        default="", help="""
 
    Pass in a pathname to the ghostscript executable that the program should
    use.  No globbing is done.  Useful when the program is in a nonstandard
    location.^^n""")
 
-cmdParser.add_argument("-ppp", "--pdftoppmPath", type=str, metavar="PATH",
+cmd_parser.add_argument("-ppp", "--pdftoppmPath", type=str, metavar="PATH",
                        default="", help="""
 
    Pass in a pathname to the pdftoppm executable that the program should use.

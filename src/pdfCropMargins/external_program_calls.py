@@ -36,10 +36,10 @@ import glob
 import shutil
 import time
 
-tempFilePrefix = "pdfCropMarginsTmp_"     # prefixed to all temporary filenames
-tempDirPrefix = "pdfCropMarginsTmpDir_"   # prefixed to all temporary dirnames
+temp_file_prefix = "pdfCropMarginsTmp_"     # prefixed to all temporary filenames
+temp_dir_prefix = "pdfCropMarginsTmpDir_"   # prefixed to all temporary dirnames
 
-cygwinFullPathPrefix = "/cygdrive"
+cygwin_full_path_prefix = "/cygdrive"
 
 ##
 ## Get info about the OS we're running on.
@@ -48,38 +48,38 @@ cygwinFullPathPrefix = "/cygdrive"
 import platform
 
 #  Get the version as a tuple of strings: (major, minor, patchlevel)
-pythonVersion = platform.python_version_tuple() # sys.version_info works too
+python_version = platform.python_version_tuple() # sys.version_info works too
 
 # Get the system OS type from platform.system as a string such as "Linux",
 # "Windows", or "CYGWIN*".  Note that os.name instead returns something like
 # "nt" for Windows and "posix" for Linux and Cygwin.
-systemOs = platform.system()
-if systemOs[:6].lower() == "cygwin":
-    systemOs = "Cygwin"
+system_os = platform.system()
+if system_os[:6].lower() == "cygwin":
+    system_os = "Cygwin"
 
-#systemOs = "Windows" # Uncomment ONLY to test Windows on Linux with Wine.
+#system_os = "Windows" # Uncomment ONLY to test Windows on Linux with Wine.
 
 # Find the number of bits the OS supports.
-if sys.maxsize > 2**32: systemBits = 64 # Supposed to work on Macs, too.
-else: systemBits = 32
+if sys.maxsize > 2**32: system_bits = 64 # Supposed to work on Macs, too.
+else: system_bits = 32
 
 # Executable paths for Ghostscript, one line for each system OS, with the
-# systemOs string followed by the 32 and 64 bit executable pathnames.  Will
+# system_os string followed by the 32 and 64 bit executable pathnames.  Will
 # use the PATH for the system.
-gsExecutables = (
+gs_executables = (
     ("Linux", "gs", "gs"),
     ("Cygwin", "gs", "gs"),
     ("Windows", "gswin64c.exe", "gswin32c.exe")
 )
-gsExecutable = None # Will be set to the executable selected for the platform.
+gs_executable = None # Will be set to the executable selected for the platform.
 
-pdftoppmExecutables = (
+pdftoppm_executables = (
     ("Linux", "pdftoppm", "pdftoppm"),
     ("Cygwin", "pdftoppm", "pdftoppm"),
     ("Windows", "pdftoppm.exe", "pdftoppm.exe")
 )
-pdftoppmExecutable = None # Will be set to the executable selected for the platform.
-oldPdftoppmVersion = False # Program will check the version and set this if true.
+pdftoppm_executable = None # Will be set to the executable selected for the platform.
+old_pdftoppm_version = False # Program will check the version and set this if true.
 
 # To find the correct path on Windows from the registry, consider this
 # http://stackoverflow.com/questions/18283574/programatically-locate-gswin32-exe
@@ -90,26 +90,26 @@ oldPdftoppmVersion = False # Program will check the version and set this if true
 ##
 
 
-def getTemporaryFilename(extension="", useProgramTempDir=True):
+def get_temporary_filename(extension="", use_program_temp_dir=True):
     """Return the string for a temporary file with the given extension or suffix.  For a
     file extension like .pdf the dot should also be in the passed string.  Caller is
     expected to open and close it as necessary and call os.remove on it after
     finishing with it.  (Note the entire programTempDir will be deleted on cleanup.)"""
-    dirName = None # uses the regular system temp dir if None
-    if useProgramTempDir: dirName = programTempDirectory
-    tmpOutputFile = tempfile.NamedTemporaryFile(
-          delete=False, prefix=tempFilePrefix, suffix=extension, dir=dirName, mode="wb")
-    tmpOutputFile.close() # this deletes the file, too, but it is empty in this case
-    return tmpOutputFile.name
+    dir_name = None # uses the regular system temp dir if None
+    if use_program_temp_dir: dir_name = program_temp_directory
+    tmp_output_file = tempfile.NamedTemporaryFile(
+          delete=False, prefix=temp_file_prefix, suffix=extension, dir=dir_name, mode="wb")
+    tmp_output_file.close() # this deletes the file, too, but it is empty in this case
+    return tmp_output_file.name
 
 
-def getTemporaryDirectory():
+def get_temporary_directory():
     """Create a temporary directory and return the name.  The caller is responsible
     for deleting it (e.g., with shutil.rmtree) after using it."""
-    return tempfile.mkdtemp(prefix=tempDirPrefix)
+    return tempfile.mkdtemp(prefix=temp_dir_prefix)
 
 
-def getDirectoryLocation():
+def get_directory_location():
     """Find the location of the directory where the module that runs this
     function is located.  An empty directory_locator.py file is assumed to be in
     the same directory as the module.  Note that there are other ways to do
@@ -117,10 +117,10 @@ def getDirectoryLocation():
     the directory is a package the import will always look at the current
     directory first.)"""
     from . import directory_locator
-    return getCanonicalAbsolueExpandedDirname(directory_locator.__file__)
+    return get_canonical_absolue_expanded_dirname(directory_locator.__file__)
 
 
-def getCanonicalAbsoluteExpandedPath(path):
+def get_canonical_absolute_expanded_path(path):
     """Get the canonical form of the absolute path from a possibly relative path
     (which may have symlinks, etc.)"""
     return os.path.normcase(
@@ -130,20 +130,20 @@ def getCanonicalAbsoluteExpandedPath(path):
                            os.path.expanduser(path)))))
 
 
-def getCanonicalAbsolueExpandedDirname(path):
+def get_canonical_absolue_expanded_dirname(path):
     """Get the absolute directory name from a possibly relative path."""
-    return os.path.dirname(getCanonicalAbsoluteExpandedPath(path))
+    return os.path.dirname(get_canonical_absolute_expanded_path(path))
 
 
 def samefile(path1, path2):
     """Test if paths refer to the same file or directory."""
-    if systemOs == "Linux" or systemOs == "Cygwin":
+    if system_os == "Linux" or system_os == "Cygwin":
         return os.path.samefile(path1, path2)
-    return (getCanonicalAbsoluteExpandedPath(path1) ==
-            getCanonicalAbsoluteExpandedPath(path2))
+    return (get_canonical_absolute_expanded_path(path1) ==
+            get_canonical_absolute_expanded_path(path2))
 
 
-def getParentDirectory(path):
+def get_parent_directory(path):
     """Like os.path.dirname except it returns the absolute name of the parent
     of the dirname directory.  No symbolic link expansion (os.path.realpath)
     or user expansion (os.path.expanduser) is done."""
@@ -151,29 +151,29 @@ def getParentDirectory(path):
     return os.path.abspath(os.path.join(path, os.path.pardir))
 
 
-def globIfWindowsOs(path, exactNumArgs=False):
-    """Expands any globbing if systemOs is Windows (DOS doesn't do it).  The
+def glob_if_windows_os(path, exact_num_args=False):
+    """Expands any globbing if system_os is Windows (DOS doesn't do it).  The
     argument exactNumFiles can be set to an integer to check for an exact
     number of matching files.  Returns a list."""
-    if systemOs != "Windows": return [path]
+    if system_os != "Windows": return [path]
     globbed = glob.glob(path)
     if not globbed:
         print("\nWarning in pdfCropMargins: The wildcards in the path\n   "
               + path + "\nfailed to expand.  Treating as literal.",
               file=sys.stderr)
         globbed = [path]
-    if exactNumArgs and len(globbed) != exactNumArgs:
+    if exact_num_args and len(globbed) != exact_num_args:
         print("\nError in pdfCropMargins: The wildcards in the path\n   "
               + path + "\nexpand to the wrong number of files.",
               file=sys.stderr)
-        cleanupAndExit(1)
+        cleanup_and_exit(1)
     return globbed
 
 
-def convertWindowsPathToCygwin(path):
+def convert_windows_path_to_cygwin(path):
     """Convert a Windows path to a Cygwin path.  Just handles the basic case."""
     if len(path) > 2 and path[1] == ":" and path[2] == "\\":
-        newpath = cygwinFullPathPrefix + "/" + path[0]
+        newpath = cygwin_full_path_prefix + "/" + path[0]
         if len(path) > 3: newpath += "/" + path[3:]
         path = newpath
     path = path.replace("\\", "/")
@@ -181,42 +181,42 @@ def convertWindowsPathToCygwin(path):
 
 
 # Set some additional variables that this module exposes to other modules.
-programCodeDirectory = getDirectoryLocation()
-projectSrcDirectory = getParentDirectory(programCodeDirectory)
+program_code_directory = get_directory_location()
+project_src_directory = get_parent_directory(program_code_directory)
 
 # The global directory that all temporary files are written to.  Other modules
 # all use the definition from this module.  This makes it easy to clean up all
 # the possibly large files, even on KeyboardInterrupt, by just deleting this
 # directory.
-programTempDirectory = getTemporaryDirectory()
+program_temp_directory = get_temporary_directory()
 
-# Set up an environment variable so Ghostscript will use programTempDirectory
+# Set up an environment variable so Ghostscript will use program_temp_directory
 # for its temporary files (to be sure they get deleted).
-gsEnvironment = os.environ.copy()
-gsEnvironment["TMPDIR"] = programTempDirectory
+gs_environment = os.environ.copy()
+gs_environment["TMPDIR"] = program_temp_directory
 
 
-def removeProgramTempDirectory():
+def remove_program_temp_directory():
     """Remove the global temp directory and all its contents."""
-    if os.path.exists(programTempDirectory):
-        maxRetries = 3
-        currRetries = 0
-        timeBetweenRetries = 1
+    if os.path.exists(program_temp_directory):
+        max_retries = 3
+        curr_retries = 0
+        time_between_retries = 1
         while True:
             try:
-                shutil.rmtree(programTempDirectory)
+                shutil.rmtree(program_temp_directory)
                 break
             except IOError:
-                currRetries += 1
-                if currRetries > maxRetries: raise # re-raise the exception
-                time.sleep(timeBetweenRetries)
+                curr_retries += 1
+                if curr_retries > max_retries: raise # re-raise the exception
+                time.sleep(time_between_retries)
     return
 
 
-def cleanupAndExit(exitCode):
+def cleanup_and_exit(exit_code):
     """Exit the program, after cleaning up the temporary directory."""
-    removeProgramTempDirectory()
-    sys.exit(exitCode)
+    remove_program_temp_directory()
+    sys.exit(exit_code)
     return
 
 
@@ -246,84 +246,84 @@ def which(program):
 ##
 
 
-def getExternalSubprocessOutput(commandList, printOutput=False, indentString="",
-                      splitLines=True, ignoreCalledProcessErrors=False, env=None):
-    """Run the command and arguments in the commandList.  Will search the system
-    PATH.  Returns the output as a list of lines.   If printOutput is True the
-    output is echoed to stdout, indented (or otherwise prefixed) by indentString.
+def get_external_subprocess_output(command_list, print_output=False, indent_string="",
+                      split_lines=True, ignore_called_process_errors=False, env=None):
+    """Run the command and arguments in the command_list.  Will search the system
+    PATH.  Returns the output as a list of lines.   If print_output is True the
+    output is echoed to stdout, indented (or otherwise prefixed) by indent_string.
     Waits for command completion.  Called process errors can be set to be
     ignored if necessary."""
 
     # Note ghostscript bounding box output writes to stderr!  So we need to
     # be sure to capture the stderr along with the stdout.
 
-    printOutput = False # Useful for debugging to set True.
+    print_output = False # Useful for debugging to set True.
 
-    usePopen = True # Needs to be True to set ignoreCalledProcessErrors True
-    if usePopen: # Use lower-level Popen call.
-        p = subprocess.Popen(commandList, stdout=subprocess.PIPE,
+    use_popen = True # Needs to be True to set ignore_called_process_errors True
+    if use_popen: # Use lower-level Popen call.
+        p = subprocess.Popen(command_list, stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT, env=env)
         output, errout = p.communicate()
         returncode = p.poll()
-        if not ignoreCalledProcessErrors and returncode != 0:
-            raise subprocess.CalledProcessError(returncode, commandList, output=output)
+        if not ignore_called_process_errors and returncode != 0:
+            raise subprocess.CalledProcessError(returncode, command_list, output=output)
     else: # Use a check_output call.
         # Note this does not work correctly if shell=True.
-        output = subprocess.check_output(commandList, stderr=subprocess.STDOUT,
+        output = subprocess.check_output(command_list, stderr=subprocess.STDOUT,
                                          shell=False, env=env)
 
     output = output.decode("utf-8")
 
-    if splitLines or printOutput:
-        splitOutput = output.splitlines()
-    if splitLines:
-        output = splitOutput
-    if printOutput:
+    if split_lines or print_output:
+        split_output = output.splitlines()
+    if split_lines:
+        output = split_output
+    if print_output:
         print()
-        for line in splitOutput:
-            print(indentString + line)
+        for line in split_output:
+            print(indent_string + line)
         sys.stdout.flush()
     return output
 
 
-def callExternalSubprocess(commandList,
-                           stdinFilename=None, stdoutFilename=None, stderrFilename=None,
+def call_external_subprocess(command_list,
+                           stdin_filename=None, stdout_filename=None, stderr_filename=None,
                            env=None):
-    """Run the command and arguments in the commandList.  Will search the system
+    """Run the command and arguments in the command_list.  Will search the system
     PATH for commands to execute, but no shell is started.  Redirects any selected
     outputs to the given filename.  Waits for command completion."""
 
-    if stdinFilename: stdin = open(stdinFilename, "r")
+    if stdin_filename: stdin = open(stdin_filename, "r")
     else: stdin = None
-    if stdoutFilename: stdout = open(stdoutFilename, "w")
+    if stdout_filename: stdout = open(stdout_filename, "w")
     else: stdout = None
-    if stderrFilename: stderr = open(stderrFilename, "w")
+    if stderr_filename: stderr = open(stderr_filename, "w")
     else: stderr = None
 
-    subprocess.check_call(commandList, stdin=stdin, stdout=stdout, stderr=stderr,
+    subprocess.check_call(command_list, stdin=stdin, stdout=stdout, stderr=stderr,
                           env=env)
 
-    if stdinFilename: stdin.close()
-    if stdoutFilename: stdout.close()
-    if stderrFilename: stderr.close()
+    if stdin_filename: stdin.close()
+    if stdout_filename: stdout.close()
+    if stderr_filename: stderr.close()
 
     # The older way to do the above with os.system is below, just for reference.
-    # command = " ".join(commandList)
-    # if stdinFilename: command += " < " + stdinFilename
-    # if stdoutFilename: command += " > " + stdoutFilename
-    # if stderrFilename: command += " 2> " + stderrFilename
+    # command = " ".join(command_list)
+    # if stdin_filename: command += " < " + stdin_filename
+    # if stdout_filename: command += " > " + stdout_filename
+    # if stderr_filename: command += " 2> " + stderr_filename
     # os.system(command)
     return
 
 
-def runExternalSubprocessInBackground(commandList, env=None):
+def run_external_subprocess_in_background(command_list, env=None):
     """Runs the command and arguments in the list as a background process."""
-    if systemOs == "Windows":
+    if system_os == "Windows":
         DETACHED_PROCESS = 0x00000008
-        p = subprocess.Popen(commandList, shell=False, stdin=None, stdout=None,
+        p = subprocess.Popen(command_list, shell=False, stdin=None, stdout=None,
                 stderr=None, close_fds=True, creationflags=DETACHED_PROCESS, env=env)
     else:
-        p = subprocess.Popen(commandList, shell=False, stdin=None, stdout=None,
+        p = subprocess.Popen(command_list, shell=False, stdin=None, stdout=None,
                 stderr=None, close_fds=True, env=env)
     return p # ignore the returned process if not needed
 
@@ -343,28 +343,28 @@ def my_function(name): # debug test
     return
 
 
-def functionCallWithTimeout(funName, funArgs, secs=5):
+def function_call_with_timeout(fun_name, fun_args, secs=5):
     """Run a Python function with a timeout.  No interprocess communication or
     return values are handled.  Setting secs to 0 gives infinite timeout."""
-    p = Process(target=funName, args=tuple(funArgs))
+    p = Process(target=fun_name, args=tuple(fun_args))
     p.start()
-    currSecs = 0
-    noTimeout = False
-    if secs == 0: noTimeout = True
+    curr_secs = 0
+    no_timeout = False
+    if secs == 0: no_timeout = True
     else: timeout = secs
-    while p.is_alive() and not noTimeout:
-        if currSecs > timeout:
+    while p.is_alive() and not no_timeout:
+        if curr_secs > timeout:
             print("Process time has exceeded timeout, terminating it.")
             p.terminate()
             return False
         time.sleep(0.1)
-        currSecs += 0.1
+        curr_secs += 0.1
     p.join() # Blocks if process hasn't terminated.
     return True
 
 # debug test
 #funcallWithTimeout(my_function, ["bob"])
-#cleanupAndExit(0)
+#cleanup_and_exit(0)
 
 
 ##
@@ -372,29 +372,29 @@ def functionCallWithTimeout(funName, funArgs, secs=5):
 ##
 
 
-def setGsExecutableToString(gsExecutablePath):
+def set_gs_executable_to_string(gs_executable_path):
     """Used to simply set the value to whatever the user asks for.  The path
     is not tested first, and takes priority over all other settings."""
     # Maybe test run these, too, at some point.
-    global gsExecutable
-    gsExecutable = gsExecutablePath
+    global gs_executable
+    gs_executable = gs_executable_path
     return
 
 
-def initAndTestGsExecutable(exitOnFail=False):
+def init_and_test_gs_executable(exit_on_fail=False):
     """Find a Ghostscript executable and test it.  If a good one is found, set
-    this module's global gsExecutable variable to that path and return that
+    this module's global gs_executable variable to that path and return that
     path.  Otherwise return None.  Any path string set from the command line
     gets priority, and is not tested."""
 
-    global gsExecutable
-    if gsExecutable: return gsExecutable # Has already been set to a path.
+    global gs_executable
+    if gs_executable: return gs_executable # Has already been set to a path.
 
     # First try basic names against the PATH.
-    gsExecutable = findAndTestExecutable(gsExecutables, ["-dSAFER", "-v"], "Ghostscript")
+    gs_executable = find_and_test_executable(gs_executables, ["-dSAFER", "-v"], "Ghostscript")
 
     # If that fails, on Windows or Cygwin look in the Program Files gs directory for it.
-    if not gsExecutable and (systemOs == "Windows" or systemOs == "Cygwin"):
+    if not gs_executable and (system_os == "Windows" or system_os == "Cygwin"):
         # TODO maybe move these strings to top as module settable strings
         gs64 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin64c.exe")
         if gs64: gs64 = gs64[0] # just take the first one for now
@@ -402,102 +402,102 @@ def initAndTestGsExecutable(exitOnFail=False):
         gs32 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin32c.exe")
         if gs32: gs32 = gs32[0] # just take the first one for now
         else: gs32 = ""
-        gsExecs = (("Windows", gs64, gs32), ("Cygwin",
-                  convertWindowsPathToCygwin(gs64), convertWindowsPathToCygwin(gs32)))
-        gsExecutable = findAndTestExecutable(gsExecs, ["-dSAFER", "-v"], "Ghostscript")
+        gs_execs = (("Windows", gs64, gs32), ("Cygwin",
+                  convert_windows_path_to_cygwin(gs64), convert_windows_path_to_cygwin(gs32)))
+        gs_executable = find_and_test_executable(gs_execs, ["-dSAFER", "-v"], "Ghostscript")
 
-    if exitOnFail and not gsExecutable:
+    if exit_on_fail and not gs_executable:
         print("Error in pdfCropMargins (detected in external_program_calls.py):"
               "\nNo Ghostscript executable was found.  Be sure your PATH is"
               "\nset properly.  You can use the `--ghostscriptPath` option to"
               "\nexplicitly set the path from the command line.", file=sys.stderr)
-        cleanupAndExit(1)
+        cleanup_and_exit(1)
 
-    return gsExecutable
+    return gs_executable
 
 
-def setPdftoppmExecutableToString(pdftoppmExecutablePath):
+def set_pdftoppm_executable_to_string(pdftoppm_executable_path):
     """Used to simply set the value to whatever the user asks for.  The path
     is not tested first, and takes priority over all other settings."""
     # Maybe test run these, too, at some point.
-    global pdftoppmExecutable
-    pdftoppmExecutable = pdftoppmExecutablePath
+    global pdftoppm_executable
+    pdftoppm_executable = pdftoppm_executable_path
     return
 
 
-def initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=False):
+def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
     """Find a pdftoppm executable and test it.  If a good one is found, set
-    this module's global pdftoppmExecutable variable to that path and return
+    this module's global pdftoppm_executable variable to that path and return
     that string.  Otherwise return None.  Any path string set from the
     command line gets priority, and is not tested."""
 
-    ignoreCalledProcessErrors = False
+    ignore_called_process_errors = False
 
-    global pdftoppmExecutable
-    if pdftoppmExecutable: return pdftoppmExecutable # Has already been set to a path.
+    global pdftoppm_executable
+    if pdftoppm_executable: return pdftoppm_executable # Has already been set to a path.
 
-    pdftoppmExecutable = findAndTestExecutable(
-                              pdftoppmExecutables, ["-v"], "pdftoppm",
-                              ignoreCalledProcessErrors=ignoreCalledProcessErrors)
+    pdftoppm_executable = find_and_test_executable(
+                              pdftoppm_executables, ["-v"], "pdftoppm",
+                              ignore_called_process_errors=ignore_called_process_errors)
 
-    # If we're on Windows and either no pdftoppm was found or preferLocal was
+    # If we're on Windows and either no pdftoppm was found or prefer_local was
     # specified then use the local pdftoppm.exe distributed with the project.
     # The local pdftoppm.exe can be tested on Linux with Wine.  Just hardcode
     # the system type to "Windows" and it automatically runs Wine on the exe.
-    if preferLocal or (not pdftoppmExecutable and systemOs == "Windows"):
-        if not preferLocal:
+    if prefer_local or (not pdftoppm_executable and system_os == "Windows"):
+        if not prefer_local:
             print("\nWarning from pdfCropMargins: No system pdftoppm was found."
                   "\nReverting to an older, locally-packaged executable.  To silence"
                   "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.",
                   file=sys.stderr)
 
-        path = os.path.join(projectSrcDirectory, "pdfCropMargins", "pdftoppm_windows_local",
+        path = os.path.join(project_src_directory, "pdfCropMargins", "pdftoppm_windows_local",
                                                                 "xpdfbin_win_3_04")
-        #path = os.path.join(projectSrcDirectory, "pdfCropMargins", "xpdfbin_win_3_04")
+        #path = os.path.join(project_src_directory, "pdfCropMargins", "xpdfbin_win_3_04")
 
-        pdftoppmExecutable32 = os.path.join(path, "bin32", "pdftoppm.exe")
-        pdftoppmExecutable64 = os.path.join(path, "bin64", "pdftoppm.exe")
+        pdftoppm_executable32 = os.path.join(path, "bin32", "pdftoppm.exe")
+        pdftoppm_executable64 = os.path.join(path, "bin64", "pdftoppm.exe")
         # Cygwin is not needed below for now, but left in case something gets fixed
         # to allow the local version to run from there.
-        pdftoppmLocalExecs = (("Windows", pdftoppmExecutable64, pdftoppmExecutable32),
-                              ("Cygwin",  pdftoppmExecutable64, pdftoppmExecutable32),)
+        pdftoppm_local_execs = (("Windows", pdftoppm_executable64, pdftoppm_executable32),
+                              ("Cygwin",  pdftoppm_executable64, pdftoppm_executable32),)
 
-        if not (os.path.exists(pdftoppmExecutable32) and
-                    os.path.exists(pdftoppmExecutable64)):
+        if not (os.path.exists(pdftoppm_executable32) and
+                    os.path.exists(pdftoppm_executable64)):
             print("Error in pdfCropMargins: The locally packaged executable files were"
                   " not found.", file=sys.stderr)
-            if exitOnFail:
-                cleanupAndExit(1)
+            if exit_on_fail:
+                cleanup_and_exit(1)
 
-        ignoreCalledProcessErrors = True # Local Windows pdftoppm returns code 99 but works.
-        localPdftoppmExecutable = findAndTestExecutable(
-                                   pdftoppmLocalExecs, ["-v"], "pdftoppm",
-                                   ignoreCalledProcessErrors=ignoreCalledProcessErrors)
-        if not localPdftoppmExecutable:
+        ignore_called_process_errors = True # Local Windows pdftoppm returns code 99 but works.
+        local_pdftoppm_executable = find_and_test_executable(
+                                   pdftoppm_local_execs, ["-v"], "pdftoppm",
+                                   ignore_called_process_errors=ignore_called_process_errors)
+        if not local_pdftoppm_executable:
             print("\nWarning from pdfCropMargins: The local pdftoppm.exe program failed"
                   "\nto execute correctly or was not found.", file=sys.stderr)
         else:
-            pdftoppmExecutable = localPdftoppmExecutable
+            pdftoppm_executable = local_pdftoppm_executable
 
-    if exitOnFail and not pdftoppmExecutable:
+    if exit_on_fail and not pdftoppm_executable:
         print("Error in pdfCropMargins (detected in external_program_calls.py):"
               "\nNo pdftoppm executable was found.  Be sure your PATH is set"
               "\ncorrectly.  You can explicitly set the path from the command"
               "\nline with the `--pdftoppmPath` option.", file=sys.stderr)
-        cleanupAndExit(1)
+        cleanup_and_exit(1)
 
-    if pdftoppmExecutable: # Found a version of pdftoppm, see if it's ancient or recent.
-        cmd = [pdftoppmExecutable, "--help"]
-        runOutput = getExternalSubprocessOutput(cmd, splitLines=False,
-                               ignoreCalledProcessErrors=ignoreCalledProcessErrors)
-        if not "-singlefile " in runOutput or not "-rx " in runOutput:
-            global oldPdftoppmVersion
-            oldPdftoppmVersion = True
-    return pdftoppmExecutable
+    if pdftoppm_executable: # Found a version of pdftoppm, see if it's ancient or recent.
+        cmd = [pdftoppm_executable, "--help"]
+        run_output = get_external_subprocess_output(cmd, split_lines=False,
+                               ignore_called_process_errors=ignore_called_process_errors)
+        if not "-singlefile " in run_output or not "-rx " in run_output:
+            global old_pdftoppm_version
+            old_pdftoppm_version = True
+    return pdftoppm_executable
 
 
-def findAndTestExecutable(executables, argumentList, stringToLookFor,
-                          ignoreCalledProcessErrors=False):
+def find_and_test_executable(executables, argument_list, string_to_look_for,
+                          ignore_called_process_errors=False):
     """Try to run the executable for the current system with the given arguments
     and look in the output for the given test string.  The executables argument
     should be a tuple of tuples.  The internal tuples should be 3-tuples
@@ -512,16 +512,16 @@ def findAndTestExecutable(executables, argumentList, stringToLookFor,
     empty executable strings."""
 
     for systemPaths in executables:
-        if systemPaths[0] != systemOs: continue
-        executablePaths = [systemPaths[1], systemPaths[2]]
-        if systemBits == 32: del executablePaths[0] # 64 bit won't run
-        for executablePath in executablePaths:
+        if systemPaths[0] != system_os: continue
+        executable_paths = [systemPaths[1], systemPaths[2]]
+        if system_bits == 32: del executable_paths[0] # 64 bit won't run
+        for executablePath in executable_paths:
             if not executablePath: continue # ignore empty strings
-            runCommandList = [executablePath] + argumentList
+            run_command_list = [executablePath] + argument_list
             try:
-                runOutput = getExternalSubprocessOutput(runCommandList, splitLines=False,
-                                       ignoreCalledProcessErrors=ignoreCalledProcessErrors)
-                if stringToLookFor in runOutput:
+                run_output = get_external_subprocess_output(run_command_list, split_lines=False,
+                                       ignore_called_process_errors=ignore_called_process_errors)
+                if string_to_look_for in run_output:
                     return executablePath
             except (subprocess.CalledProcessError, OSError, IOError) as e:
                 # OSError if it isn't found, CalledProcessError if it runs but returns
@@ -536,131 +536,131 @@ def findAndTestExecutable(executables, argumentList, stringToLookFor,
 ##
 
 
-def fixPdfWithGhostscriptToTmpFile(inputDocFname):
+def fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname):
     """Attempt to fix a bad PDF file with a Ghostscript command, writing the output
     PDF to a temporary file and returning the filename.  Caller is responsible for
     deleting the file."""
 
-    if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
-    tempFileName = getTemporaryFilename(extension=".pdf")
-    gsRunCommand = [gsExecutable, "-dSAFER", "-o", tempFileName,
-                    "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", inputDocFname]
+    if not gs_executable: init_and_test_gs_executable(exit_on_fail=True)
+    temp_file_name = get_temporary_filename(extension=".pdf")
+    gs_run_command = [gs_executable, "-dSAFER", "-o", temp_file_name,
+                    "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", input_doc_fname]
     try:
-        gsOutput = getExternalSubprocessOutput(gsRunCommand,
-                              printOutput=True, indentString="   ", env=gsEnvironment)
+        gs_output = get_external_subprocess_output(gs_run_command,
+                              print_output=True, indent_string="   ", env=gs_environment)
     except subprocess.CalledProcessError:
         print("\nError in pdfCropMargins:  Ghostscript returned a non-zero exit"
-              "\nstatus when attempting to fix the file:\n   ", inputDocFname,
+              "\nstatus when attempting to fix the file:\n   ", input_doc_fname,
               file=sys.stderr)
-        cleanupAndExit(1)
+        cleanup_and_exit(1)
     except UnicodeDecodeError:
         print("\nWarning in pdfCropMargins:  In attempting to repair the PDF file"
               "\nGhostscript produced a message containing characters which cannot"
               "\nbe decoded by the 'utf-8' codec.  Ignoring and hoping for the best.",
               file=sys.stderr)
-    return tempFileName
+    return temp_file_name
 
 
-def getBoundingBoxListGhostscript(inputDocFname, resX, resY, fullPageBox):
+def get_bounding_box_list_ghostscript(input_doc_fname, res_x, res_y, full_page_box):
     """Call Ghostscript to get the bounding box list.  Cannot set a threshold
     with this method."""
 
-    if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
-    res = str(resX) + "x" + str(resY)
-    boxArg = "-dUseMediaBox" # should be default, but set anyway
-    if "c" in fullPageBox: boxArg = "-dUseCropBox"
-    if "t" in fullPageBox: boxArg = "-dUseTrimBox"
-    if "a" in fullPageBox: boxArg = "-dUseArtBox"
-    if "b" in fullPageBox: boxArg = "-dUseBleedBox" # may not be defined in gs
-    gsRunCommand = [gsExecutable, "-dSAFER", "-dNOPAUSE", "-dBATCH", "-sDEVICE=bbox",
-                    boxArg, "-r"+res, inputDocFname]
+    if not gs_executable: init_and_test_gs_executable(exit_on_fail=True)
+    res = str(res_x) + "x" + str(res_y)
+    box_arg = "-dUseMediaBox" # should be default, but set anyway
+    if "c" in full_page_box: box_arg = "-dUseCropBox"
+    if "t" in full_page_box: box_arg = "-dUseTrimBox"
+    if "a" in full_page_box: box_arg = "-dUseArtBox"
+    if "b" in full_page_box: box_arg = "-dUseBleedBox" # may not be defined in gs
+    gs_run_command = [gs_executable, "-dSAFER", "-dNOPAUSE", "-dBATCH", "-sDEVICE=bbox",
+                    box_arg, "-r"+res, input_doc_fname]
     # Set printOutput to True for debugging or extra-verbose with Ghostscript's output.
     # Note Ghostscript writes the data to stderr, so the command below must capture it.
     try:
-        gsOutput = getExternalSubprocessOutput(gsRunCommand,
-                          printOutput=False, indentString="   ", env=gsEnvironment)
+        gs_output = get_external_subprocess_output(gs_run_command,
+                          print_output=False, indent_string="   ", env=gs_environment)
     except UnicodeDecodeError:
         print("\nError in pdfCropMargins:  In attempting to get the bounding boxes"
               "\nGhostscript encountered characters which cannot be decoded by the"
               "\n'utf-8' codec.",
               file=sys.stderr)
-        cleanupAndExit(1)
+        cleanup_and_exit(1)
 
-    boundingBoxList = []
-    for line in gsOutput:
-        splitLine = line.split()
-        if splitLine and splitLine[0] == r"%%HiResBoundingBox:":
-            del splitLine[0]
-            if len(splitLine) != 4:
+    bounding_box_list = []
+    for line in gs_output:
+        split_line = line.split()
+        if split_line and split_line[0] == r"%%HiResBoundingBox:":
+            del split_line[0]
+            if len(split_line) != 4:
                 print("\nWarning from pdfCropMargins: Ignoring this unparsable line"
                       "\nwhen finding the bounding boxes with Ghostscript:",
                       line, "\n", file=sys.stderr)
                 continue
             # Note gs reports values in order left, bottom, right, top,
             # i.e., lower left point followed by top right point.
-            boundingBoxList.append([float(splitLine[0]),
-                                    float(splitLine[1]),
-                                    float(splitLine[2]),
-                                    float(splitLine[3])])
+            bounding_box_list.append([float(split_line[0]),
+                                    float(split_line[1]),
+                                    float(split_line[2]),
+                                    float(split_line[3])])
 
-    if not boundingBoxList:
+    if not bounding_box_list:
         print("\nError in pdfCropMargins: Ghostscript failed to find any bounding"
               "\nboxes in the document.", file=sys.stderr)
-        cleanupAndExit(1)
-    return boundingBoxList
+        cleanup_and_exit(1)
+    return bounding_box_list
 
 
-def renderPdfFileToImageFiles_pdftoppm_ppm(pdfFileName, rootOutputFilePath,
-                                           resX=150, resY=150, extraArgs=None):
+def render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name, root_output_file_path,
+                                           res_x=150, res_y=150, extra_args=None):
     """Use the pdftoppm program to render a PDF file to .png images.  The
-    rootOutputFilePath is prepended to all the output files, which have numbers
-    and extensions added.  Extra arguments can be passed as a list in extraArgs.
+    root_output_file_path is prepended to all the output files, which have numbers
+    and extensions added.  Extra arguments can be passed as a list in extra_args.
     Return the command output."""
 
-    if extraArgs is None: extraArgs = []
+    if extra_args is None: extra_args = []
 
-    if not pdftoppmExecutable:
-        initAndTestPdftoppmExecutable(preferLocal=False, exitOnFail=True)
+    if not pdftoppm_executable:
+        init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=True)
 
-    if oldPdftoppmVersion:
+    if old_pdftoppm_version:
         # We only have -r, not -rx and -ry.
-        command = [pdftoppmExecutable] + extraArgs + ["-r", resX, pdfFileName,
-                                              rootOutputFilePath]
+        command = [pdftoppm_executable] + extra_args + ["-r", res_x, pdf_file_name,
+                                              root_output_file_path]
     else:
-        command = [pdftoppmExecutable] + extraArgs + ["-rx", resX, "-ry", resY,
-                                              pdfFileName, rootOutputFilePath]
-    commOutput = getExternalSubprocessOutput(command)
-    return commOutput
+        command = [pdftoppm_executable] + extra_args + ["-rx", res_x, "-ry", res_y,
+                                              pdf_file_name, root_output_file_path]
+    comm_output = get_external_subprocess_output(command)
+    return comm_output
 
 
-def renderPdfFileToImageFiles_pdftoppm_pgm(pdfFileName, rootOutputFilePath,
-                                           resX=150, resY=150):
+def render_pdf_file_to_image_files_pdftoppm_pgm(pdf_file_name, root_output_file_path,
+                                           res_x=150, res_y=150):
     """Same as renderPdfFileToImageFile_pdftoppm_ppm but with -gray option for pgm."""
 
-    commOutput = renderPdfFileToImageFiles_pdftoppm_ppm(pdfFileName, rootOutputFilePath,
-                                                        resX, resY, ["-gray"])
-    return commOutput
+    comm_output = render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name, root_output_file_path,
+                                                        res_x, res_y, ["-gray"])
+    return comm_output
 
 
-def renderPdfFileToImageFiles_Ghostscript_png(pdfFileName, rootOutputFilePath,
-                                              resX=150, resY=150):
-    """Use Ghostscript to render a PDF file to .png images.  The rootOutputFilePath
+def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name, root_output_file_path,
+                                              res_x=150, res_y=150):
+    """Use Ghostscript to render a PDF file to .png images.  The root_output_file_path
     is prepended to all the output files, which have numbers and extensions added.
     Return the command output."""
     # For gs commands see
     # http://ghostscript.com/doc/current/Devices.htm#File_formats
     # http://ghostscript.com/doc/current/Devices.htm#PNG
-    if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
-    command = [gsExecutable, "-dBATCH", "-dNOPAUSE", "-sDEVICE=pnggray",
-               "-r"+resX+"x"+resY, "-sOutputFile="+rootOutputFilePath+"-%06d.png",
-               pdfFileName]
-    commOutput = getExternalSubprocessOutput(command, env=gsEnvironment)
-    return commOutput
+    if not gs_executable: init_and_test_gs_executable(exit_on_fail=True)
+    command = [gs_executable, "-dBATCH", "-dNOPAUSE", "-sDEVICE=pnggray",
+               "-r"+res_x+"x"+res_y, "-sOutputFile="+root_output_file_path+"-%06d.png",
+               pdf_file_name]
+    comm_output = get_external_subprocess_output(command, env=gs_environment)
+    return comm_output
 
 
-def renderPdfFileToImageFiles_Ghostscript_bmp(pdfFileName, rootOutputFilePath,
-                                              resX=150, resY=150):
-    """Use Ghostscript to render a PDF file to .bmp images.  The rootOutputFilePath
+def render_pdf_file_to_image_files__ghostscript_bmp(pdf_file_name, root_output_file_path,
+                                              res_x=150, res_y=150):
+    """Use Ghostscript to render a PDF file to .bmp images.  The root_output_file_path
     is prepended to all the output files, which have numbers and extensions added.
     Return the command output."""
     # For gs commands see
@@ -668,12 +668,12 @@ def renderPdfFileToImageFiles_Ghostscript_bmp(pdfFileName, rootOutputFilePath,
     # http://ghostscript.com/doc/current/Devices.htm#BMP
     # These are the BMP devices:
     #    bmpmono bmpgray bmpsep1 bmpsep8 bmp16 bmp256 bmp16m bmp32b
-    if not gsExecutable: initAndTestGsExecutable(exitOnFail=True)
-    command = [gsExecutable, "-dBATCH", "-dNOPAUSE", "-sDEVICE=bmpgray",
-               "-r"+resX+"x"+resY, "-sOutputFile="+rootOutputFilePath+"-%06d.bmp",
-               pdfFileName]
-    commOutput = getExternalSubprocessOutput(command, env=gsEnvironment)
-    return commOutput
+    if not gs_executable: init_and_test_gs_executable(exit_on_fail=True)
+    command = [gs_executable, "-dBATCH", "-dNOPAUSE", "-sDEVICE=bmpgray",
+               "-r"+res_x+"x"+res_y, "-sOutputFile="+root_output_file_path+"-%06d.bmp",
+               pdf_file_name]
+    comm_output = get_external_subprocess_output(command, env=gs_environment)
+    return comm_output
 
 
 ##
@@ -681,13 +681,13 @@ def renderPdfFileToImageFiles_Ghostscript_bmp(pdfFileName, rootOutputFilePath,
 ##
 
 
-def showPreview(viewerPath, pdfFileName):
-    """Run the PDF viewer at the path viewerPath on the file pdfFileName."""
+def show_preview(viewer_path, pdf_file_name):
+    """Run the PDF viewer at the path viewer_path on the file pdf_file_name."""
     try:
-        cmd = [viewerPath, pdfFileName]
-        runExternalSubprocessInBackground(cmd)
+        cmd = [viewer_path, pdf_file_name]
+        run_external_subprocess_in_background(cmd)
     except (subprocess.CalledProcessError, OSError, IOError) as e:
         print("\nWarning from pdfCropMargins: The argument to the '--viewer' option:"
-              "\n   ", viewerPath, "\nwas not found or failed to execute correctly.\n")
+              "\n   ", viewer_path, "\nwas not found or failed to execute correctly.\n")
     return
 

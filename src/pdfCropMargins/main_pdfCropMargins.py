@@ -63,22 +63,22 @@ import time
 ##
 
 from . import external_program_calls as ex
-pythonVersion = ex.pythonVersion
-projectSrcDirectory = ex.projectSrcDirectory
+python_version = ex.python_version
+project_src_directory = ex.project_src_directory
 
 ##
-## Try to import the system pyPdf.  If that fails or if the '--pyPdfLocal'
+## Try to import the system pyPdf.  If that fails or if the '--pypdf_local'
 ## option was set then revert to the appropriate local version.
 ##
 
-pyPdfLocal = False # TODO delete cleanup
+pypdf_local = False # TODO delete cleanup
 # Peek at the command line (before fully parsing it later) to see if we should
 # import the local pyPdf.  This works for simple options which are either set
 # or not.  Note that importing is now dependent on sys.argv (even though it
 # shouldn't make a difference in this application).
-if "--pyPdfLocal" in sys.argv or "-pdl" in sys.argv:
-    #pyPdfLocal = True
-    pyPdfLocal = False # NEVER USE LOCAL
+if "--pypdf_local" in sys.argv or "-pdl" in sys.argv:
+    #pypdf_local = True
+    pypdf_local = False # NEVER USE LOCAL
 
 try:
     from PyPDF2 import PdfFileWriter, PdfFileReader # the system's pyPdf
@@ -94,21 +94,21 @@ except ImportError:
 ## Import the general function for calculating a list of bounding boxes.
 ##
 
-from .calculate_bounding_boxes import getBoundingBoxList
+from .calculate_bounding_boxes import get_bounding_box_list
 
 ##
 ## Import the prettified argparse module and the text of the manpage documentation.
 ##
 
-from .prettified_argparse import parseCommandLineArguments
-from .manpage_data import cmdParser
+from .prettified_argparse import parse_command_line_arguments
+from .manpage_data import cmd_parser
 
 ##
 ## Some general strings used by the program.
 ##
 
 # The string which is appended to Producer metadata in cropped PDFs.
-producerModifier = " (Cropped by pdfCropMargins.)"
+producer_modifier = " (Cropped by pdfCropMargins.)"
 
 
 ##
@@ -116,18 +116,18 @@ producerModifier = " (Cropped by pdfCropMargins.)"
 ##
 
 
-def generateDefaultFilename(infilePath, isCroppedFile=True):
+def generate_default_filename(infile_path, is_cropped_file=True):
     """Generate the name of the default output file from the name of the input
-    file.  The isCroppedFile boolean is used to indicate that the file has been
+    file.  The is_cropped_file boolean is used to indicate that the file has been
     (or will be) cropped, to determine which filename-modification string to
     use.  Function assumes that args has been set globally by argparse."""
 
-    if isCroppedFile: suffix = prefix = args.stringCropped
+    if is_cropped_file: suffix = prefix = args.stringCropped
     else: suffix = prefix = args.stringUncropped
 
     # Use modified basename as output path; program writes default output to CWD.
-    fileName = os.path.basename(infilePath)
-    nameBeforeExtension, extension = os.path.splitext(fileName)
+    file_name = os.path.basename(infile_path)
+    nameBeforeExtension, extension = os.path.splitext(file_name)
     if extension not in {".pdf", ".PDF"}: extension += ".pdf"
 
     sep = args.stringSeparator
@@ -137,7 +137,7 @@ def generateDefaultFilename(infilePath, isCroppedFile=True):
     return name
 
 
-def intersectBoxes(box1, box2):
+def intersect_boxes(box1, box2):
     """Takes two pyPdf boxes (such as page.mediaBox) and returns the pyPdf
     box which is their intersection."""
     if not box1 and not box2: return None
@@ -151,7 +151,7 @@ def intersectBoxes(box1, box2):
     return intersect
 
 
-def modBoxForRotation(box, angle, undo=False):
+def mod_box_for_rotation(box, angle, undo=False):
     """The user sees left, bottom, right, and top margins on a page, but inside
     the PDF and in pyPdf the page may be rotated (such as in landscape mode).
     In the case of 90 degree clockwise rotation the left really modifies the
@@ -159,23 +159,23 @@ def modBoxForRotation(box, angle, undo=False):
     like '--percentRetain4' and '--absoluteOffset4' to work as expected the
     values need to be shifted to match any "hidden" rotations on any page."""
 
-    def rotateNinetyDegreesClockwise(box, n):
+    def rotate_ninety_degrees_clockwise(box, n):
         if n == 0: return box
-        box = rotateNinetyDegreesClockwise(box, n-1)
+        box = rotate_ninety_degrees_clockwise(box, n-1)
         return [box[1], box[2], box[3], box[0]]
 
     # These are for clockwise, swap do and undo to reverse.
-    doMap = {0: 0, 90: 1, 180: 2, 270: 3}
-    undoMap = {0: 0, 90: 3, 180: 2, 270: 1}
+    do_map = {0: 0, 90: 1, 180: 2, 270: 3}
+    undo_map = {0: 0, 90: 3, 180: 2, 270: 1}
 
     if not undo:
-        return rotateNinetyDegreesClockwise(box, doMap[angle])
+        return rotate_ninety_degrees_clockwise(box, do_map[angle])
     else:
-        return rotateNinetyDegreesClockwise(box, undoMap[angle])
+        return rotate_ninety_degrees_clockwise(box, undo_map[angle])
     return
 
 
-def getFullPageBoxAssigningMediaAndCrop(page):
+def get_full_page_box_assigning_media_and_crop(page):
     """This returns whatever PDF box was selected (by the user option
     '--fullPageBox') to represent the full page size.  All cropping is done
     relative to this box.  The default selection option is the MediaBox
@@ -205,69 +205,69 @@ def getFullPageBoxAssigningMediaAndCrop(page):
     page.originalMediaBox = page.mediaBox
     page.originalCropBox = page.cropBox
 
-    firstLoop = True
+    first_loop = True
     for boxString in args.fullPageBox:
-        if boxString == "m": fBox = page.mediaBox
-        if boxString == "c": fBox = page.cropBox
-        if boxString == "t": fBox = page.trimBox
-        if boxString == "a": fBox = page.artBox
-        if boxString == "b": fBox = page.bleedBox
+        if boxString == "m": f_box = page.mediaBox
+        if boxString == "c": f_box = page.cropBox
+        if boxString == "t": f_box = page.trimBox
+        if boxString == "a": f_box = page.artBox
+        if boxString == "b": f_box = page.bleedBox
 
         # Take intersection over all chosen boxes.
-        if firstLoop:
-            fullBox = fBox
+        if first_loop:
+            full_box = f_box
         else:
-            fullBox = intersectBoxes(fullBox, fBox)
+            full_box = intersect_boxes(full_box, f_box)
 
-        firstLoop = False
+        first_loop = False
 
     # Do any absolute pre-cropping specified for the page (after modifying any
     # absolutePreCrop arguments to take into account rotations to the page).
-    a = modBoxForRotation(args.absolutePreCrop, rotation)
-    fullBox = RectangleObject([float(fullBox.lowerLeft[0]) + a[0],
-                               float(fullBox.lowerLeft[1]) + a[1],
-                               float(fullBox.upperRight[0]) - a[2],
-                               float(fullBox.upperRight[1]) - a[3]])
+    a = mod_box_for_rotation(args.absolutePreCrop, rotation)
+    full_box = RectangleObject([float(full_box.lowerLeft[0]) + a[0],
+                               float(full_box.lowerLeft[1]) + a[1],
+                               float(full_box.upperRight[0]) - a[2],
+                               float(full_box.upperRight[1]) - a[3]])
 
-    page.mediaBox = fullBox
-    page.cropBox = fullBox
+    page.mediaBox = full_box
+    page.cropBox = full_box
 
-    return fullBox
+    return full_box
 
 
-def getFullPageBoxListAssigningMediaAndCrop(inputDoc, quiet=False):
+def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False):
     """Get a list of all the full-page box values for each page.  The argument
-    inputDoc should be a PdfFileReader object.  The boxes on the list are in the
+    input_doc should be a PdfFileReader object.  The boxes on the list are in the
     simple 4-float list format used by this program, not RectangleObject format."""
 
-    fullPageBoxList = []
-    rotationList = []
+    full_page_box_list = []
+    rotation_list = []
 
     if args.verbose and not quiet:
         print("\nOriginal full page sizes, in PDF format (lbrt):")
 
-    for pageNum in range(inputDoc.getNumPages()):
+    for pageNum in range(input_doc.getNumPages()):
 
         # Get the current page and find the full-page box.
-        currPage = inputDoc.getPage(pageNum)
-        fullPageBox = getFullPageBoxAssigningMediaAndCrop(currPage)
+        curr_page = input_doc.getPage(pageNum)
+        full_page_box = get_full_page_box_assigning_media_and_crop(curr_page)
 
         if args.verbose and not quiet:
             # want to display page num numbering from 1, so add one
             print("\t"+str(pageNum+1), "  rot =",
-                  currPage.rotationAngle, "\t", fullPageBox)
+                  curr_page.rotationAngle, "\t", full_page_box)
 
         # Convert the RectangleObject to floats in an ordinary list and append.
-        ordinaryBox = [float(b) for b in fullPageBox]
-        fullPageBoxList.append(ordinaryBox)
+        ordinary_box = [float(b) for b in full_page_box]
+        full_page_box_list.append(ordinary_box)
 
-        # Append the rotation value to the rotationList.
-        rotationList.append(currPage.rotationAngle)
+        # Append the rotation value to the rotation_list.
+        rotation_list.append(curr_page.rotationAngle)
 
-    return fullPageBoxList, rotationList
+    return full_page_box_list, rotation_list
 
 
-def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCrop):
+def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list, page_nums_to_crop):
     """Given a list of full-page boxes (media boxes) and a list of tight
     bounding boxes for each page, calculate and return another list giving the
     list of bounding boxes to crop down to."""
@@ -283,9 +283,9 @@ def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCro
     # tight bounding box, and so part of the text within the tight bounding box
     # will also be cropped (unless absolute offsets are used to counter that).
 
-    numPages = len(boundingBoxList)
-    pageRange = range(numPages)
-    numPagesToCrop = len(pageNumsToCrop)
+    num_pages = len(bounding_box_list)
+    page_range = range(num_pages)
+    num_pages_to_crop = len(page_nums_to_crop)
 
     # Handle the '--samePageSize' option.
     # Note that this is always done first, over the whole document, even before
@@ -293,51 +293,51 @@ def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCro
     if args.samePageSize:
         if args.verbose:
             print("\nSetting each page size to the smallest box bounding all the pages.")
-        fullPageBoxList = [[min(box[0] for box in fullPageBoxList),
-                            min(box[1] for box in fullPageBoxList),
-                            max(box[2] for box in fullPageBoxList),
-                            max(box[3] for box in fullPageBoxList)]
-                           ] * numPages
+        full_page_box_list = [[min(box[0] for box in full_page_box_list),
+                            min(box[1] for box in full_page_box_list),
+                            max(box[2] for box in full_page_box_list),
+                            max(box[3] for box in full_page_box_list)]
+                           ] * num_pages
 
     # Handle the '--evenodd' option if it was selected.
     if args.evenodd:
-        evenPageNumsToCrop = {pNum for pNum in pageNumsToCrop if pNum % 2 == 0}
-        oddPageNumsToCrop = {pNum for pNum in pageNumsToCrop if pNum % 2 != 0}
+        even_page_nums_to_crop = {p_num for p_num in page_nums_to_crop if p_num % 2 == 0}
+        odd_page_nums_to_crop = {p_num for p_num in page_nums_to_crop if p_num % 2 != 0}
 
-        if args.uniform: uniformSetWithEvenOdd = True
-        else: uniformSetWithEvenOdd = False
+        if args.uniform: uniform_set_with_even_odd = True
+        else: uniform_set_with_even_odd = False
 
         # Recurse on even and odd pages, after resetting some options.
         if args.verbose: print("\nRecursively calculating crops for even and odd pages.")
         args.evenodd = False # avoid infinite recursion
         args.uniform = True  # --evenodd implies uniform, just on each separate group
-        evenCropList = calculateCropList(
-                       fullPageBoxList, boundingBoxList, angleList, evenPageNumsToCrop)
-        oddCropList = calculateCropList(
-                       fullPageBoxList, boundingBoxList, angleList, oddPageNumsToCrop)
+        even_crop_list = calculate_crop_list(
+                       full_page_box_list, bounding_box_list, angle_list, even_page_nums_to_crop)
+        odd_crop_list = calculate_crop_list(
+                       full_page_box_list, bounding_box_list, angle_list, odd_page_nums_to_crop)
 
         # Recombine the even and odd pages
-        combineEvenOdd = []
-        for pNum in pageRange:
-            if pNum % 2 == 0: combineEvenOdd.append(evenCropList[pNum])
-            else: combineEvenOdd.append(oddCropList[pNum])
+        combine_even_odd = []
+        for p_num in page_range:
+            if p_num % 2 == 0: combine_even_odd.append(even_crop_list[p_num])
+            else: combine_even_odd.append(odd_crop_list[p_num])
 
         # Handle the case where --uniform was set with --evenodd
-        if uniformSetWithEvenOdd:
-            minBottomMargin = min([box[1] for box in combineEvenOdd])
-            maxTopMargin = max([box[3] for box in combineEvenOdd])
-            combineEvenOdd = [[box[0], minBottomMargin, box[2], maxTopMargin]
-                              for box in combineEvenOdd]
-        return combineEvenOdd
+        if uniform_set_with_even_odd:
+            min_bottom_margin = min([box[1] for box in combine_even_odd])
+            max_top_margin = max([box[3] for box in combine_even_odd])
+            combine_even_odd = [[box[0], min_bottom_margin, box[2], max_top_margin]
+                              for box in combine_even_odd]
+        return combine_even_odd
 
     # Before calculating the crops we modify the percentRetain and
     # absoluteOffset values for all the pages according to any specified
     # rotations for the pages.  This is so, for example, uniform cropping is
     # relative to what the user actually sees.
-    rotatedPercentRetain = [modBoxForRotation(args.percentRetain, angleList[i])
-                                                         for i in range(numPages)]
-    rotatedAbsoluteOffset = [modBoxForRotation(args.absoluteOffset, angleList[i])
-                                                         for i in range(numPages)]
+    rotated_percent_retain = [mod_box_for_rotation(args.percentRetain, angle_list[i])
+                                                         for i in range(num_pages)]
+    rotated_absolute_offset = [mod_box_for_rotation(args.absoluteOffset, angle_list[i])
+                                                         for i in range(num_pages)]
 
     # Calculate the list of deltas to be used to modify the original page
     # sizes.  Basically, a delta is the absolute diff between the full and
@@ -348,55 +348,55 @@ def calculateCropList(fullPageBoxList, boundingBoxList, angleList, pageNumsToCro
     # percent>100.  They are added (lb) or subtracted (tr) as appropriate.
 
 
-    deltaList = []
-    for pNum, tBox, fBox in zip(list(range(len(fullPageBoxList))),
-                                               boundingBoxList, fullPageBoxList):
-        deltas = [abs(tBox[i] - fBox[i]) for i in range(4)]
-        adjDeltas = [deltas[i] * (100.0-rotatedPercentRetain[pNum][i]) / 100.0
+    delta_list = []
+    for p_num, t_box, f_box in zip(list(range(len(full_page_box_list))),
+                                               bounding_box_list, full_page_box_list):
+        deltas = [abs(t_box[i] - f_box[i]) for i in range(4)]
+        adj_deltas = [deltas[i] * (100.0-rotated_percent_retain[p_num][i]) / 100.0
                      for i in range(4)]
-        adjDeltas = [adjDeltas[i] + rotatedAbsoluteOffset[pNum][i] for i in range(4)]
-        deltaList.append(adjDeltas)
+        adj_deltas = [adj_deltas[i] + rotated_absolute_offset[p_num][i] for i in range(4)]
+        delta_list.append(adj_deltas)
 
     # Handle the '--uniform' options if one was selected.
     if args.uniformOrderPercent:
-        percentVal = args.uniformOrderPercent[0]
-        if percentVal < 0.0: percentVal = 0.0
-        if percentVal > 100.0: percentVal = 100.0
-        args.uniformOrderStat = [int(round(numPagesToCrop * percentVal / 100.0))]
+        percent_val = args.uniformOrderPercent[0]
+        if percent_val < 0.0: percent_val = 0.0
+        if percent_val > 100.0: percent_val = 100.0
+        args.uniformOrderStat = [int(round(num_pages_to_crop * percent_val / 100.0))]
 
     if args.uniform or args.uniformOrderStat:
         if args.verbose: print("\nAll the selected pages will be uniformly cropped.")
         # Only look at the deltas which correspond to pages selected for cropping.
         # They will then be sorted for each margin and selected.
-        cropDeltaList = [deltaList[j] for j in pageRange if j in pageNumsToCrop]
+        crop_delta_list = [delta_list[j] for j in page_range if j in page_nums_to_crop]
 
         i = 0 # Let i be the index value into the sorted delta list.
         if args.uniformOrderStat: i = args.uniformOrderStat[0]
-        if i < 0 or i >= numPagesToCrop:
+        if i < 0 or i >= num_pages_to_crop:
             print("\nWarning: The selected order statistic is out of range.",
                   "Setting to closest value.", file=sys.stderr)
-            if i >= numPagesToCrop: i = numPagesToCrop - 1
+            if i >= num_pages_to_crop: i = num_pages_to_crop - 1
             if i < 0: i = 0
         if args.verbose and (args.uniformOrderStat or args.uniformOrderPercent):
             print("\nThe " + str(i) +
                   " smallest delta values over the selected pages will be ignored"
                   "\nwhen choosing a common, uniform delta value for each margin.")
-        leftVals = sorted([box[0] for box in cropDeltaList])
-        lowerVals = sorted([box[1] for box in cropDeltaList])
-        rightVals = sorted([box[2] for box in cropDeltaList])
-        upperVals = sorted([box[3] for box in cropDeltaList])
-        deltaList = [[leftVals[i], lowerVals[i], rightVals[i], upperVals[i]]] * numPages
+        left_vals = sorted([box[0] for box in crop_delta_list])
+        lower_vals = sorted([box[1] for box in crop_delta_list])
+        right_vals = sorted([box[2] for box in crop_delta_list])
+        upper_vals = sorted([box[3] for box in crop_delta_list])
+        delta_list = [[left_vals[i], lower_vals[i], right_vals[i], upper_vals[i]]] * num_pages
 
     # Apply the delta modifications to the full boxes to get the final sizes.
-    finalCropList = []
-    for fBox, deltas in zip(fullPageBoxList, deltaList):
-        finalCropList.append((fBox[0] + deltas[0], fBox[1] + deltas[1],
-                              fBox[2] - deltas[2], fBox[3] - deltas[3]))
+    final_crop_list = []
+    for f_box, deltas in zip(full_page_box_list, delta_list):
+        final_crop_list.append((f_box[0] + deltas[0], f_box[1] + deltas[1],
+                              f_box[2] - deltas[2], f_box[3] - deltas[3]))
 
-    return finalCropList
+    return final_crop_list
 
 
-def setCroppedMetadata(inputDoc, outputDoc, inputMetadataInfo):
+def set_cropped_metadata(input_doc, output_doc, InputMetadataInfo):
     """Set the metadata for the output document.  Mostly just copied over, but
     "Producer" has a string appended to indicate that this program modified the
     file.  That allows for the undo operation to make sure that this
@@ -404,26 +404,26 @@ def setCroppedMetadata(inputDoc, outputDoc, inputMetadataInfo):
 
     # Setting metadata with pyPdf requires low-level pyPdf operations, see
     # http://stackoverflow.com/questions/2574676/change-metadata-of-pdf-file-with-pypdf
-    if not inputMetadataInfo: # In case it's null, just set values to empty strings.
-        class inputMetadataInfo(object):
+    if not InputMetadataInfo: # In case it's null, just set values to empty strings.
+        class InputMetadataInfo(object):
             pass
-        inputMetadataInfo.author = ""
-        inputMetadataInfo.creator = ""
-        inputMetadataInfo.producer = ""
-        inputMetadataInfo.subject = ""
-        inputMetadataInfo.title = ""
+        InputMetadataInfo.author = ""
+        InputMetadataInfo.creator = ""
+        InputMetadataInfo.producer = ""
+        InputMetadataInfo.subject = ""
+        InputMetadataInfo.title = ""
 
-    outputInfoDict = outputDoc._info.getObject()
+    output_info_dict = output_doc._info.getObject()
 
     # Check Producer metadata attribute to see if this program cropped document before.
-    global producerModifier
-    alreadyCroppedByThisProgram = False
-    oldProducerString = inputMetadataInfo.producer
-    if oldProducerString and oldProducerString.endswith(producerModifier):
+    global producer_modifier
+    already_cropped_by_this_program = False
+    old_producer_string = InputMetadataInfo.producer
+    if old_producer_string and old_producer_string.endswith(producer_modifier):
         if args.verbose:
             print("\nThe document was already cropped at least once by this program.")
-        alreadyCroppedByThisProgram = True
-        producerModifier = "" # No need to pile up suffixes each time on Producer.
+        already_cropped_by_this_program = True
+        producer_modifier = "" # No need to pile up suffixes each time on Producer.
 
     # Note that all None metadata attributes are currently set to the empty string
     # when passing along the metadata information.
@@ -431,22 +431,22 @@ def setCroppedMetadata(inputDoc, outputDoc, inputMetadataInfo):
         if item is None: return ""
         else: return item
 
-    outputInfoDict.update({
-          NameObject("/Author"): createStringObject(st(inputMetadataInfo.author)),
-          NameObject("/Creator"): createStringObject(st(inputMetadataInfo.creator)),
-          NameObject("/Producer"): createStringObject(st(inputMetadataInfo.producer)
-                                                                 + producerModifier),
-          NameObject("/Subject"): createStringObject(st(inputMetadataInfo.subject)),
-          NameObject("/Title"): createStringObject(st(inputMetadataInfo.title))
+    output_info_dict.update({
+          NameObject("/Author"): createStringObject(st(InputMetadataInfo.author)),
+          NameObject("/Creator"): createStringObject(st(InputMetadataInfo.creator)),
+          NameObject("/Producer"): createStringObject(st(InputMetadataInfo.producer)
+                                                                 + producer_modifier),
+          NameObject("/Subject"): createStringObject(st(InputMetadataInfo.subject)),
+          NameObject("/Title"): createStringObject(st(InputMetadataInfo.title))
           })
 
-    return alreadyCroppedByThisProgram
+    return already_cropped_by_this_program
 
 
-def applyCropList(cropList, inputDoc, pageNumsToCrop, alreadyCroppedByThisProgram):
+def apply_crop_list(crop_list, input_doc, page_nums_to_crop, already_cropped_by_this_program):
     """Apply the crop list to the pages of the input PdfFileReader object."""
 
-    if args.restore and not alreadyCroppedByThisProgram:
+    if args.restore and not already_cropped_by_this_program:
         print("\nWarning from pdfCropMargins: The Producer string indicates that"
               "\neither this document was not previously cropped by pdfCropMargins"
               "\nor else it was modified by another program after that.  Trying the"
@@ -459,52 +459,52 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop, alreadyCroppedByThisProgra
         print("\nNew full page sizes after cropping, in PDF format (lbrt):")
 
     # Copy over each page, after modifying the appropriate PDF boxes.
-    for pageNum in range(inputDoc.getNumPages()):
+    for pageNum in range(input_doc.getNumPages()):
 
-        currPage = inputDoc.getPage(pageNum)
+        curr_page = input_doc.getPage(pageNum)
 
         # Restore any rotation which was originally on the page.
-        currPage.rotateClockwise(currPage.rotationAngle)
+        curr_page.rotateClockwise(curr_page.rotationAngle)
 
         # Only do the restore from ArtBox if '--restore' option was selected.
         if args.restore:
-            if not currPage.artBox:
+            if not curr_page.artBox:
                 print("\nWarning from pdfCropMargins: Attempting to restore pages from"
                       "\nthe ArtBox in each page, but page", pageNum, "has no readable"
                       "\nArtBox.  Leaving that page unchanged.", file=sys.stderr)
                 continue
-            currPage.mediaBox = currPage.artBox
-            currPage.cropBox = currPage.artBox
+            curr_page.mediaBox = curr_page.artBox
+            curr_page.cropBox = curr_page.artBox
             continue
 
         # Do the save to ArtBox if that option is chosen and Producer is set.
-        if not args.noundosave and not alreadyCroppedByThisProgram:
-            currPage.artBox = intersectBoxes(currPage.mediaBox, currPage.cropBox)
+        if not args.noundosave and not already_cropped_by_this_program:
+            curr_page.artBox = intersect_boxes(curr_page.mediaBox, curr_page.cropBox)
 
         # Reset the CropBox and MediaBox to their saved original values
-        # (which were set in getFullPageBox, in the currPage object's namespace).
-        currPage.mediaBox = currPage.originalMediaBox
-        currPage.cropBox = currPage.originalCropBox
+        # (which were set in getFullPageBox, in the curr_page object's namespace).
+        curr_page.mediaBox = curr_page.originalMediaBox
+        curr_page.cropBox = curr_page.originalCropBox
 
         # Copy the original page without further mods if it wasn't in the range
         # selected for cropping.
-        if pageNum not in pageNumsToCrop:
+        if pageNum not in page_nums_to_crop:
             continue
 
         # Convert the computed "box to crop to" into a RectangleObject (for pyPdf).
-        newCroppedBox = RectangleObject(cropList[pageNum])
+        new_cropped_box = RectangleObject(crop_list[pageNum])
 
         if args.verbose:
-            print("\t"+str(pageNum+1)+"\t", newCroppedBox) # page numbering from 1
+            print("\t"+str(pageNum+1)+"\t", new_cropped_box) # page numbering from 1
 
         if not args.boxesToSet: args.boxesToSet = ["m", "c"]
 
         # Now set any boxes which were selected to be set via the --boxesToSet option.
-        if "m" in args.boxesToSet: currPage.mediaBox = newCroppedBox
-        if "c" in args.boxesToSet: currPage.cropBox = newCroppedBox
-        if "t" in args.boxesToSet: currPage.trimBox = newCroppedBox
-        if "a" in args.boxesToSet: currPage.artBox = newCroppedBox
-        if "b" in args.boxesToSet: currPage.bleedBox = newCroppedBox
+        if "m" in args.boxesToSet: curr_page.mediaBox = new_cropped_box
+        if "c" in args.boxesToSet: curr_page.cropBox = new_cropped_box
+        if "t" in args.boxesToSet: curr_page.trimBox = new_cropped_box
+        if "a" in args.boxesToSet: curr_page.artBox = new_cropped_box
+        if "b" in args.boxesToSet: curr_page.bleedBox = new_cropped_box
 
     return
 
@@ -517,9 +517,9 @@ def applyCropList(cropList, inputDoc, pageNumsToCrop, alreadyCroppedByThisProgra
 
 
 # Parse the command-line arguments and set the variable args.
-args = parseCommandLineArguments(cmdParser)
+args = parse_command_line_arguments(cmd_parser)
 
-def mainCrop():
+def main_crop():
     """This function does the real work.  It is called by main() in
     pdfCropMargins.py, which just handles catching exceptions and cleaning up."""
 
@@ -529,7 +529,7 @@ def mainCrop():
 
     if args.verbose:
         print("\nProcessing the PDF with pdfCropMargins...\nSystem type:",
-              ex.systemOs)
+              ex.system_os)
 
     if args.gsBbox and len(args.fullPageBox) > 1:
         print("\nWarning: only one --fullPageBox value can be used with the -gs option.",
@@ -568,72 +568,72 @@ def mainCrop():
               "\nFound more than one on the command line:", file=sys.stderr)
         for f in args.pdf_input_doc:
             print("   ", f, file=sys.stderr)
-        ex.cleanupAndExit(1)
+        ex.cleanup_and_exit(1)
 
-    inputDocFname = ex.globIfWindowsOs(args.pdf_input_doc[0], exactNumArgs=1)[0]
-    if not inputDocFname.endswith((".pdf",".PDF")):
+    input_doc_fname = ex.glob_if_windows_os(args.pdf_input_doc[0], exact_num_args=1)[0]
+    if not input_doc_fname.endswith((".pdf",".PDF")):
         print("\nWarning in pdfCropMargins: The file extension is neither '.pdf'"
               "\nnor '.PDF'; continuing anyway.\n", file=sys.stderr)
     if args.verbose:
-        print("\nThe input document's filename is:\n   ", inputDocFname)
-    if not os.path.isfile(inputDocFname):
+        print("\nThe input document's filename is:\n   ", input_doc_fname)
+    if not os.path.isfile(input_doc_fname):
         print("\nError in pdfCropMargins: The specified input file\n   "
-              + inputDocFname + "\nis not a file or does not exist.",
+              + input_doc_fname + "\nis not a file or does not exist.",
               file=sys.stderr)
-        ex.cleanupAndExit(1)
+        ex.cleanup_and_exit(1)
 
     if not args.outfile:
         if args.verbose: print("\nUsing the default-generated output filename.")
-        outputDocFname = generateDefaultFilename(inputDocFname)
+        output_doc_fname = generate_default_filename(input_doc_fname)
     else:
-        outputDocFname = ex.globIfWindowsOs(args.outfile[0], exactNumArgs=1)[0]
+        output_doc_fname = ex.glob_if_windows_os(args.outfile[0], exact_num_args=1)[0]
     if args.verbose:
-        print("\nThe output document's filename will be:\n   ", outputDocFname)
+        print("\nThe output document's filename will be:\n   ", output_doc_fname)
 
-    if os.path.lexists(outputDocFname) and args.noclobber:
+    if os.path.lexists(output_doc_fname) and args.noclobber:
         print("\nOption '--noclobber' is set, refusing to overwrite an existing"
-              "\nfile with filename:\n   ", outputDocFname, file=sys.stderr)
-        ex.cleanupAndExit(1)
+              "\nfile with filename:\n   ", output_doc_fname, file=sys.stderr)
+        ex.cleanup_and_exit(1)
 
-    if os.path.lexists(outputDocFname) and ex.samefile(inputDocFname,
-                                                                outputDocFname):
+    if os.path.lexists(output_doc_fname) and ex.samefile(input_doc_fname,
+                                                                output_doc_fname):
         print("\nError in pdfCropMargins: The input file is the same as"
               "\nthe output file.\n", file=sys.stderr)
-        ex.cleanupAndExit(1)
+        ex.cleanup_and_exit(1)
 
-    if args.pdftoppmPath: ex.setPdftoppmExecutableToString(args.pdftoppmPath)
-    if args.ghostscriptPath: ex.setGsExecutableToString(args.ghostscriptPath)
+    if args.pdftoppmPath: ex.set_pdftoppm_executable_to_string(args.pdftoppmPath)
+    if args.ghostscriptPath: ex.set_gs_executable_to_string(args.ghostscriptPath)
 
     # If the option settings require pdftoppm, make sure we have a running
     # version.  If '--gsBbox' isn't chosen then assume that PDF pages are to be
     # explicitly rendered.  In that case we either need pdftoppm or gs to do the
     # rendering.
-    gsRenderFallbackSet = False # Set True if we switch to gs option as a fallback.
+    gs_render_fallback_set = False # Set True if we switch to gs option as a fallback.
     if not args.gsBbox and not args.gsRender:
-        foundPdftoppm = ex.initAndTestPdftoppmExecutable(preferLocal=args.pdftoppmLocal)
-        if args.verbose: print("\nFound pdftoppm program at:", foundPdftoppm)
-        if not foundPdftoppm:
+        found_pdftoppm = ex.init_and_test_pdftoppm_executable(prefer_local=args.pdftoppmLocal)
+        if args.verbose: print("\nFound pdftoppm program at:", found_pdftoppm)
+        if not found_pdftoppm:
             args.gsRender = True
-            gsRenderFallbackSet = True
+            gs_render_fallback_set = True
             if args.verbose:
                 print("\nNo pdftoppm executable found; using Ghostscript for rendering.")
 
     # If any options require Ghostscript, make sure it it installed.
     if args.gsBbox or args.gsFix or args.gsRender:
-        foundGs = ex.initAndTestGsExecutable()
-        if args.verbose: print("\nFound Ghostscript program at:", foundGs)
-    if args.gsBbox and not foundGs:
+        found_gs = ex.init_and_test_gs_executable()
+        if args.verbose: print("\nFound Ghostscript program at:", found_gs)
+    if args.gsBbox and not found_gs:
         print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
               "\nthe Ghostscript executable could not be located.  Is it"
               "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
-        ex.cleanupAndExit(1)
-    if args.gsFix and not foundGs:
+        ex.cleanup_and_exit(1)
+    if args.gsFix and not found_gs:
         print("\nError in pdfCropMargins: The '--gsFix' option was specified but"
               "\nthe Ghostscript executable could not be located.  Is it"
               "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
-        ex.cleanupAndExit(1)
-    if args.gsRender and not foundGs:
-        if gsRenderFallbackSet:
+        ex.cleanup_and_exit(1)
+    if args.gsRender and not found_gs:
+        if gs_render_fallback_set:
             print("\nError in pdfCropMargins: Neither Ghostscript nor pdftoppm"
                   "\nwas found in the PATH for command execution.  At least one is"
                   "\nrequired.\n", file=sys.stderr)
@@ -641,7 +641,7 @@ def mainCrop():
             print("\nError in pdfCropMargins: The '--gsRender' option was specified but"
                   "\nthe Ghostscript executable could not be located.  Is it"
                   "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
-        ex.cleanupAndExit(1)
+        ex.cleanup_and_exit(1)
 
     # Give a warning message if incompatible option combinations have been selected.
     if args.gsBbox and args.threshold:
@@ -667,14 +667,14 @@ def mainCrop():
     if args.gsFix:
         if args.verbose:
             print("\nAttempting to fix the PDF input file before reading it...")
-        fixedInputDocFname = ex.fixPdfWithGhostscriptToTmpFile(inputDocFname)
+        fixed_input_doc_fname = ex.fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname)
     else:
-        fixedInputDocFname = inputDocFname
+        fixed_input_doc_fname = input_doc_fname
 
-    fixedInputDocFileObject = open(fixedInputDocFname, "rb")
+    fixed_input_doc_file_object = open(fixed_input_doc_fname, "rb")
     try:
-        inputDoc = PdfFileReader(fixedInputDocFileObject)
-        tmpInputDoc = PdfFileReader(fixedInputDocFileObject)
+        input_doc = PdfFileReader(fixed_input_doc_file_object)
+        tmp_input_doc = PdfFileReader(fixed_input_doc_file_object)
     #except PdfReadError, ValueError: # throws various errors, just use general except
     except:
         print("\nError in pdfCropMargins: The pyPdf module failed in an attempt"
@@ -683,7 +683,7 @@ def mainCrop():
               "\noption (assuming you are not using it already).  That option can"
               "\nalso convert some PostScript files to a readable format.",
               file=sys.stderr)
-        ex.cleanupAndExit(1)
+        ex.cleanup_and_exit(1)
 
     ##
     ## See if the document needs to be decrypted.
@@ -691,16 +691,16 @@ def mainCrop():
 
     if args.password:
         try:
-            inputDoc.decrypt(args.password)
-            tmpInputDoc.decrypt(args.password)
+            input_doc.decrypt(args.password)
+            tmp_input_doc.decrypt(args.password)
         except KeyError:
             print("\nDecrypting with the password from the '--password' option"
                   "\nfailed.", file=sys.stderr)
-            ex.cleanupAndExit(1)
+            ex.cleanup_and_exit(1)
     else: # try decrypting with an empty password
         try:
-            inputDoc.decrypt("")
-            tmpInputDoc.decrypt("")
+            input_doc.decrypt("")
+            tmp_input_doc.decrypt("")
         except KeyError:
             pass # document apparently wasn't encrypted with an empty password
 
@@ -709,27 +709,27 @@ def mainCrop():
     ##
 
     if args.verbose:
-        print("\nThe input document has %s pages." % inputDoc.getNumPages())
+        print("\nThe input document has %s pages." % input_doc.getNumPages())
 
     try: # This is needed because the call sometimes just raises an error.
-        metadataInfo = inputDoc.getDocumentInfo()
+        metadata_info = input_doc.getDocumentInfo()
     except:
-        metadataInfo = None
+        metadata_info = None
 
-    if args.verbose and not metadataInfo:
+    if args.verbose and not metadata_info:
         print("\nNo readable metadata in the document.")
     elif args.verbose:
         print("\nThe document's metadata, if set:\n")
         print("   The Author attribute set in the input document is:\n      %s"
-              % (metadataInfo.author))
+              % (metadata_info.author))
         print("   The Creator attribute set in the input document is:\n      %s"
-              % (metadataInfo.creator))
+              % (metadata_info.creator))
         print("   The Producer attribute set in the input document is:\n      %s"
-              % (metadataInfo.producer))
+              % (metadata_info.producer))
         print("   The Subject attribute set in the input document is:\n      %s"
-              % (metadataInfo.subject))
+              % (metadata_info.subject))
         print("   The Title attribute set in the input document is:\n      %s"
-              % (metadataInfo.title))
+              % (metadata_info.title))
 
     ##
     ## Now compute the set containing the pyPdf page number of all the pages
@@ -738,40 +738,40 @@ def mainCrop():
     ## (There are a few optimizations for expensive operations like finding
     ## bounding boxes; the rest is negligible).  This keeps the correspondence
     ## between page numbers and the positions of boxes in the box lists.  The
-    ## function applyCropList then just ignores the cropping information for any
+    ## function apply_crop_list then just ignores the cropping information for any
     ## pages which were not selected.
     ##
 
-    allPageNums = set(range(0, inputDoc.getNumPages()))
-    pageNumsToCrop = set()
+    all_page_nums = set(range(0, input_doc.getNumPages()))
+    page_nums_to_crop = set()
     if args.pages:
         for pageNumOrRange in args.pages.split(","):
-            splitRange = pageNumOrRange.split("-")
+            split_range = pageNumOrRange.split("-")
             try:
-                if len(splitRange) == 1:
+                if len(split_range) == 1:
                     # Note pyPdf page nums start at 0, not 1 like usual PDF pages,
                     # subtract 1.
-                    pageNumsToCrop.add(int(splitRange[0])-1)
+                    page_nums_to_crop.add(int(split_range[0])-1)
                 else:
-                    pageNumsToCrop.update(
-                        set(range(int(splitRange[0])-1, int(splitRange[1]))))
+                    page_nums_to_crop.update(
+                        set(range(int(split_range[0])-1, int(split_range[1]))))
             except ValueError:
                 print(
                     "\nError in pdfCropMargins: The page range specified on the command",
                     "\nline contains a non-integer value or otherwise cannot be parsed.",
                     file=sys.stderr)
-                ex.cleanupAndExit(1)
-        pageNumsToCrop = pageNumsToCrop & allPageNums # intersect chosen with actual
+                ex.cleanup_and_exit(1)
+        page_nums_to_crop = page_nums_to_crop & all_page_nums # intersect chosen with actual
     else:
-        pageNumsToCrop = allPageNums
+        page_nums_to_crop = all_page_nums
 
     # Print out the pages to crop in verbose mode.
     if args.verbose and args.pages:
         print("These pages of the document will be cropped:", end="")
-        pNumList = sorted(list(pageNumsToCrop))
-        for i in range(len(pNumList)):
-            if i % 10 == 0 and i != len(pNumList)-1: print("\n   ", end="")
-            print("%5d" % (pNumList[i]+1), " ", end="")
+        p_num_list = sorted(list(page_nums_to_crop))
+        for i in range(len(p_num_list)):
+            if i % 10 == 0 and i != len(p_num_list)-1: print("\n   ", end="")
+            print("%5d" % (p_num_list[i]+1), " ", end="")
         print("\n")
     elif args.verbose:
         print("\nAll the pages of the document will be cropped.")
@@ -782,87 +782,87 @@ def mainCrop():
     ## chosen full-page size as a side-effect, saving the old boxes.
     ##
 
-    fullPageBoxList, rotationList = getFullPageBoxListAssigningMediaAndCrop(inputDoc)
-    tmpfullPageBoxList, tmpRotationList = getFullPageBoxListAssigningMediaAndCrop(
-                                                            tmpInputDoc, quiet=True)
+    full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(input_doc)
+    tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
+                                                            tmp_input_doc, quiet=True)
 
     ##
-    ## Define the PdfFileWriter object and insert all the inputDoc pages into it.
+    ## Define the PdfFileWriter object and insert all the input_doc pages into it.
     ## Note that inserting pages from a PdfFileReader into multiple PdfFileWriters
     ## seems to cause problems (writer can hang on write), so only one is used.
     ##
 
-    outputDoc = PdfFileWriter()
-    for page in [inputDoc.getPage(i) for i in range(inputDoc.getNumPages())]:
-        outputDoc.addPage(page)
+    output_doc = PdfFileWriter()
+    for page in [input_doc.getPage(i) for i in range(input_doc.getNumPages())]:
+        output_doc.addPage(page)
 
-    tmpOutputDoc = PdfFileWriter()
-    for page in [tmpInputDoc.getPage(i) for i in range(tmpInputDoc.getNumPages())]:
-        tmpOutputDoc.addPage(page)
+    tmp_output_doc = PdfFileWriter()
+    for page in [tmp_input_doc.getPage(i) for i in range(tmp_input_doc.getNumPages())]:
+        tmp_output_doc.addPage(page)
 
     ##
     ## Write out the PDF document again, with the CropBox and MediaBox reset.
     ## This temp version is only used for calculating the bounding boxes of
     ## pages.  Note we are writing from tmpOutputDocument (due to an apparent bug
-    ## discussed above).  After this tmpInputDoc and tmpOutputDoc are no longer
+    ## discussed above).  After this tmp_input_doc and tmp_output_doc are no longer
     ## needed.
     ##
 
     if not args.restore:
-        docWithCropAndMediaBoxesName = ex.getTemporaryFilename(".pdf")
-        docWithCropAndMediaBoxesObject = open(docWithCropAndMediaBoxesName, "wb")
+        doc_with_crop_and_media_boxes_name = ex.get_temporary_filename(".pdf")
+        doc_with_crop_and_media_boxes_object = open(doc_with_crop_and_media_boxes_name, "wb")
 
         if args.verbose:
             print("\nWriting out the PDF with the CropBox and MediaBox redefined.")
 
         try:
-            tmpOutputDoc.write(docWithCropAndMediaBoxesObject)
+            tmp_output_doc.write(doc_with_crop_and_media_boxes_object)
         except KeyError:
             print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
                   "\nwrite out a PDF file of the document.  The document may be"
                   "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
                   "\noption (assuming you are not already using it).", file=sys.stderr)
-            ex.cleanupAndExit(1)
+            ex.cleanup_and_exit(1)
 
-        docWithCropAndMediaBoxesObject.close()
+        doc_with_crop_and_media_boxes_object.close()
 
     ##
-    ## Copy the metadata from inputDot to outputDoc, modifying the Producer string
+    ## Copy the metadata from inputDot to output_doc, modifying the Producer string
     ## if this program didn't already set it.  Get bool for whether this program
     ## cropped the document already.
     ##
 
-    alreadyCroppedByThisProgram = setCroppedMetadata(inputDoc, outputDoc,
-                                                     metadataInfo)
+    already_cropped_by_this_program = set_cropped_metadata(input_doc, output_doc,
+                                                     metadata_info)
 
     ##
-    ## Calculate the boundingBoxList containing tight page bounds for each page.
+    ## Calculate the bounding_box_list containing tight page bounds for each page.
     ##
 
     if not args.restore:
-        boundingBoxList = getBoundingBoxList(docWithCropAndMediaBoxesName, inputDoc,
-                             fullPageBoxList, pageNumsToCrop, args, PdfFileWriter)
+        bounding_box_list = get_bounding_box_list(doc_with_crop_and_media_boxes_name, input_doc,
+                             full_page_box_list, page_nums_to_crop, args, PdfFileWriter)
         if args.verbose:
             print("\nThe bounding boxes are:")
-            for pNum, b in enumerate(boundingBoxList):
+            for pNum, b in enumerate(bounding_box_list):
                 print("\t", pNum+1, "\t", b)
 
     ##
-    ## Calculate the cropList based on the fullpage boxes and the bounding boxes.
+    ## Calculate the crop_list based on the fullpage boxes and the bounding boxes.
     ##
 
     if not args.restore:
-        cropList = calculateCropList(fullPageBoxList, boundingBoxList,
-                                     rotationList, pageNumsToCrop)
+        crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
+                                     rotation_list, page_nums_to_crop)
     else:
-        cropList = None # not needed in this case
+        crop_list = None # not needed in this case
 
     ##
-    ## Apply the calculated crops to the pages of the PdfFileReader inputDoc.
-    ## This also modifies the same pages in the PdfFileWriter outputDoc.
+    ## Apply the calculated crops to the pages of the PdfFileReader input_doc.
+    ## This also modifies the same pages in the PdfFileWriter output_doc.
     ##
 
-    applyCropList(cropList, inputDoc, pageNumsToCrop, alreadyCroppedByThisProgram)
+    apply_crop_list(crop_list, input_doc, page_nums_to_crop, already_cropped_by_this_program)
 
     ##
     ## Write the final PDF out to a file.
@@ -870,36 +870,36 @@ def mainCrop():
 
     if args.verbose: print("\nWriting the cropped PDF file.")
 
-    outputDocStream = open(outputDocFname, "wb")
+    output_doc_stream = open(output_doc_fname, "wb")
     try:
-        outputDoc.write(outputDocStream)
+        output_doc.write(output_doc_stream)
     except KeyError:
         print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
               "\nwrite out a PDF file of the document.  The document may be"
               "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
               "\noption (assuming you are not already using it).", file=sys.stderr)
-        ex.cleanupAndExit(1)
+        ex.cleanup_and_exit(1)
     # Experimental test in line below to catch if it hangs... still causes bugs...
-    #completed = ex.functionCallWithTimeout(outputDoc.write, [outputDocStream], secs=0)
-    outputDocStream.close()
+    #completed = ex.function_call_with_timeout(output_doc.write, [output_doc_stream], secs=0)
+    output_doc_stream.close()
     completed = True
     if not completed:
         print("Sorry, the PDF writer is taking longer than the timeout time.  Exiting.",
               file=sys.stderr)
-        ex.cleanupAndExit(1)
+        ex.cleanup_and_exit(1)
 
     # We're finished with this open file; close it; let temp dir removal delete it.
-    fixedInputDocFileObject.close()
+    fixed_input_doc_file_object.close()
 
     ##
     ## Now handle the options which apply after the file is written.
     ##
 
-    def doPreview(outputDocFname):
+    def do_preview(output_doc_fname):
         viewer = args.preview
         if args.verbose:
             print("\nPreviewing the output document with viewer:\n   ", viewer)
-        ex.showPreview(viewer, outputDocFname)
+        ex.show_preview(viewer, output_doc_fname)
         return
 
     # Handle the '--queryModifyOriginal' option.
@@ -908,25 +908,25 @@ def mainCrop():
             print("\nRunning the preview viewer on the file, will query whether or not"
                   "\nto modify the original file after the viewer is launched in the"
                   "\nbackground...\n")
-            doPreview(outputDocFname)
+            do_preview(output_doc_fname)
             # Give preview time to start; it may write startup garbage to the terminal...
-            queryWaitTime = 1 # seconds
-            time.sleep(queryWaitTime)
+            query_wait_time = 1 # seconds
+            time.sleep(query_wait_time)
             print()
         while True:
-            queryString = "\nModify the original file to the cropped file " \
+            query_string = "\nModify the original file to the cropped file " \
                 "(saving the original)? [yn] "
-            if ex.pythonVersion[0] == "2":
-                queryResult = raw_input(queryString).decode("utf-8")
+            if ex.python_version[0] == "2":
+                query_result = raw_input(query_string).decode("utf-8")
             else:
-                queryResult = input(queryString)
-            if queryResult in ["y", "Y"]:
+                query_result = input(query_string)
+            if query_result in ["y", "Y"]:
                 args.modifyOriginal = True
                 print("\nModifying the original file.")
                 break
-            elif queryResult in ["n", "N"]:
+            elif query_result in ["n", "N"]:
                 print("\nNot modifying the original file.  The cropped file is saved"
-                      " as:\n   {0}".format(outputDocFname))
+                      " as:\n   {0}".format(output_doc_fname))
                 args.modifyOriginal = False
                 break
             else:
@@ -935,43 +935,43 @@ def mainCrop():
 
     # Handle the '--modifyOriginal' option.
     if args.modifyOriginal:
-        generatedUncroppedFilename = generateDefaultFilename(
-                                                  inputDocFname, isCroppedFile=False)
+        generated_uncropped_filename = generate_default_filename(
+                                                  input_doc_fname, is_cropped_file=False)
 
-        # Remove any existing file with the name generatedUncroppedFilename unless a
+        # Remove any existing file with the name generated_uncropped_filename unless a
         # relevant noclobber option is set or it isn't a file.
-        if os.path.exists(generatedUncroppedFilename):
-            if os.path.isfile(generatedUncroppedFilename) \
+        if os.path.exists(generated_uncropped_filename):
+            if os.path.isfile(generated_uncropped_filename) \
                     and not args.noclobberOriginal and not args.noclobber:
                 if args.verbose:
-                    print("\nRemoving the file\n   ", generatedUncroppedFilename)
+                    print("\nRemoving the file\n   ", generated_uncropped_filename)
                 # TODO may want try-except on this; permissions
-                os.remove(generatedUncroppedFilename)
+                os.remove(generated_uncropped_filename)
             else:
                 print(
                     "\nA noclobber option is set or not a file; refusing to"
-                    " overwrite:\n   ", generatedUncroppedFilename,
+                    " overwrite:\n   ", generated_uncropped_filename,
                     "\nFiles are as if option '--modifyOriginal' were not set.",
                     file=sys.stderr)
 
         # Move (noclobber) the original file to the name for uncropped files.
-        if not os.path.exists(generatedUncroppedFilename):
-            if args.verbose: print("\nDoing a file move:\n   ", inputDocFname,
-                                   "\nis moving to:\n   ", generatedUncroppedFilename)
-            shutil.move(inputDocFname, generatedUncroppedFilename)
+        if not os.path.exists(generated_uncropped_filename):
+            if args.verbose: print("\nDoing a file move:\n   ", input_doc_fname,
+                                   "\nis moving to:\n   ", generated_uncropped_filename)
+            shutil.move(input_doc_fname, generated_uncropped_filename)
 
         # Move (noclobber) the cropped file to the original file's name.
-        if not os.path.exists(inputDocFname):
-            if args.verbose: print("\nDoing a file move:\n   ", outputDocFname,
-                                   "\nis moving to:\n   ", inputDocFname)
-            shutil.move(outputDocFname, inputDocFname)
+        if not os.path.exists(input_doc_fname):
+            if args.verbose: print("\nDoing a file move:\n   ", output_doc_fname,
+                                   "\nis moving to:\n   ", input_doc_fname)
+            shutil.move(output_doc_fname, input_doc_fname)
 
     # Handle any previewing which still needs to be done.
     if args.preview and not args.queryModifyOriginal: # already previewed in query mod
         if args.modifyOriginal: # already swapped to original filename in this case
-            doPreview(inputDocFname)
+            do_preview(input_doc_fname)
         else: # the usual case, preview the output filename
-            doPreview(outputDocFname)
+            do_preview(output_doc_fname)
 
     if args.verbose: print("\nFinished this run of pdfCropMargins.\n")
 

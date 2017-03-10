@@ -55,26 +55,26 @@ import sys
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
 
-    def cleanupIgnoringKeyboardInterrupt(exitCode):
+    def cleanup_ignoring_keyboard_interrupt(exit_code):
         """Some people like to hit multiple ^C chars; ignore them and call again."""
         for i in range(30): # Give up after 30 tries.
             try:
-                cleanupAndExit(exitCode)
+                cleanup_and_exit(exit_code)
             except KeyboardInterrupt: # Some people hit multiple ^C chars, kills cleanup.
                 continue
             except SystemExit:
                 pass
 
-    cleanupAndExit = sys.exit # Function to do cleanup and exit before the import.
-    exitCode = 0
+    cleanup_and_exit = sys.exit # Function to do cleanup and exit before the import.
+    exit_code = 0
 
     # Imports are done here inside the try block so some ugly (and useless)
     # traceback info is avoided on user's ^C (KeyboardInterrupt).
     try:
         from . import external_program_calls as ex # Creates tmp dir as side effect.
-        cleanupAndExit = ex.cleanupAndExit # Switch to the real one, deletes temp dir.
+        cleanup_and_exit = ex.cleanup_and_exit # Switch to the real one, deletes temp dir.
         from . import main_pdfCropMargins # Imports external_program_calls, don't do first.
-        main_pdfCropMargins.mainCrop() # Run the actual program.
+        main_pdfCropMargins.main_crop() # Run the actual program.
     except KeyboardInterrupt:
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
               file=sys.stderr)
@@ -87,13 +87,13 @@ def main():
         print("Unexpected error: ", sys.exc_info()[0], file=sys.stderr)
         print("Error message   : ", sys.exc_info()[1], file=sys.stderr)
         print()
-        exitCode = 1
+        exit_code = 1
         import traceback
-        maxTracebackLength = 30
-        traceback.print_tb(sys.exc_info()[2], limit=maxTracebackLength)
+        max_traceback_length = 30
+        traceback.print_tb(sys.exc_info()[2], limit=max_traceback_length)
         # raise # Re-raise the error.
     finally:
-        cleanupIgnoringKeyboardInterrupt(exitCode)
+        cleanup_ignoring_keyboard_interrupt(exit_code)
     return
 
 #
