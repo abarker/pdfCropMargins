@@ -3,6 +3,11 @@
 History
 =======
 
+0.1.2 (upcoming)
+----------------
+
+* Changed code to better PEP-8 naming.
+
 0.1.1 (2017-02-27)
 ------------------
 
