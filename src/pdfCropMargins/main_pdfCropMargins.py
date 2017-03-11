@@ -206,12 +206,12 @@ def get_full_page_box_assigning_media_and_crop(page):
     page.originalCropBox = page.cropBox
 
     first_loop = True
-    for boxString in args.fullPageBox:
-        if boxString == "m": f_box = page.mediaBox
-        if boxString == "c": f_box = page.cropBox
-        if boxString == "t": f_box = page.trimBox
-        if boxString == "a": f_box = page.artBox
-        if boxString == "b": f_box = page.bleedBox
+    for box_string in args.fullPageBox:
+        if box_string == "m": f_box = page.mediaBox
+        if box_string == "c": f_box = page.cropBox
+        if box_string == "t": f_box = page.trimBox
+        if box_string == "a": f_box = page.artBox
+        if box_string == "b": f_box = page.bleedBox
 
         # Take intersection over all chosen boxes.
         if first_loop:
@@ -246,15 +246,15 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False):
     if args.verbose and not quiet:
         print("\nOriginal full page sizes, in PDF format (lbrt):")
 
-    for pageNum in range(input_doc.getNumPages()):
+    for page_num in range(input_doc.getNumPages()):
 
         # Get the current page and find the full-page box.
-        curr_page = input_doc.getPage(pageNum)
+        curr_page = input_doc.getPage(page_num)
         full_page_box = get_full_page_box_assigning_media_and_crop(curr_page)
 
         if args.verbose and not quiet:
             # want to display page num numbering from 1, so add one
-            print("\t"+str(pageNum+1), "  rot =",
+            print("\t"+str(page_num+1), "  rot =",
                   curr_page.rotationAngle, "\t", full_page_box)
 
         # Convert the RectangleObject to floats in an ordinary list and append.
@@ -465,9 +465,9 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
         print("\nNew full page sizes after cropping, in PDF format (lbrt):")
 
     # Copy over each page, after modifying the appropriate PDF boxes.
-    for pageNum in range(input_doc.getNumPages()):
+    for page_num in range(input_doc.getNumPages()):
 
-        curr_page = input_doc.getPage(pageNum)
+        curr_page = input_doc.getPage(page_num)
 
         # Restore any rotation which was originally on the page.
         curr_page.rotateClockwise(curr_page.rotationAngle)
@@ -476,7 +476,7 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
         if args.restore:
             if not curr_page.artBox:
                 print("\nWarning from pdfCropMargins: Attempting to restore pages from"
-                      "\nthe ArtBox in each page, but page", pageNum, "has no readable"
+                      "\nthe ArtBox in each page, but page", page_num, "has no readable"
                       "\nArtBox.  Leaving that page unchanged.", file=sys.stderr)
                 continue
             curr_page.mediaBox = curr_page.artBox
@@ -494,14 +494,14 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
 
         # Copy the original page without further mods if it wasn't in the range
         # selected for cropping.
-        if pageNum not in page_nums_to_crop:
+        if page_num not in page_nums_to_crop:
             continue
 
         # Convert the computed "box to crop to" into a RectangleObject (for pyPdf).
-        new_cropped_box = RectangleObject(crop_list[pageNum])
+        new_cropped_box = RectangleObject(crop_list[page_num])
 
         if args.verbose:
-            print("\t"+str(pageNum+1)+"\t", new_cropped_box) # page numbering from 1
+            print("\t"+str(page_num+1)+"\t", new_cropped_box) # page numbering from 1
 
         if not args.boxesToSet:
             args.boxesToSet = ["m", "c"]
@@ -753,8 +753,8 @@ def main_crop():
     all_page_nums = set(range(0, input_doc.getNumPages()))
     page_nums_to_crop = set()
     if args.pages:
-        for pageNumOrRange in args.pages.split(","):
-            split_range = pageNumOrRange.split("-")
+        for page_num_or_range in args.pages.split(","):
+            split_range = page_num_or_range.split("-")
             try:
                 if len(split_range) == 1:
                     # Note pyPdf page nums start at 0, not 1 like usual PDF pages,

@@ -81,8 +81,8 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
     if args.gsBbox:
         if args.verbose:
             print("\nUsing Ghostscript to calculate the bounding boxes.")
-        bbox_list = ex.get_bounding_box_list_ghostscript(input_doc_fname, args.resX, args.resY,
-                                                    args.fullPageBox)
+        bbox_list = ex.get_bounding_box_list_ghostscript(input_doc_fname,
+                                             args.resX, args.resY, args.fullPageBox)
     else:
         if not hasPIL:
             print("\nError in pdfCropMargins: No version of the PIL package (or a"
@@ -93,7 +93,8 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
         bbox_list = get_bounding_box_list_render_image(input_doc_fname, input_doc)
 
     # Now we need to use the full page boxes to translate for non-zero origin.
-    bbox_list = correct_bounding_box_list_for_nonzero_origin(bbox_list, full_page_box_list)
+    bbox_list = correct_bounding_box_list_for_nonzero_origin(bbox_list,
+                                                             full_page_box_list)
 
     return bbox_list
 
@@ -107,9 +108,9 @@ def correct_bounding_box_list_for_nonzero_origin(bbox_list, full_box_list):
     translation on all the points."""
 
     corrected_box_list = []
-    for bbox, fullBox in zip(bbox_list, full_box_list):
-        left_x = fullBox[0]
-        lower_y = fullBox[1]
+    for bbox, full_box in zip(bbox_list, full_box_list):
+        left_x = full_box[0]
+        lower_y = full_box[1]
         corrected_box_list.append([bbox[0]+left_x, bbox[1]+lower_y,
                                  bbox[2]+left_x, bbox[3]+lower_y])
     return corrected_box_list
@@ -149,8 +150,8 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
 
     bounding_box_list = []
 
-    for pageNum, tmpImageFileName in enumerate(outfiles):
-        curr_page = input_doc.getPage(pageNum)
+    for page_num, tmp_image_file_name in enumerate(outfiles):
+        curr_page = input_doc.getPage(page_num)
 
         # Open the image in PIL.  Retry a few times on fail in case race conditions.
         max_num_tries = 3
@@ -164,12 +165,12 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
                 #
                 # tmpImageFile = open(tmpImageFileName)
                 # im = Image.open(tmpImageFile)
-                im = Image.open(tmpImageFileName)
+                im = Image.open(tmp_image_file_name)
                 break
             except (IOError, UnicodeDecodeError) as e:
                 curr_num_tries += 1
                 if args.verbose:
-                    print("Warning: Exception opening image", tmpImageFileName,
+                    print("Warning: Exception opening image", tmp_image_file_name,
                           "on try", curr_num_tries, "\nError is", e, file=sys.stderr)
                 # tmpImageFile.close() # see above comment
                 if curr_num_tries > max_num_tries: raise # re-raise exception
@@ -184,7 +185,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         # Convert the image to black and white, according to a threshold.
         # Make a negative image, because that works with the PIL getbbox routine.
 
-        if args.verbose: print(pageNum+1, end=" ") # page num numbering from 1
+        if args.verbose: print(page_num+1, end=" ") # page num numbering from 1
         # Note: the point method calls the function on each pixel, replacing it.
         #im = im.point(lambda p: p > threshold and 255) # create a positive image
         im = im.point(lambda p: p < threshold and 255)  # create a negative image
@@ -197,7 +198,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
 
         # Clean up the image files after they are no longer needed.
         # tmpImageFile.close() # see above comment
-        os.remove(tmpImageFileName)
+        os.remove(tmp_image_file_name)
 
     if args.verbose: print()
     return bounding_box_list

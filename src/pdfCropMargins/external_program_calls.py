@@ -511,18 +511,18 @@ def find_and_test_executable(executables, argument_list, string_to_look_for,
     working executable name for the system, or the None if both fail.  Ignores
     empty executable strings."""
 
-    for systemPaths in executables:
-        if systemPaths[0] != system_os: continue
-        executable_paths = [systemPaths[1], systemPaths[2]]
+    for system_paths in executables:
+        if system_paths[0] != system_os: continue
+        executable_paths = [system_paths[1], system_paths[2]]
         if system_bits == 32: del executable_paths[0] # 64 bit won't run
-        for executablePath in executable_paths:
-            if not executablePath: continue # ignore empty strings
-            run_command_list = [executablePath] + argument_list
+        for executable_path in executable_paths:
+            if not executable_path: continue # ignore empty strings
+            run_command_list = [executable_path] + argument_list
             try:
                 run_output = get_external_subprocess_output(run_command_list, split_lines=False,
                                        ignore_called_process_errors=ignore_called_process_errors)
                 if string_to_look_for in run_output:
-                    return executablePath
+                    return executable_path
             except (subprocess.CalledProcessError, OSError, IOError) as e:
                 # OSError if it isn't found, CalledProcessError if it runs but returns
                 # fail.
