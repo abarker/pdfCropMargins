@@ -54,6 +54,7 @@ RedirectHelp comment for the changes to the standard argparse formatting.
 # See the top answer here:
 # http://stackoverflow.com/questions/6133517/parse-config-file-environment-and-command-line-arguments-to-get-a-single-coll
 
+from __future__ import print_function, division, absolute_import
 import textwrap
 import re
 import sys

@@ -27,7 +27,7 @@ Note for cleanup that this module creates a temp dir at time of initialization.
 
 """
 
-from __future__ import print_function, division
+from __future__ import print_function, division, absolute_import
 import sys
 import os
 import subprocess

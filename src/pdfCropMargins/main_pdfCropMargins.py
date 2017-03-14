@@ -52,7 +52,7 @@ to find the startup module.
 # routine of PIL returns ltrb instead of lbrt.  Keep in mind that the program
 # needs to make these conversions when rendering explicitly to images.
 
-from __future__ import print_function, division
+from __future__ import print_function, division, absolute_import
 import sys
 import os
 import shutil

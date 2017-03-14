@@ -52,6 +52,8 @@ General argparse reminders and warnings:
 
 """
 
+from __future__ import print_function, division, absolute_import
+
 import argparse
 cmd_parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,

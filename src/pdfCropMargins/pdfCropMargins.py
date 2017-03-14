@@ -47,7 +47,7 @@ the program and clean up.
 # TODO: Consider defining a command-line option which will print out either a
 # bash script or a DOS script that they can modify and use.
 
-from __future__ import print_function, division
+from __future__ import print_function, division, absolute_import
 import sys
 
 def main():
