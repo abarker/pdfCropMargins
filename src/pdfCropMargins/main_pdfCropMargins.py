@@ -785,12 +785,14 @@ def main_crop():
 
     # Print out the pages to crop in verbose mode.
     if args.verbose and args.pages:
-        print("These pages of the document will be cropped:", end="")
+        print("\nThese pages of the document will be cropped:", end="")
         p_num_list = sorted(list(page_nums_to_crop))
-        for i in range(len(p_num_list)):
-            if i % 10 == 0 and i != len(p_num_list)-1: print("\n   ", end="")
+        num_pages_to_crop = len(p_num_list)
+        for i in range(num_pages_to_crop):
+            if i % 10 == 0 and i != num_pages_to_crop - 1:
+                print("\n   ", end="")
             print("%5d" % (p_num_list[i]+1), " ", end="")
-        print("\n")
+        print()
     elif args.verbose:
         print("\nAll the pages of the document will be cropped.")
 
