@@ -97,8 +97,8 @@ def get_temporary_filename(extension="", use_program_temp_dir=True):
     finishing with it.  (Note the entire programTempDir will be deleted on cleanup.)"""
     dir_name = None # uses the regular system temp dir if None
     if use_program_temp_dir: dir_name = program_temp_directory
-    tmp_output_file = tempfile.NamedTemporaryFile(
-          delete=False, prefix=temp_file_prefix, suffix=extension, dir=dir_name, mode="wb")
+    tmp_output_file = tempfile.NamedTemporaryFile(delete=False,
+                     prefix=temp_file_prefix, suffix=extension, dir=dir_name, mode="wb")
     tmp_output_file.close() # this deletes the file, too, but it is empty in this case
     return tmp_output_file.name
 
@@ -208,16 +208,18 @@ def remove_program_temp_directory():
                 break
             except IOError:
                 curr_retries += 1
-                if curr_retries > max_retries: raise # re-raise the exception
+                if curr_retries > max_retries:
+                    raise # re-raise the exception
                 time.sleep(time_between_retries)
-    return
+            except:
+                print("Error in pdfCropMargins temp dir cleanup.", file=sys.stderr)
+                raise
 
 
 def cleanup_and_exit(exit_code):
     """Exit the program, after cleaning up the temporary directory."""
     remove_program_temp_directory()
     sys.exit(exit_code)
-    return
 
 
 def which(program):
@@ -287,8 +289,8 @@ def get_external_subprocess_output(command_list, print_output=False, indent_stri
 
 
 def call_external_subprocess(command_list,
-                           stdin_filename=None, stdout_filename=None, stderr_filename=None,
-                           env=None):
+                       stdin_filename=None, stdout_filename=None, stderr_filename=None,
+                       env=None):
     """Run the command and arguments in the command_list.  Will search the system
     PATH for commands to execute, but no shell is started.  Redirects any selected
     outputs to the given filename.  Waits for command completion."""
@@ -333,10 +335,8 @@ def run_external_subprocess_in_background(command_list, env=None):
 ##
 
 
-from multiprocessing import Process, Queue
-
-
 def my_function(name): # debug test
+    """Unused test function, experimental feature."""
     print("name is", name)
     time.sleep(7)
     print("afterward name is", name)
@@ -346,6 +346,7 @@ def my_function(name): # debug test
 def function_call_with_timeout(fun_name, fun_args, secs=5):
     """Run a Python function with a timeout.  No interprocess communication or
     return values are handled.  Setting secs to 0 gives infinite timeout."""
+    from multiprocessing import Process, Queue
     p = Process(target=fun_name, args=tuple(fun_args))
     p.start()
     curr_secs = 0
@@ -403,8 +404,10 @@ def init_and_test_gs_executable(exit_on_fail=False):
         if gs32: gs32 = gs32[0] # just take the first one for now
         else: gs32 = ""
         gs_execs = (("Windows", gs64, gs32), ("Cygwin",
-                  convert_windows_path_to_cygwin(gs64), convert_windows_path_to_cygwin(gs32)))
-        gs_executable = find_and_test_executable(gs_execs, ["-dSAFER", "-v"], "Ghostscript")
+                                              convert_windows_path_to_cygwin(gs64),
+                                              convert_windows_path_to_cygwin(gs32)))
+        gs_executable = find_and_test_executable(gs_execs,
+                                                 ["-dSAFER", "-v"], "Ghostscript")
 
     if exit_on_fail and not gs_executable:
         print("Error in pdfCropMargins (detected in external_program_calls.py):"
@@ -451,9 +454,9 @@ def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
                   "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.",
                   file=sys.stderr)
 
-        path = os.path.join(project_src_directory, "pdfCropMargins", "pdftoppm_windows_local",
-                                                                "xpdfbin_win_3_04")
-        #path = os.path.join(project_src_directory, "pdfCropMargins", "xpdfbin_win_3_04")
+        path = os.path.join(project_src_directory, "pdfCropMargins",
+                                                   "pdftoppm_windows_local",
+                                                   "xpdfbin_win_3_04")
 
         pdftoppm_executable32 = os.path.join(path, "bin32", "pdftoppm.exe")
         pdftoppm_executable64 = os.path.join(path, "bin64", "pdftoppm.exe")
@@ -471,8 +474,8 @@ def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
 
         ignore_called_process_errors = True # Local Windows pdftoppm returns code 99 but works.
         local_pdftoppm_executable = find_and_test_executable(
-                                   pdftoppm_local_execs, ["-v"], "pdftoppm",
-                                   ignore_called_process_errors=ignore_called_process_errors)
+                              pdftoppm_local_execs, ["-v"], "pdftoppm",
+                              ignore_called_process_errors=ignore_called_process_errors)
         if not local_pdftoppm_executable:
             print("\nWarning from pdfCropMargins: The local pdftoppm.exe program failed"
                   "\nto execute correctly or was not found.", file=sys.stderr)
@@ -519,8 +522,9 @@ def find_and_test_executable(executables, argument_list, string_to_look_for,
             if not executable_path: continue # ignore empty strings
             run_command_list = [executable_path] + argument_list
             try:
-                run_output = get_external_subprocess_output(run_command_list, split_lines=False,
-                                       ignore_called_process_errors=ignore_called_process_errors)
+                run_output = get_external_subprocess_output(run_command_list,
+                              split_lines=False,
+                              ignore_called_process_errors=ignore_called_process_errors)
                 if string_to_look_for in run_output:
                     return executable_path
             except (subprocess.CalledProcessError, OSError, IOError) as e:
@@ -546,8 +550,8 @@ def fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname):
     gs_run_command = [gs_executable, "-dSAFER", "-o", temp_file_name,
                     "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", input_doc_fname]
     try:
-        gs_output = get_external_subprocess_output(gs_run_command,
-                              print_output=True, indent_string="   ", env=gs_environment)
+        gs_output = get_external_subprocess_output(gs_run_command, print_output=True,
+                                             indent_string="   ", env=gs_environment)
     except subprocess.CalledProcessError:
         print("\nError in pdfCropMargins:  Ghostscript returned a non-zero exit"
               "\nstatus when attempting to fix the file:\n   ", input_doc_fname,
@@ -637,13 +641,14 @@ def render_pdf_file_to_image_files_pdftoppm_pgm(pdf_file_name, root_output_file_
                                            res_x=150, res_y=150):
     """Same as renderPdfFileToImageFile_pdftoppm_ppm but with -gray option for pgm."""
 
-    comm_output = render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name, root_output_file_path,
-                                                        res_x, res_y, ["-gray"])
+    comm_output = render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name,
+                                        root_output_file_path, res_x, res_y, ["-gray"])
     return comm_output
 
 
-def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name, root_output_file_path,
-                                              res_x=150, res_y=150):
+def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name,
+                                                    root_output_file_path,
+                                                    res_x=150, res_y=150):
     """Use Ghostscript to render a PDF file to .png images.  The root_output_file_path
     is prepended to all the output files, which have numbers and extensions added.
     Return the command output."""
@@ -658,8 +663,9 @@ def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name, root_output_f
     return comm_output
 
 
-def render_pdf_file_to_image_files__ghostscript_bmp(pdf_file_name, root_output_file_path,
-                                              res_x=150, res_y=150):
+def render_pdf_file_to_image_files__ghostscript_bmp(pdf_file_name,
+                                                    root_output_file_path,
+                                                    res_x=150, res_y=150):
     """Use Ghostscript to render a PDF file to .bmp images.  The root_output_file_path
     is prepended to all the output files, which have numbers and extensions added.
     Return the command output."""
@@ -688,6 +694,7 @@ def show_preview(viewer_path, pdf_file_name):
         run_external_subprocess_in_background(cmd)
     except (subprocess.CalledProcessError, OSError, IOError) as e:
         print("\nWarning from pdfCropMargins: The argument to the '--viewer' option:"
-              "\n   ", viewer_path, "\nwas not found or failed to execute correctly.\n")
+              "\n   ", viewer_path, "\nwas not found or failed to execute correctly.\n",
+              file=sys.stderr)
     return
 

@@ -31,23 +31,21 @@ document is printed or displayed on a screen -- because the fonts appear
 larger.  Margin-cropping is also useful at times when one PDF is included in
 another as a graphic.  Many options are available.
 
-To see the formatted documentation, run
+To see the formatted documentation, run::
    pdfCropMargins -h | more
-or
+or::
    python pdfCropMargins -h | more
 
-This is the initial starting script, but it just calls mainCrop from
-main_pdfCropMargins.py, which does the real work.  Its only purpose is to
+This is the initial starting script, but it just calls `mainCrop` from
+`main_pdfCropMargins.py`, which does the real work.  Its only purpose is to
 handle errors and make sure that any temp directories are cleaned up.  It tries
-to gracefully handle ^C characters from the user (KeyboardInterrupt) to stop
+to gracefully handle ^C characters from the user (`KeyboardInterrupt`) to stop
 the program and clean up.
 
 """
 
-# TODO:
-#
-# Consider defining a command-line option which will print out either a bash
-# script or a DOS script that they can modify and use.
+# TODO: Consider defining a command-line option which will print out either a
+# bash script or a DOS script that they can modify and use.
 
 from __future__ import print_function, division
 import sys
@@ -55,34 +53,29 @@ import sys
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
 
-    def cleanup_ignoring_keyboard_interrupt(exit_code):
-        """Some people like to hit multiple ^C chars; ignore them and call again."""
-        for i in range(30): # Give up after 30 tries.
-            try:
-                cleanup_and_exit(exit_code)
-            except KeyboardInterrupt: # Some people hit multiple ^C chars, kills cleanup.
-                continue
-            except SystemExit:
-                pass
-
     cleanup_and_exit = sys.exit # Function to do cleanup and exit before the import.
     exit_code = 0
 
     # Imports are done here inside the try block so some ugly (and useless)
-    # traceback info is avoided on user's ^C (KeyboardInterrupt).
+    # traceback info is avoided on user's ^C (KeyboardInterrupt, EOFError on Windows).
     try:
         from . import external_program_calls as ex # Creates tmp dir as side effect.
         cleanup_and_exit = ex.cleanup_and_exit # Switch to the real one, deletes temp dir.
+
         from . import main_pdfCropMargins # Imports external_program_calls, don't do first.
         main_pdfCropMargins.main_crop() # Run the actual program.
-    except KeyboardInterrupt:
+
+    except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
               file=sys.stderr)
+
     except SystemExit:
+        exit_code = sys.exc_info()[1]
         print()
+
     except:
         # Echo back the unexpected error so the user can see it.
-        print("Caught an unexpected exception in the pdfCropMargins program",
+        print("Caught an unexpected exception in the pdfCropMargins program.",
                                                                file=sys.stderr)
         print("Unexpected error: ", sys.exc_info()[0], file=sys.stderr)
         print("Error message   : ", sys.exc_info()[1], file=sys.stderr)
@@ -92,9 +85,16 @@ def main():
         max_traceback_length = 30
         traceback.print_tb(sys.exc_info()[2], limit=max_traceback_length)
         # raise # Re-raise the error.
+
     finally:
-        cleanup_ignoring_keyboard_interrupt(exit_code)
-    return
+        # Some people like to hit multiple ^C chars, which kills cleanup.
+        # Call cleanup again each time.
+        for i in range(30): # Give up after 30 tries.
+            try:
+                cleanup_and_exit(exit_code)
+            except (KeyboardInterrupt, EOFError):
+                continue
+
 
 #
 # Run when invoked as a script.
