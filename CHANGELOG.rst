@@ -8,6 +8,8 @@ History
 
 * Changed code to better PEP-8 naming.
 
+* Fixed issue where return codes were not being returned correctly on failure.
+
 0.1.1 (2017-02-27)
 ------------------
 
