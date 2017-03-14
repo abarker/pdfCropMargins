@@ -90,6 +90,12 @@ For help, run::
 On Windows you may need to put the Python ``Scripts`` directory into your
 environment ``PATH`` in order to avoid having to use the full pathname.
 
+To diagnose unexpected crops, try running with the ``-v`` verbose argument.
+Running without ``-u`` will crop each page separately, so you can see which
+pages might be causing problems (such as with noise near the borders or margin
+text).  To get cropped pages all the same size be sure to use both ``-s`` to
+make pages the same size and ``-u`` to crop each page by the same amount.
+
 Documentation
 =============
 

@@ -316,7 +316,8 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         else: uniform_set_with_even_odd = False
 
         # Recurse on even and odd pages, after resetting some options.
-        if args.verbose: print("\nRecursively calculating crops for even and odd pages.")
+        if args.verbose:
+            print("\nRecursively calculating crops for even and odd pages.")
         args.evenodd = False # avoid infinite recursion
         args.uniform = True  # --evenodd implies uniform, just on each separate group
         even_crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
