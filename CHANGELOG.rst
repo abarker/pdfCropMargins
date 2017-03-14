@@ -10,6 +10,8 @@ History
 
 * Fixed issue where return codes were not being returned correctly on failure.
 
+* Modified `samePageSize` option to only apply to pages selected by the `pages` option.
+
 0.1.1 (2017-02-27)
 ------------------
 

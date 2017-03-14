@@ -325,7 +325,7 @@ cmd_parser.add_argument("-u", "--uniform", action="store_true", help="""
    some margin space (relative to the margins obtained by cropping pages
    individually) to some of the pages.  If the pages of the original document
    are all the same size then the cropped pages will again all be the same
-   size.  The '--sameSize' option can also be used in combination with this
+   size.  The '--samePageSize' option can also be used in combination with this
    option to force all pages to be the same size after cropping.^^n""")
 
 cmd_parser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
@@ -367,7 +367,8 @@ cmd_parser.add_argument("-s", "--samePageSize", action="store_true", help="""
    new, possibly larger, page size.  The resulting pages are still cropped
    independently by default, and will not necessarily all have the same size
    unless '--uniform' is also selected to force the cropping amounts to be the
-   same for each page.^^n""")
+   same for each page.  If pages are selected with '--pages' then this option
+   is only applied to those selected pages.^^n""")
 
 cmd_parser.add_argument("-e", "--evenodd", action="store_true", help="""
 
@@ -377,7 +378,7 @@ cmd_parser.add_argument("-e", "--evenodd", action="store_true", help="""
    vertical cropping will be uniform over all the pages and only the
    horizontal cropping will differ between even and odd pages.^^n""")
 
-cmd_parser.add_argument("-g", "--pages", metavar="PAGESTR", help="""
+cmd_parser.add_argument("-g", "-pg", "--pages", metavar="PAGESTR", help="""
 
    Apply the cropping operation only to the selected pages.  The argument
    should be a list of the usual form such as "2-4,5,9,20-30".  The

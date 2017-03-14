@@ -289,16 +289,23 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     num_pages_to_crop = len(page_nums_to_crop)
 
     # Handle the '--samePageSize' option.
-    # Note that this is always done first, over the whole document, even before
-    # pages and evenodd are handled.
+    # Note that this is always done first, even before evenodd is handled.  It
+    # is only applied to the pages in `page_nums_to_crop`.
     if args.samePageSize:
         if args.verbose:
             print("\nSetting each page size to the smallest box bounding all the pages.")
-        full_page_box_list = [[min(box[0] for box in full_page_box_list),
-                            min(box[1] for box in full_page_box_list),
-                            max(box[2] for box in full_page_box_list),
-                            max(box[3] for box in full_page_box_list)]
-                           ] * num_pages
+        same_size_bounding_box = [
+                           min(full_page_box_list[pg][0] for pg in page_nums_to_crop),
+                           min(full_page_box_list[pg][1] for pg in page_nums_to_crop),
+                           max(full_page_box_list[pg][2] for pg in page_nums_to_crop),
+                           max(full_page_box_list[pg][3] for pg in page_nums_to_crop)]
+        new_full_page_box_list = []
+        for p_num, box in enumerate(full_page_box_list):
+            if p_num not in page_nums_to_crop:
+                new_full_page_box_list.append(box)
+            else:
+                new_full_page_box_list.append(same_size_bounding_box)
+        full_page_box_list = new_full_page_box_list
 
     # Handle the '--evenodd' option if it was selected.
     if args.evenodd:
@@ -752,8 +759,9 @@ def main_crop():
     ##
 
     all_page_nums = set(range(0, input_doc.getNumPages()))
-    page_nums_to_crop = set()
+    page_nums_to_crop = set() # Note that this set holds page num MINUS ONE, start at 0.
     if args.pages:
+        # Parse any page range specifier argument.
         for page_num_or_range in args.pages.split(","):
             split_range = page_num_or_range.split("-")
             try:
