@@ -812,11 +812,64 @@ def main_crop():
     ## seems to cause problems (writer can hang on write), so only one is used.
     ##
 
+    # NOTE: You can get the _root_object from the output document after calling
+    # cloneReaderDocumentRoot or you can just directly get it from
+    # input_doc.trailer (which is from the code for cloneReaderDocumentRoot)
+    # but you CANNOT set the full _root_object to be the _root_object for the
+    # actual output_doc or else only blank pages show up in acroread (whether
+    # or not any are attempted to be directly copied).  At least '/Pages'
+    # causes problems, and is skipped.  Probably a bug in PyPDF2.
+    #
+    # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/pdf.py
+    # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/generic.py
+
+    # TODO: This works to not delete the outline, but page sizes change.... but ordinary
+    # files do the same when not even cropped...
+    # https://superuser.com/questions/278302/prevent-adobe-reader-from-switching-to-fit-page-zoom-when-bookmark-is-clicked
+    #dummy_output = PdfFileWriter()
+    #dummy_output.cloneReaderDocumentRoot(input_doc) # No method to read from input_doc...
+    #outline = dummy_output.getOutlineRoot() # FAILS even when used normally! Raises exception.
+    #if '/Outlines' in dummy_output._root_object:
+
+    #if '/Outlines' in _root_object:
+    #    #outline = dummy_output._root_object['/Outlines']
+    #    outline = _root_object['/Outlines']
+    #else:
+    #    outline = None
+
     output_doc = PdfFileWriter()
+    #if outline:
+    #    output_doc._root_object[NameObject('/Outlines')] = outline # WORKS
+        #output_doc._root_object = _root_object
+        #dict.__setitem__(output_doc._root_object, "/Outlines", outline) # Kludge: go direct to dict.
+    #page_mode = input_doc.getPageMode() # TODO page mode doesn't break it, no noticable change
+    #output_doc.setPageMode(page_mode) # TODO page mode doesn't break it, no noticable change
+
+    #output_doc.cloneDocumentFromReader(input_doc) # TODO try these commented-out to fix indexes
+    #output_doc.cloneReaderDocumentRoot(input_doc) # TODO Doesn't work, though...
+    #outline = output_doc.getOutlineRoot()
+    _root_object = input_doc.trailer['/Root']
+    for key, value in _root_object.items():
+        #  Some keys can be:
+        #
+        #    /PageMode
+        #    /Type
+        #    /OpenAction
+        #    /Pages
+        #    /Names
+        #    /Outlines
+        if key == "/Pages":
+            continue
+        #print("DEBUG the keys of _root_object are:", key)
+        output_doc._root_object[NameObject(key)] = value
+
+    #output_doc.appendPagesFromReader(input_doc) # This does work, but wait and test more.
     for page in [input_doc.getPage(i) for i in range(input_doc.getNumPages())]:
         output_doc.addPage(page)
 
     tmp_output_doc = PdfFileWriter()
+    #tmp_output_doc.cloneReaderDocumentRoot(tmp_input_doc)  # TODO Gets index but no pages anymore.
+    #tmp_output_doc.appendPagesFromReader(tmp_input_doc)  # Works, but wait.
     for page in [tmp_input_doc.getPage(i) for i in range(tmp_input_doc.getNumPages())]:
         tmp_output_doc.addPage(page)
 
@@ -847,8 +900,11 @@ def main_crop():
 
         doc_with_crop_and_media_boxes_object.close()
 
+    del tmp_input_doc
+    del tmp_output_doc
+
     ##
-    ## Copy the metadata from inputDot to output_doc, modifying the Producer string
+    ## Copy the metadata from input_doc to output_doc, modifying the Producer string
     ## if this program didn't already set it.  Get bool for whether this program
     ## cropped the document already.
     ##
