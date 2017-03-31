@@ -334,14 +334,15 @@ cmd_parser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
    Choosing this option implies the '--uniform' option, but the smallest delta
    value over all the pages is no longer chosen.  Instead, for each margin the
    nth smallest delta value (with n numbered starting at zero) is chosen over
-   all the pages.  Choosing n to be half the number of pages gives the median
-   delta value.  This option is useful for cropping noisy scanned PDFs which
-   have a common margin size on most of the pages, or for ignoring annotations
-   which only appear in the margins of a few pages.  This option essentially
-   causes the program to ignores the n largest tight-crop margins when
-   computing common delta values over all the pages.  Increasing n always
-   either increases the cropping amount or leaves it unchanged.  Some
-   trial-and-error may be needed to choose the best number.^^n""")
+   all the pages.  The argument is the integer n, for example '-m 4'.  Choosing
+   n to be half the number of pages gives the median delta value.  This option
+   is useful for cropping noisy scanned PDFs which have a common margin size on
+   most of the pages, or for ignoring annotations which only appear in the
+   margins of a few pages.  This option essentially causes the program to
+   ignores the n largest tight-crop margins when computing common delta values
+   over all the pages.  Increasing n always either increases the cropping
+   amount or leaves it unchanged.  Some trial-and-error may be needed to choose
+   the best number.^^n""")
 
 cmd_parser.add_argument("-mp", "--uniformOrderPercent", nargs=1, type=float,
                        default=[], metavar="INT", help="""
@@ -349,8 +350,8 @@ cmd_parser.add_argument("-mp", "--uniformOrderPercent", nargs=1, type=float,
    This option is the same as '--uniformOrderStat' except that the order number
    n is automatically set to a given percentage of the number of pages which
    are set to be cropped (either the full number or the ones set with
-   '--pages').  (This option overrides that option if both are set.) The
-   argument is a float percent value; rounding is done to get the final
+   '--pages').  This option overrides '--uniformOrderStat' if both are set.
+   The argument is a float percent value; rounding is done to get the final
    order-number.  Setting the percent to 0 is equivalent to n=1, setting the
    percent to 100 is equivalent to setting n to the full number of pages, and
    setting the percent to 50 gives the median (for odd numbers of
@@ -369,6 +370,16 @@ cmd_parser.add_argument("-s", "--samePageSize", action="store_true", help="""
    unless '--uniform' is also selected to force the cropping amounts to be the
    same for each page.  If pages are selected with '--pages' then this option
    is only applied to those selected pages.^^n""")
+
+cmd_parser.add_argument("-sm", "--samePageSizeOrderStat", nargs=1, type=int,
+                       default=[], metavar="INT", help="""
+
+   Choosing this option implies the '--samePageSize' option, but the
+   calculations for each edge of the smallest bounding box ignore the largest
+   (or smallest for left and bottom edges) n values.  The argument is the
+   nonnegative number n.  Each edge is calculated independently.  This is an
+   order statistic for selecting the uniform size to make the pages.  Note that
+   this will cut off parts of some pages if n>0.^^n""")
 
 cmd_parser.add_argument("-e", "--evenodd", action="store_true", help="""
 

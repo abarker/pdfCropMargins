@@ -271,7 +271,9 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                                                                page_nums_to_crop):
     """Given a list of full-page boxes (media boxes) and a list of tight
     bounding boxes for each page, calculate and return another list giving the
-    list of bounding boxes to crop down to."""
+    list of bounding boxes to crop down to.  The parameter `angle_list` is
+    a list of rotation angles which correspond to the pages.  The pages
+    selected to crop are in the set `page_nums_to_crop`."""
 
     # Definition: the deltas are the four differences, one for each margin,
     # between the original full page box and the final, cropped full-page box.
@@ -290,15 +292,25 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     # Handle the '--samePageSize' option.
     # Note that this is always done first, even before evenodd is handled.  It
-    # is only applied to the pages in `page_nums_to_crop`.
+    # is only applied to the pages in  the set `page_nums_to_crop`.
+
+    #args.samePageSizeOrderStat = [30]
+    order_n = 0
+    if args.samePageSizeOrderStat:
+        args.samePageSize = True
+        order_n = min(args.samePageSizeOrderStat[0], num_pages_to_crop - 1)
+
     if args.samePageSize:
         if args.verbose:
             print("\nSetting each page size to the smallest box bounding all the pages.")
+            if order_n != 0:
+                print("But ignoring the largest {} pages in calculating each edge.".format(order_n))
         same_size_bounding_box = [
-                           min(full_page_box_list[pg][0] for pg in page_nums_to_crop),
-                           min(full_page_box_list[pg][1] for pg in page_nums_to_crop),
-                           max(full_page_box_list[pg][2] for pg in page_nums_to_crop),
-                           max(full_page_box_list[pg][3] for pg in page_nums_to_crop)]
+              sorted(full_page_box_list[pg][0] for pg in page_nums_to_crop), # want smallest
+              sorted(full_page_box_list[pg][1] for pg in page_nums_to_crop), # want smallest
+              sorted((full_page_box_list[pg][2] for pg in page_nums_to_crop), reverse=True), # largest
+              sorted((full_page_box_list[pg][3] for pg in page_nums_to_crop), reverse=True)] # largest
+        same_size_bounding_box = [sortlist[order_n] for sortlist in same_size_bounding_box]
         new_full_page_box_list = []
         for p_num, box in enumerate(full_page_box_list):
             if p_num not in page_nums_to_crop:
