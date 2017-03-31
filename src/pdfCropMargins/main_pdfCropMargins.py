@@ -83,7 +83,7 @@ if "--pypdf_local" in sys.argv or "-pdl" in sys.argv:
 try:
     from PyPDF2 import PdfFileWriter, PdfFileReader # the system's pyPdf
     from PyPDF2.generic import \
-        NameObject, createStringObject, RectangleObject, FloatObject
+        NameObject, createStringObject, RectangleObject, FloatObject, IndirectObject
     from PyPDF2.utils import PdfReadError
 except ImportError:
     print("\nError in pdfCropMargins: No system pyPdf Python package"
@@ -802,74 +802,123 @@ def main_crop():
     ## chosen full-page size as a side-effect, saving the old boxes.
     ##
 
-    full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(input_doc)
+    full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(
+                                                                              input_doc)
     tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
                                                             tmp_input_doc, quiet=True)
 
     ##
-    ## Define the PdfFileWriter object and insert all the input_doc pages into it.
-    ## Note that inserting pages from a PdfFileReader into multiple PdfFileWriters
-    ## seems to cause problems (writer can hang on write), so only one is used.
+    ## Define a PdfFileWriter object and copy input_doc info over to it.
     ##
 
-    # NOTE: You can get the _root_object from the output document after calling
-    # cloneReaderDocumentRoot or you can just directly get it from
-    # input_doc.trailer (which is from the code for cloneReaderDocumentRoot)
-    # but you CANNOT set the full _root_object to be the _root_object for the
+    # NOTE: Inserting pages from a PdfFileReader into multiple PdfFileWriters
+    # seems to cause problems (writer can hang on write), so only one is used.
+    # This is why the tmp_input_doc file was created earlier, to get copies of
+    # the page objects which are independent of those in input_doc.  An ugly
+    # hack for a nasty bug to track down.
+
+    # NOTE: You can get the _root_object attribute (dict for the document
+    # catalog) from the output document after calling cloneReaderDocumentRoot
+    # or else you can just directly get it from the input_doc.trailer dict, as
+    # below (which is from the code for cloneReaderDocumentRoot), but you
+    # CANNOT set the full _root_object to be the _root_object attribute for the
     # actual output_doc or else only blank pages show up in acroread (whether
-    # or not any are attempted to be directly copied).  At least '/Pages'
-    # causes problems, and is skipped.  Probably a bug in PyPDF2.
+    # or not there is any attempt to explicitly copy the pages over).  The same
+    # is true for using cloneDocumentFromReader (which just calls
+    # cloneReaderDocumentRoot followed by appendPagesFromReader).  At least the
+    # '/Pages' key and value in _root_object cause problems, so they are
+    # skipped in the partial copy.  Probably a bug in PyPDF2.  See the original
+    # code for the routines on the github pages below.
     #
     # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/pdf.py
     # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/generic.py
-
-    # TODO: This works to not delete the outline, but page sizes change.... but ordinary
-    # files do the same when not even cropped...
-    # https://superuser.com/questions/278302/prevent-adobe-reader-from-switching-to-fit-page-zoom-when-bookmark-is-clicked
-    #dummy_output = PdfFileWriter()
-    #dummy_output.cloneReaderDocumentRoot(input_doc) # No method to read from input_doc...
-    #outline = dummy_output.getOutlineRoot() # FAILS even when used normally! Raises exception.
-    #if '/Outlines' in dummy_output._root_object:
-
-    #if '/Outlines' in _root_object:
-    #    #outline = dummy_output._root_object['/Outlines']
-    #    outline = _root_object['/Outlines']
-    #else:
-    #    outline = None
+    #
+    # Files still can change zoom mode on clicking outline links, but that is
+    # an Adobe implementation problem, and happens even in the uncropped files:
+    # https://superuser.com/questions/278302/
 
     output_doc = PdfFileWriter()
-    #if outline:
-    #    output_doc._root_object[NameObject('/Outlines')] = outline # WORKS
-        #output_doc._root_object = _root_object
-        #dict.__setitem__(output_doc._root_object, "/Outlines", outline) # Kludge: go direct to dict.
-    #page_mode = input_doc.getPageMode() # TODO page mode doesn't break it, no noticable change
-    #output_doc.setPageMode(page_mode) # TODO page mode doesn't break it, no noticable change
 
-    #output_doc.cloneDocumentFromReader(input_doc) # TODO try these commented-out to fix indexes
-    #output_doc.cloneReaderDocumentRoot(input_doc) # TODO Doesn't work, though...
-    #outline = output_doc.getOutlineRoot()
-    _root_object = input_doc.trailer['/Root']
-    for key, value in _root_object.items():
-        #  Some keys can be:
-        #
-        #    /PageMode
-        #    /Type
-        #    /OpenAction
-        #    /Pages
-        #    /Names
-        #    /Outlines
-        if key == "/Pages":
-            continue
-        #print("DEBUG the keys of _root_object are:", key)
-        output_doc._root_object[NameObject(key)] = value
+    def root_objects_not_indirect(input_doc, root_object):
+        """This can expand some of the `IndirectObject` objects in  a root object to
+        see the actual values.  Currently only used for debugging.  May mess up the
+        input doc and require a temporary one."""
+        if isinstance(root_object, dict):
+            return {root_objects_not_indirect(key): root_objects_not_indirect(value) for
+                    key, value in root_object.items()}
+        elif isinstance(root_object, list):
+            return [root_objects_not_indirect(item) for item in root_object]
+        elif isinstance(root_object, IndirectObject):
+            return input_doc.getObject(root_object)
+        else:
+            return root_object
 
-    #output_doc.appendPagesFromReader(input_doc) # This does work, but wait and test more.
+    doc_cat_whitelist = args.docCatWhitelist.split()
+    if "ALL" in doc_cat_whitelist:
+        doc_cat_whitelist = ["ALL"]
+
+    doc_cat_blacklist = args.docCatBlacklist.split()
+    if "ALL" in doc_cat_blacklist:
+        doc_cat_blacklist = ["ALL"]
+
+    # Partially copy over document catalog data from input_doc to output_doc.
+    if not doc_cat_whitelist and doc_cat_blacklist == ["ALL"]:
+        # Check this first, to completely skip the possibly problematic code getting
+        # document catalog items when possible.  Does not print a skipped list, though.
+        if args.verbose:
+            print("\nNot copying any document catalog items to the cropped document.")
+    else:
+        try:
+            _root_object = input_doc.trailer["/Root"]
+
+            copied_items = []
+            skipped_items = []
+            for key, value in _root_object.items():
+                # Some possible keys can be:
+                #
+                # /Type -- required, must have value /Catalog
+                # /Pages -- required, indirect ref to page tree; skip, will change
+                # /PageMode -- set to /UseNone, /UseOutlines, /UseThumbs, /Fullscreen,
+                #              /UseOC, or /UseAttachments, with /UseNone default.
+                # /OpenAction -- action to take when document is opened, like zooming
+                # /PageLayout -- set to /SinglePage, /OneColumn, /TwoColumnLeft,
+                #                /TwoColumnRight, /TwoPageLeft, /TwoPageRight
+                # /Names -- a name dictionary to avoid having to use object numbers
+                # /Outlines -- indirect ref to document outline, i.e., bookmarks
+                # /Dests -- a dict of destinations in the PDF
+                # /ViewerPreferences -- a viewer preferences dict
+                # /MetaData -- XMP metadata, as opposed to other metadata
+                # /PageLabels -- alternate numbering for pages, only affect PDF viewers
+                if key == "/Pages":
+                    skipped_items.append(key)
+                    continue
+                if doc_cat_whitelist != ["ALL"] and key not in doc_cat_whitelist:
+                    if doc_cat_blacklist == ["ALL"] or key in doc_cat_blacklist:
+                        skipped_items.append(key)
+                        continue
+                copied_items.append(key)
+                output_doc._root_object[NameObject(key)] = value
+
+            if args.verbose:
+                print("\nCopied these items from the document catalog:\n   ", end="")
+                print(*copied_items)
+                print("Skipped copy of these items from the document catalog:\n   ", end="")
+                print(*skipped_items)
+
+        except (KeyboardInterrupt, EOFError):
+            raise
+        except: # Just catch any errors here; don't know which might be raised.
+            # On exception just warn and get a new PdfFileWriter object, to be safe.
+            print("\nWarning: The document catalog data could not be copied to the"
+                  " new, cropped document.", file=sys.stderr)
+            output_doc = PdfFileWriter()
+
+    #output_doc.appendPagesFromReader(input_doc) # Works, but wait and test more.
     for page in [input_doc.getPage(i) for i in range(input_doc.getNumPages())]:
         output_doc.addPage(page)
 
     tmp_output_doc = PdfFileWriter()
-    #tmp_output_doc.cloneReaderDocumentRoot(tmp_input_doc)  # TODO Gets index but no pages anymore.
-    #tmp_output_doc.appendPagesFromReader(tmp_input_doc)  # Works, but wait.
+    #tmp_output_doc.appendPagesFromReader(tmp_input_doc)  # Works, but test more.
     for page in [tmp_input_doc.getPage(i) for i in range(tmp_input_doc.getNumPages())]:
         tmp_output_doc.addPage(page)
 
@@ -988,7 +1037,7 @@ def main_crop():
                   "\nbackground...\n")
             do_preview(output_doc_fname)
             # Give preview time to start; it may write startup garbage to the terminal...
-            query_wait_time = 1 # seconds
+            query_wait_time = 2 # seconds
             time.sleep(query_wait_time)
             print()
         while True:

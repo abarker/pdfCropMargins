@@ -185,12 +185,14 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         # Convert the image to black and white, according to a threshold.
         # Make a negative image, because that works with the PIL getbbox routine.
 
-        if args.verbose: print(page_num+1, end=" ") # page num numbering from 1
+        if args.verbose:
+            print(page_num+1, end=" ") # page num numbering from 1
         # Note: the point method calls the function on each pixel, replacing it.
         #im = im.point(lambda p: p > threshold and 255) # create a positive image
         im = im.point(lambda p: p < threshold and 255)  # create a negative image
 
-        if args.showImages: im.show() # usually for debugging or param-setting
+        if args.showImages:
+            im.show() # usually for debugging or param-setting
 
         # Calculate the bounding box of the negative image, and append to list.
         bounding_box = calculate_bounding_box_from_image(im, curr_page)
@@ -200,7 +202,8 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         # tmpImageFile.close() # see above comment
         os.remove(tmp_image_file_name)
 
-    if args.verbose: print()
+    if args.verbose:
+        print()
     return bounding_box_list
 
 

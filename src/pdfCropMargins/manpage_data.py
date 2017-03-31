@@ -605,19 +605,50 @@ cmd_parser.add_argument("-ss", "--stringSeparator", default="_", metavar="STR",
    appending or prependeding string values to automatically generate filenames.
    The default value is "_".^^n""")
 
-cmd_parser.add_argument("-pw", "--password", metavar="PASSWD",
-                       help="""
+cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
 
    Specify a password to be used to decrypt an encrypted PDF file.  Note that
    decrypting with an empty password is always tried, so this option is only
    needed for non-empty passwords.  The resulting cropped file will not be
    encrypted, so use caution if important data is involved.^^n""")
 
+cmd_parser.add_argument("-dcb", "--docCatBlacklist", default="",
+                       metavar="STR", help="""
+
+   Data associated with the full document, such as outlines, bookmarks, and
+   modes, is saved in the document catalog of the PDF file.  By default it is
+   all copied over to the cropped document if possible (with some exceptions,
+   e.g., "/Pages" will be modified by cropping).  If this is not wanted, or if
+   it causes problems for a document, this option specifies a blacklist of
+   document catalog items that will never be copied.  The arguments should be
+   passed as a single, quoted, whitespace-separated string, for example
+   "/Outlines /PageMode /OpenAction".  The special value "ALL" blacklists
+   everything.  An empty string blacklists nothing, and is the default.  As an
+   example, it can be useful to blacklist "/OpenAction" if on opening the PDF
+   it does something like zooming which is not desired.  Blacklisting
+   `/PageMode` can also be useful to, for example, not open the outline by
+   default.  Running in verbose mode '-v' will show which document catalog
+   items are and are not being copied for a document.^^n""")
+
+cmd_parser.add_argument("-dcw", "--docCatWhitelist", default="",
+                       metavar="STR", help="""
+
+   See the '--docCatBlacklist' option.  This is just a whitelist that
+   essentially works the same way.  The whitelist takes precedence over the
+   blacklist.  It specifies a list of items which will always be copied over
+   even if they are in the blacklist.  Useful combined with setting the
+   blacklist to "ALL" if you only want one or two of the items.  The default
+   value is the empty string, which whitelists nothing and so only the
+   blacklist is used.  Setting to "ALL" guarantees that everything possible is
+   copied over.^^n""")
+
 cmd_parser.add_argument("-i", "--showImages", action="store_true", help="""
 
    When explicitly rendering PDF files to image files, display the inverse
    image files that are used to find the bounding boxes.  Useful for debugging
-   and for choosing some of the other parameters (such as the threshold).^^n""")
+   and for choosing some of the other parameters (such as the threshold).  This
+   option requires a default external viewer program selected by the Pillow
+   image manipulation package (xv on Unix, and usually Paint on Windows).^^n""")
 
 cmd_parser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
 

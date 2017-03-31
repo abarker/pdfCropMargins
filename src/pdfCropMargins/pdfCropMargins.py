@@ -75,7 +75,7 @@ def main():
 
     except:
         # Echo back the unexpected error so the user can see it.
-        print("Caught an unexpected exception in the pdfCropMargins program.",
+        print("\nCaught an unexpected exception in the pdfCropMargins program.",
                                                                file=sys.stderr)
         print("Unexpected error: ", sys.exc_info()[0], file=sys.stderr)
         print("Error message   : ", sys.exc_info()[1], file=sys.stderr)

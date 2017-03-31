@@ -3,6 +3,23 @@
 History
 =======
 
+0.1.3 (no date yet)
+-------------------
+
+New Features:
+
+* Now copies over data from the document catalog to the cropped document.
+  This includes, for example, the outline or bookmarks.
+
+* There is a new option `--docCatBlacklist` (shortcut `-dcb`) which can
+  be used to block any particular item from being copied.  The default is
+  an empty string, which copies everything possible.  To revert to the
+  previous behavior of pdfCropMargins you can set `-dcb "ALL"`.
+
+* There is another new option `--docCatWhitelist` (shortcut `dcw`) which
+  is a list of document catalog items to always try to copy over.  This
+  list overrides the blacklist.
+
 0.1.2 (2017-03-14)
 ------------------
 
