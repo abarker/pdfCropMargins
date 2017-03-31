@@ -547,38 +547,6 @@ def main_crop():
         print("\nProcessing the PDF with pdfCropMargins...\nSystem type:",
               ex.system_os)
 
-    if args.gsBbox and len(args.fullPageBox) > 1:
-        print("\nWarning: only one --fullPageBox value can be used with the -gs option.",
-              "\nIgnoring all but the first one.", file=sys.stderr)
-        args.fullPageBox = [args.fullPageBox[0]]
-    elif args.gsBbox and not args.fullPageBox: args.fullPageBox = ["c"] # gs default
-    elif not args.fullPageBox: args.fullPageBox = ["m", "c"] # usual default
-
-    if args.verbose:
-        print("\nFor the full page size, using values from the PDF box"
-              "\nspecified by the intersection of these boxes:", args.fullPageBox)
-
-    if args.absolutePreCrop: args.absolutePreCrop *= 4 # expand to 4 offsets
-    # See if all four offsets are explicitly set and use those if so.
-    if args.absolutePreCrop4: args.absolutePreCrop = args.absolutePreCrop4
-    if args.verbose:
-        print("\nThe absolute pre-crops to be applied to each margin, in units of bp,"
-              " are:\n   ", args.absolutePreCrop)
-
-    if args.percentRetain: args.percentRetain *= 4 # expand to 4 percents
-    # See if all four percents are explicitly set and use those if so.
-    if args.percentRetain4: args.percentRetain = args.percentRetain4
-    if args.verbose:
-        print("\nThe percentages of margins to retain are:\n   ",
-              args.percentRetain)
-
-    if args.absoluteOffset: args.absoluteOffset *= 4 # expand to 4 offsets
-    # See if all four offsets are explicitly set and use those if so.
-    if args.absoluteOffset4: args.absoluteOffset = args.absoluteOffset4
-    if args.verbose:
-        print("\nThe absolute offsets to be applied to each margin, in units of bp,"
-              " are:\n   ", args.absoluteOffset)
-
     if len(args.pdf_input_doc) > 1:
         print("\nError in pdfCropMargins: Only one input PDF document is allowed."
               "\nFound more than one on the command line:", file=sys.stderr)
@@ -617,6 +585,38 @@ def main_crop():
               "\nthe output file.\n", file=sys.stderr)
         ex.cleanup_and_exit(1)
 
+    if args.gsBbox and len(args.fullPageBox) > 1:
+        print("\nWarning: only one --fullPageBox value can be used with the -gs option.",
+              "\nIgnoring all but the first one.", file=sys.stderr)
+        args.fullPageBox = [args.fullPageBox[0]]
+    elif args.gsBbox and not args.fullPageBox: args.fullPageBox = ["c"] # gs default
+    elif not args.fullPageBox: args.fullPageBox = ["m", "c"] # usual default
+
+    if args.verbose:
+        print("\nFor the full page size, using values from the PDF box"
+              "\nspecified by the intersection of these boxes:", args.fullPageBox)
+
+    if args.absolutePreCrop: args.absolutePreCrop *= 4 # expand to 4 offsets
+    # See if all four offsets are explicitly set and use those if so.
+    if args.absolutePreCrop4: args.absolutePreCrop = args.absolutePreCrop4
+    if args.verbose:
+        print("\nThe absolute pre-crops to be applied to each margin, in units of bp,"
+              " are:\n   ", args.absolutePreCrop)
+
+    if args.percentRetain: args.percentRetain *= 4 # expand to 4 percents
+    # See if all four percents are explicitly set and use those if so.
+    if args.percentRetain4: args.percentRetain = args.percentRetain4
+    if args.verbose:
+        print("\nThe percentages of margins to retain are:\n   ",
+              args.percentRetain)
+
+    if args.absoluteOffset: args.absoluteOffset *= 4 # expand to 4 offsets
+    # See if all four offsets are explicitly set and use those if so.
+    if args.absoluteOffset4: args.absoluteOffset = args.absoluteOffset4
+    if args.verbose:
+        print("\nThe absolute offsets to be applied to each margin, in units of bp,"
+              " are:\n   ", args.absoluteOffset)
+
     if args.pdftoppmPath: ex.set_pdftoppm_executable_to_string(args.pdftoppmPath)
     if args.ghostscriptPath: ex.set_gs_executable_to_string(args.ghostscriptPath)
 
@@ -628,7 +628,8 @@ def main_crop():
     if not args.gsBbox and not args.gsRender:
         found_pdftoppm = ex.init_and_test_pdftoppm_executable(
                                                    prefer_local=args.pdftoppmLocal)
-        if args.verbose: print("\nFound pdftoppm program at:", found_pdftoppm)
+        if args.verbose:
+            print("\nFound pdftoppm program at:", found_pdftoppm)
         if not found_pdftoppm:
             args.gsRender = True
             gs_render_fallback_set = True
@@ -638,7 +639,8 @@ def main_crop():
     # If any options require Ghostscript, make sure it it installed.
     if args.gsBbox or args.gsFix or args.gsRender:
         found_gs = ex.init_and_test_gs_executable()
-        if args.verbose: print("\nFound Ghostscript program at:", found_gs)
+        if args.verbose:
+            print("\nFound Ghostscript program at:", found_gs)
     if args.gsBbox and not found_gs:
         print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
               "\nthe Ghostscript executable could not be located.  Is it"
@@ -844,10 +846,11 @@ def main_crop():
         see the actual values.  Currently only used for debugging.  May mess up the
         input doc and require a temporary one."""
         if isinstance(root_object, dict):
-            return {root_objects_not_indirect(key): root_objects_not_indirect(value) for
-                    key, value in root_object.items()}
+            return {root_objects_not_indirect(input_doc, key):
+                    root_objects_not_indirect(input_doc, value) for
+                                                  key, value in root_object.items()}
         elif isinstance(root_object, list):
-            return [root_objects_not_indirect(item) for item in root_object]
+            return [root_objects_not_indirect(input_doc, item) for item in root_object]
         elif isinstance(root_object, IndirectObject):
             return input_doc.getObject(root_object)
         else:
@@ -869,11 +872,11 @@ def main_crop():
             print("\nNot copying any document catalog items to the cropped document.")
     else:
         try:
-            _root_object = input_doc.trailer["/Root"]
+            root_object = input_doc.trailer["/Root"]
 
             copied_items = []
             skipped_items = []
-            for key, value in _root_object.items():
+            for key, value in root_object.items():
                 # Some possible keys can be:
                 #
                 # /Type -- required, must have value /Catalog
