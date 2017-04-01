@@ -371,7 +371,7 @@ cmd_parser.add_argument("-s", "--samePageSize", action="store_true", help="""
    same for each page.  If pages are selected with '--pages' then this option
    is only applied to those selected pages.^^n""")
 
-cmd_parser.add_argument("-sm", "--samePageSizeOrderStat", nargs=1, type=int,
+cmd_parser.add_argument("-ms", "--samePageSizeOrderStat", nargs=1, type=int,
                        default=[], metavar="INT", help="""
 
    Choosing this option implies the '--samePageSize' option, but the

@@ -212,7 +212,7 @@ def remove_program_temp_directory():
                     raise # re-raise the exception
                 time.sleep(time_between_retries)
             except:
-                print("Error in pdfCropMargins temp dir cleanup.", file=sys.stderr)
+                print("Cleaning up temp dir...", file=sys.stderr)
                 raise
 
 

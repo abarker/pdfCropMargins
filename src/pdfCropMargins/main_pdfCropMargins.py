@@ -57,6 +57,7 @@ import sys
 import os
 import shutil
 import time
+import copy
 
 ##
 ## Import the module that calls external programs and gets system info.
@@ -294,11 +295,11 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     # Note that this is always done first, even before evenodd is handled.  It
     # is only applied to the pages in  the set `page_nums_to_crop`.
 
-    #args.samePageSizeOrderStat = [30]
     order_n = 0
     if args.samePageSizeOrderStat:
         args.samePageSize = True
         order_n = min(args.samePageSizeOrderStat[0], num_pages_to_crop - 1)
+        order_n = max(order_n, 0)
 
     if args.samePageSize:
         if args.verbose:
@@ -535,6 +536,131 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
 
     return
 
+def setup_output_document(input_doc, tmp_input_doc, metadata_info, copy_document_catalog=True):
+    """Create the output `PdfFileWriter` objects and copy over the relevant info."""
+
+    # NOTE: Inserting pages from a PdfFileReader into multiple PdfFileWriters
+    # seems to cause problems (writer can hang on write), so only one is used.
+    # This is why the tmp_input_doc file was created earlier, to get copies of
+    # the page objects which are independent of those in input_doc.  An ugly
+    # hack for a nasty bug to track down.
+
+    # NOTE: You can get the _root_object attribute (dict for the document
+    # catalog) from the output document after calling cloneReaderDocumentRoot
+    # or else you can just directly get it from the input_doc.trailer dict, as
+    # below (which is from the code for cloneReaderDocumentRoot), but you
+    # CANNOT set the full _root_object to be the _root_object attribute for the
+    # actual output_doc or else only blank pages show up in acroread (whether
+    # or not there is any attempt to explicitly copy the pages over).  The same
+    # is true for using cloneDocumentFromReader (which just calls
+    # cloneReaderDocumentRoot followed by appendPagesFromReader).  At least the
+    # '/Pages' key and value in _root_object cause problems, so they are
+    # skipped in the partial copy.  Probably a bug in PyPDF2.  See the original
+    # code for the routines on the github pages below.
+    #
+    # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/pdf.py
+    # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/generic.py
+    #
+    # Files still can change zoom mode on clicking outline links, but that is
+    # an Adobe implementation problem, and happens even in the uncropped files:
+    # https://superuser.com/questions/278302/
+
+    output_doc = PdfFileWriter()
+
+    def root_objects_not_indirect(input_doc, root_object):
+        """This can expand some of the `IndirectObject` objects in  a root object to
+        see the actual values.  Currently only used for debugging.  May mess up the
+        input doc and require a temporary one."""
+        if isinstance(root_object, dict):
+            return {root_objects_not_indirect(input_doc, key):
+                    root_objects_not_indirect(input_doc, value) for
+                                                  key, value in root_object.items()}
+        elif isinstance(root_object, list):
+            return [root_objects_not_indirect(input_doc, item) for item in root_object]
+        elif isinstance(root_object, IndirectObject):
+            return input_doc.getObject(root_object)
+        else:
+            return root_object
+
+    doc_cat_whitelist = args.docCatWhitelist.split()
+    if "ALL" in doc_cat_whitelist:
+        doc_cat_whitelist = ["ALL"]
+
+    doc_cat_blacklist = args.docCatBlacklist.split()
+    if "ALL" in doc_cat_blacklist:
+        doc_cat_blacklist = ["ALL"]
+
+    # Partially copy over document catalog data from input_doc to output_doc.
+    if not copy_document_catalog or (not doc_cat_whitelist and doc_cat_blacklist == ["ALL"]):
+        # Check this first, to completely skip the possibly problematic code getting
+        # document catalog items when possible.  Does not print a skipped list, though.
+        if args.verbose:
+            print("\nNot copying any document catalog items to the cropped document.")
+    else:
+        try:
+            root_object = input_doc.trailer["/Root"]
+
+            copied_items = []
+            skipped_items = []
+            for key, value in root_object.items():
+                # Some possible keys can be:
+                #
+                # /Type -- required, must have value /Catalog
+                # /Pages -- required, indirect ref to page tree; skip, will change
+                # /PageMode -- set to /UseNone, /UseOutlines, /UseThumbs, /Fullscreen,
+                #              /UseOC, or /UseAttachments, with /UseNone default.
+                # /OpenAction -- action to take when document is opened, like zooming
+                # /PageLayout -- set to /SinglePage, /OneColumn, /TwoColumnLeft,
+                #                /TwoColumnRight, /TwoPageLeft, /TwoPageRight
+                # /Names -- a name dictionary to avoid having to use object numbers
+                # /Outlines -- indirect ref to document outline, i.e., bookmarks
+                # /Dests -- a dict of destinations in the PDF
+                # /ViewerPreferences -- a viewer preferences dict
+                # /MetaData -- XMP metadata, as opposed to other metadata
+                # /PageLabels -- alternate numbering for pages, only affect PDF viewers
+                if key == "/Pages":
+                    skipped_items.append(key)
+                    continue
+                if doc_cat_whitelist != ["ALL"] and key not in doc_cat_whitelist:
+                    if doc_cat_blacklist == ["ALL"] or key in doc_cat_blacklist:
+                        skipped_items.append(key)
+                        continue
+                copied_items.append(key)
+                output_doc._root_object[NameObject(key)] = value
+
+            if args.verbose:
+                print("\nCopied these items from the document catalog:\n   ", end="")
+                print(*copied_items)
+                print("Skipped copy of these items from the document catalog:\n   ", end="")
+                print(*skipped_items)
+
+        except (KeyboardInterrupt, EOFError):
+            raise
+        except: # Just catch any errors here; don't know which might be raised.
+            # On exception just warn and get a new PdfFileWriter object, to be safe.
+            print("\nWarning: The document catalog data could not be copied to the"
+                  " new, cropped document.", file=sys.stderr)
+            output_doc = PdfFileWriter()
+
+    #output_doc.appendPagesFromReader(input_doc) # Works, but wait and test more.
+    for page in [input_doc.getPage(i) for i in range(input_doc.getNumPages())]:
+        output_doc.addPage(page)
+
+    tmp_output_doc = PdfFileWriter()
+    #tmp_output_doc.appendPagesFromReader(tmp_input_doc)  # Works, but test more.
+    for page in [tmp_input_doc.getPage(i) for i in range(tmp_input_doc.getNumPages())]:
+        tmp_output_doc.addPage(page)
+
+    ##
+    ## Copy the metadata from input_doc to output_doc, modifying the Producer string
+    ## if this program didn't already set it.  Get bool for whether this program
+    ## cropped the document already.
+    ##
+
+    already_cropped_by_this_program = set_cropped_metadata(input_doc, output_doc,
+                                                           metadata_info)
+    return output_doc, tmp_output_doc, already_cropped_by_this_program
+
 
 ##############################################################################
 #
@@ -706,6 +832,8 @@ def main_crop():
     try:
         input_doc = PdfFileReader(fixed_input_doc_file_object)
         tmp_input_doc = PdfFileReader(fixed_input_doc_file_object)
+    except (KeyboardInterrupt, EOFError):
+        raise
     #except PdfReadError, ValueError: # throws various errors, just use general except
     except:
         print("\nError in pdfCropMargins: The pyPdf module failed in an attempt"
@@ -745,6 +873,7 @@ def main_crop():
     try: # This is needed because the call sometimes just raises an error.
         metadata_info = input_doc.getDocumentInfo()
     except:
+        print("\nWarning: Document metadata could not be read.", file=sys.stderr)
         metadata_info = None
 
     if args.verbose and not metadata_info:
@@ -825,122 +954,13 @@ def main_crop():
     ## Define a PdfFileWriter object and copy input_doc info over to it.
     ##
 
-    # NOTE: Inserting pages from a PdfFileReader into multiple PdfFileWriters
-    # seems to cause problems (writer can hang on write), so only one is used.
-    # This is why the tmp_input_doc file was created earlier, to get copies of
-    # the page objects which are independent of those in input_doc.  An ugly
-    # hack for a nasty bug to track down.
-
-    # NOTE: You can get the _root_object attribute (dict for the document
-    # catalog) from the output document after calling cloneReaderDocumentRoot
-    # or else you can just directly get it from the input_doc.trailer dict, as
-    # below (which is from the code for cloneReaderDocumentRoot), but you
-    # CANNOT set the full _root_object to be the _root_object attribute for the
-    # actual output_doc or else only blank pages show up in acroread (whether
-    # or not there is any attempt to explicitly copy the pages over).  The same
-    # is true for using cloneDocumentFromReader (which just calls
-    # cloneReaderDocumentRoot followed by appendPagesFromReader).  At least the
-    # '/Pages' key and value in _root_object cause problems, so they are
-    # skipped in the partial copy.  Probably a bug in PyPDF2.  See the original
-    # code for the routines on the github pages below.
-    #
-    # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/pdf.py
-    # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/generic.py
-    #
-    # Files still can change zoom mode on clicking outline links, but that is
-    # an Adobe implementation problem, and happens even in the uncropped files:
-    # https://superuser.com/questions/278302/
-
-    output_doc = PdfFileWriter()
-
-    def root_objects_not_indirect(input_doc, root_object):
-        """This can expand some of the `IndirectObject` objects in  a root object to
-        see the actual values.  Currently only used for debugging.  May mess up the
-        input doc and require a temporary one."""
-        if isinstance(root_object, dict):
-            return {root_objects_not_indirect(input_doc, key):
-                    root_objects_not_indirect(input_doc, value) for
-                                                  key, value in root_object.items()}
-        elif isinstance(root_object, list):
-            return [root_objects_not_indirect(input_doc, item) for item in root_object]
-        elif isinstance(root_object, IndirectObject):
-            return input_doc.getObject(root_object)
-        else:
-            return root_object
-
-    doc_cat_whitelist = args.docCatWhitelist.split()
-    if "ALL" in doc_cat_whitelist:
-        doc_cat_whitelist = ["ALL"]
-
-    doc_cat_blacklist = args.docCatBlacklist.split()
-    if "ALL" in doc_cat_blacklist:
-        doc_cat_blacklist = ["ALL"]
-
-    # Partially copy over document catalog data from input_doc to output_doc.
-    if not doc_cat_whitelist and doc_cat_blacklist == ["ALL"]:
-        # Check this first, to completely skip the possibly problematic code getting
-        # document catalog items when possible.  Does not print a skipped list, though.
-        if args.verbose:
-            print("\nNot copying any document catalog items to the cropped document.")
-    else:
-        try:
-            root_object = input_doc.trailer["/Root"]
-
-            copied_items = []
-            skipped_items = []
-            for key, value in root_object.items():
-                # Some possible keys can be:
-                #
-                # /Type -- required, must have value /Catalog
-                # /Pages -- required, indirect ref to page tree; skip, will change
-                # /PageMode -- set to /UseNone, /UseOutlines, /UseThumbs, /Fullscreen,
-                #              /UseOC, or /UseAttachments, with /UseNone default.
-                # /OpenAction -- action to take when document is opened, like zooming
-                # /PageLayout -- set to /SinglePage, /OneColumn, /TwoColumnLeft,
-                #                /TwoColumnRight, /TwoPageLeft, /TwoPageRight
-                # /Names -- a name dictionary to avoid having to use object numbers
-                # /Outlines -- indirect ref to document outline, i.e., bookmarks
-                # /Dests -- a dict of destinations in the PDF
-                # /ViewerPreferences -- a viewer preferences dict
-                # /MetaData -- XMP metadata, as opposed to other metadata
-                # /PageLabels -- alternate numbering for pages, only affect PDF viewers
-                if key == "/Pages":
-                    skipped_items.append(key)
-                    continue
-                if doc_cat_whitelist != ["ALL"] and key not in doc_cat_whitelist:
-                    if doc_cat_blacklist == ["ALL"] or key in doc_cat_blacklist:
-                        skipped_items.append(key)
-                        continue
-                copied_items.append(key)
-                output_doc._root_object[NameObject(key)] = value
-
-            if args.verbose:
-                print("\nCopied these items from the document catalog:\n   ", end="")
-                print(*copied_items)
-                print("Skipped copy of these items from the document catalog:\n   ", end="")
-                print(*skipped_items)
-
-        except (KeyboardInterrupt, EOFError):
-            raise
-        except: # Just catch any errors here; don't know which might be raised.
-            # On exception just warn and get a new PdfFileWriter object, to be safe.
-            print("\nWarning: The document catalog data could not be copied to the"
-                  " new, cropped document.", file=sys.stderr)
-            output_doc = PdfFileWriter()
-
-    #output_doc.appendPagesFromReader(input_doc) # Works, but wait and test more.
-    for page in [input_doc.getPage(i) for i in range(input_doc.getNumPages())]:
-        output_doc.addPage(page)
-
-    tmp_output_doc = PdfFileWriter()
-    #tmp_output_doc.appendPagesFromReader(tmp_input_doc)  # Works, but test more.
-    for page in [tmp_input_doc.getPage(i) for i in range(tmp_input_doc.getNumPages())]:
-        tmp_output_doc.addPage(page)
+    output_doc, tmp_output_doc, already_cropped_by_this_program = setup_output_document(
+                                                   input_doc, tmp_input_doc, metadata_info)
 
     ##
     ## Write out the PDF document again, with the CropBox and MediaBox reset.
     ## This temp version is only used for calculating the bounding boxes of
-    ## pages.  Note we are writing from tmpOutputDocument (due to an apparent bug
+    ## pages.  Note we are writing from tmp_output_doc (due to an apparent bug
     ## discussed above).  After this tmp_input_doc and tmp_output_doc are no longer
     ## needed.
     ##
@@ -955,7 +975,9 @@ def main_crop():
 
         try:
             tmp_output_doc.write(doc_with_crop_and_media_boxes_object)
-        except KeyError:
+        except (KeyboardInterrupt, EOFError):
+            raise
+        except: # Was on KeyError, but PyPDF2 can raise various exceptions.
             print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
                   "\nwrite out a PDF file of the document.  The document may be"
                   "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
@@ -963,18 +985,6 @@ def main_crop():
             ex.cleanup_and_exit(1)
 
         doc_with_crop_and_media_boxes_object.close()
-
-    del tmp_input_doc
-    del tmp_output_doc
-
-    ##
-    ## Copy the metadata from input_doc to output_doc, modifying the Producer string
-    ## if this program didn't already set it.  Get bool for whether this program
-    ## cropped the document already.
-    ##
-
-    already_cropped_by_this_program = set_cropped_metadata(input_doc, output_doc,
-                                                     metadata_info)
 
     ##
     ## Calculate the bounding_box_list containing tight page bounds for each page.
@@ -1000,7 +1010,7 @@ def main_crop():
 
     ##
     ## Apply the calculated crops to the pages of the PdfFileReader input_doc.
-    ## This also modifies the same pages in the PdfFileWriter output_doc.
+    ## These were already copied to the PdfFileWriter output_doc.
     ##
 
     apply_crop_list(crop_list, input_doc, page_nums_to_crop,
@@ -1015,12 +1025,35 @@ def main_crop():
     output_doc_stream = open(output_doc_fname, "wb")
     try:
         output_doc.write(output_doc_stream)
-    except KeyError:
-        print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
-              "\nwrite out a PDF file of the document.  The document may be"
-              "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
-              "\noption (assuming you are not already using it).", file=sys.stderr)
-        ex.cleanup_and_exit(1)
+    except (KeyboardInterrupt, EOFError):
+        raise
+    except: # PyPDF2 can raise various exceptions.
+        try:
+            # We know the write succeeded on tmp_output_doc.
+            # Restore the old output doc root object and try again.  Malformed
+            # document catalog info can cause write failures.
+            print("\nWrite failure, trying one more time...", file=sys.stderr)
+            output_doc_stream.close()
+            output_doc_stream = open(output_doc_fname, "wb")
+            output_doc, tmp_output_doc, already_cropped = setup_output_document(
+                    input_doc, tmp_input_doc, metadata_info, copy_document_catalog=False)
+            output_doc.write(output_doc_stream)
+            print("\nWarning: Document catalog data caused a write failure.  A retry"
+                  "\nwithout that data succeeded.  No document catalog information was"
+                  "\ncopied to the cropped output file.  Try fixing the PDF file.  If"
+                  "\nyou have ghostscript installed, run pdfCropMargins with the --gsFix"
+                  "\noption.  You can also try blacklisting some of the document catalog"
+                  "\nitems with the --dcb option.", file=sys.stderr)
+        except (KeyboardInterrupt, EOFError):
+            raise
+        except: # Give up... PyPDF2 can raise many errors for many reasons.
+            print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
+                  "\nwrite out a PDF file of the document.  The document may be"
+                  "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
+                  "\noption (assuming you are not already using it).", file=sys.stderr)
+            raise # TODO remove
+            ex.cleanup_and_exit(1)
+
     # Experimental test in line below to catch if it hangs... still causes bugs...
     #completed = ex.function_call_with_timeout(output_doc.write, [output_doc_stream], secs=0)
     output_doc_stream.close()
