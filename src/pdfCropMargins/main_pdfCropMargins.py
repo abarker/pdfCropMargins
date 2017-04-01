@@ -27,10 +27,6 @@ Equivalently, import the main() function from that script and run it.  The
 source directory and the project root directories have __main__.py files which
 do this automatically when Python is invoked on their directories.
 
-Note that this application is not a package, just a bunch of scripts in a
-directory but it has an __init__.py file to make it easy for setuptools
-to find the startup module.
-
 """
 
 # Possible useful feature to add: Have -ea and -oa options that do absolute
@@ -59,63 +55,39 @@ import shutil
 import time
 import copy
 
-##
-## Import the module that calls external programs and gets system info.
-##
-
+# Import the module that calls external programs and gets system info.
 from . import external_program_calls as ex
 python_version = ex.python_version
 project_src_directory = ex.project_src_directory
 
-##
-## Try to import the system pyPdf.  If that fails or if the '--pypdf_local'
-## option was set then revert to the appropriate local version.
-##
-
-pypdf_local = False # TODO delete cleanup
-# Peek at the command line (before fully parsing it later) to see if we should
-# import the local pyPdf.  This works for simple options which are either set
-# or not.  Note that importing is now dependent on sys.argv (even though it
-# shouldn't make a difference in this application).
-if "--pypdf_local" in sys.argv or "-pdl" in sys.argv:
-    #pypdf_local = True
-    pypdf_local = False # NEVER USE LOCAL
-
 try:
-    from PyPDF2 import PdfFileWriter, PdfFileReader # the system's pyPdf
-    from PyPDF2.generic import \
-        NameObject, createStringObject, RectangleObject, FloatObject, IndirectObject
+    from PyPDF2 import PdfFileWriter, PdfFileReader
+    from PyPDF2.generic import (NameObject, createStringObject, RectangleObject,
+                                FloatObject, IndirectObject)
     from PyPDF2.utils import PdfReadError
 except ImportError:
     print("\nError in pdfCropMargins: No system pyPdf Python package"
           " was found.\n", file=sys.stderr)
     raise
 
-##
-## Import the general function for calculating a list of bounding boxes.
-##
-
+# Import the general function for calculating a list of bounding boxes.
 from .calculate_bounding_boxes import get_bounding_box_list
 
-##
-## Import the prettified argparse module and the text of the manpage documentation.
-##
-
+# Import the prettified argparse module and the text of the manpage documentation.
 from .prettified_argparse import parse_command_line_arguments
 from .manpage_data import cmd_parser
 
 ##
-## Some general strings used by the program.
+## Some data used by the program.
 ##
 
 # The string which is appended to Producer metadata in cropped PDFs.
-producer_modifier = " (Cropped by pdfCropMargins.)"
+PRODUCER_MODIFIER = " (Cropped by pdfCropMargins.)"
 
 
 ##
 ## Begin general function definitions.
 ##
-
 
 def generate_default_filename(infile_path, is_cropped_file=True):
     """Generate the name of the default output file from the name of the input
@@ -137,7 +109,6 @@ def generate_default_filename(infile_path, is_cropped_file=True):
 
     return name
 
-
 def intersect_boxes(box1, box2):
     """Takes two pyPdf boxes (such as page.mediaBox) and returns the pyPdf
     box which is their intersection."""
@@ -150,7 +121,6 @@ def intersect_boxes(box1, box2):
     intersect.lowerLeft = (max(box1.lowerLeft[0], box2.lowerLeft[0]),
                            max(box1.lowerLeft[1], box2.lowerLeft[1]))
     return intersect
-
 
 def mod_box_for_rotation(box, angle, undo=False):
     """The user sees left, bottom, right, and top margins on a page, but inside
@@ -174,7 +144,6 @@ def mod_box_for_rotation(box, angle, undo=False):
     else:
         return rotate_ninety_degrees_clockwise(box, undo_map[angle])
     return
-
 
 def get_full_page_box_assigning_media_and_crop(page):
     """This returns whatever PDF box was selected (by the user option
@@ -235,7 +204,6 @@ def get_full_page_box_assigning_media_and_crop(page):
 
     return full_box
 
-
 def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False):
     """Get a list of all the full-page box values for each page.  The argument
     input_doc should be a PdfFileReader object.  The boxes on the list are in the
@@ -266,7 +234,6 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False):
         rotation_list.append(curr_page.rotationAngle)
 
     return full_page_box_list, rotation_list
-
 
 def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                                                                page_nums_to_crop):
@@ -431,7 +398,6 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     return final_crop_list
 
-
 def set_cropped_metadata(input_doc, output_doc, metadata_info):
     """Set the metadata for the output document.  Mostly just copied over, but
     "Producer" has a string appended to indicate that this program modified the
@@ -454,7 +420,7 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info):
     output_info_dict = output_doc._info.getObject()
 
     # Check Producer metadata attribute to see if this program cropped document before.
-    producer_mod = producer_modifier
+    producer_mod = PRODUCER_MODIFIER
     already_cropped_by_this_program = False
     old_producer_string = metadata_info.producer
     if old_producer_string and old_producer_string.endswith(producer_mod):
@@ -603,7 +569,8 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
         doc_cat_blacklist = ["ALL"]
 
     # Partially copy over document catalog data from input_doc to output_doc.
-    if not copy_document_catalog or (not doc_cat_whitelist and doc_cat_blacklist == ["ALL"]):
+    if not copy_document_catalog or (
+            not doc_cat_whitelist and doc_cat_blacklist == ["ALL"]):
         # Check this first, to completely skip the possibly problematic code getting
         # document catalog items when possible.  Does not print a skipped list, though.
         if args.verbose:
@@ -682,7 +649,8 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
 ##############################################################################
 
 
-# Parse the command-line arguments and set the variable args.
+# Parse the command-line arguments and set the variable args.  In module scope so
+# all the functions can easily access the arguments they need.
 args = parse_command_line_arguments(cmd_parser)
 
 
@@ -1125,7 +1093,7 @@ def main_crop():
         # Remove any existing file with the name generated_uncropped_filename unless a
         # relevant noclobber option is set or it isn't a file.
         if os.path.exists(generated_uncropped_filename):
-            if (os.path.isfile(generated_uncropped_filename) \
+            if (os.path.isfile(generated_uncropped_filename)
                     and not args.noclobberOriginal and not args.noclobber):
                 if args.verbose:
                     print("\nRemoving the file\n   ", generated_uncropped_filename)

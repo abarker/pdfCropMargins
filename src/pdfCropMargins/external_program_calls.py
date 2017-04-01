@@ -89,7 +89,6 @@ old_pdftoppm_version = False # Program will check the version and set this if tr
 ## General utility functions for paths and finding the directory path.
 ##
 
-
 def get_temporary_filename(extension="", use_program_temp_dir=True):
     """Return the string for a temporary file with the given extension or suffix.  For a
     file extension like .pdf the dot should also be in the passed string.  Caller is
@@ -102,12 +101,10 @@ def get_temporary_filename(extension="", use_program_temp_dir=True):
     tmp_output_file.close() # this deletes the file, too, but it is empty in this case
     return tmp_output_file.name
 
-
 def get_temporary_directory():
     """Create a temporary directory and return the name.  The caller is responsible
     for deleting it (e.g., with shutil.rmtree) after using it."""
     return tempfile.mkdtemp(prefix=temp_dir_prefix)
-
 
 def get_directory_location():
     """Find the location of the directory where the module that runs this
@@ -119,7 +116,6 @@ def get_directory_location():
     from . import directory_locator
     return get_canonical_absolue_expanded_dirname(directory_locator.__file__)
 
-
 def get_canonical_absolute_expanded_path(path):
     """Get the canonical form of the absolute path from a possibly relative path
     (which may have symlinks, etc.)"""
@@ -129,11 +125,9 @@ def get_canonical_absolute_expanded_path(path):
                        os.path.abspath( # may not be needed with realpath, to be safe
                            os.path.expanduser(path)))))
 
-
 def get_canonical_absolue_expanded_dirname(path):
     """Get the absolute directory name from a possibly relative path."""
     return os.path.dirname(get_canonical_absolute_expanded_path(path))
-
 
 def samefile(path1, path2):
     """Test if paths refer to the same file or directory."""
@@ -142,14 +136,12 @@ def samefile(path1, path2):
     return (get_canonical_absolute_expanded_path(path1) ==
             get_canonical_absolute_expanded_path(path2))
 
-
 def get_parent_directory(path):
     """Like os.path.dirname except it returns the absolute name of the parent
     of the dirname directory.  No symbolic link expansion (os.path.realpath)
     or user expansion (os.path.expanduser) is done."""
     if not os.path.isdir(path): path = os.path.dirname(path)
     return os.path.abspath(os.path.join(path, os.path.pardir))
-
 
 def glob_if_windows_os(path, exact_num_args=False):
     """Expands any globbing if system_os is Windows (DOS doesn't do it).  The
@@ -169,7 +161,6 @@ def glob_if_windows_os(path, exact_num_args=False):
         cleanup_and_exit(1)
     return globbed
 
-
 def convert_windows_path_to_cygwin(path):
     """Convert a Windows path to a Cygwin path.  Just handles the basic case."""
     if len(path) > 2 and path[1] == ":" and path[2] == "\\":
@@ -178,7 +169,6 @@ def convert_windows_path_to_cygwin(path):
         path = newpath
     path = path.replace("\\", "/")
     return path
-
 
 # Set some additional variables that this module exposes to other modules.
 program_code_directory = get_directory_location()
@@ -194,7 +184,6 @@ program_temp_directory = get_temporary_directory()
 # for its temporary files (to be sure they get deleted).
 gs_environment = os.environ.copy()
 gs_environment["TMPDIR"] = program_temp_directory
-
 
 def remove_program_temp_directory():
     """Remove the global temp directory and all its contents."""
@@ -215,12 +204,10 @@ def remove_program_temp_directory():
                 print("Cleaning up temp dir...", file=sys.stderr)
                 raise
 
-
 def cleanup_and_exit(exit_code):
     """Exit the program, after cleaning up the temporary directory."""
     remove_program_temp_directory()
     sys.exit(exit_code)
-
 
 def which(program):
     """This function is for possible future reference and modification, from
@@ -246,7 +233,6 @@ def which(program):
 ##
 ## General utility functions for running external processes.
 ##
-
 
 def get_external_subprocess_output(command_list, print_output=False, indent_string="",
                       split_lines=True, ignore_called_process_errors=False, env=None):
@@ -287,7 +273,6 @@ def get_external_subprocess_output(command_list, print_output=False, indent_stri
         sys.stdout.flush()
     return output
 
-
 def call_external_subprocess(command_list,
                        stdin_filename=None, stdout_filename=None, stderr_filename=None,
                        env=None):
@@ -317,7 +302,6 @@ def call_external_subprocess(command_list,
     # os.system(command)
     return
 
-
 def run_external_subprocess_in_background(command_list, env=None):
     """Runs the command and arguments in the list as a background process."""
     if system_os == "Windows":
@@ -334,14 +318,12 @@ def run_external_subprocess_in_background(command_list, env=None):
 ## Run a program in Python with a time limit (experimental, not currently used).
 ##
 
-
 def my_function(name): # debug test
     """Unused test function, experimental feature."""
     print("name is", name)
     time.sleep(7)
     print("afterward name is", name)
     return
-
 
 def function_call_with_timeout(fun_name, fun_args, secs=5):
     """Run a Python function with a timeout.  No interprocess communication or
@@ -371,7 +353,6 @@ def function_call_with_timeout(fun_name, fun_args, secs=5):
 ##
 ## Functions to find and test whether an external program is there and runs.
 ##
-
 
 def set_gs_executable_to_string(gs_executable_path):
     """Used to simply set the value to whatever the user asks for.  The path
@@ -418,7 +399,6 @@ def init_and_test_gs_executable(exit_on_fail=False):
 
     return gs_executable
 
-
 def set_pdftoppm_executable_to_string(pdftoppm_executable_path):
     """Used to simply set the value to whatever the user asks for.  The path
     is not tested first, and takes priority over all other settings."""
@@ -426,7 +406,6 @@ def set_pdftoppm_executable_to_string(pdftoppm_executable_path):
     global pdftoppm_executable
     pdftoppm_executable = pdftoppm_executable_path
     return
-
 
 def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
     """Find a pdftoppm executable and test it.  If a good one is found, set
@@ -498,7 +477,6 @@ def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
             old_pdftoppm_version = True
     return pdftoppm_executable
 
-
 def find_and_test_executable(executables, argument_list, string_to_look_for,
                           ignore_called_process_errors=False):
     """Try to run the executable for the current system with the given arguments
@@ -539,7 +517,6 @@ def find_and_test_executable(executables, argument_list, string_to_look_for,
 ## Functions that call Ghostscript to fix PDFs or get bounding boxes.
 ##
 
-
 def fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname):
     """Attempt to fix a bad PDF file with a Ghostscript command, writing the output
     PDF to a temporary file and returning the filename.  Caller is responsible for
@@ -563,7 +540,6 @@ def fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname):
               "\nbe decoded by the 'utf-8' codec.  Ignoring and hoping for the best.",
               file=sys.stderr)
     return temp_file_name
-
 
 def get_bounding_box_list_ghostscript(input_doc_fname, res_x, res_y, full_page_box):
     """Call Ghostscript to get the bounding box list.  Cannot set a threshold
@@ -613,7 +589,6 @@ def get_bounding_box_list_ghostscript(input_doc_fname, res_x, res_y, full_page_b
         cleanup_and_exit(1)
     return bounding_box_list
 
-
 def render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name, root_output_file_path,
                                            res_x=150, res_y=150, extra_args=None):
     """Use the pdftoppm program to render a PDF file to .png images.  The
@@ -636,7 +611,6 @@ def render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name, root_output_file_
     comm_output = get_external_subprocess_output(command)
     return comm_output
 
-
 def render_pdf_file_to_image_files_pdftoppm_pgm(pdf_file_name, root_output_file_path,
                                            res_x=150, res_y=150):
     """Same as renderPdfFileToImageFile_pdftoppm_ppm but with -gray option for pgm."""
@@ -644,7 +618,6 @@ def render_pdf_file_to_image_files_pdftoppm_pgm(pdf_file_name, root_output_file_
     comm_output = render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name,
                                         root_output_file_path, res_x, res_y, ["-gray"])
     return comm_output
-
 
 def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name,
                                                     root_output_file_path,
@@ -661,7 +634,6 @@ def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name,
                pdf_file_name]
     comm_output = get_external_subprocess_output(command, env=gs_environment)
     return comm_output
-
 
 def render_pdf_file_to_image_files__ghostscript_bmp(pdf_file_name,
                                                     root_output_file_path,
@@ -685,7 +657,6 @@ def render_pdf_file_to_image_files__ghostscript_bmp(pdf_file_name,
 ##
 ## Function to run a previewing program on a PDF file.
 ##
-
 
 def show_preview(viewer_path, pdf_file_name):
     """Run the PDF viewer at the path viewer_path on the file pdf_file_name."""

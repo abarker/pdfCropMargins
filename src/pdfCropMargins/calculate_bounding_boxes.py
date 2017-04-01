@@ -60,7 +60,6 @@ PdfFileWriter = None # Initialized in get_bounding_box_list
 # The main functions of the module.
 #
 
-
 def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
                        set_of_page_nums_to_crop, argparse_args, chosen_PdfFileWriter):
     """Calculate a bounding box for each page in the document.  The first
@@ -97,7 +96,6 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
                                                              full_page_box_list)
 
     return bbox_list
-
 
 def correct_bounding_box_list_for_nonzero_origin(bbox_list, full_box_list):
     """The bounding box calculated from an image has coordinates relative to the
@@ -206,7 +204,6 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         print()
     return bounding_box_list
 
-
 def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_to_use):
     """Render all the pages of the PDF file at pdf_file_name to image files with
     path and filename prefix given by output_filename_root.  Any directories must
@@ -237,8 +234,6 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
         print("Error in renderPdfFileToImageFile: Unrecognized external program.",
               file=sys.stderr)
         ex.cleanup_and_exit(1)
-    return
-
 
 def calculate_bounding_box_from_image(im, curr_page):
     """This function uses a PIL routine to get the bounding box of the rendered
@@ -272,3 +267,4 @@ def calculate_bounding_box_from_image(im, curr_page):
         bounding_box[1] * convert_y]
 
     return final_box
+
