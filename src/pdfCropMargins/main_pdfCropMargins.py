@@ -305,13 +305,19 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         if args.verbose:
             print("\nSetting each page size to the smallest box bounding all the pages.")
             if order_n != 0:
-                print("But ignoring the largest {} pages in calculating each edge.".format(order_n))
+                print("But ignoring the largest {} pages in calculating each edge."
+                        .format(order_n))
+
         same_size_bounding_box = [
-              sorted(full_page_box_list[pg][0] for pg in page_nums_to_crop), # want smallest
-              sorted(full_page_box_list[pg][1] for pg in page_nums_to_crop), # want smallest
-              sorted((full_page_box_list[pg][2] for pg in page_nums_to_crop), reverse=True), # largest
-              sorted((full_page_box_list[pg][3] for pg in page_nums_to_crop), reverse=True)] # largest
+              # We want the smallest of the left and bottom edges.
+              sorted(full_page_box_list[pg][0] for pg in page_nums_to_crop),
+              sorted(full_page_box_list[pg][1] for pg in page_nums_to_crop),
+              # We want the largest of the right and top edges.
+              sorted((full_page_box_list[pg][2] for pg in page_nums_to_crop), reverse=True),
+              sorted((full_page_box_list[pg][3] for pg in page_nums_to_crop), reverse=True)
+              ]
         same_size_bounding_box = [sortlist[order_n] for sortlist in same_size_bounding_box]
+
         new_full_page_box_list = []
         for p_num, box in enumerate(full_page_box_list):
             if p_num not in page_nums_to_crop:
@@ -325,26 +331,30 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         even_page_nums_to_crop = {p_num for p_num in page_nums_to_crop if p_num % 2 == 0}
         odd_page_nums_to_crop = {p_num for p_num in page_nums_to_crop if p_num % 2 != 0}
 
-        if args.uniform: uniform_set_with_even_odd = True
-        else: uniform_set_with_even_odd = False
+        if args.uniform:
+            uniform_set_with_even_odd = True
+        else:
+            uniform_set_with_even_odd = False
 
         # Recurse on even and odd pages, after resetting some options.
         if args.verbose:
             print("\nRecursively calculating crops for even and odd pages.")
-        args.evenodd = False # avoid infinite recursion
+        args.evenodd = False # Avoid infinite recursion.
         args.uniform = True  # --evenodd implies uniform, just on each separate group
         even_crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
                                              angle_list, even_page_nums_to_crop)
         odd_crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
                                             angle_list, odd_page_nums_to_crop)
 
-        # Recombine the even and odd pages
+        # Recombine the even and odd pages.
         combine_even_odd = []
         for p_num in page_range:
-            if p_num % 2 == 0: combine_even_odd.append(even_crop_list[p_num])
-            else: combine_even_odd.append(odd_crop_list[p_num])
+            if p_num % 2 == 0:
+                combine_even_odd.append(even_crop_list[p_num])
+            else:
+                combine_even_odd.append(odd_crop_list[p_num])
 
-        # Handle the case where --uniform was set with --evenodd
+        # Handle the case where --uniform was set with --evenodd.
         if uniform_set_with_even_odd:
             min_bottom_margin = min([box[1] for box in combine_even_odd])
             max_top_margin = max([box[3] for box in combine_even_odd])
@@ -353,7 +363,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         return combine_even_odd
 
     # Before calculating the crops we modify the percentRetain and
-    # absoluteOffset values for all the pages according to any specified
+    # absoluteOffset values for all the pages according to any specified.
     # rotations for the pages.  This is so, for example, uniform cropping is
     # relative to what the user actually sees.
     rotated_percent_retain = [mod_box_for_rotation(args.percentRetain, angle_list[i])
@@ -538,7 +548,6 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
 
 def setup_output_document(input_doc, tmp_input_doc, metadata_info, copy_document_catalog=True):
     """Create the output `PdfFileWriter` objects and copy over the relevant info."""
-
     # NOTE: Inserting pages from a PdfFileReader into multiple PdfFileWriters
     # seems to cause problems (writer can hang on write), so only one is used.
     # This is why the tmp_input_doc file was created earlier, to get copies of
@@ -828,14 +837,15 @@ def main_crop():
     else:
         fixed_input_doc_fname = input_doc_fname
 
+    # Open the input file object.
     fixed_input_doc_file_object = open(fixed_input_doc_fname, "rb")
+
     try:
         input_doc = PdfFileReader(fixed_input_doc_file_object)
         tmp_input_doc = PdfFileReader(fixed_input_doc_file_object)
     except (KeyboardInterrupt, EOFError):
         raise
-    #except PdfReadError, ValueError: # throws various errors, just use general except
-    except:
+    except: # Can raise various exceptions, just catch the rest here.
         print("\nError in pdfCropMargins: The pyPdf module failed in an attempt"
               "\nto read the input file.  Is the file a PDF file?  If so then it"
               "\nmay be corrupted.  If you have Ghostscript, try the '--gsFix'"
@@ -1010,7 +1020,7 @@ def main_crop():
 
     ##
     ## Apply the calculated crops to the pages of the PdfFileReader input_doc.
-    ## These were already copied to the PdfFileWriter output_doc.
+    ## These pages are copied to the PdfFileWriter output_doc.
     ##
 
     apply_crop_list(crop_list, input_doc, page_nums_to_crop,
@@ -1023,13 +1033,14 @@ def main_crop():
     if args.verbose: print("\nWriting the cropped PDF file.")
 
     output_doc_stream = open(output_doc_fname, "wb")
+
     try:
         output_doc.write(output_doc_stream)
     except (KeyboardInterrupt, EOFError):
         raise
     except: # PyPDF2 can raise various exceptions.
         try:
-            # We know the write succeeded on tmp_output_doc.
+            # We know the write succeeded on tmp_output_doc of we wouldn't reach here.
             # Restore the old output doc root object and try again.  Malformed
             # document catalog info can cause write failures.
             print("\nWrite failure, trying one more time...", file=sys.stderr)
@@ -1041,9 +1052,9 @@ def main_crop():
             print("\nWarning: Document catalog data caused a write failure.  A retry"
                   "\nwithout that data succeeded.  No document catalog information was"
                   "\ncopied to the cropped output file.  Try fixing the PDF file.  If"
-                  "\nyou have ghostscript installed, run pdfCropMargins with the --gsFix"
+                  "\nyou have ghostscript installed, run pdfCropMargins with the '--gsFix'"
                   "\noption.  You can also try blacklisting some of the document catalog"
-                  "\nitems with the --dcb option.", file=sys.stderr)
+                  "\nitems with the '--dcb' option.", file=sys.stderr)
         except (KeyboardInterrupt, EOFError):
             raise
         except: # Give up... PyPDF2 can raise many errors for many reasons.
@@ -1051,19 +1062,11 @@ def main_crop():
                   "\nwrite out a PDF file of the document.  The document may be"
                   "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
                   "\noption (assuming you are not already using it).", file=sys.stderr)
-            raise # TODO remove
             ex.cleanup_and_exit(1)
 
-    # Experimental test in line below to catch if it hangs... still causes bugs...
-    #completed = ex.function_call_with_timeout(output_doc.write, [output_doc_stream], secs=0)
     output_doc_stream.close()
-    completed = True
-    if not completed:
-        print("Sorry, the PDF writer is taking longer than the timeout time.  Exiting.",
-              file=sys.stderr)
-        ex.cleanup_and_exit(1)
 
-    # We're finished with this open file; close it; let temp dir removal delete it.
+    # We're finished with this open file; close it and let temp dir removal delete it.
     fixed_input_doc_file_object.close()
 
     ##
