@@ -432,7 +432,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     return final_crop_list
 
 
-def set_cropped_metadata(input_doc, output_doc, InputMetadataInfo):
+def set_cropped_metadata(input_doc, output_doc, metadata_info):
     """Set the metadata for the output document.  Mostly just copied over, but
     "Producer" has a string appended to indicate that this program modified the
     file.  That allows for the undo operation to make sure that this
@@ -440,26 +440,28 @@ def set_cropped_metadata(input_doc, output_doc, InputMetadataInfo):
 
     # Setting metadata with pyPdf requires low-level pyPdf operations, see
     # http://stackoverflow.com/questions/2574676/change-metadata-of-pdf-file-with-pypdf
-    if not InputMetadataInfo: # In case it's null, just set values to empty strings.
-        class InputMetadataInfo(object):
-            pass
-        InputMetadataInfo.author = ""
-        InputMetadataInfo.creator = ""
-        InputMetadataInfo.producer = ""
-        InputMetadataInfo.subject = ""
-        InputMetadataInfo.title = ""
+    if not metadata_info:
+        # In case it's null, just set values to empty strings.  This class just holds
+        # data temporary in the same format; this is not sent into PyPDF2.
+        class MetadataInfo(object):
+            author = ""
+            creator = ""
+            producer = ""
+            subject = ""
+            title = ""
+        metadata_info = MetadataInfo()
 
     output_info_dict = output_doc._info.getObject()
 
     # Check Producer metadata attribute to see if this program cropped document before.
-    global producer_modifier
+    producer_mod = producer_modifier
     already_cropped_by_this_program = False
-    old_producer_string = InputMetadataInfo.producer
-    if old_producer_string and old_producer_string.endswith(producer_modifier):
+    old_producer_string = metadata_info.producer
+    if old_producer_string and old_producer_string.endswith(producer_mod):
         if args.verbose:
             print("\nThe document was already cropped at least once by this program.")
         already_cropped_by_this_program = True
-        producer_modifier = "" # No need to pile up suffixes each time on Producer.
+        producer_mod = "" # No need to pile up suffixes each time on Producer.
 
     # Note that all None metadata attributes are currently set to the empty string
     # when passing along the metadata information.
@@ -468,12 +470,12 @@ def set_cropped_metadata(input_doc, output_doc, InputMetadataInfo):
         else: return item
 
     output_info_dict.update({
-          NameObject("/Author"): createStringObject(st(InputMetadataInfo.author)),
-          NameObject("/Creator"): createStringObject(st(InputMetadataInfo.creator)),
-          NameObject("/Producer"): createStringObject(st(InputMetadataInfo.producer)
-                                                                 + producer_modifier),
-          NameObject("/Subject"): createStringObject(st(InputMetadataInfo.subject)),
-          NameObject("/Title"): createStringObject(st(InputMetadataInfo.title))
+          NameObject("/Author"): createStringObject(st(metadata_info.author)),
+          NameObject("/Creator"): createStringObject(st(metadata_info.creator)),
+          NameObject("/Producer"): createStringObject(st(metadata_info.producer)
+                                                                 + producer_mod),
+          NameObject("/Subject"): createStringObject(st(metadata_info.subject)),
+          NameObject("/Title"): createStringObject(st(metadata_info.title))
           })
 
     return already_cropped_by_this_program
@@ -546,7 +548,8 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
 
     return
 
-def setup_output_document(input_doc, tmp_input_doc, metadata_info, copy_document_catalog=True):
+def setup_output_document(input_doc, tmp_input_doc, metadata_info,
+                                                    copy_document_catalog=True):
     """Create the output `PdfFileWriter` objects and copy over the relevant info."""
     # NOTE: Inserting pages from a PdfFileReader into multiple PdfFileWriters
     # seems to cause problems (writer can hang on write), so only one is used.
@@ -648,7 +651,8 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info, copy_document
         except: # Just catch any errors here; don't know which might be raised.
             # On exception just warn and get a new PdfFileWriter object, to be safe.
             print("\nWarning: The document catalog data could not be copied to the"
-                  " new, cropped document.", file=sys.stderr)
+                  "\nnew, cropped document.  Try fixing the PDF document using"
+                  "\n'--gsFix' if you have Ghostscript installed.", file=sys.stderr)
             output_doc = PdfFileWriter()
 
     #output_doc.appendPagesFromReader(input_doc) # Works, but wait and test more.
@@ -838,6 +842,7 @@ def main_crop():
         fixed_input_doc_fname = input_doc_fname
 
     # Open the input file object.
+    # TODO: Need try except since might fail for permissions.
     fixed_input_doc_file_object = open(fixed_input_doc_fname, "rb")
 
     try:
@@ -987,7 +992,7 @@ def main_crop():
             tmp_output_doc.write(doc_with_crop_and_media_boxes_object)
         except (KeyboardInterrupt, EOFError):
             raise
-        except: # Was on KeyError, but PyPDF2 can raise various exceptions.
+        except: # PyPDF2 can raise various exceptions.
             print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
                   "\nwrite out a PDF file of the document.  The document may be"
                   "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
@@ -1032,6 +1037,7 @@ def main_crop():
 
     if args.verbose: print("\nWriting the cropped PDF file.")
 
+    # TODO: Try and except on the open, since it might fail for permissions.
     output_doc_stream = open(output_doc_fname, "wb")
 
     try:
@@ -1040,9 +1046,9 @@ def main_crop():
         raise
     except: # PyPDF2 can raise various exceptions.
         try:
-            # We know the write succeeded on tmp_output_doc of we wouldn't reach here.
-            # Restore the old output doc root object and try again.  Malformed
-            # document catalog info can cause write failures.
+            # We know the write succeeded on tmp_output_doc or we wouldn't be here.
+            # Malformed document catalog info can cause write failures, so get
+            # a new output_doc without that data and try the write again.
             print("\nWrite failure, trying one more time...", file=sys.stderr)
             output_doc_stream.close()
             output_doc_stream = open(output_doc_fname, "wb")
@@ -1054,7 +1060,7 @@ def main_crop():
                   "\ncopied to the cropped output file.  Try fixing the PDF file.  If"
                   "\nyou have ghostscript installed, run pdfCropMargins with the '--gsFix'"
                   "\noption.  You can also try blacklisting some of the document catalog"
-                  "\nitems with the '--dcb' option.", file=sys.stderr)
+                  "\nitems using the '--dcb' option.", file=sys.stderr)
         except (KeyboardInterrupt, EOFError):
             raise
         except: # Give up... PyPDF2 can raise many errors for many reasons.
@@ -1119,26 +1125,33 @@ def main_crop():
         # Remove any existing file with the name generated_uncropped_filename unless a
         # relevant noclobber option is set or it isn't a file.
         if os.path.exists(generated_uncropped_filename):
-            if os.path.isfile(generated_uncropped_filename) \
-                    and not args.noclobberOriginal and not args.noclobber:
+            if (os.path.isfile(generated_uncropped_filename) \
+                    and not args.noclobberOriginal and not args.noclobber):
                 if args.verbose:
                     print("\nRemoving the file\n   ", generated_uncropped_filename)
-                # TODO may want try-except on this; permissions
-                os.remove(generated_uncropped_filename)
+                try:
+                    os.remove(generated_uncropped_filename)
+                except OSError:
+                    print("Removing the file {} failed.  Maybe a permission error?"
+                          "\nFiles are as if option '--modifyOriginal' were not set."
+                          .format(generated_uncropped_filename))
+                    args.modifyOriginal = False # Failed.
             else:
-                print(
-                    "\nA noclobber option is set or not a file; refusing to"
+                print("\nA noclobber option is set or else not a file; refusing to"
                     " overwrite:\n   ", generated_uncropped_filename,
                     "\nFiles are as if option '--modifyOriginal' were not set.",
                     file=sys.stderr)
+                args.modifyOriginal = False # Failed.
 
-        # Move (noclobber) the original file to the name for uncropped files.
+        # Move the original file to the name for uncropped files.  Silently do nothing
+        # if the file exists (should have been removed above).
         if not os.path.exists(generated_uncropped_filename):
             if args.verbose: print("\nDoing a file move:\n   ", input_doc_fname,
                                    "\nis moving to:\n   ", generated_uncropped_filename)
             shutil.move(input_doc_fname, generated_uncropped_filename)
 
-        # Move (noclobber) the cropped file to the original file's name.
+        # Move the cropped file to the original file's name.  Silently do nothing if
+        # the file exists (should have been moved above).
         if not os.path.exists(input_doc_fname):
             if args.verbose: print("\nDoing a file move:\n   ", output_doc_fname,
                                    "\nis moving to:\n   ", input_doc_fname)
@@ -1153,5 +1166,4 @@ def main_crop():
 
     if args.verbose: print("\nFinished this run of pdfCropMargins.\n")
 
-    return
 
