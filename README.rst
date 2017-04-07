@@ -14,7 +14,7 @@ Features
 - Automatically detects the margins and can crop a given percentage of them.
 - Can crop all the pages to the same size to give a uniform appearance (such as
   in two-up).
-- Works on Linux, Windows and Cygwin.
+- Works on Linux, Windows, Cygwin, and OS X/Darwin.
 - Works with either the pdftoppm program or with Ghostscript.
 - A version of pdftoppm for Windows is included.
 - Renders and analyzes page images to find the bounding boxes, which allows it
