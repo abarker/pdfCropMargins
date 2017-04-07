@@ -69,6 +69,8 @@ else: system_bits = 32
 gs_executables = (
     ("Linux", "gs", "gs"),
     ("Cygwin", "gs", "gs"),
+    ("Darwin", "gs", "gs"),
+
     ("Windows", "gswin64c.exe", "gswin32c.exe")
 )
 gs_executable = None # Will be set to the executable selected for the platform.
@@ -76,6 +78,7 @@ gs_executable = None # Will be set to the executable selected for the platform.
 pdftoppm_executables = (
     ("Linux", "pdftoppm", "pdftoppm"),
     ("Cygwin", "pdftoppm", "pdftoppm"),
+    ("Darwin", "pdftoppm", "pdftoppm"),
     ("Windows", "pdftoppm.exe", "pdftoppm.exe")
 )
 pdftoppm_executable = None # Will be set to the executable selected for the platform.
