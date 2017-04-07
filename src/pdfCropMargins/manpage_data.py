@@ -497,8 +497,8 @@ cmd_parser.add_argument("-r", "--restore", action="store_true", help="""
    '--modifyOriginal' option (or its query variant) can be used with this
    option.^^n""")
 
-# TODO maybe later option to choose which box to save to, or none, not just
-# turn off ArtBox.
+# TODO maybe later an option to choose which box to save to, or none, rather
+# than just turn off ArtBox.
 cmd_parser.add_argument("-A", "--noundosave", action="store_true", help="""
 
    Do not save any restore data in the ArtBox.  This option will need to be

@@ -60,8 +60,10 @@ if system_os[:6].lower() == "cygwin":
 #system_os = "Windows" # Uncomment ONLY to test Windows on Linux with Wine.
 
 # Find the number of bits the OS supports.
-if sys.maxsize > 2**32: system_bits = 64 # Supposed to work on Macs, too.
-else: system_bits = 32
+if sys.maxsize > 2**32:
+    system_bits = 64 # Supposed to work on Macs, too.
+else:
+    system_bits = 32
 
 # Executable paths for Ghostscript, one line for each system OS, with the
 # system_os string followed by the 32 and 64 bit executable pathnames.  Will
@@ -70,7 +72,6 @@ gs_executables = (
     ("Linux", "gs", "gs"),
     ("Cygwin", "gs", "gs"),
     ("Darwin", "gs", "gs"),
-
     ("Windows", "gswin64c.exe", "gswin32c.exe")
 )
 gs_executable = None # Will be set to the executable selected for the platform.
@@ -373,7 +374,8 @@ def init_and_test_gs_executable(exit_on_fail=False):
     gets priority, and is not tested."""
 
     global gs_executable
-    if gs_executable: return gs_executable # Has already been set to a path.
+    if gs_executable:
+        return gs_executable # Has already been set to a path.
 
     # First try basic names against the PATH.
     gs_executable = find_and_test_executable(gs_executables, ["-dSAFER", "-v"], "Ghostscript")
@@ -382,11 +384,15 @@ def init_and_test_gs_executable(exit_on_fail=False):
     if not gs_executable and (system_os == "Windows" or system_os == "Cygwin"):
         # TODO maybe move these strings to top as module settable strings
         gs64 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin64c.exe")
-        if gs64: gs64 = gs64[0] # just take the first one for now
-        else: gs64 = ""
+        if gs64:
+            gs64 = gs64[0] # just take the first one for now
+        else:
+            gs64 = ""
         gs32 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin32c.exe")
-        if gs32: gs32 = gs32[0] # just take the first one for now
-        else: gs32 = ""
+        if gs32:
+            gs32 = gs32[0] # just take the first one for now
+        else:
+            gs32 = ""
         gs_execs = (("Windows", gs64, gs32), ("Cygwin",
                                               convert_windows_path_to_cygwin(gs64),
                                               convert_windows_path_to_cygwin(gs32)))
@@ -445,7 +451,7 @@ def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
         # Cygwin is not needed below for now, but left in case something gets fixed
         # to allow the local version to run from there.
         pdftoppm_local_execs = (("Windows", pdftoppm_executable64, pdftoppm_executable32),
-                              ("Cygwin",  pdftoppm_executable64, pdftoppm_executable32),)
+                                ("Cygwin",  pdftoppm_executable64, pdftoppm_executable32),)
 
         if not (os.path.exists(pdftoppm_executable32) and
                     os.path.exists(pdftoppm_executable64)):

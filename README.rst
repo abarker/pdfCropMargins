@@ -30,6 +30,7 @@ Features
 - Can automatically run a document previewer on the output file.
 - The format of any automatically-generated output filenames is easily
   modifiable.
+- Preserves document catalog information such as outlines if possible.
 - Implements a rudimentary 'undo' capability by default. 
 - Can deal with at least simple cases of password-encrypted files.
 - Works with Python 2 and Python 3.
