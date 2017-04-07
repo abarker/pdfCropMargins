@@ -396,6 +396,28 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         final_crop_list.append((f_box[0] + deltas[0], f_box[1] + deltas[1],
                                 f_box[2] - deltas[2], f_box[3] - deltas[3]))
 
+    # Set the page ratios if user chose that option.
+    if args.setPageRatios:
+        ratio = args.setPageRatios[0]
+        if args.verbose:
+            print("\nSetting all page width to height ratios to:", ratio)
+        ratio_set_crop_list = []
+        for left, bottom, right, top in final_crop_list:
+            width = right - left
+            horizontal_center = (right + left) / 2.0
+            height = top - bottom
+            vertical_center = (top + bottom) / 2.0
+            new_height = width / ratio
+            if new_height < height:
+                new_width = height * ratio
+                assert new_width >= width
+                ratio_set_crop_list.append((horizontal_center - new_width/2.0, bottom,
+                                            horizontal_center + new_width/2.0, top))
+            else:
+                ratio_set_crop_list.append((left, vertical_center - new_height/2.0,
+                                           right, vertical_center + new_height/2.0))
+        final_crop_list = ratio_set_crop_list
+
     return final_crop_list
 
 def set_cropped_metadata(input_doc, output_doc, metadata_info):
@@ -736,6 +758,24 @@ def main_crop():
         print("\nThe absolute offsets to be applied to each margin, in units of bp,"
               " are:\n   ", args.absoluteOffset)
 
+    # Parse the page ratio into a float if user chose that option.
+    if args.setPageRatios:
+        ratio = args.setPageRatios[0].split(":")
+        if len(ratio) > 2:
+            print("\nError in pdfCropMargins: Bad format in aspect ratio command line"
+                  " argument.\nToo many colons.")
+            ex.cleanup_and_exit(1)
+        try:
+            if len(ratio) == 2:
+                args.setPageRatios[0] = float(ratio[0])/float(ratio[1])
+            else:
+                args.setPageRatios[0] = float(ratio[0])
+        except ValueError:
+            print("\nError in pdfCropMargins: Bad format in aspect ratio command line"
+                  " argument.\nCannot convert to a float.")
+            ex.cleanup_and_exit(1)
+
+    # Set executable paths to non-default locations if set.
     if args.pdftoppmPath: ex.set_pdftoppm_executable_to_string(args.pdftoppmPath)
     if args.ghostscriptPath: ex.set_gs_executable_to_string(args.ghostscriptPath)
 

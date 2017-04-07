@@ -623,6 +623,16 @@ cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
    needed for non-empty passwords.  The resulting cropped file will not be
    encrypted, so use caution if important data is involved.^^n""")
 
+cmd_parser.add_argument("-spr", "--setPageRatios", nargs=1, type=str,
+                        default=[], metavar="FLOAT:FLOAT", help="""
+   Force all the cropped page ratios to equal the set ratio.  All crops are
+   calculated and applied as usual, but either the left and right margins will
+   be increased equally or else the top and bottom margins will be increased
+   equally in order to make the ratio of width to height equal the set value.
+   Margins are only ever increased.  The format for the ratio is either a
+   string width-to-height ratio such as '4.5:3' or else a floating point number
+   like '0.75' which is the width divided by the height.^^n""")
+
 cmd_parser.add_argument("-dcb", "--docCatBlacklist", default="",
                        metavar="STR", help="""
 
