@@ -26,6 +26,11 @@ New Features:
   ignore in each edge calculation.  The option is ``--samePageSizeOrderStat``
   (shortcut ``-ms``).  See the program's help option ``-h``.
 
+* Added a new option ``--setPageRatios`` (shortcut ``-spr``) which allows the
+  width to height ratios of the final pages to be set.  Either top and bottom
+  or left and right margins will be increased after the usual cropping to
+  give the chosen ratio.
+
 0.1.2 (2017-03-14)
 ------------------
 
