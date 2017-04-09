@@ -902,17 +902,23 @@ def main_crop():
     if args.verbose and not metadata_info:
         print("\nNo readable metadata in the document.")
     elif args.verbose:
-        print("\nThe document's metadata, if set:\n")
-        print("   The Author attribute set in the input document is:\n      %s"
-              % (metadata_info.author))
-        print("   The Creator attribute set in the input document is:\n      %s"
-              % (metadata_info.creator))
-        print("   The Producer attribute set in the input document is:\n      %s"
-              % (metadata_info.producer))
-        print("   The Subject attribute set in the input document is:\n      %s"
-              % (metadata_info.subject))
-        print("   The Title attribute set in the input document is:\n      %s"
-              % (metadata_info.title))
+        try:
+            print("\nThe document's metadata, if set:\n")
+            print("   The Author attribute set in the input document is:\n      %s"
+                  % (metadata_info.author))
+            print("   The Creator attribute set in the input document is:\n      %s"
+                  % (metadata_info.creator))
+            print("   The Producer attribute set in the input document is:\n      %s"
+                  % (metadata_info.producer))
+            print("   The Subject attribute set in the input document is:\n      %s"
+                  % (metadata_info.subject))
+            print("   The Title attribute set in the input document is:\n      %s"
+                  % (metadata_info.title))
+        # Some metadata cannot be decoded or encoded, at least on Windows.  Could
+        # print from a function instead to write all the lines which can be written.
+        except (UnicodeDecodeError, UnicodeEncodeError):
+            print("\nWarning: Could not write all the document's metadata to the screen."
+                  "\nGot a UnicodeEncodeError or a UnicodeDecodeError.")
 
     ##
     ## Now compute the set containing the pyPdf page number of all the pages

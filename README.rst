@@ -18,7 +18,7 @@ Features
 - Works with either the pdftoppm program or with Ghostscript.
 - A version of pdftoppm for Windows is included.
 - Renders and analyzes page images to find the bounding boxes, which allows it
-  to deal with noisy images.
+  to deal with noisy scanned PDFs.
 - Ghostscript can optionally be used to find the bounding boxes directly.
 - Can automatically apply a Ghostscript repair operation to attempt to fix
   corrupt PDF files.
@@ -28,7 +28,7 @@ Features
   their margins.
 - Can uniformly crop even and odd pages separately.
 - Can automatically run a document previewer on the output file.
-- The format of any automatically-generated output filenames is easily
+- The format of automatically-generated output-file names is easily
   modifiable.
 - Preserves document catalog information such as outlines if possible.
 - Implements a rudimentary 'undo' capability by default. 
@@ -69,18 +69,20 @@ The easiest way to install pdfCropMargins is to install using pip::
 
    pip install pdfCropMargins
 
-The ``pip`` program should be installed with Python.  You can run ``python -m
-ensurepip`` if it is not, or install from the repos in Linux.
+The ``pip`` program should be automatically installed along with Python.  You
+can run ``python -m ensurepip`` if it is not, or install from the repos in
+Linux.
 
-The package can also be run directly from its source code directory.  In that
-case the PyPDF2 Python package must be installed.  The Pillow imaging package
-is also necessary if Ghostscript is unavailable as well as for certain advanced
-features which use explicit image analysis.
+The package can also be run directly from its source code directory tree.  In
+that case the PyPDF2 Python package must already be installed.  The Pillow
+imaging package is also necessary if Ghostscript is unavailable, as well as for
+certain advanced features which use explicit image analysis.  Run the script in
+the top-level bin directory called ``pdfCropMargins.py``.
 
 Running
 =======
 
-After installation the program can be run with a command such as::
+After installation via pip the program can be run with a command such as::
 
    pdf-crop-margins -v -s -u your-file.pdf
 
@@ -88,14 +90,16 @@ For help, run::
 
    pdf-crop-margins -h | more
 
-On Windows you may need to put the Python ``Scripts`` directory into your
-environment ``PATH`` in order to avoid having to use the full pathname.
+On Windows you may need to explicitly put the Python distribution's ``Scripts``
+directory into your environment ``PATH`` in order to avoid having to use the
+full pathname.
 
 To diagnose unexpected crops, try running with the ``-v`` verbose argument.
 Running without ``-u`` will crop each page separately, so you can see which
-pages might be causing problems (such as with noise near the borders or margin
-text).  To get cropped pages all the same size be sure to use both ``-s`` to
-make pages the same size and ``-u`` to crop each page by the same amount.
+pages might be causing problems (such as pages with noise near the borders or
+margin text).  To get cropped pages all the same size be sure to use both
+``-s`` to make pages the same size and ``-u`` to crop each page by the same
+amount.
 
 Documentation
 =============
