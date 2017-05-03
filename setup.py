@@ -20,6 +20,11 @@ import os.path
 from setuptools import setup, find_packages
 import codecs # Use a consistent encoding.
 import shutil
+import re
+
+# Get the version data from the main __init__.py file.
+with open(os.path.join("src", "pdfCropMargins", "__init__.py")) as f:
+    __version__ = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read()).group(1)
 
 # To package external data, which includes an executable, the package_dir
 # option tends to be better than the data_files option, which does not preserve
@@ -47,7 +52,7 @@ with codecs.open(os.path.join(current_dir, "README.rst"), encoding="utf-8") as f
 
 setup(
     name="pdfCropMargins",
-    version="0.1.3", # major version, minor version, patch (see PEP440)
+    version="__version__", # <majorVersion>.<minorVersion>.<patch> format, (see PEP440)
     description="A command-line program to crop the margins of PDF files, with many options.",
     keywords=["pdf", "crop", "margins", "resize"],
     install_requires=["wheel", "pillow", "PyPDF2"], # EITHER Pillow or PIL, NOT BOTH.

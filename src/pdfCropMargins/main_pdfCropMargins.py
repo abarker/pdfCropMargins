@@ -55,6 +55,9 @@ import shutil
 import time
 import copy
 
+# Get the program's version number from the __init__.py file.
+from . import __version__
+
 # Import the module that calls external programs and gets system info.
 from . import external_program_calls as ex
 python_version = ex.python_version
@@ -685,8 +688,8 @@ def main_crop():
     ##
 
     if args.verbose:
-        print("\nProcessing the PDF with pdfCropMargins...\nSystem type:",
-              ex.system_os)
+        print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
+        print("System type:", ex.system_os)
 
     if len(args.pdf_input_doc) > 1:
         print("\nError in pdfCropMargins: Only one input PDF document is allowed."
