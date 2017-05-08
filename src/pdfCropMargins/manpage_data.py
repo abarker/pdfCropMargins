@@ -342,7 +342,8 @@ cmd_parser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
    ignores the n largest tight-crop margins when computing common delta values
    over all the pages.  Increasing n always either increases the cropping
    amount or leaves it unchanged.  Some trial-and-error may be needed to choose
-   the best number.^^n""")
+   the best number.  Using '-m 1' tends to work well with arXiv papers (which
+   have a date in the margin of the first page).^^n""")
 
 cmd_parser.add_argument("-mp", "--uniformOrderPercent", nargs=1, type=float,
                        default=[], metavar="INT", help="""
