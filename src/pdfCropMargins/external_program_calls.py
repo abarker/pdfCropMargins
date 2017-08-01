@@ -443,8 +443,9 @@ def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
                   "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.",
                   file=sys.stderr)
 
-        # TODO: consider using pkgutil.get_data() library function below, to work in
-        # more cases (like zipfiles) to find the packaged executable.
+        # TODO: consider using either the pkgutil.get_data() library function
+        # or pkg_resources in the lines below to work in more cases (like
+        # zipped eggs) to find the packaged executable.
         path = os.path.join(project_src_directory, "pdfCropMargins",
                                                    "pdftoppm_windows_local",
                                                    "xpdfbin_win_3_04")
