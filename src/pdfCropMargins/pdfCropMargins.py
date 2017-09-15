@@ -44,8 +44,18 @@ the program and clean up.
 
 """
 
-# TODO: Consider defining a command-line option which will print out either a
-# bash script or a DOS script that they can modify and use.
+# Possible future enhancements:
+#
+# 1) Consider defining a command-line option which will print out either a bash
+# script or a DOS script that they can modify and use.
+#
+# 2) An option -m4 might be useful, with a different m level for each edge.
+#
+# 3) Have -ea and -oa options that do absolute crops on even and odd
+# differently.  Similarly, -ea4 and -oa4 for individual margins.  Similarly
+# -eap and -oap for even vs. odd absolute pre-crops.  Or maybe just have an
+# option to easily *only* crop the even or odd pages, so user can run usual
+# program twice.
 
 from __future__ import print_function, division, absolute_import
 import sys

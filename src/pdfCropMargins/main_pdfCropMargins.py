@@ -29,10 +29,6 @@ do this automatically when Python is invoked on their directories.
 
 """
 
-# Possible useful feature to add: Have -ea and -oa options that do absolute
-# crops on even and odd differently.  Similarly, -ea4 and -oa4 for individual
-# margins.  Similarly -eap and -oap for even vs. odd absolute pre-crops.
-
 # Some general notes, useful for reading the code.
 #
 # Margins are conveniently described as left, bottom, right, and top, but boxes
