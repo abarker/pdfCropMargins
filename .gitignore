@@ -39,3 +39,6 @@ pip-delete-this-directory.txt
 /dist
 !*/dist # Needed for older versions of git (don't ignore dist deeper than root level).
 
+# Mypy type-checker cache.
+.mypy_cache
+

@@ -49,13 +49,21 @@ the program and clean up.
 # 1) Consider defining a command-line option which will print out either a bash
 # script or a DOS script that they can modify and use.
 #
-# 2) An option -m4 might be useful, with a different m level for each edge.
-#
-# 3) Have -ea and -oa options that do absolute crops on even and odd
+# 2) Have -ea and -oa options that do absolute crops on even and odd
 # differently.  Similarly, -ea4 and -oa4 for individual margins.  Similarly
 # -eap and -oap for even vs. odd absolute pre-crops.  Or maybe just have an
 # option to easily *only* crop the even or odd pages, so user can run usual
 # program twice.
+#
+# 3) It would be possible to ask for changes to any parameters before deleting
+# the temp file.  Then they could be recomputed very quickly, without having to
+# recalculate the bounding boxes.
+#
+# 4) An option to run a test comparison would be useful for a test suite.  Just
+# dump both the original crop values and the final ones to a file in some
+# standard format.  Later compare between files.  Other things could also be
+# checked; basically dump the verbose output except not so sensitive to minor
+# text changes and use "close enough" for floating point value equality.
 
 from __future__ import print_function, division, absolute_import
 import sys

@@ -94,12 +94,14 @@ On Windows you may need to explicitly put the Python distribution's ``Scripts``
 directory into your environment ``PATH`` in order to avoid having to use the
 full pathname.
 
-To diagnose unexpected crops, try running with the ``-v`` verbose argument.
-Running without the ``-u`` or ``-s`` options will crop each page separately,
-so you can see which pages might be causing problems (such as pages with noise
-near the borders or margin text).  To get cropped pages all the same size be
-sure to use both ``-s`` to make pages the same size and ``-u`` to crop each
-page by the same amount.
+To diagnose unexpected crops, try running with the ``-v`` verbose argument.  It
+will tell you the page with the smallest crop amount for a margin.  Running
+without the ``-u`` or ``-s`` options will crop each page separately, so you can
+see which pages might be causing problems (such as pages with noise near the
+borders or margin text).  To get cropped pages all the same size be sure to use
+both ``-s`` to make pages the same size and ``-u`` to crop each page by the
+same amount.  Sometimes a small pre-crop is needed (``-ap`` or ``-ap4``) to get
+past small, unwanted markings near the edges of pages.
 
 Documentation
 =============
@@ -113,45 +115,45 @@ To see the documentation, run::
 
 The output of that command follows::
 
-   Usage: pdfCropMargins.py [-h] [-o OUTFILE_NAME] [-v] [-p PCT]
-                            [-p4 PCT PCT PCT PCT] [-a BP] [-a4 BP BP BP BP]
-                            [-ap BP] [-ap4 BP BP BP BP] [-u] [-m INT] [-mp INT]
-                            [-s] [-ms INT] [-e] [-g PAGESTR] [-t BYTEVAL]
-                            [-nb INT] [-ns INT] [-gs] [-gsr] [-x DPI] [-y DPI]
-                            [-b [m|c|t|a|b]] [-f [m|c|t|a|b]] [-r] [-A] [-gsf]
-                            [-nc] [-pv PROG] [-mo] [-q] [-nco] [-pf] [-sc STR]
-                            [-su STR] [-ss STR] [-pw PASSWD] [-spr FLOAT:FLOAT]
-                            [-dcb STR] [-dcw STR] [-i] [-pdl] [-gsp PATH]
-                            [-ppp PATH]
-                            PDF_FILE [PDF_FILE ...]
-   
+   Usage: pdf-crop-margins [-h] [-o OUTFILE_NAME] [-v] [-p PCT]
+                           [-p4 PCT PCT PCT PCT] [-a BP] [-a4 BP BP BP BP]
+                           [-ap BP] [-ap4 BP BP BP BP] [-u] [-m INT]
+                           [-m4 INT INT INT INT] [-mp INT] [-s] [-ms INT] [-e]
+                           [-g PAGESTR] [-t BYTEVAL] [-nb INT] [-ns INT] [-gs]
+                           [-gsr] [-x DPI] [-y DPI] [-b [m|c|t|a|b]]
+                           [-f [m|c|t|a|b]] [-r] [-A] [-gsf] [-nc] [-pv PROG]
+                           [-mo] [-q] [-nco] [-pf] [-sc STR] [-su STR] [-ss STR]
+                           [-pw PASSWD] [-spr FLOAT:FLOAT] [-dcb STR] [-dcw STR]
+                           [-i] [-pdl] [-gsp PATH] [-ppp PATH]
+                           PDF_FILE [PDF_FILE ...]
+
    Description:
-   
+
         A command-line application to crop the margins of PDF files. Cropping
         the margins can make it easier to read the pages of a PDF document --
         whether the document is printed or displayed on a screen -- because the
         display fonts are larger. Margin-cropping is also sometimes useful when
         a PDF file is included in a document as a graphic.
-   
+
         By default 10% of the existing margins will be retained; the rest will
         be eliminated. There are many options which can be set, however,
         including the percentage of existing margins to retain.
-   
+
         Here is a simple example of cropping a file named document.pdf and
         writing the cropped output-document to a file named
         croppedDocument.pdf:
-   
+
            pdf-crop-margins document.pdf -o croppedDocument.pdf
-   
+
         If no destination is provided a filename will be automatically
         generated from the name of the source file (see below).
-   
+
         The pdfCropMargins program works by changing the page sizes which are
         stored in the PDF file (and are interpreted by programs like Acrobat
         Reader). Both the CropBox and the MediaBox are set to the newly-
         computed cropped size. After this the view of the document in most
         programs will be the new, cropped view.
-   
+
         When cropping a file not produced by the pdfCropMargins program the
         default is also to save the intersection of the MediaBox and any
         existing CropBox in the ArtBox. This saves the "usual" view of the
@@ -162,7 +164,7 @@ The output of that command follows::
         MarginBox and CropBox. Note, though, that this assumes the ArtBox is
         unused (it is rarely used, and this feature can be turned off with the
         -A option).
-   
+
         These defaults are designed to reduce the number of copies of a
         document which need to be saved. This is especially useful if
         annotations, highlighting, etc., are added to the document. If a
@@ -171,106 +173,106 @@ The output of that command follows::
         original document's margin-formatting can be recovered by using the '--
         restore' option. Programs which change the "Producer" string in the PDF
         may interfere with this feature.
-   
+
         Below are several examples using more of the command-line options, each
         applied to an input file called doc.pdf. The output filename is
         unspecified in these examples, so the program will automatically
         generate the filename (or an output filename can always be explicitly
         provided):
-   
+
         Crop doc.pdf so that all the pages are set to the same size and the
         cropping amount is uniform across all the pages (this gives a nice two-up
         appearance).  The default of retaining 10% of the existing margins is
         used.  Note carefully that '-u' only makes the amount to be cropped uniform
         for each page; if the pages do not have the same size to begin with they
         will not have the same size afterward unless the '-s' option is also used.
-   
+
            pdf-crop-margins -u -s doc.pdf
-   
+
         Crop each page of doc.pdf individually (i.e., not uniformly), keeping 50%
         of the existing margins.
-   
+
            pdf-crop-margins -p 50 doc.pdf
-   
+
         Crop doc.pdf uniformly, keeping 50% of the left margin, 20% of the bottom
         margin, 40% of the right margin, and 10% of the top margin.
-   
+
            pdf-crop-margins -u -p4 50 20 40 10 doc.pdf
-   
+
         Crop doc.pdf retaining 20% of the margins, and then reduce the right page
         margins only by an absolute 12 points.
-   
+
            pdf-crop-margins -p 20 -a4 0 0 12 0 doc.pdf
-   
+
         Pre-crop the document by 5 points on each side before computing the
         bounding boxes.  Then crop retaining 50% of the computed margins.  This
         can be useful for difficult documents such as scanned books with page-edge
         noise or other "features" inside the current margins.
-   
+
            pdf-crop-margins -ap 5 -p 50 doc.pdf
-   
+
         Crop doc.pdf, re-naming the cropped output file doc.pdf and backing
         up the original file in a file named backup_doc.pdf.
-   
+
            pdf-crop-margins -mo -pf -su "backup" doc.pdf
-   
+
         Crop the margins of doc.pdf to 120% of their original size, increasing the
         margins.  Use Ghostscript to find the bounding boxes (in general this is
         often faster if Ghostscript is available and no rendering operations are
         needed).
-   
+
            pdf-crop-margins -p 120 -gs doc.pdf
-   
+
         Crop the margins of doc.pdf ignoring the 10 largest margins on each edge
         (over the whole document).  This is especially good for noisy documents
         where all the pages have very similar margins, or when you want to ignore
         marginal annotations which only occur on a few pages.
-   
+
            pdf-crop-margins -m 10 doc.pdf
-   
+
         Crop doc.pdf, launch the acroread viewer on the cropped output, and then
         query as to whether or not to rename the cropped file doc.pdf and back up
         the original file as doc_uncropped.pdf.
-   
+
            pdf-crop-margins -mo -q doc.pdf
-   
+
         Crop pages 1-100 of doc.pdf, cropping all even pages uniformly and all odd
         pages uniformly.
-   
+
            pdf-crop-margins -g 1-100 -e doc.pdf
-   
+
         Try to restore doc.pdf to its original margins, assuming it was cropped
         with pdfCropMargins previously.  Note that the default output filename is
         still named doc_cropped.pdf, even though it is the recovered file.
-   
+
            pdf-crop-margins -r doc.pdf
-   
+
         There are many different ways to use this program. After finding a
         method which works well for a particular task or workflow pattern it is
         often convenient to make a simple shell script (batch file) which
         invokes the program with those particular options and settings. Simple
         template scripts for Bash and Windows are packaged with the program, in
         the bin directory.
-   
+
         When printing a document with closely-cropped pages it may be necessary
         to use options such as "Fit to Printable Area". It may also be
         necessary to fine-tune the size of the retained margins if the edges of
         the text are being cut off.
-   
+
         Sometimes a PDF file is corrupted or non-standard to the point where
         the routines used by this program raise an error and exit. In that case
         it can sometimes help to repair the PDF file before attempting to crop
         it. If it is readable by Ghostscript then the following command will
         often repair it sufficiently:
-   
+
            gs -o repaired.pdf -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress corrupted.pdf
-   
+
         This command can also be used to convert some PostScript (.ps) files to
         PDF. In Windows the executable would be something like "gswin32c.exe"
         rather than "gs". The option '--gsFix' (or '-gsf') will automatically
         attempt to apply this fix, provided Ghostscript is available. See the
         description of that option for more information.
-   
+
         The pdfCropMargins program handles rotated pages (such as pages in
         landscape mode versus portrait mode) as follows. All rotated pages are
         un-rotated as soon as they are read in. All the cropping is then
@@ -281,7 +283,7 @@ The output of that command follows::
         take four arguments, one for each margin, are shifted so the left,
         bottom, right, and top margins correspond to the screen appearance
         (regardless of any internal rotation).
-   
+
         All the command-line options to pdfCropMargins are described below. The
         following definition is useful in precisely defining what several of
         the options do. Let the delta values be the absolute reduction lengths,
@@ -292,9 +294,9 @@ The output of that command follows::
         100 or when a negative absolute offset is used). When a delta value is
         negative the corresponding margin size will increase.
       
-   
+
    Positional arguments:
-   
+
      PDF_FILE              The pathname of the PDF file to crop. Use quotes
                            around any file or directory name which contains a
                            space. If no filename is given for the cropped PDF
@@ -309,12 +311,12 @@ The output of that command follows::
                            '.pdf' will be appended to the existing (possibly-
                            null) extension. Globbing of wildcards is performed on
                            Windows systems.
-   
-   
+
+
    Optional arguments:
-   
+
      -h, --help            Show this help message and exit.
-   
+
      -o OUTFILE_NAME, --outfile OUTFILE_NAME
                            An optional argument specifying the pathname of a file
                            that the cropped output document should be written to.
@@ -326,11 +328,11 @@ The output of that command follows::
                            extension is not '.pdf' or '.PDF' then '.pdf' is
                            appended to the extension). Globbing of wildcards is
                            performed on Windows systems.
-   
+
      -v, --verbose         Print more information about the program's actions and
                            progress. Without this switch only warning and error
                            messages are printed to the screen.
-   
+
      -p PCT, --percentRetain PCT
                            Set the percent of margin space to retain in the
                            image. This is a percentage of the original margin
@@ -340,13 +342,13 @@ The output of that command follows::
                            margin sizes from their original sizes, and negative
                            values decrease the margins even more than a tight
                            bounding box.
-   
+
      -p4 PCT PCT PCT PCT, -pppp PCT PCT PCT PCT, --percentRetain4 PCT PCT PCT PCT
                            Set the percent of margin space to retain in the
                            image, individually for the left, bottom, right, and
                            top margins, respectively. The four arguments should
                            be percent values.
-   
+
      -a BP, --absoluteOffset BP
                            Decrease each margin size by an absolute floating
                            point offset value, to be subtracted from each
@@ -358,7 +360,7 @@ The output of that command follows::
                            margin size and negative numbers always increase it.
                            Absolute offsets are always applied after any
                            percentage change operations.
-   
+
      -a4 BP BP BP BP, -aaaa BP BP BP BP, --absoluteOffset4 BP BP BP BP
                            Decrease the margin sizes individually with four
                            absolute offset values. The four floating point
@@ -366,7 +368,7 @@ The output of that command follows::
                            offset values, respectively. See the '--
                            absoluteOffset' option for information on the
                            units.
-   
+
      -ap BP, --absolutePreCrop BP
                            This option is like '--absoluteOffset' except that the
                            changes are applied before any bounding box
@@ -376,14 +378,14 @@ The output of that command follows::
                            100% of the margins but applying an absolute offset
                            and then doing any other operations on that pre-
                            cropped file.
-   
+
      -ap4 BP BP BP BP, --absolutePreCrop4 BP BP BP BP
                            This is the same as '--absolutePreCrop' except that
                            four separate arguments can be given. The four
                            floating point arguments should be the left, bottom,
                            right, and top absolute pre-crop values,
                            respectively.
-   
+
      -u, --uniform         Crop all the pages uniformly. This forces the
                            magnitude of margin-cropping (absolute, not relative)
                            to be the same on each page. This option is applied
@@ -400,7 +402,7 @@ The output of that command follows::
                            samePageSize' option can also be used in combination
                            with this option to force all pages to be the same
                            size after cropping.
-   
+
      -m INT, --uniformOrderStat INT
                            Choosing this option implies the '--uniform' option,
                            but the smallest delta value over all the pages is no
@@ -418,7 +420,16 @@ The output of that command follows::
                            the pages. Increasing n always either increases the
                            cropping amount or leaves it unchanged. Some trial-
                            and-error may be needed to choose the best number.
-   
+                           Using '-m 1' tends to work well with arXiv papers
+                           (which have a date in the margin of the first
+                           page).
+
+     -m4 INT INT INT INT, -mmmm INT INT INT INT, --uniformOrderStat4 INT INT INT INT
+                           This option is the same as '--uniformOrderStat' (or
+                           '-m') except that separate values are specified for
+                           each margin individually. The margins are ordered as
+                           left, bottom, right, and top.
+
      -mp INT, --uniformOrderPercent INT
                            This option is the same as '--uniformOrderStat' except
                            that the order number n is automatically set to a
@@ -432,7 +443,7 @@ The output of that command follows::
                            setting n to the full number of pages, and setting the
                            percent to 50 gives the median (for odd numbers of
                            pages).
-   
+
      -s, --samePageSize    Set all the page sizes to be equal. This option only
                            has an effect when the page sizes are different. The
                            pages sizes are set to the size of the union of all
@@ -448,7 +459,7 @@ The output of that command follows::
                            cropping amounts to be the same for each page. If
                            pages are selected with '--pages' then this option is
                            only applied to those selected pages.
-   
+
      -ms INT, --samePageSizeOrderStat INT
                            Choosing this option implies the '--samePageSize'
                            option, but the calculations for each edge of the
@@ -458,7 +469,7 @@ The output of that command follows::
                            independently. This is an order statistic for
                            selecting the uniform size to make the pages. Note
                            that this will cut off parts of some pages if n>0.
-   
+
      -e, --evenodd         Crop all the odd pages uniformly, and all the even
                            pages uniformly. The largest amount of cropping that
                            works for all the pages in each group is chosen. If
@@ -466,7 +477,7 @@ The output of that command follows::
                            then the vertical cropping will be uniform over all
                            the pages and only the horizontal cropping will differ
                            between even and odd pages.
-   
+
      -g PAGESTR, -pg PAGESTR, --pages PAGESTR
                            Apply the cropping operation only to the selected
                            pages. The argument should be a list of the usual form
@@ -476,7 +487,7 @@ The output of that command follows::
                            falling outside the document are ignored. Note that
                            restore information is always saved for all the pages
                            (in the ArtBox) unless '--noundosave' is selected.
-   
+
      -t BYTEVAL, --threshold BYTEVAL
                            Set the threshold for determining what is background
                            space (white). The value can be from 0 to 255, with
@@ -486,18 +497,18 @@ The output of that command follows::
                            particular, it is ignored when '--gsBbox' is selected.
                            By default, any pixel value over 191 is considered to
                            be background (white).
-   
+
      -nb INT, --numBlurs INT
                            When PDF files are explicitly rendered to image files,
                            apply a blur operation to the resulting images this
                            many times. This can be useful for noisy images.
-   
+
      -ns INT, --numSmooths INT
                            When PDF files are explicitly rendered to image files,
                            apply a smoothing operation to the resulting images
                            this many times. This can be useful for noisy
                            images.
-   
+
      -gs, --gsBbox         Use Ghostscript to find the bounding boxes for the
                            pages. The alternative is to explicitly render the PDF
                            pages to image files and calculate bounding boxes from
@@ -510,23 +521,23 @@ The output of that command follows::
                            "gswin32c.exe" or "gswin64c.exe" on Windows, or as
                            "gs" on Linux. When this option is set the PIL image
                            library for Python is not required.
-   
+
      -gsr, --gsRender      Use Ghostscript to render the PDF pages to images. By
                            default the pdftoppm program will be preferred for the
                            rendering, if it is found. Note that this option has
                            no effect if '--gsBbox' is chosen, since then no
                            explicit rendering is done.
-   
+
      -x DPI, --resX DPI    The x-resolution in dots per inch to use when the
                            image is rendered to find the bounding boxes. The
                            default is 150. Higher values produce more precise
                            bounding boxes.
-   
+
      -y DPI, --resY DPI    The y-resolution in dots per inch to use when the
                            image is rendered to find the bounding boxes. The
                            default is 150. Higher values produce more precise
                            bounding boxes.
-   
+
      -b [m|c|t|a|b], --boxesToSet [m|c|t|a|b]
                            By default the pdfCropMargins program sets both the
                            MediaBox and the CropBox for each page of the cropped
@@ -539,7 +550,7 @@ The output of that command follows::
                            BleedBox (b). This option overrides the default and
                            can be repeated multiple times to set several box
                            types.
-   
+
      -f [m|c|t|a|b], --fullPageBox [m|c|t|a|b]
                            By default the program first (before any cropping is
                            calculated) sets the MediaBox and CropBox of each page
@@ -560,7 +571,7 @@ The output of that command follows::
                            Ghostscript does its own internal rendering when
                            finding bounding boxes. The default with '-gs' is the
                            CropBox.
-   
+
      -r, --restore         By default, whenever this program crops a file for the
                            first time it saves the MediaBox intersected with the
                            CropBox as the new ArtBox (since the ArtBox is rarely
@@ -578,7 +589,7 @@ The output of that command follows::
                            generated output filename still has a "_cropped.pdf"
                            suffix). The '--modifyOriginal' option (or its query
                            variant) can be used with this option.
-   
+
      -A, --noundosave      Do not save any restore data in the ArtBox. This
                            option will need to be selected if the document
                            actually uses the ArtBox for anything important (which
@@ -586,7 +597,7 @@ The output of that command follows::
                            work correctly for the cropped document if this option
                            is included in the cropping command. (The program does
                            not currently check for this when doing a restore.)
-   
+
      -gsf, --gsFix         Attempt to repair the input PDF file with Ghostscript
                            before it is read-in with PyPdf. This requires that
                            Ghostscript be available. (See the general description
@@ -611,10 +622,10 @@ The output of that command follows::
                            default unless you encounter many corrupted PDF files
                            and do not need to restore back to the original
                            margins.
-   
+
      -nc, --noclobber      Never overwrite an existing file as the output
                            file.
-   
+
      -pv PROG, --preview PROG
                            Run a PDF viewer on the cropped PDF output. The viewer
                            process is run in the background. The viewer is
@@ -635,7 +646,7 @@ The output of that command follows::
                            simply acroread. A shell script or batch file wrapper
                            can be used to set any additional options for the
                            viewer.
-   
+
      -mo, --modifyOriginal
                            This option moves (renames) the original file to a
                            backup filename and then moves the cropped file to the
@@ -655,7 +666,7 @@ The output of that command follows::
                            on the same source filename will modify the original
                            file; the '-noclobberOriginal' option can be used to
                            avoid this.
-   
+
      -q, --queryModifyOriginal
                            This option selects the '--modifyOriginal' option, but
                            queries the user about whether to actually do the
@@ -665,7 +676,7 @@ The output of that command follows::
                            original). If you decline then the files are not
                            swapped (and are just as if the '--modifyOriginal'
                            option had not been set).
-   
+
      -nco, --noclobberOriginal
                            If the '--modifyOriginal' option is selected, do not
                            ever overwrite an existing file as the backup copy for
@@ -676,7 +687,7 @@ The output of that command follows::
                            modifyOriginal' option had not been selected. This
                            option is redundant if the ordinary '--noclobber'
                            option is also set.
-   
+
      -pf, --usePrefix      Prepend a prefix-string when generating default file
                            names rather than appending a suffix-string. The same
                            string value is used, either the default or the one
@@ -687,26 +698,26 @@ The output of that command follows::
                            written to the file named "cropped_document.pdf"
                            (instead of to the default filename
                            "document_cropped.pdf").
-   
+
      -sc STR, --stringCropped STR
                            This option can be used to set the string which will
                            be appended (or prepended) to the document filename
                            when automatically generating the output filename for
                            a cropped file. The default value is "cropped".
-   
+
      -su STR, --stringUncropped STR
                            This option can be used to set the string which will
                            be appended (or prepended) to the document filename
                            when automatically generating the output filename for
                            the original, uncropped file. The default value is
                            "uncropped".
-   
+
      -ss STR, --stringSeparator STR
                            This option can be used to set the separator string
                            which will be used when appending or prependeding
                            string values to automatically generate filenames. The
                            default value is "_".
-   
+
      -pw PASSWD, --password PASSWD
                            Specify a password to be used to decrypt an encrypted
                            PDF file. Note that decrypting with an empty password
@@ -714,7 +725,7 @@ The output of that command follows::
                            non-empty passwords. The resulting cropped file will
                            not be encrypted, so use caution if important data is
                            involved.
-   
+
      -spr FLOAT:FLOAT, --setPageRatios FLOAT:FLOAT
                            Force all the cropped page ratios to equal the set
                            ratio. All crops are calculated and applied as usual,
@@ -726,7 +737,7 @@ The output of that command follows::
                            either a string width-to-height ratio such as '4.5:3'
                            or else a floating point number like '0.75' which is
                            the width divided by the height.
-   
+
      -dcb STR, --docCatBlacklist STR
                            Data associated with the full document, such as
                            outlines, bookmarks, and modes, is saved in the
@@ -748,7 +759,7 @@ The output of that command follows::
                            default. Running in verbose mode '-v' will show which
                            document catalog items are and are not being copied
                            for a document.
-   
+
      -dcw STR, --docCatWhitelist STR
                            See the '--docCatBlacklist' option. This is just a
                            whitelist that essentially works the same way. The
@@ -760,7 +771,7 @@ The output of that command follows::
                            is the empty string, which whitelists nothing and so
                            only the blacklist is used. Setting to "ALL"
                            guarantees that everything possible is copied over.
-   
+
      -i, --showImages      When explicitly rendering PDF files to image files,
                            display the inverse image files that are used to find
                            the bounding boxes. Useful for debugging and for
@@ -769,7 +780,7 @@ The output of that command follows::
                            viewer program selected by the Pillow image
                            manipulation package (xv on Unix, and usually Paint on
                            Windows).
-   
+
      -pdl, --pdftoppmLocal
                            Use a locally-packaged pdftoppm executable rather than
                            the system version. This option is only available on
@@ -782,18 +793,18 @@ The output of that command follows::
                            packaged pdftoppm executable is a few years old, but
                            for page-cropping it only needs to get the margins
                            right.
-   
+
      -gsp PATH, --ghostscriptPath PATH
                            Pass in a pathname to the ghostscript executable that
                            the program should use. No globbing is done. Useful
                            when the program is in a nonstandard location.
-   
+
      -ppp PATH, --pdftoppmPath PATH
                            Pass in a pathname to the pdftoppm executable that the
                            program should use. No globbing is done. Useful when
                            the program is in a nonstandard location.
-   
-   
+
+
    The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.  Released
    under the GNU GPL license, version 3 or later.
-   
+

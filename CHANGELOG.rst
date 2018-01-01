@@ -3,6 +3,18 @@
 History
 =======
 
+0.1.4 (2018-????)
+-----------------
+
+New features:
+
+* An option ``--uniformOrderStat4`` (shortcut ``-m4``) has been added to allow
+  setting the order statistic (for how many smallest delta values to ignore)
+  individually for each margin.
+
+* Verbose mode now prints out the pages on which the smallest delta values were
+  found, for better tuning of crop commands.
+
 0.1.3 (2017-03-14)
 ------------------
 

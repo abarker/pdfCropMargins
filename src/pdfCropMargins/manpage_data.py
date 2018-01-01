@@ -21,14 +21,13 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 =====================================================================
 
-This module sets up an argparse command-line parser, named cmd_parser, meant for
-use with the prettifying routines in prettified_argparse.py.  The command-line
+This module sets up an argparse command-line parser, named `cmd_parser`, meant for
+use with the prettifying routines in `prettified_argparse.py`.  The command-line
 arguments, flags, and their descriptions are all defined here.  The formatting
 used here assumes that the prettified formatting directives from
-prettified_argparse.py are being used.
+`prettified_argparse.py` are being used.
 
-This file can be copied inline when you really want a single-file script.
-Otherwise, the usage is:
+The usage is:
 
    from prettified_argparse import parseCommandLineArguments
    from manpage_data import cmd_parser
@@ -344,6 +343,13 @@ cmd_parser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
    amount or leaves it unchanged.  Some trial-and-error may be needed to choose
    the best number.  Using '-m 1' tends to work well with arXiv papers (which
    have a date in the margin of the first page).^^n""")
+
+cmd_parser.add_argument("-m4", "-mmmm", "--uniformOrderStat4", nargs=4, type=int,
+                       default=[], metavar="INT", help="""
+
+   This option is the same as '--uniformOrderStat' (or '-m') except that
+   separate values are specified for each margin individually.  The margins are
+   ordered as left, bottom, right, and top.^^n""")
 
 cmd_parser.add_argument("-mp", "--uniformOrderPercent", nargs=1, type=float,
                        default=[], metavar="INT", help="""
