@@ -69,15 +69,19 @@ The easiest way to install pdfCropMargins is to install using pip::
 
    pip install pdfCropMargins
 
-The ``pip`` program should be automatically installed along with Python.  You
-can run ``python -m ensurepip`` if it is not, or install from the repos in
-Linux.
+The ``pip`` program should be automatically installed along with Python.  On
+Windows you can run ``python -m ensurepip`` if it is not, or install from the
+repos in Linux.
 
-The package can also be run directly from its source code directory tree.  In
-that case the PyPDF2 Python package must already be installed.  The Pillow
-imaging package is also necessary if Ghostscript is unavailable, as well as for
-certain advanced features which use explicit image analysis.  Run the script in
-the top-level bin directory called ``pdfCropMargins.py``.
+The pdfCropMargins program can also be run directly from its source code
+directory tree.  In that case the PyPDF2 package must also be installed and
+available in the Python distribution that will be used to run pdfCropMargins.
+If Ghostscript is unavailable as a system command then the Pillow imaging
+package is also necessary in the Python distribution.  It is also needed for
+certain advanced features which use explicit image analysis, so it is a good
+idea to install it in Python.  Assuming the dependencies are satisfied, run the
+program as ``bin/pdfCropMargins.py``, where the path is relative to the top of
+the source distribution.
 
 Running
 =======
