@@ -41,19 +41,19 @@ Requirements and installing
 Requirements
 ------------
 
-This program requires either the Ghostscript program or the pdftoppm
-program to be installed (and locatable) on the system.  For Window users an
+This program depends on either the Ghostscript program or the pdftoppm
+program being installed (and locatable) on the system.  For Window users an
 older version of a pdftoppm binary is packaged with the program and will be
 used as a fallback if no other program can be found.
    
-- **Ghostscript**
+* **Ghostscript**
 
    Ghostscript is standard in most Linux distributions, and is easy to install
    on Windows and in Cygwin.  The Windows install page is `located here
    <http://www.ghostscript.com/download/gsdnld.html>`_, and the non-commercial
    GPL version should work fine for most people.
 
--  **pdftoppm**
+*  **pdftoppm**
 
    The pdftoppm program is standard in most Linux distributions and is easy to
    install in Cygwin.  It is currently part of the Poppler PDF tools, so that
