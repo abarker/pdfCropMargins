@@ -393,9 +393,9 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         m_vals = fixed_m_vals
         if args.verbose and (args.uniformOrderStat or args.uniformOrderPercent
                                                    or args.uniformOrderStat4):
-            print("\nPer-margin, the ", m_vals,
-                  "smallest delta values over the selected pages will be ignored"
-                  "\nwhen choosing common, uniform delta values.")
+            print("\nPer-margin, the", m_vals,
+                  "smallest delta values over the selected pages\nwill be ignored"
+                  " when choosing common, uniform delta values.")
 
         # Get a sorted list of (delta, page_num) tuples for each margin.
         left_vals = sorted([(box[0][0], box[1]) for box in crop_delta_list])
@@ -409,10 +409,10 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
             delta_page_nums = [left_vals[m_vals[0]][1], lower_vals[m_vals[1]][1],
                                right_vals[m_vals[2]][1], upper_vals[m_vals[3]][1]]
             print("\nThe smallest delta values actually used to set the uniform"
-                  " cropping\namounts (ignoring '-m' skips and pages in ranges not"
-                  " cropped) were\nfound on these pages, numbered from 1:",
+                  " cropping\namounts (ignoring any '-m' skips and pages in ranges"
+                  " not cropped) were\nfound on these pages, numbered from 1:\n   ",
                   delta_page_nums)
-            print("\nThe final delta values themselves are:", delta_list[0])
+            print("\nThe final delta values themselves are:\n   ", delta_list[0])
 
     # Apply the delta modifications to the full boxes to get the final sizes.
     final_crop_list = []
