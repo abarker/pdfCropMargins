@@ -65,7 +65,8 @@ prog_name = os.path.basename(sys.argv[0])
 abs_prog_name = os.path.basename(os.path.abspath(sys.argv[0]))
 # Improve the usage message when run from a file with a different name (such
 # as __main__.py).
-if not abs_prog_name.startswith("pdfCropMargins"): abs_prog_name += " (pdfCropMargins)"
+if not abs_prog_name.startswith("pdfCropMargins"):
+    abs_prog_name += " (pdfCropMargins)"
 
 # These strings are directly replaced in the argparse help and usage output stream.
 # The string on the right of the tuple replaces the string on the left.  The
@@ -83,30 +84,34 @@ help_string_replacement_pairs = (
 
 
 class RedirectHelp(object):
+    """This class allows for redirecting stdout in order to prettify the output
+    of argparse's help and usage messages (via a postprocessor).  An outstream
+    like stdout is simply set equal to an instance of this class, passed the
+    original outstream in the initializer.  This class just reformats before
+    passing values through.
 
-    """This class allows us to redirect stdout in order to prettify the output
-    of argparse's help and usage messages (via a postprocessor).  The
-    postprocessor does a string replacement for all the pairs defined in the
-    user-defined sequence help_string_replacement_pairs.  It also adds the following
-    directives to the formatting language:
+    The postprocessor does a string replacement for all the pairs defined in
+    the user-defined sequence help_string_replacement_pairs.  It also adds the
+    following directives to the formatting language:
+
        ^^s          replaced with a space, correctly preserved by ^^f format
        \a           the bell control char is also replaced with preserved space
        ^^f ... ^^f  reformat all the text between these directives
        ^^n          replaced with a newline (after any ^^f format)
+
     Formatting with ^^f converts any sequence of two or more newlines into a
     single newline, i.e., a paragraph break.  Multiple (non-preserved)
     whitespaces are converted to a single white space, and the text in
-    paragraphs is line-wrapped with a new indent level.
-    """
+    paragraphs is line-wrapped with a new indent level."""
 
     def __init__(self, outstream, help_string_replacement_pairs,
                  init_indent=5, subs_indent=5, line_width=76):
-        """Will usually be passed sys.stdout or sys.stderr as an outstream
-        argument.  The pairs in the variable help_string_replacement_pairs variable
+        """Will usually be passed `sys.stdout` or `sys.stderr` as an outstream
+        argument.  The pairs in the variable `help_string_replacement_pairs`
         are all applied to the any returned text as postprocessor string
         replacements.  The initial indent of formatted sections is set to
-        init_indent, and subsequent indents are set to subs_indent.  The line width
-        in formatted sections is set to line_width."""
+        `init_indent`, and subsequent indents are set to `subs_indent`.  The
+        line width in formatted sections is set to `line_width`."""
         self.outstream = outstream
         self.help_string_replacement_pairs = help_string_replacement_pairs
         self.init_indent = init_indent
@@ -114,6 +119,9 @@ class RedirectHelp(object):
         self.line_width = line_width
 
     def write(self, s):
+        """First preprocess the string `s` to prettify it (assuming it is argparse
+        help output).  Then write the result to the outstream associated with the
+        class."""
         pretty_str = s
         for pair in self.help_string_replacement_pairs:
             pretty_str = pretty_str.replace(pair[0], pair[1])
@@ -130,7 +138,8 @@ class RedirectHelp(object):
                 subsequent_indent=" "*self.subs_indent,
                 width=self.line_width)
             return "\n\n".join([wrapper.fill(s) for s in st]) # wrap each para
-        # do the fill on all the fill sections
+
+        # Do the fill on all the fill sections.
         pretty_str = re.sub(r"\^\^f.*?\^\^f", do_fill, pretty_str, flags=re.DOTALL)
         pretty_str = pretty_str.replace("\a", " ") # bell character back to space
         pretty_str = pretty_str.replace("^^n", "\n") # replace ^^n with newline
@@ -138,6 +147,8 @@ class RedirectHelp(object):
         self.outstream.flush() # automatically flush each write
 
     def __getattr__(self, attr):
+        """For any undefined attributes return the value associated with the outstream
+        saved with the class."""
         return getattr(self.outstream, attr)
 
 
@@ -159,7 +170,8 @@ class SelfFlushingOutstream(object):
         return getattr(self.outstream, attr)
 
 
-def parse_command_line_arguments(argparse_parser, init_indent=5, subs_indent=5, line_width=76):
+def parse_command_line_arguments(argparse_parser, init_indent=5, subs_indent=5,
+                                 line_width=76):
     """Main routine to call to execute the command parsing.  Returns an object
     from argparse's parse_args() routine."""
     # Redirect stdout and stderr to prettify help or usage output from argparse.
