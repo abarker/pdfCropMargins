@@ -184,9 +184,11 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
 
         if args.verbose:
             print(page_num+1, end=" ") # page num numbering from 1
-        # Note: the point method calls the function on each pixel, replacing it.
+        # Note that the point method calls the function on each pixel, replacing it.
         #im = im.point(lambda p: p > threshold and 255) # create a positive image
-        im = im.point(lambda p: p < threshold and 255)  # create a negative image
+        #im = im.point(lambda p: p < threshold and 255)  # create a negative image
+        # Below code is easier to understand than tricky use of "and" in evaluation.
+        im = im.point(lambda p: 255 if p < threshold else 0)  # create a negative image
 
         if args.showImages:
             im.show() # usually for debugging or param-setting
