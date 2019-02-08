@@ -3,8 +3,8 @@
 History
 =======
 
-0.1.4 (2018-????)
------------------
+0.1.4 (2019-02-07)
+------------------
 
 New features:
 
@@ -14,6 +14,10 @@ New features:
 
 * Verbose mode now prints out the pages on which the smallest delta values were
   found, for better tuning of crop commands.
+
+Bug fixes:
+
+* Fixed a bug in the interaction of the `-u`, `-pg`, and `-e` options.
 
 0.1.3 (2017-03-14)
 ------------------
