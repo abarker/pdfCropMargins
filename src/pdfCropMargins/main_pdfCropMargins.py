@@ -24,7 +24,7 @@ This script is not the starting/entry point script.  If installed with pip you
 can just run `pdf-crop-margins` to run the program.  When pip is not used the
 starting point for the pdfCropMargins program is to import function `main` from
 the `pdfCropMargins.py` script and run it.  The source directory has a
-__main__.py file which does this automatically when Python is invoked on the
+`__main__.py` file which does this automatically when Python is invoked on the
 directory.  There is also standalone script in the `bin` directory which is the
 preferred way to run the program when it is not installed via pip.
 
@@ -260,7 +260,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     # Handle the '--samePageSize' option.
     # Note that this is always done first, even before evenodd is handled.  It
-    # is only applied to the pages in  the set `page_nums_to_crop`.
+    # is only applied to the pages in the set `page_nums_to_crop`.
 
     order_n = 0
     if args.samePageSizeOrderStat:
@@ -323,8 +323,10 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
         # Handle the case where --uniform was set with --evenodd.
         if uniform_set_with_even_odd:
-            min_bottom_margin = min([box[1] for box in combine_even_odd])
-            max_top_margin = max([box[3] for box in combine_even_odd])
+            min_bottom_margin = min(box[1] for p_num, box in enumerate(combine_even_odd)
+                                                          if p_num in page_nums_to_crop)
+            max_top_margin = max(box[3] for p_num, box in enumerate(combine_even_odd)
+                                                       if p_num in page_nums_to_crop)
             combine_even_odd = [[box[0], min_bottom_margin, box[2], max_top_margin]
                               for box in combine_even_odd]
         return combine_even_odd

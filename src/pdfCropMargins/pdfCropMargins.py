@@ -52,7 +52,7 @@ the program and clean up.
 # differently.  Similarly, -ea4 and -oa4 for individual margins.  Similarly
 # -eap and -oap for even vs. odd absolute pre-crops.  Or maybe just have an
 # option to easily *only* crop the even or odd pages, so user can run usual
-# program twice.
+# program twice.  --even-only (-eo), --odd-only (-oo)
 #
 # 3) It would be possible to ask for changes to any parameters before deleting
 # the temp file.  Then they could be recomputed very quickly, without having to
