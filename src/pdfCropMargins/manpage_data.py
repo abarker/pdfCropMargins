@@ -26,14 +26,14 @@ arguments, flags, and their descriptions are all defined here.  The formatting
 used here assumes that the prettified formatting directives from
 `prettified_argparse.py` are being used.
 
-The usage is:
+The usage is::
 
-   from prettified_argparse import parseCommandLineArguments
+   from prettified_argparse import parse_command_line_arguments
    from manpage_data import cmd_parser
 
-Somewhere in the program, the function should be called as:
+Somewhere in the program, the function should be called as::
 
-    args = parseCommandLineArguments(cmd_parser)
+    args = parse_command_line_arguments(cmd_parser)
 
 Note that the default text formatting in the description is raw, i.e., it is
 unformatted unless the formatting directive ^^f is specified.  So literal
@@ -41,11 +41,11 @@ unformatted unless the formatting directive ^^f is specified.  So literal
 and so '%' characters must be escaped as '%%'.
 
 General argparse reminders and warnings:
-  1) Using nargs=1 puts the single value inside a list, default doesn't.
+  1) Using `nargs=1` puts the single value inside a list, default doesn't.
   2) First argument specified is the one which appears in the Usage message.
   3) The metavar kwarg sets the string for option's VALUES in Usage messages.
   4) With default values you can always assume some value is assigned.
-  5) Use numargs=1 and default=[] to test whether or not, say, an int-valued
+  5) Use `numargs=1` and `default=[]` to test whether or not, say, an int-valued
      option was selected at all (or you could check for value None).
 
 """

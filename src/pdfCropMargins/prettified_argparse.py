@@ -43,7 +43,7 @@ Somewhere in the calling program, the imported function should be called as:
 
 Note that the standard TextWrapper fill and wrap routines used in argparse
 do not strip out multiple whitespace like many fill programs do.  See the
-RedirectHelp comment for the changes to the standard argparse formatting.
+`RedirectHelp` comment for the changes to the standard argparse formatting.
 
 """
 
@@ -156,7 +156,7 @@ class SelfFlushingOutstream(object):
     """This class allows stdout and stderr to be redefined so that they are
     automatically flushed after each write.  (The same thing can be achieved via
     the '-u' flag on the Python command line.)  This helps when running in
-    Cygwin terminals.  Class is independent of the RedirectHelp class above."""
+    Cygwin terminals.  Class is independent of the `RedirectHelp` class above."""
 
     def __init__(self, outstream):
         """Will usually be passed sys.stdout or sys.stderr as an argument."""
