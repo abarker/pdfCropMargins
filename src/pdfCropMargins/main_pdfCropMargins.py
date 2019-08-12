@@ -422,33 +422,35 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                                 f_box[2] - deltas[2], f_box[3] - deltas[3]))
 
     # Set the page ratios if user chose that option.
-    if args.setPageRatios:
-        ratio, left_weight, bottom_weight, right_weight, top_weight = args.setPageRatios
+    if args.setPageRatios4:
+        ratio, left_weight, bottom_weight, right_weight, top_weight = args.setPageRatios4
         if args.verbose:
             print("\nSetting all page width to height ratios to:", ratio)
+            print("The weights per margin are:",
+                    left_weight, bottom_weight, right_weight, top_weight)
         ratio_set_crop_list = []
-        for left, bottom, right, top in final_crop_list:
+        for pnum, (left, bottom, right, top) in enumerate(final_crop_list):
+            if pnum not in page_nums_to_crop:
+                ratio_set_crop_list.append((left, bottom, right, top))
+                continue
+            # Pad out left/right or top/bottom margins; padding amount is scaled.
             width = right - left
             height = top - bottom
             new_height = width / ratio
-            if new_height < height:
+            if new_height < height: # Use new_width instead.
                 new_width = height * ratio
                 assert new_width >= width
                 difference = new_width - width
-                scale = left_weight + right_weight
-                # allow standard code to handle side-margins-locking
-                if scale == 0: scale = 1
-                left_weight /= scale
-                right_weight /= scale
+                total_lr_weight = left_weight + right_weight
+                left_weight /= total_lr_weight
+                right_weight /= total_lr_weight
                 ratio_set_crop_list.append((left - difference * left_weight, bottom,
                                             right + difference * right_weight, top))
             else:
                 difference = new_height - height
-                scale = bottom_weight + top_weight
-                # allow standard code to handle top-bottom-margins-locking
-                if scale == 0: scale = 1
-                bottom_weight /= scale
-                top_weight /= scale
+                total_tb_weight = bottom_weight + top_weight
+                bottom_weight /= total_tb_weight
+                top_weight /= total_tb_weight
                 ratio_set_crop_list.append((left, bottom - difference * bottom_weight,
                                            right, top + difference * top_weight))
         final_crop_list = ratio_set_crop_list
@@ -793,35 +795,31 @@ def main_crop():
         print("\nThe absolute offsets to be applied to each margin, in units of bp,"
               " are:\n   ", args.absoluteOffset)
 
-    # fill in equal weights
-    if args.setPageRatios:
-        args.setPageRatios = [args.setPageRatios[0], 1, 1, 1, 1]
+    # Initialize any setPageRatios arguments, saving in args.setPageRatios4.
+    if args.setPageRatios: # Note setPageRatios takes precedence over setPageRatios4.
+        args.setPageRatios4 = [args.setPageRatios[0], 1, 1, 1, 1]
 
-    # See if explicit weigths were given and use those if so.
-    if args.setPageRatios4: args.setPageRatios = args.setPageRatios4
-
-    if args.setPageRatios or args.setPageRatios4:
+    if args.setPageRatios4:
         # Parse the page ratio into a float if user chose that option.
-        ratio = args.setPageRatios[0].split(":")
+        ratio = args.setPageRatios4[0].split(":")
         if len(ratio) > 2:
             print("\nError in pdfCropMargins: Bad format in aspect ratio command line"
-                  " argument.\nToo many colons.")
+                  " argument.\nToo many colons.", file=sys.stderr)
             ex.cleanup_and_exit(1)
         try:
-            if len(ratio) == 2:
-                args.setPageRatios[0] = float(ratio[0])/float(ratio[1])
-            else:
-                args.setPageRatios[0] = float(ratio[0])
+            if len(ratio) == 2: # Colon form.
+                args.setPageRatios4[0] = float(ratio[0])/float(ratio[1])
+            else: # Float form.
+                args.setPageRatios4[0] = float(ratio[0])
             for i in range(1, 5):
-                args.setPageRatios[i] = float(args.setPageRatios[i])
-                if args.setPageRatios[i] < 0:
-                    print("\nError in pdfCropMargins: Attempted absolute mode"
-                    " in aspect ratio command line\nargument. The behaviour"
-                    " specified for negative arguments is not yet\nimplemented.")
+                args.setPageRatios4[i] = float(args.setPageRatios4[i])
+                if args.setPageRatios4[i] <= 0:
+                    print("\nError in pdfCropMargins: Negative weight argument passed "
+                          "to setPageRatios4.", file=sys.stderr)
                     ex.cleanup_and_exit(1)
         except ValueError:
             print("\nError in pdfCropMargins: Bad format in aspect ratio command line"
-                  " argument.\nCannot convert to a float.")
+                  " argument.\nCannot convert to a float.", file=sys.stderr)
             ex.cleanup_and_exit(1)
 
     # Set executable paths to non-default locations if set.
@@ -967,7 +965,7 @@ def main_crop():
         # print from a function instead to write all the lines which can be written.
         except (UnicodeDecodeError, UnicodeEncodeError):
             print("\nWarning: Could not write all the document's metadata to the screen."
-                  "\nGot a UnicodeEncodeError or a UnicodeDecodeError.")
+                  "\nGot a UnicodeEncodeError or a UnicodeDecodeError.", file=sys.stderr)
 
     ##
     ## Now compute the set containing the pyPdf page number of all the pages

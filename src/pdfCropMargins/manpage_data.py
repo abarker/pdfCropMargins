@@ -642,14 +642,13 @@ cmd_parser.add_argument("-spr", "--setPageRatios", nargs=1, type=str,
 cmd_parser.add_argument("-spr4", "--setPageRatios4", nargs=5, type=str,
                         default=[], metavar=("FLOAT:FLOAT", "FLOAT", "FLOAT",
                         "FLOAT", "FLOAT"), help="""
-
-   This is the same as '--setPageRatios' except that four additonal arguments
-   can be given.  The first argument stays, and the four floating point
-   arguments should be the left, bottom, right, and top weights, respectively.
-   The weights determine how much of the necessary height/width increase is
-   added at the respective edge. Negative numbers cause complete margin to the
-   boundary box to be weighted instead of just the margin added to archive the
-   desired page ratio.^^n""")
+   This is the same as '--setPageRatios' except that it takes four additional
+   scaling arguments, one per margin.  The first argument is the ratio, as
+   before.  The remaining four floating point arguments should be the left,
+   bottom, right, and top weights, respectively.  The weights determine what
+   proportion of the total height(width) increase necessary to achieve the
+   target page ratio is added to the corresponding margin.  All weights must be
+   greater than zero.^^n""")
 
 cmd_parser.add_argument("-dcb", "--docCatBlacklist", default="",
                        metavar="STR", help="""
