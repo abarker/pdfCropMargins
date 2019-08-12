@@ -639,6 +639,18 @@ cmd_parser.add_argument("-spr", "--setPageRatios", nargs=1, type=str,
    string width-to-height ratio such as '4.5:3' or else a floating point number
    like '0.75' which is the width divided by the height.^^n""")
 
+cmd_parser.add_argument("-spr4", "--setPageRatios4", nargs=5, type=str,
+                        default=[], metavar=("FLOAT:FLOAT", "FLOAT", "FLOAT",
+                        "FLOAT", "FLOAT"), help="""
+
+   This is the same as '--setPageRatios' except that four additonal arguments
+   can be given.  The first argument stays, and the four floating point
+   arguments should be the left, bottom, right, and top weights, respectively.
+   The weights determine how much of the necessary height/width increase is
+   added at the respective edge. Negative numbers cause complete margin to the
+   boundary box to be weighted instead of just the margin added to archive the
+   desired page ratio.^^n""")
+
 cmd_parser.add_argument("-dcb", "--docCatBlacklist", default="",
                        metavar="STR", help="""
 
