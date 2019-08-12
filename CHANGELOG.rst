@@ -3,6 +3,14 @@
 History
 =======
 
+0.1.5 (2019-??-??)
+------------------
+
+New features:
+
+* An option ``--setPageRatios4`` which also takes per-margin weights to determine
+  what proportion of the necessary padding to apply to each margin.
+
 0.1.4 (2019-02-07)
 ------------------
 
