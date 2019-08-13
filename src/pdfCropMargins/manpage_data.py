@@ -538,6 +538,10 @@ cmd_parser.add_argument("-nc", "--noclobber", action="store_true", help="""
 
    Never overwrite an existing file as the output file.^^n""")
 
+cmd_parser.add_argument("-l", "--loop", action="store_true", help="""
+
+   Loop over the main program, querying for different arguments.^^n""")
+
 cmd_parser.add_argument("-pv", "--preview", metavar="PROG", help="""
 
    Run a PDF viewer on the cropped PDF output.  The viewer process is run in

@@ -46,7 +46,7 @@ the program and clean up.
 # Possible future enhancements:
 #
 # 1) Consider defining a command-line option which will print out either a bash
-# script or a DOS script that they can modify and use.
+# script or a DOS script that users can modify and use.  Or maybe a config file.
 #
 # 2) Have -ea and -oa options that do absolute crops on even and odd
 # differently.  Similarly, -ea4 and -oa4 for individual margins.  Similarly
@@ -66,6 +66,9 @@ the program and clean up.
 
 from __future__ import print_function, division, absolute_import
 import sys
+from .prettified_argparse import parse_command_line_arguments
+# Import the prettified argparse module and the text of the manpage documentation.
+from .manpage_data import cmd_parser
 
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
@@ -76,11 +79,42 @@ def main():
     # Imports are done here inside the try block so some ugly (and useless)
     # traceback info is avoided on user's ^C (KeyboardInterrupt, EOFError on Windows).
     try:
-        from . import external_program_calls as ex # Creates tmp dir as side effect.
+        from . import external_program_calls as ex # Creates tmp dir as a side effect.
         cleanup_and_exit = ex.cleanup_and_exit # Switch to the real one, deletes temp dir.
 
         from . import main_pdfCropMargins # Imports external_program_calls, don't do first.
-        main_pdfCropMargins.main_crop() # Run the actual program.
+
+        while True:
+            # Parse the command-line arguments and set the variable args.  In module scope so
+            # all the functions can easily access the arguments they need.
+            parsed_args = parse_command_line_arguments(cmd_parser)
+
+            # Call the "real" main routine.
+            args = sys.argv[:] # Save these in case they're needed in loop.
+            final_doc_fname = main_pdfCropMargins.main_crop(parsed_args)
+
+            if not parsed_args.loop:
+                break
+            # Initial tests for re-writing command line to re-execute or maybe GUI.
+            # NOTE need to handle file-moving options, too.
+            import readline
+            import curses
+            # https://docs.python.org/3/howto/curses.html
+            # https://docs.python.org/3/library/curses.html
+            # Windows: https://www.devdungeon.com/content/curses-windows-python
+            stdscr = curses.initscr()
+            stdscr.addstr("curses..................................................")
+
+            readline.insert_text(" ".join(args))
+            readline.insert_text(" dummy ")
+            readline.redisplay()
+            new_buffer = readline.get_line_buffer()
+            print("new line buffer is:",  new_buffer)
+            input("> ")
+            import importlib
+            importlib.reload(sys)
+            print("new sys.argv is", sys.argv)
+
 
     except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",

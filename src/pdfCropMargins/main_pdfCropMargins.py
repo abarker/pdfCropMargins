@@ -73,10 +73,6 @@ except ImportError:
 # Import the general function for calculating a list of bounding boxes.
 from .calculate_bounding_boxes import get_bounding_box_list
 
-# Import the prettified argparse module and the text of the manpage documentation.
-from .prettified_argparse import parse_command_line_arguments
-from .manpage_data import cmd_parser
-
 ##
 ## Some data used by the program.
 ##
@@ -708,14 +704,12 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
 ##############################################################################
 
 
-# Parse the command-line arguments and set the variable args.  In module scope so
-# all the functions can easily access the arguments they need.
-args = parse_command_line_arguments(cmd_parser)
-
-
-def main_crop():
+def main_crop(parsed_args):
     """This function does the real work.  It is called by main() in
-    pdfCropMargins.py, which just handles catching exceptions and cleaning up."""
+    pdfCropMargins.py, which just handles catching exceptions and cleaning up.  It
+    returns the name of the modified file that was written to disk."""
+    global args # This is global only to avoid passing it to essentially every function.
+    args = parsed_args
 
     ##
     ## Process some of the command-line arguments.
@@ -897,8 +891,12 @@ def main_crop():
         fixed_input_doc_fname = input_doc_fname
 
     # Open the input file object.
-    # TODO: Need try except since might fail for permissions.
-    fixed_input_doc_file_object = open(fixed_input_doc_fname, "rb")
+    try:
+        fixed_input_doc_file_object = open(fixed_input_doc_fname, "rb")
+    except IOError:
+        print("Error in pdfCropMargins: Could not open output document with "
+              "filename '{}'".format(fixed_input_doc_fname))
+        ex.cleanup_and_exit(1)
 
     try:
         input_doc = PdfFileReader(fixed_input_doc_file_object)
@@ -1096,10 +1094,15 @@ def main_crop():
     ## Write the final PDF out to a file.
     ##
 
-    if args.verbose: print("\nWriting the cropped PDF file.")
+    if args.verbose:
+        print("\nWriting the cropped PDF file.")
 
-    # TODO: Try and except on the open, since it might fail for permissions.
-    output_doc_stream = open(output_doc_fname, "wb")
+    try:
+        output_doc_stream = open(output_doc_fname, "wb")
+    except IOError:
+        print("Error in pdfCropMargins: Could not open output document with "
+              "filename '{}'".format(output_doc_fname))
+        ex.cleanup_and_exit(1)
 
     try:
         output_doc.write(output_doc_stream)
@@ -1179,9 +1182,10 @@ def main_crop():
                 continue
 
     # Handle the '--modifyOriginal' option.
+    final_output_document_name = output_doc_fname
     if args.modifyOriginal:
         generated_uncropped_filename = generate_default_filename(
-                                                  input_doc_fname, is_cropped_file=False)
+                                                input_doc_fname, is_cropped_file=False)
 
         # Remove any existing file with the name generated_uncropped_filename unless a
         # relevant noclobber option is set or it isn't a file.
@@ -1217,14 +1221,14 @@ def main_crop():
             if args.verbose: print("\nDoing a file move:\n   ", output_doc_fname,
                                    "\nis moving to:\n   ", input_doc_fname)
             shutil.move(output_doc_fname, input_doc_fname)
+            final_output_document_name = input_doc_fname
 
     # Handle any previewing which still needs to be done.
-    if args.preview and not args.queryModifyOriginal: # already previewed in query mod
-        if args.modifyOriginal: # already swapped to original filename in this case
-            do_preview(input_doc_fname)
-        else: # the usual case, preview the output filename
-            do_preview(output_doc_fname)
+    if args.preview and not args.queryModifyOriginal: # already previewed in queryModifyOriginal
+        do_preview(final_output_document_name)
 
-    if args.verbose: print("\nFinished this run of pdfCropMargins.\n")
+    if args.verbose:
+        print("\nFinished this run of pdfCropMargins.\n")
 
+    return final_output_document_name
 
