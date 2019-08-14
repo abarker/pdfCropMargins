@@ -259,6 +259,10 @@ cmd_parser.add_argument("-v", "--verbose", action="store_true", help="""
    this switch only warning and error messages are printed to the
    screen.^^n""")
 
+cmd_parser.add_argument("-gui", "--gui", action="store_true", help="""
+
+   Run the graphical user interface.^^n""")
+
 cmd_parser.add_argument("-p", "--percentRetain", nargs=1, type=float,
                        metavar="PCT", default=[10.0], help="""
 
@@ -537,10 +541,6 @@ cmd_parser.add_argument("-gsf", "--gsFix", action="store_true", help="""
 cmd_parser.add_argument("-nc", "--noclobber", action="store_true", help="""
 
    Never overwrite an existing file as the output file.^^n""")
-
-cmd_parser.add_argument("-l", "--loop", action="store_true", help="""
-
-   Loop over the main program, querying for different arguments.^^n""")
 
 cmd_parser.add_argument("-pv", "--preview", metavar="PROG", help="""
 

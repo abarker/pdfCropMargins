@@ -70,6 +70,20 @@ from .prettified_argparse import parse_command_line_arguments
 # Import the prettified argparse module and the text of the manpage documentation.
 from .manpage_data import cmd_parser
 
+def get_help_for_option_string(cmd_parser, option_string):
+    import textwrap
+    wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=75)
+    """Extract the help message for an option from an argparse command parser."""
+    for a in cmd_parser._actions:
+        if "--" + option_string in a.option_strings:
+            help_text = textwrap.dedent(a.help)
+            help_text = wrapper.fill(help_text)
+            help_text = help_text.replace("^^n", "\n")
+            print(help_text)
+            print()
+            return a.option_strings, help_text
+    return None
+
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
 
@@ -87,34 +101,21 @@ def main():
         while True:
             # Parse the command-line arguments and set the variable args.  In module scope so
             # all the functions can easily access the arguments they need.
+
+            #print(get_help_for_option_string(cmd_parser, "percentRetain"))
             parsed_args = parse_command_line_arguments(cmd_parser)
 
-            # Call the "real" main routine.
-            args = sys.argv[:] # Save these in case they're needed in loop.
-            final_doc_fname = main_pdfCropMargins.main_crop(parsed_args)
+            if parsed_args.gui:
+                args = sys.argv[:] # Save these in case they're needed in loop.
+                # TODO: Call gui fun, return the new args list.
+                # Then command parse the new args (set to sys.argv) and call main crop routine.
+                # Pass in cmd_parser or actions object to extract tooltips, too.
+            else:
+                # Call the "real" main routine.
+                final_doc_fname = main_pdfCropMargins.main_crop(parsed_args)
 
-            if not parsed_args.loop:
+            if not parsed_args.gui:
                 break
-            # Initial tests for re-writing command line to re-execute or maybe GUI.
-            # NOTE need to handle file-moving options, too.
-            import readline
-            import curses
-            # https://docs.python.org/3/howto/curses.html
-            # https://docs.python.org/3/library/curses.html
-            # Windows: https://www.devdungeon.com/content/curses-windows-python
-            stdscr = curses.initscr()
-            stdscr.addstr("curses..................................................")
-
-            readline.insert_text(" ".join(args))
-            readline.insert_text(" dummy ")
-            readline.redisplay()
-            new_buffer = readline.get_line_buffer()
-            print("new line buffer is:",  new_buffer)
-            input("> ")
-            import importlib
-            importlib.reload(sys)
-            print("new sys.argv is", sys.argv)
-
 
     except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
