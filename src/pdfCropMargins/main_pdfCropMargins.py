@@ -907,7 +907,6 @@ def process_pdf_file(input_doc_fname, output_doc_fname):
     ## the PdfFileWriter is written, the pages are modified, and there is an attempt
     ## to write the same PdfFileWriter to a different file.
     ##
-    print("xxxx, uniform =", args.uniform)
 
     if args.gsFix:
         if args.verbose:
