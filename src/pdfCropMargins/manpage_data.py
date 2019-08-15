@@ -635,6 +635,7 @@ cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
 
 cmd_parser.add_argument("-spr", "--setPageRatios", nargs=1, type=str,
                         default=[], metavar="FLOAT:FLOAT", help="""
+
    Force all the cropped page ratios to equal the set ratio.  All crops are
    calculated and applied as usual, but either the left and right margins will
    be increased equally or else the top and bottom margins will be increased
@@ -643,16 +644,16 @@ cmd_parser.add_argument("-spr", "--setPageRatios", nargs=1, type=str,
    string width-to-height ratio such as '4.5:3' or else a floating point number
    like '0.75' which is the width divided by the height.^^n""")
 
-cmd_parser.add_argument("-spr4", "--setPageRatios4", nargs=5, type=str,
-                        default=[], metavar=("FLOAT:FLOAT", "FLOAT", "FLOAT",
+cmd_parser.add_argument("-prw", "--pageRatioWeights", nargs=4, type=float,
+                        default=[1,1,1,1], metavar=("FLOAT", "FLOAT",
                         "FLOAT", "FLOAT"), help="""
-   This is the same as '--setPageRatios' except that it takes four additional
-   scaling arguments, one per margin.  The first argument is the ratio, as
-   before.  The remaining four floating point arguments should be the left,
-   bottom, right, and top weights, respectively.  The weights determine what
-   proportion of the total height(width) increase necessary to achieve the
-   target page ratio is added to the corresponding margin.  All weights must be
-   greater than zero.^^n""")
+
+   This option weights any whitespace added by the '--setPageRatios' argument.
+   It takes four weight arguments, one per margin.  The four floating point
+   arguments should be the left, bottom, right, and top weights, respectively.
+   The weights determine what proportion of the total height(width) increase
+   necessary to achieve the target page ratio is added to the corresponding
+   margin.  All weights must be greater than zero.^^n""")
 
 cmd_parser.add_argument("-dcb", "--docCatBlacklist", default="",
                        metavar="STR", help="""

@@ -50,7 +50,6 @@ import sys
 import os
 import shutil
 import time
-import copy
 
 # Get the program's version number from the __init__.py file.
 from . import __version__
@@ -80,6 +79,7 @@ from .calculate_bounding_boxes import get_bounding_box_list
 # The string which is appended to Producer metadata in cropped PDFs.
 PRODUCER_MODIFIER = " (Cropped by pdfCropMargins.)"
 
+args = None # Global set during cmd-line processing (since almost all funs use it).
 
 ##
 ## Begin general function definitions.
@@ -188,8 +188,8 @@ def get_full_page_box_assigning_media_and_crop(page):
         first_loop = False
 
     # Do any absolute pre-cropping specified for the page (after modifying any
-    # absolutePreCrop arguments to take into account rotations to the page).
-    a = mod_box_for_rotation(args.absolutePreCrop, rotation)
+    # absolutePreCrop4 arguments to take into account rotations to the page).
+    a = mod_box_for_rotation(args.absolutePreCrop4, rotation)
     full_box = RectangleObject([float(full_box.lowerLeft[0]) + a[0],
                                 float(full_box.lowerLeft[1]) + a[1],
                                 float(full_box.upperRight[0]) - a[2],
@@ -331,9 +331,9 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     # absoluteOffset values for all the pages according to any specified.
     # rotations for the pages.  This is so, for example, uniform cropping is
     # relative to what the user actually sees.
-    rotated_percent_retain = [mod_box_for_rotation(args.percentRetain, angle_list[m_val])
+    rotated_percent_retain = [mod_box_for_rotation(args.percentRetain4, angle_list[m_val])
                                                          for m_val in range(num_pages)]
-    rotated_absolute_offset = [mod_box_for_rotation(args.absoluteOffset, angle_list[m_val])
+    rotated_absolute_offset = [mod_box_for_rotation(args.absoluteOffset4, angle_list[m_val])
                                                          for m_val in range(num_pages)]
 
     # Calculate the list of deltas to be used to modify the original page
@@ -418,8 +418,9 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                                 f_box[2] - deltas[2], f_box[3] - deltas[3]))
 
     # Set the page ratios if user chose that option.
-    if args.setPageRatios4:
-        ratio, left_weight, bottom_weight, right_weight, top_weight = args.setPageRatios4
+    if args.setPageRatios:
+        ratio = args.setPageRatios[0]
+        left_weight, bottom_weight, right_weight, top_weight = args.pageRatioWeights
         if args.verbose:
             print("\nSetting all page width to height ratios to:", ratio)
             print("The weights per margin are:",
@@ -703,17 +704,11 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
 #
 ##############################################################################
 
-
-def main_crop(parsed_args):
-    """This function does the real work.  It is called by main() in
-    pdfCropMargins.py, which just handles catching exceptions and cleaning up.  It
-    returns the name of the modified file that was written to disk."""
+def process_command_line_arguments(parsed_args):
+    """Perform an initial processing on the command-line arguments.  This is called
+    first, before any PDF processing is done."""
     global args # This is global only to avoid passing it to essentially every function.
     args = parsed_args
-
-    ##
-    ## Process some of the command-line arguments.
-    ##
 
     if args.verbose:
         print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
@@ -725,6 +720,10 @@ def main_crop(parsed_args):
         for f in args.pdf_input_doc:
             print("   ", f, file=sys.stderr)
         ex.cleanup_and_exit(1)
+
+    #
+    # Process input and output filenames.
+    #
 
     input_doc_fname = ex.glob_if_windows_os(args.pdf_input_doc[0], exact_num_args=1)[0]
     if not input_doc_fname.endswith((".pdf",".PDF")):
@@ -757,68 +756,86 @@ def main_crop(parsed_args):
               "\nthe output file.\n", file=sys.stderr)
         ex.cleanup_and_exit(1)
 
-    if args.gsBbox and len(args.fullPageBox) > 1:
-        print("\nWarning: only one --fullPageBox value can be used with the -gs option.",
-              "\nIgnoring all but the first one.", file=sys.stderr)
-        args.fullPageBox = [args.fullPageBox[0]]
-    elif args.gsBbox and not args.fullPageBox: args.fullPageBox = ["c"] # gs default
-    elif not args.fullPageBox: args.fullPageBox = ["m", "c"] # usual default
+    #
+    # Process some args with both regular and per-page 4-param forms.  Note that
+    # in all these cases the 4-param version takes precedence.
+    #
 
-    if args.verbose:
-        print("\nFor the full page size, using values from the PDF box"
-              "\nspecified by the intersection of these boxes:", args.fullPageBox)
-
-    if args.absolutePreCrop: args.absolutePreCrop *= 4 # expand to 4 offsets
-    # See if all four offsets are explicitly set and use those if so.
-    if args.absolutePreCrop4: args.absolutePreCrop = args.absolutePreCrop4
+    if args.absolutePreCrop and not args.absolutePreCrop4:
+        args.absolutePreCrop4 = args.absolutePreCrop * 4 # expand to 4 offsets
+    if args.absolutePreCrop4:
+        pass # No processing to do.
     if args.verbose:
         print("\nThe absolute pre-crops to be applied to each margin, in units of bp,"
-              " are:\n   ", args.absolutePreCrop)
+              " are:\n   ", args.absolutePreCrop4)
 
-    if args.percentRetain: args.percentRetain *= 4 # expand to 4 percents
+    if args.percentRetain and not args.percentRetain4:
+        args.percentRetain4 = args.percentRetain * 4 # expand to 4 percents
     # See if all four percents are explicitly set and use those if so.
-    if args.percentRetain4: args.percentRetain = args.percentRetain4
+    if args.percentRetain4:
+        pass # No processing to do.
     if args.verbose:
         print("\nThe percentages of margins to retain are:\n   ",
-              args.percentRetain)
+              args.percentRetain4)
 
-    if args.absoluteOffset: args.absoluteOffset *= 4 # expand to 4 offsets
-    # See if all four offsets are explicitly set and use those if so.
-    if args.absoluteOffset4: args.absoluteOffset = args.absoluteOffset4
+    if args.absoluteOffset and not args.absoluteOffset4:
+        args.absoluteOffset4 = args.absoluteOffset * 4 # expand to 4 offsets
+    if args.absoluteOffset4:
+        pass # No processing to do.
     if args.verbose:
         print("\nThe absolute offsets to be applied to each margin, in units of bp,"
-              " are:\n   ", args.absoluteOffset)
+              " are:\n   ", args.absoluteOffset4)
 
-    # Initialize any setPageRatios arguments, saving in args.setPageRatios4.
-    if args.setPageRatios: # Note setPageRatios takes precedence over setPageRatios4.
-        args.setPageRatios4 = [args.setPageRatios[0], 1, 1, 1, 1]
+    #
+    # Page ratios.
+    #
 
-    if args.setPageRatios4:
-        # Parse the page ratio into a float if user chose that option.
-        ratio = args.setPageRatios4[0].split(":")
+    if args.setPageRatios:
+        # Parse the page ratio into a float if user chose that representation.
+        ratio = args.setPageRatios[0].split(":")
         if len(ratio) > 2:
             print("\nError in pdfCropMargins: Bad format in aspect ratio command line"
                   " argument.\nToo many colons.", file=sys.stderr)
             ex.cleanup_and_exit(1)
         try:
             if len(ratio) == 2: # Colon form.
-                args.setPageRatios4[0] = float(ratio[0])/float(ratio[1])
+                args.setPageRatios[0] = float(ratio[0])/float(ratio[1])
             else: # Float form.
-                args.setPageRatios4[0] = float(ratio[0])
-            for i in range(1, 5):
-                args.setPageRatios4[i] = float(args.setPageRatios4[i])
-                if args.setPageRatios4[i] <= 0:
-                    print("\nError in pdfCropMargins: Negative weight argument passed "
-                          "to setPageRatios4.", file=sys.stderr)
-                    ex.cleanup_and_exit(1)
+                args.setPageRatios[0] = float(ratio[0])
         except ValueError:
-            print("\nError in pdfCropMargins: Bad format in aspect ratio command line"
-                  " argument.\nCannot convert to a float.", file=sys.stderr)
+            print("\nError in pdfCropMargins: Bad format in argument to "
+                  " setPageRatios.\nCannot convert to a float.", file=sys.stderr)
             ex.cleanup_and_exit(1)
 
+    if args.pageRatioWeights:
+        for w in args.pageRatioWeights:
+            if w <= 0:
+                print("\nError in pdfCropMargins: Negative weight argument passed "
+                      "to pageRatiosWeights.", file=sys.stderr)
+                ex.cleanup_and_exit(1)
+
+    #
+    # Process options dealing with external programs.
+    #
+
+    if args.gsBbox and len(args.fullPageBox) > 1:
+        print("\nWarning: only one --fullPageBox value can be used with the -gs option.",
+              "\nIgnoring all but the first one.", file=sys.stderr)
+        args.fullPageBox = [args.fullPageBox[0]]
+    elif args.gsBbox and not args.fullPageBox:
+        args.fullPageBox = ["c"] # gs default
+    elif not args.fullPageBox:
+        args.fullPageBox = ["m", "c"] # usual default
+
+    if args.verbose:
+        print("\nFor the full page size, using values from the PDF box"
+              "\nspecified by the intersection of these boxes:", args.fullPageBox)
+
     # Set executable paths to non-default locations if set.
-    if args.pdftoppmPath: ex.set_pdftoppm_executable_to_string(args.pdftoppmPath)
-    if args.ghostscriptPath: ex.set_gs_executable_to_string(args.ghostscriptPath)
+    if args.pdftoppmPath:
+        ex.set_pdftoppm_executable_to_string(args.pdftoppmPath)
+    if args.ghostscriptPath:
+        ex.set_gs_executable_to_string(args.ghostscriptPath)
 
     # If the option settings require pdftoppm, make sure we have a running
     # version.  If '--gsBbox' isn't chosen then assume that PDF pages are to be
@@ -872,7 +889,12 @@ def main_crop(parsed_args):
     if args.gsBbox and args.numSmooths:
         print("\nWarning in pdfCropMargins: The '--numSmooths' option is ignored"
               "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
+    return input_doc_fname, output_doc_fname
 
+def process_pdf_file(input_doc_fname, output_doc_fname):
+    """This function does the real work.  It is called by main() in
+    pdfCropMargins.py, which just handles catching exceptions and cleaning up.  It
+    returns the name of the modified file that was written to disk."""
     ##
     ## Open the input document in a PdfFileReader object.  Due to an apparent bug
     ## in pyPdf we open two PdfFileReader objects for the file.  The time required should
@@ -1139,9 +1161,9 @@ def main_crop(parsed_args):
     # We're finished with this open file; close it and let temp dir removal delete it.
     fixed_input_doc_file_object.close()
 
-    ##
-    ## Now handle the options which apply after the file is written.
-    ##
+def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
+    """Handle the options which apply after the file is written such as previewing
+    and renaming."""
 
     def do_preview(output_doc_fname):
         viewer = args.preview
@@ -1165,9 +1187,9 @@ def main_crop(parsed_args):
             query_string = "\nModify the original file to the cropped file " \
                 "(saving the original)? [yn] "
             if ex.python_version[0] == "2":
-                query_result = raw_input(query_string).decode("utf-8")
+                query_result = raw_input(query_string).decode("utf-8").strip()
             else:
-                query_result = input(query_string)
+                query_result = input(query_string).strip()
             if query_result in ["y", "Y"]:
                 args.modifyOriginal = True
                 print("\nModifying the original file.")
@@ -1230,5 +1252,15 @@ def main_crop(parsed_args):
     if args.verbose:
         print("\nFinished this run of pdfCropMargins.\n")
 
-    return final_output_document_name
+def main_crop(parsed_args):
+    """Process command-line arguments, do the PDF processing, and then perform final
+    processing on the filenames."""
+    # Process some of the command-line arguments.
+    input_doc_fname, output_doc_fname = process_command_line_arguments(parsed_args)
+
+    # Do the PDF processing.
+    process_pdf_file(input_doc_fname, output_doc_fname)
+
+    # Do any final name moves, etc.
+    handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
 

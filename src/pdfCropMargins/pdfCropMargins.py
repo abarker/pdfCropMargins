@@ -106,13 +106,15 @@ def main():
             parsed_args = parse_command_line_arguments(cmd_parser)
 
             if parsed_args.gui:
+                from . import gui
                 args = sys.argv[:] # Save these in case they're needed in loop.
+                gui.display_gui(parsed_args)
                 # TODO: Call gui fun, return the new args list.
                 # Then command parse the new args (set to sys.argv) and call main crop routine.
                 # Pass in cmd_parser or actions object to extract tooltips, too.
             else:
                 # Call the "real" main routine.
-                final_doc_fname = main_pdfCropMargins.main_crop(parsed_args)
+                main_pdfCropMargins.main_crop(parsed_args)
 
             if not parsed_args.gui:
                 break

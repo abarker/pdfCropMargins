@@ -38,7 +38,6 @@ Below is the original module docstring:
     pixmaps and page re-visits will re-use a once-created display list.
 
 """
-
 import sys
 import os
 import fitz
@@ -133,7 +132,7 @@ def get_max_size():
     return max_size
 
 #
-# Helper functions for updating values.
+# Helper functions for updating the values of elements.
 #
 
 def update_input_text(input_text_element, value=None, fun_to_apply=None):
@@ -192,7 +191,6 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args):
     for i in [0,1,2,3]:
         update_input_text(element_list4[i], value=args_attr4[i])
 
-
 #
 # The main function with the event loop.
 #
@@ -200,6 +198,7 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args):
 def create_gui(pdf_filename, parsed_args):
     """Create a GUI for running pdfCropMargins with parsed arguments `parsed_args`
     on the PDF file named `pdf_filename`"""
+    args = parsed_args
     document = fitz.open(pdf_filename)
     page_count = len(document)
 
@@ -223,22 +222,22 @@ def create_gui(pdf_filename, parsed_args):
 
     image_element = sg.Image(data=data)  # make image element
 
-    # ===================================================
+    ## ===================================================
 
-    # Standin for parsed_args for testing.
-    class args:
-        """Dummy class mocking argparse args."""
-        percentRetain = [10.0]
-        percentRetain4 = [0.0, 1.0, 2.0, 3.0]
-        absoluteOffset = [10]
-        absoluteOffset4 = [0.0, 1.0, 2.0, 3.0]
+    ## Standin for parsed_args for testing.
+    #class args:
+    #    """Dummy class mocking argparse args."""
+    #    percentRetain = [10.0]
+    #    percentRetain4 = [0.0, 1.0, 2.0, 3.0]
+    #    absoluteOffset = [10]
+    #    absoluteOffset4 = [0.0, 1.0, 2.0, 3.0]
 
-    if len(set(args.percentRetain4)) != 1: # All the same.
-        args.percentRetain[0] = "N/A"
-    if len(set(args.absoluteOffset4)) != 1: # All the same.
-        args.absoluteOffset[0] = "N/A"
+    #if len(set(args.percentRetain4)) != 1: # All the same.
+    #    args.percentRetain[0] = "N/A"
+    #if len(set(args.absoluteOffset4)) != 1: # All the same.
+    #    args.absoluteOffset[0] = "N/A"
 
-    # ===================================================
+    ## ===================================================
 
     update_funs = [] # A list of all the updating functions.
 
@@ -453,3 +452,5 @@ def display_gui(parsed_args):
 
 if __name__ == "__main__":
     display_gui(parsed_args="DUMMY")
+
+
