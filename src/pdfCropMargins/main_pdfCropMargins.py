@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 
 pdfCropMargins -- a program to crop the margins of PDF files
@@ -51,8 +52,9 @@ import os
 import shutil
 import time
 
-# Get the program's version number from the __init__.py file.
-from . import __version__
+from . import __version__ # Get the version number from the __init__.py file.
+from .manpage_data import cmd_parser
+from .prettified_argparse import parse_command_line_arguments
 
 # Import the module that calls external programs and gets system info.
 from . import external_program_calls as ex
@@ -353,6 +355,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         adj_deltas = [adj_deltas[m_val] + rotated_absolute_offset[p_num][m_val] for m_val in range(4)]
         delta_list.append(adj_deltas)
 
+    print("xxxx args.uniform where used", args.uniform)
     # Handle the '--uniform' options if one was selected.
     if args.uniformOrderPercent:
         percent_val = args.uniformOrderPercent[0]
@@ -904,6 +907,7 @@ def process_pdf_file(input_doc_fname, output_doc_fname):
     ## the PdfFileWriter is written, the pages are modified, and there is an attempt
     ## to write the same PdfFileWriter to a different file.
     ##
+    print("xxxx, uniform =", args.uniform)
 
     if args.gsFix:
         if args.verbose:
@@ -1246,9 +1250,26 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
             final_output_document_name = input_doc_fname
 
     # Handle any previewing which still needs to be done.
-    if args.preview and not args.queryModifyOriginal: # already previewed in queryModifyOriginal
+    if args.preview and not args.queryModifyOriginal: # queryModifyOriginal does its own.
         do_preview(final_output_document_name)
 
     if args.verbose:
         print("\nFinished this run of pdfCropMargins.\n")
+
+def main_crop():
+    """Process command-line arguments, do the PDF processing, and then perform final
+    processing on the filenames."""
+    parsed_args = parse_command_line_arguments(cmd_parser)
+
+    # Process some of the command-line arguments (also sets args globally). TODO right way??
+    input_doc_fname, output_doc_fname = process_command_line_arguments(parsed_args)
+
+    if args.gui:
+        from .gui import create_gui
+        did_crop = create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args)
+        if did_crop:
+            handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
+    else:
+        process_pdf_file(input_doc_fname, output_doc_fname)
+        handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
 

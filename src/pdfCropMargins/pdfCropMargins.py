@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Note that using the shebang "usr/bin/env python" does not set the process
 # name to pdfCropMargins in Linux (for things like top, ps, and killall).
@@ -63,50 +62,13 @@ the program and clean up.
 # standard format.  Later compare between files.  Other things could also be
 # checked; basically dump the verbose output except not so sensitive to minor
 # text changes and use "close enough" for floating point value equality.
+#
+# 5) An option 'safeAbsolute' which can be turned on to keep absolute crops
+# from exceeding the bounding box sizes.  But need to define semantics with
+# and without uniform cropping and same page size.
 
 from __future__ import print_function, division, absolute_import
 import sys
-from .prettified_argparse import parse_command_line_arguments
-# Import the prettified argparse module and the text of the manpage documentation.
-from .manpage_data import cmd_parser
-
-def get_help_for_option_string(cmd_parser, option_string):
-    import textwrap
-    wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=75)
-    """Extract the help message for an option from an argparse command parser."""
-    for a in cmd_parser._actions:
-        if "--" + option_string in a.option_strings:
-            help_text = textwrap.dedent(a.help)
-            help_text = wrapper.fill(help_text)
-            help_text = help_text.replace("^^n", "\n")
-            print(help_text)
-            print()
-            return a.option_strings, help_text
-    return None
-
-def main_crop(main_pdfCropMargins):
-    """Process command-line arguments, do the PDF processing, and then perform final
-    processing on the filenames."""
-    #print(get_help_for_option_string(cmd_parser, "percentRetain"))
-    parsed_args = parse_command_line_arguments(cmd_parser)
-
-    # Process some of the command-line arguments.
-    input_doc_fname, output_doc_fname = \
-            main_pdfCropMargins.process_command_line_arguments(parsed_args)
-
-    # Do the PDF processing.
-    if parsed_args.gui:
-                from . import gui
-                args = sys.argv[:] # Save these in case they're needed in loop.
-                gui.display_gui("egg.pdf", parsed_args)
-                # TODO: Call gui fun, return the new args list.
-                # Then command parse the new args (set to sys.argv) and call main crop routine.
-                # Pass in cmd_parser or actions object to extract tooltips, too.
-    else:
-        main_pdfCropMargins.process_pdf_file(input_doc_fname, output_doc_fname)
-
-    # Do any final name moves, etc.
-    main_pdfCropMargins.handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
 
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
@@ -122,7 +84,7 @@ def main():
 
         # Below import also imports external_program_calls, don't do it first.
         from . import main_pdfCropMargins
-        main_crop(main_pdfCropMargins)
+        main_pdfCropMargins.main_crop()
 
     except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
@@ -154,12 +116,4 @@ def main():
             except (KeyboardInterrupt, EOFError):
                 continue
 
-
-#
-# Run when invoked as a script.
-#
-
-if __name__ == "__main__":
-
-    main()
 
