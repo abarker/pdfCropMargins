@@ -84,6 +84,30 @@ def get_help_for_option_string(cmd_parser, option_string):
             return a.option_strings, help_text
     return None
 
+def main_crop(main_pdfCropMargins):
+    """Process command-line arguments, do the PDF processing, and then perform final
+    processing on the filenames."""
+    #print(get_help_for_option_string(cmd_parser, "percentRetain"))
+    parsed_args = parse_command_line_arguments(cmd_parser)
+
+    # Process some of the command-line arguments.
+    input_doc_fname, output_doc_fname = \
+            main_pdfCropMargins.process_command_line_arguments(parsed_args)
+
+    # Do the PDF processing.
+    if parsed_args.gui:
+                from . import gui
+                args = sys.argv[:] # Save these in case they're needed in loop.
+                gui.display_gui("egg.pdf", parsed_args)
+                # TODO: Call gui fun, return the new args list.
+                # Then command parse the new args (set to sys.argv) and call main crop routine.
+                # Pass in cmd_parser or actions object to extract tooltips, too.
+    else:
+        main_pdfCropMargins.process_pdf_file(input_doc_fname, output_doc_fname)
+
+    # Do any final name moves, etc.
+    main_pdfCropMargins.handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
+
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
 
@@ -96,28 +120,9 @@ def main():
         from . import external_program_calls as ex # Creates tmp dir as a side effect.
         cleanup_and_exit = ex.cleanup_and_exit # Switch to the real one, deletes temp dir.
 
-        from . import main_pdfCropMargins # Imports external_program_calls, don't do first.
-
-        while True:
-            # Parse the command-line arguments and set the variable args.  In module scope so
-            # all the functions can easily access the arguments they need.
-
-            #print(get_help_for_option_string(cmd_parser, "percentRetain"))
-            parsed_args = parse_command_line_arguments(cmd_parser)
-
-            if parsed_args.gui:
-                from . import gui
-                args = sys.argv[:] # Save these in case they're needed in loop.
-                gui.display_gui(parsed_args)
-                # TODO: Call gui fun, return the new args list.
-                # Then command parse the new args (set to sys.argv) and call main crop routine.
-                # Pass in cmd_parser or actions object to extract tooltips, too.
-            else:
-                # Call the "real" main routine.
-                main_pdfCropMargins.main_crop(parsed_args)
-
-            if not parsed_args.gui:
-                break
+        # Below import also imports external_program_calls, don't do it first.
+        from . import main_pdfCropMargins
+        main_crop(main_pdfCropMargins)
 
     except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",

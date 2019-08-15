@@ -195,17 +195,17 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args):
 # The main function with the event loop.
 #
 
-def create_gui(pdf_filename, parsed_args):
+def create_gui(input_doc_fname, parsed_args):
     """Create a GUI for running pdfCropMargins with parsed arguments `parsed_args`
     on the PDF file named `pdf_filename`"""
     args = parsed_args
-    document = fitz.open(pdf_filename)
+    document = fitz.open(input_doc_fname)
     page_count = len(document)
 
     # Allocate storage for caching page display lists.
     page_display_list_cache = [None] * page_count
 
-    title = "pdfCropMargins: {}".format(os.path.basename(pdf_filename))
+    title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
     max_size = get_max_size()
 
     window = sg.Window(title, return_keyboard_events=True, location=(0, 0),
@@ -364,10 +364,10 @@ def create_gui(pdf_filename, parsed_args):
         return btn.startswith("Crop")
 
     def is_Next(btn):
-        return btn.startswith("Next") or btn == "MouseWheel:Down"
+        return btn.startswith("Next:") or btn == "MouseWheel:Down" # Note mouse not giving any event.
 
     def is_Prev(btn):
-        return btn.startswith("Prev") or btn == "MouseWheel:Up"
+        return btn.startswith("Prior:") or btn == "MouseWheel:Up"
 
     def is_Up(btn):
         return btn.startswith("Up:")
@@ -395,6 +395,7 @@ def create_gui(pdf_filename, parsed_args):
 
     while True:
         btn, value = window.Read()
+        #print(btn)
 
         if btn is None and (value is None or value["PageNumber"] is None):
             break
@@ -446,11 +447,8 @@ def create_gui(pdf_filename, parsed_args):
                                   zoom=zoom, max_size=max_size)
         image_element.Update(data=data)
 
-def display_gui(parsed_args):
-    pdf_filename = get_filename()
-    create_gui(pdf_filename, parsed_args=parsed_args)
-
-if __name__ == "__main__":
-    display_gui(parsed_args="DUMMY")
-
+def display_gui(input_doc_fname, parsed_args):
+    if not input_doc_fname:
+        input_doc_fname = get_filename()
+    create_gui(input_doc_fname, parsed_args=parsed_args)
 

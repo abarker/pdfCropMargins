@@ -119,19 +119,18 @@ To see the documentation, run::
 
 The output of that command follows::
 
-   Usage: pdfCropMargins.py [-h] [-o OUTFILE_NAME] [-v] [-p PCT]
-                            [-p4 PCT PCT PCT PCT] [-a BP] [-a4 BP BP BP BP]
-                            [-ap BP] [-ap4 BP BP BP BP] [-u] [-m INT]
-                            [-m4 INT INT INT INT] [-mp INT] [-s] [-ms INT] [-e]
-                            [-g PAGESTR] [-t BYTEVAL] [-nb INT] [-ns INT] [-gs]
-                            [-gsr] [-x DPI] [-y DPI] [-b [m|c|t|a|b]]
-                            [-f [m|c|t|a|b]] [-r] [-A] [-gsf] [-nc] [-pv PROG]
-                            [-mo] [-q] [-nco] [-pf] [-sc STR] [-su STR] [-ss STR]
-                            [-pw PASSWD] [-spr FLOAT:FLOAT]
-                            [-spr4 FLOAT:FLOAT FLOAT FLOAT FLOAT FLOAT]
-                            [-dcb STR] [-dcw STR] [-i] [-pdl] [-gsp PATH]
-                            [-ppp PATH]
-                            PDF_FILE [PDF_FILE ...]
+   Usage: pdf-crop-margins [-h] [-o OUTFILE_NAME] [-v] [-gui] [-p PCT]
+                           [-p4 PCT PCT PCT PCT] [-a BP] [-a4 BP BP BP BP]
+                           [-ap BP] [-ap4 BP BP BP BP] [-u] [-m INT]
+                           [-m4 INT INT INT INT] [-mp INT] [-s] [-ms INT] [-e]
+                           [-g PAGESTR] [-t BYTEVAL] [-nb INT] [-ns INT] [-gs]
+                           [-gsr] [-x DPI] [-y DPI] [-b [m|c|t|a|b]]
+                           [-f [m|c|t|a|b]] [-r] [-A] [-gsf] [-nc] [-pv PROG]
+                           [-mo] [-q] [-nco] [-pf] [-sc STR] [-su STR] [-ss STR]
+                           [-pw PASSWD] [-spr FLOAT:FLOAT]
+                           [-prw FLOAT FLOAT FLOAT FLOAT] [-dcb STR] [-dcw STR]
+                           [-i] [-pdl] [-gsp PATH] [-ppp PATH]
+                           PDF_FILE [PDF_FILE ...]
    
    Description:
    
@@ -338,6 +337,8 @@ The output of that command follows::
      -v, --verbose         Print more information about the program's actions and
                            progress. Without this switch only warning and error
                            messages are printed to the screen.
+   
+     -gui, --gui           Run the graphical user interface.
    
      -p PCT, --percentRetain PCT
                            Set the percent of margin space to retain in the
@@ -744,16 +745,16 @@ The output of that command follows::
                            or else a floating point number like '0.75' which is
                            the width divided by the height.
    
-     -spr4 FLOAT:FLOAT FLOAT FLOAT FLOAT FLOAT, --setPageRatios4 FLOAT:FLOAT FLOAT FLOAT FLOAT FLOAT
-                           This is the same as '--setPageRatios' except that it
-                           takes four additional scaling arguments, one per
-                           margin. The first argument is the ratio, as before.
-                           The remaining four floating point arguments should be
-                           the left, bottom, right, and top weights,
-                           respectively. The weights determine what proportion of
-                           the total height(width) increase necessary to achieve
-                           the target page ratio is added to the corresponding
-                           margin. All weights must be greater than zero.
+     -prw FLOAT FLOAT FLOAT FLOAT, --pageRatioWeights FLOAT FLOAT FLOAT FLOAT
+                           This option weights any whitespace added by the '--
+                           setPageRatios' argument. It takes four weight
+                           arguments, one per margin. The four floating point
+                           arguments should be the left, bottom, right, and top
+                           weights, respectively. The weights determine what
+                           proportion of the total height(width) increase
+                           necessary to achieve the target page ratio is added to
+                           the corresponding margin. All weights must be greater
+                           than zero.
    
      -dcb STR, --docCatBlacklist STR
                            Data associated with the full document, such as

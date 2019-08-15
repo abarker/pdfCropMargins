@@ -1252,15 +1252,3 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
     if args.verbose:
         print("\nFinished this run of pdfCropMargins.\n")
 
-def main_crop(parsed_args):
-    """Process command-line arguments, do the PDF processing, and then perform final
-    processing on the filenames."""
-    # Process some of the command-line arguments.
-    input_doc_fname, output_doc_fname = process_command_line_arguments(parsed_args)
-
-    # Do the PDF processing.
-    process_pdf_file(input_doc_fname, output_doc_fname)
-
-    # Do any final name moves, etc.
-    handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
-
