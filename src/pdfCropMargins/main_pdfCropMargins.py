@@ -107,6 +107,29 @@ def generate_default_filename(infile_path, is_cropped_file=True):
 
     return name
 
+def parse_page_range_specifiers(spec_string, all_page_nums):
+    """Parse a page range specifier argument such as "4-5,7,9".  Passed
+    a specifier and the set of all page numbers, it returns the subset."""
+    page_nums_to_crop = set() # Note that this set holds page num MINUS ONE, start at 0.
+    for page_num_or_range in spec_string.split(","):
+        split_range = page_num_or_range.split("-")
+        if len(split_range) == 1:
+            # Note pyPdf page nums start at 0, not 1 like usual PDF pages,
+            # subtract 1.
+            page_nums_to_crop.add(int(split_range[0])-1)
+        else:
+            left_arg = int(split_range[0])-1
+            right_arg = int(split_range[1])
+            print(range(left_arg, right_arg))
+            if left_arg >= right_arg:
+                print("Error in pdfCropMargins: left argument of range cannot be less"
+                      " than the right one.", file=sys.stderr)
+                raise ValueError
+            page_nums_to_crop.update(
+                set(range(left_arg, right_arg)))
+    page_nums_to_crop = page_nums_to_crop & all_page_nums # intersect chosen with actual
+    return page_nums_to_crop
+
 def intersect_boxes(box1, box2):
     """Takes two pyPdf boxes (such as page.mediaBox) and returns the pyPdf
     box which is their intersection."""
@@ -1006,26 +1029,15 @@ def process_pdf_file(input_doc_fname, output_doc_fname):
     ##
 
     all_page_nums = set(range(0, input_doc.getNumPages()))
-    page_nums_to_crop = set() # Note that this set holds page num MINUS ONE, start at 0.
     if args.pages:
-        # Parse any page range specifier argument.
-        for page_num_or_range in args.pages.split(","):
-            split_range = page_num_or_range.split("-")
-            try:
-                if len(split_range) == 1:
-                    # Note pyPdf page nums start at 0, not 1 like usual PDF pages,
-                    # subtract 1.
-                    page_nums_to_crop.add(int(split_range[0])-1)
-                else:
-                    page_nums_to_crop.update(
-                        set(range(int(split_range[0])-1, int(split_range[1]))))
-            except ValueError:
-                print(
-                    "\nError in pdfCropMargins: The page range specified on the command",
-                    "\nline contains a non-integer value or otherwise cannot be parsed.",
-                    file=sys.stderr)
-                ex.cleanup_and_exit(1)
-        page_nums_to_crop = page_nums_to_crop & all_page_nums # intersect chosen with actual
+        try:
+            page_nums_to_crop = parse_page_range_specifiers(args.pages, all_page_nums)
+        except ValueError:
+            print(
+                "\nError in pdfCropMargins: The page range specified on the command",
+                "\nline contains a non-integer value or otherwise cannot be parsed.",
+                file=sys.stderr)
+            ex.cleanup_and_exit(1)
     else:
         page_nums_to_crop = all_page_nums
 

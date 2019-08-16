@@ -32,25 +32,28 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
+
 import sys
 import os
-import fitz
-from copy import deepcopy
+from . import external_program_calls as ex
 
-print(fitz.__doc__)
+try:
+    import fitz
+    if not list(map(int, fitz.VersionBind.split("."))) >= [1, 14, 5]:
+        raise ImportError
+    if not ex.python_version[0] == "2":
+        import PySimpleGUI as sg
+        import tkinter as tk
+    else:
+        import PySimpleGUI27 as sg
+        import Tkinter as tk
+except ImportError:
+    print("The GUI feature requires Tkinter, pySimpleGUI, and PyMuPDF at least v1.14.5."
+          "\nIf installing via pip, use the optional-feature install:"
+          "\n   pip install pdfCropMargins[gui]", file=sys.stderr)
+    ex.cleanup_and_exit(1)
 
-if not list(map(int, fitz.VersionBind.split("."))) >= [1, 14, 5]:
-    raise SystemExit("This script requires at least PyMuPDF v1.14.5.")
-
-py2 = str is bytes  # Is this Python 2?
-if not py2:
-    import PySimpleGUI as sg
-    import tkinter as tk
-else:
-    import PySimpleGUI27 as sg
-    import Tkinter as tk
-
-from .main_pdfCropMargins import process_pdf_file
+from .main_pdfCropMargins import process_pdf_file, parse_page_range_specifiers
 
 #
 # Helper functions.
@@ -65,9 +68,8 @@ def get_filename():
                                        ],
                             )
     if not fname:
-        # TODO: Handle error correctly.
         sg.Popup("Cancelling:", "No filename supplied")
-        raise SystemExit("Cancelled: no filename supplied")
+        raise PdfCropMarginsError("Cancelled: no filename supplied")
 
     return fname
 
@@ -96,7 +98,8 @@ def get_page(page_num, page_display_list_cache, document, window_size, zoom=Fals
 
     rect = page_display_list.rect  # The page rectangle.
     clip = rect
-    # Ensure image fits screen: exploit, but do not exceed width or height.
+
+    # Make sure that the image will fits the screen.
     zoom_0 = 1
     if window_size:
         zoom_0 = min(1, window_size[0] / rect.width, window_size[1] / rect.height)
@@ -132,16 +135,13 @@ def get_window_size():
     width = root.winfo_screenwidth() - 20
     height = root.winfo_screenheight() - 135
     root.destroy()
-    #del root
     return width, height
 
-def get_help_for_option_string(cmd_parser, option_string):
+def get_help_text_string_for_tooltip(cmd_parser, option_string):
     """Extract the help message for an option from an argparse command parser.
     This gets the argparse help string to use as a tooltip."""
     import textwrap
     wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=75)
-    option_list = None
-    help_text = None
     for a in cmd_parser._actions:
         if "--" + option_string in a.option_strings:
             help_text = a.help
@@ -150,19 +150,19 @@ def get_help_for_option_string(cmd_parser, option_string):
     else:
         return None
     help_text = textwrap.dedent(help_text)
-    combined_para = " ".join(option_list) + "^^n^^n" + help_text
-    formatted_para = wrapper.fill(combined_para)
-    formatted_para = formatted_para.replace("^^n", "\n")
-    return formatted_para
+    formatted_para = wrapper.fill(help_text)
+    combined_para = " ".join(option_list) + "\n\n" + formatted_para
+    combined_para = combined_para.replace("^^n", "\n")
+    return combined_para
 
 #
 # Helper functions for updating the values of elements.
 #
 
-def call_all_update_funs(update_funs, values_dict, prev_values_dict):
+def call_all_update_funs(update_funs, values_dict):
     """Call all the functions."""
     for f in update_funs:
-        f(values_dict, prev_values_dict)
+        f(values_dict)
 
 def to_float_or_NA(value):
     """Convert to float unless the value is 'N/A', which is left unchanged."""
@@ -171,23 +171,25 @@ def to_float_or_NA(value):
     else:
         return float(value)
 
-def to_float_or_NA_to_str(value):
+def to_int_or_NA(value):
     """Convert to float unless the value is 'N/A', which is left unchanged."""
     if value == "N/A":
         return "N/A"
     else:
-        return str(float(value))
+        return int(value)
 
-def string_to_bool(string):
+def str_to_bool(string):
     """Convert a string "True" or "False" to the boolean True or False, respectively."""
     if string == "True":
         return True
     elif string == "False":
         return False
     else:
-        raise SystemExit("Converting bad value.") # TODO: update err handling.
+        print("Error in pdfCropMargins: String cannot be converted to bool.",
+              file=sys.stderr)
+        ex.cleanup_and_exit(1)
 
-def update_input_text(input_text_element, value=None, fun_to_apply=None):
+def update_value_and_return_it(input_text_element, value=None, fun_to_apply=None):
     """
     1) Get the text in the `InputText` element `input_text_element`.
     2) Apply the function `fun_to_apply` to it (if one is passed in).
@@ -208,46 +210,51 @@ def update_combo_box(values_dict, element, element_key, args, attr, fun_to_apply
         return
     #args_attr = getattr(args, attr)
     #print("before", attr, args_attr, type(args_attr))
-    element_value = values_dict[element_key] # TODO: this is apparently the "right" way to get values...
+    element_value = values_dict[element_key]
     element_value = fun_to_apply(element_value)
     element.Update(str(element_value))
     setattr(args, attr, element_value)
 
-def update_paired_1_and_4_values(element, element_list4, attr, attr4, args, values_dict, prev_values_dict):
+def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
+                                 values_dict, value_type=to_float_or_NA,
+                                 value_type4=float):
     """Update all the value for pairs such as `percentRetain` and
     `percentRetain4`, keeping the versions with one vs. four arguments
     synchronized."""
-    args_attr = getattr(args, attr)
-    args_attr4 = getattr(args, attr4)
+    args_attr = args_dict[attr]
+    args_attr4 = args_dict[attr4]
 
-    element_text = to_float_or_NA_to_str(element.Get())
-    # TODO: may need to keep the attr stuff, BUT now is being at least set in other place...
-    #velement_text = to_float_or_NA_to_str(values_dict[attr])
-    #prev_velement_text = to_float_or_NA_to_str(prev_values_dict[attr])
-    #assert element_text == velement_text
-    #print("prevs", args_attr[0], prev_velement_text)
-    #assert args_attr[0] == prev_velement_text # FAILS!!!
-    element_text4 = [to_float_or_NA_to_str(element_list4[i].Get()) for i in [0,1,2,3]]
-
-    # See if the element value changed.
-    if to_float_or_NA(element_text) != args_attr[0]:
-        args_attr[0] = update_input_text(element, fun_to_apply=to_float_or_NA)
+    def update_all_from_args_dict():
+        update_value_and_return_it(element, value=args_attr[0])
         for i in [0,1,2,3]:
-            args_attr4[i] = update_input_text(element_list4[i], value=args_attr[0])
+            update_value_and_return_it(element_list4[i], value=args_attr4[i])
+
+    try:
+        element_text = str(value_type(element.Get()))
+        #velement_text = str(value_type(values_dict[attr])) # Also works.
+        element_text4 = [str(value_type4(element_list4[i].Get())) for i in [0,1,2,3]]
+    except ValueError:
+        update_all_from_args_dict() # Replace bad text with saved version.
+        return
+    # See if the element value changed.
+    if value_type(element_text) != args_attr[0] and element_text != "N/A":
+        args_attr[0] = update_value_and_return_it(element, fun_to_apply=value_type)
+        for i in [0,1,2,3]:
+            args_attr4[i] = update_value_and_return_it(element_list4[i],
+                                                       value=args_attr[0])
 
     # See if any of the element_list4 values changed.
-    elif any(float(element_text4[i]) != args_attr4[i] for i in [0,1,2,3]):
+    elif any(value_type4(element_text4[i]) != args_attr4[i] for i in [0,1,2,3]):
         for i in [0,1,2,3]:
-            args_attr4[i] = update_input_text(element_list4[i], fun_to_apply=float)
+            args_attr4[i] = update_value_and_return_it(element_list4[i],
+                                                       fun_to_apply=value_type4)
         if len(set(args_attr4)) == 1: # All are the same value.
-            args_attr[0] = update_input_text(element, value=args_attr4[0])
+            args_attr[0] = update_value_and_return_it(element, value=args_attr4[0])
         else:
-            args_attr[0] = update_input_text(element, value="N/A")
+            args_attr[0] = update_value_and_return_it(element, value="N/A")
 
-    # Just do update to convert forms like 5 to 5.0 (which were equal above).
-    update_input_text(element, value=args_attr[0])
-    for i in [0,1,2,3]:
-        update_input_text(element_list4[i], value=args_attr4[i])
+    # Update all, to convert forms like 5 to 5.0 (which were equal above).
+    update_all_from_args_dict()
 
 #
 # The main function with the event loop.
@@ -257,11 +264,18 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     """Create a GUI for running pdfCropMargins with parsed arguments `parsed_args`
     on the PDF file named `pdf_filename`"""
     args = parsed_args
+    args_dict = {} # Dict for holding "real" values backing the GUI element values.
+
+    ##
+    ## Set up the document and window.
+    ##
+
     document, page_count = open_document(input_doc_fname)
     cur_page = 0
 
     window_title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
     window_size = get_window_size()
+    size_for_full_app = (0.65*window_size[0], window_size[1]) # Reduce max width.
 
     window = sg.Window(window_title, return_keyboard_events=True, location=(0, 0),
                        use_default_focus=False)
@@ -273,7 +287,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     data, clip_pos = get_page(cur_page,  # Read first page.
                               page_display_list_cache,
                               document,
-                              window_size=window_size,  # image max dim
+                              window_size=size_for_full_app,  # image max dim
                               zoom=False,  # Not zooming yet.
                               )
 
@@ -281,9 +295,9 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
 
     update_funs = [] # A list of all the updating functions (defined below).
 
-    #
-    # Code for handling page numbers.
-    #
+    ##
+    ## Code for handling page numbers.
+    ##
 
     input_text_page_num = sg.InputText(str(cur_page + 1), size=(5, 1),
                                        do_not_clear=True, key="PageNumber")
@@ -298,123 +312,192 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             input_text_element.Update(str(cur_page + 1))
         return cur_page
 
-    #
-    # Code for percentRetain options.
-    #
+    ##
+    ## Code for percentRetain options.
+    ##
 
-    if len(set(args.percentRetain4)) != 1: # Initial value, if all the same.
-        args.percentRetain[0] = "N/A"
-
+    args_dict["percentRetain"] = args.percentRetain
+    if len(set(args.percentRetain4)) != 1: # Set initial value if all the same.
+        args_dict["percentRetain"] = ["N/A"]
     text_percentRetain = sg.Text("percentRetain",
-                      tooltip=get_help_for_option_string(cmd_parser, "percentRetain"))
-    input_text_percentRetain = sg.InputText(args.percentRetain[0],
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "percentRetain"))
+    input_text_percentRetain = sg.InputText(args_dict["percentRetain"][0],
                                  size=(5, 1), do_not_clear=True, key="percentRetain")
 
     # Code for percentRetain4.
+    args_dict["percentRetain4"] = args.percentRetain4
     text_percentRetain4 = sg.Text("percentRetain4",
-                      tooltip=get_help_for_option_string(cmd_parser, "percentRetain4"))
-
-    input_text_percentRetain4 = [sg.InputText(args.percentRetain4[i], size=(5, 1),
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "percentRetain4"))
+    input_text_percentRetain4 = [sg.InputText(args_dict["percentRetain4"][i], size=(5, 1),
                                  do_not_clear=True, key="percentRetain4_{}".format(i))
                                  for i in [0,1,2,3]]
 
-    def update_percentRetainValues(values_dict, prev_values_dict):
+    def update_percentRetain_values(values_dict):
         """Update both the percentRetain value and the percentRetain4 values."""
         update_paired_1_and_4_values(input_text_percentRetain,
-                    input_text_percentRetain4, "percentRetain", "percentRetain4", args, values_dict, prev_values_dict)
-        # Update the args.  TODO: below is redundant now; how much of above fun can be removed??
-        percentRetain_val = to_float_or_NA(values_dict["percentRetain"])
-        percentRetain_val4 = [float(values_dict["percentRetain4_"+str(i)]) for i in range(4)]
-        if percentRetain_val != "N/A":
-            args.percentRetain4 = [percentRetain_val] * 4
-        else:
-            args.percentRetain4 = percentRetain_val4
+                    input_text_percentRetain4, "percentRetain", "percentRetain4", args_dict, values_dict)
+        # Copy backing values to the actual args object.
+        args.percentRetain = args_dict["percentRetain"]
+        args.percentRetain4 = args_dict["percentRetain4"]
 
-    update_funs.append(update_percentRetainValues)
+    update_funs.append(update_percentRetain_values)
 
-    #
-    # Code for absoluteOffset options.
-    #
+    ##
+    ## Code for absoluteOffset options.
+    ##
 
-    if len(set(args.absoluteOffset4)) != 1: # Initial value, if all 4 the same.
-        args.absoluteOffset[0] = "N/A"
-
+    args_dict["absoluteOffset"] = args.absoluteOffset
+    if len(set(args.absoluteOffset4)) != 1: # Set initial value if all the same.
+        args_dict["absoluteOffset"] = ["N/A"]
     text_absoluteOffset = sg.Text("absoluteOffset",
-                      tooltip=get_help_for_option_string(cmd_parser, "absoluteOffset"))
-    input_text_absoluteOffset = sg.InputText(args.absoluteOffset[0], size=(5, 1),
-                      do_not_clear=True, key="absoluteOffset")
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "absoluteOffset"))
+    input_text_absoluteOffset = sg.InputText(args_dict["absoluteOffset"][0],
+                                 size=(5, 1), do_not_clear=True, key="absoluteOffset")
 
     # Code for absoluteOffset4.
+    args_dict["absoluteOffset4"] = args.absoluteOffset4
     text_absoluteOffset4 = sg.Text("absoluteOffset4",
-                      tooltip=get_help_for_option_string(cmd_parser, "absoluteOffset4"))
-
-    input_text_absoluteOffset4 = [sg.InputText(args.absoluteOffset4[i], size=(5, 1),
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "absoluteOffset4"))
+    input_text_absoluteOffset4 = [sg.InputText(args_dict["absoluteOffset4"][i], size=(5, 1),
                                  do_not_clear=True, key="absoluteOffset4_{}".format(i))
                                  for i in [0,1,2,3]]
 
-    def update_absoluteOffsetValues(values_dict, prev_values_dict):
+    def update_absoluteOffset_values(values_dict):
         """Update both the absoluteOffset value and the absoluteOffset4 values."""
-        update_paired_1_and_4_values(input_text_absoluteOffset, input_text_absoluteOffset4,
-                               "absoluteOffset", "absoluteOffset4", args, values_dict, prev_values_dict)
-        # Update the args.
-        absoluteOffset_val = to_float_or_NA(values_dict["absoluteOffset"])
-        absoluteOffset_val4 = [float(values_dict["absoluteOffset4_"+str(i)]) for i in range(4)]
-        if absoluteOffset_val != "N/A":
-            args.absoluteOffset4 = [absoluteOffset_val] * 4
+        update_paired_1_and_4_values(input_text_absoluteOffset,
+                    input_text_absoluteOffset4, "absoluteOffset", "absoluteOffset4", args_dict, values_dict)
+        # Copy backing values to the actual args object.
+        args.absoluteOffset = args_dict["absoluteOffset"]
+        args.absoluteOffset4 = args_dict["absoluteOffset4"]
+
+    update_funs.append(update_absoluteOffset_values)
+
+    ##
+    ## Code for uniformOrderStat options.
+    ##
+
+    if args.uniformOrderStat:
+        args_dict["uniformOrderStat"] = args.uniformOrderStat
+    else:
+        args_dict["uniformOrderStat"] = [0]
+    if args.uniformOrderStat4:
+        args_dict["uniformOrderStat4"] = args.uniformOrderStat4
+        if len(set(args.uniformOrderStat4)) != 1: # Set initial value if all the same.
+            args_dict["uniformOrderStat"] = [0]
         else:
-            args.absoluteOffset4 = absoluteOffset_val4
+            args_dict["uniformOrderStat"] = [args.uniformOrderStat4[0]]
+    elif args.uniformOrderStat:
+        args_dict["uniformOrderStat4"] = [args.uniformOrderStat[0]] * 4
+    else:
+        args_dict["uniformOrderStat4"] = [0] * 4
+    print("args_dict", args_dict)
+    text_uniformOrderStat = sg.Text("uniformOrderStat",
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat"))
+    input_text_uniformOrderStat = sg.InputText(args_dict["uniformOrderStat"][0],
+                                 size=(5, 1), do_not_clear=True, key="uniformOrderStat")
 
-    update_funs.append(update_absoluteOffsetValues)
+    # Code for uniformOrderStat4.
+    text_uniformOrderStat4 = sg.Text("uniformOrderStat4",
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat4"))
+    input_text_uniformOrderStat4 = [sg.InputText(args_dict["uniformOrderStat4"][i], size=(5, 1),
+                                 do_not_clear=True, key="uniformOrderStat4_{}".format(i))
+                                 for i in [0,1,2,3]]
 
-    #
-    # Code for uniform.
-    #
+    def update_uniformOrderStat_values(values_dict):
+        """Update both the uniformOrderStat value and the uniformOrderStat4 values."""
+        update_paired_1_and_4_values(input_text_uniformOrderStat,
+              input_text_uniformOrderStat4, "uniformOrderStat", "uniformOrderStat4", args_dict, values_dict,
+              value_type=int, value_type4=int)
+        # Copy backing values to the actual args object.
+        args.uniformOrderStat = args_dict["uniformOrderStat"]
+        args.uniformOrderStat4 = args_dict["uniformOrderStat4"]
+
+    update_funs.append(update_uniformOrderStat_values)
+
+    ##
+    ## Code for uniform.
+    ##
 
     text_uniform = sg.Text("uniform",
-                      tooltip=get_help_for_option_string(cmd_parser, "uniform"))
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniform"))
 
     # BUG: default values not set unless they are strings!
     combo_box_uniform = sg.Combo(["True", "False"], readonly=True, default_value=str(args.uniform),
-                                       size=(5, 1), key="uniform")
+                                       size=(5, 1), key="uniform", enable_events=True)
 
-    def update_uniform(values_dict, prev_values_dict):
+    def update_uniform(values_dict):
         """Update the uniform values."""
         update_combo_box(values_dict, combo_box_uniform, "uniform", args, "uniform",
-                        fun_to_apply=string_to_bool)
+                        fun_to_apply=str_to_bool)
 
     update_funs.append(update_uniform)
 
-    #
-    # Code for samePageSize.
-    #
+    ##
+    ## Code for samePageSize.
+    ##
 
     text_samePageSize = sg.Text("samePageSize",
-                      tooltip=get_help_for_option_string(cmd_parser, "samePageSize"))
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "samePageSize"))
 
     combo_box_samePageSize = sg.Combo(["True", "False"], readonly=True,
                                          default_value=str(args.samePageSize), size=(5, 1),
-                                         key="samePageSize")
+                                         key="samePageSize", enable_events=True)
 
-    def update_samePageSize(values_dict, prev_values_dict):
+    def update_samePageSize(values_dict):
         """Update the samePageSize values."""
         update_combo_box(values_dict, combo_box_samePageSize, "samePageSize", args, "samePageSize",
-                        fun_to_apply=string_to_bool)
+                        fun_to_apply=str_to_bool)
 
     update_funs.append(update_samePageSize)
 
-    #
-    # Code for doing a crop.
-    #
+    ##
+    ## Code for pages option.
+    ##
 
-    def perform_crop(parsed_args):
-        """Do the crop with the current parsed argument list."""
-        saved_args = parsed_args[:] # Copy since cropping routines can modify.
-        print("DO CROP HERE")
-        parsed_args = saved_args # Restore from saved copy.
+    args_dict["pages"] = args.pages if args.pages else ""
+    text_pages = sg.Text("pages",
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "pages"))
+    input_text_pages = sg.InputText(args_dict["pages"],
+                                 size=(7, 1), do_not_clear=True, key="pages")
 
-    #
-    # Setup and assign the window's layout.
-    #
+    def update_pages_values(values_dict):
+        """Update both the pages value and the pages4 values."""
+        value = values_dict["pages"]
+        try:
+            if value:
+                parse_page_range_specifiers(value, set(range(page_count)))
+        except ValueError:
+            sg.PopupError("Bad page specifier.")
+            input_text_pages.Update("")
+            args_dict["pages"] = ""
+        else:
+            args_dict["pages"] = values_dict["pages"]
+        # Copy backing value to the actual args object.
+        args.pages = args_dict["pages"] if args_dict["pages"] else None
+
+    update_funs.append(update_pages_values)
+
+    ##
+    ## Code for evenodd option.
+    ##
+
+    text_evenodd = sg.Text("evenodd",
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "evenodd"))
+
+    combo_box_evenodd = sg.Combo(["True", "False"], readonly=True,
+                                         default_value=str(args.evenodd), size=(5, 1),
+                                         key="evenodd", enable_events=True)
+
+    def update_evenodd(values_dict):
+        """Update the evenodd values."""
+        update_combo_box(values_dict, combo_box_evenodd, "evenodd", args, "evenodd",
+                        fun_to_apply=str_to_bool)
+
+    update_funs.append(update_evenodd)
+
+    ##
+    ## Setup and assign the window's layout.
+    ##
 
     layout = [ # The window layout.
         [
@@ -425,37 +508,36 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             sg.Text("({})      ".format(page_count)), # Show max page count.
             sg.Button("Toggle Zoom"),
             sg.Text("(arrow keys navigate while zooming)"),
-            sg.Text(" "*40 + "Hover to show option-description tooltips."),
+            sg.Text(" "*30 + "Hover to show option-description tooltips."),
             ],
         [
             image_element,
             sg.Column([
+                    [combo_box_uniform, text_uniform, combo_box_samePageSize, text_samePageSize],
                     [input_text_percentRetain, text_percentRetain],
-                    [input_text_absoluteOffset, text_absoluteOffset],
-                    [combo_box_uniform, text_uniform],
-                    [sg.Button("Crop"),]
-                ]),
-            sg.Column([
                     [*input_text_percentRetain4, text_percentRetain4],
+                    [input_text_absoluteOffset, text_absoluteOffset],
                     [*input_text_absoluteOffset4, text_absoluteOffset4],
-                    [combo_box_samePageSize, text_samePageSize],
-                    [sg.Button("Exit"),]
+                    [input_text_uniformOrderStat, text_uniformOrderStat],
+                    [*input_text_uniformOrderStat4, text_uniformOrderStat4],
+                    [input_text_pages, text_pages, combo_box_evenodd, text_evenodd],
+                    [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),]
                 ]),
             ],
     ]
 
     window.Layout(layout)
-    # If you want to call an element's Update method or call a Graph element's
-    # drawing primitives, you must either call Read or Finalize prior to making
-    # those calls.
-    #window.Finalize()
-    btn, values_dict = window.Read(timeout=0) # haven't tried..
-    #print(values_dict)
-    #call_all_update_funs(update_funs, values_dict, values_dict) # Above has initial values, may be enough...
 
-    #
-    # Define the buttons/events we want to handle.
-    #
+    # Note from manual: "If you want to call an element's Update method or call
+    # a Graph element's drawing primitives, you must either call Read or
+    # Finalize prior to making those calls."
+    #window.Finalize()
+    btn, values_dict = window.Read(timeout=0)
+    #call_all_update_funs(update_funs, values_dict)
+
+    ##
+    ## Define the buttons/events we want to handle.
+    ##
 
     def is_Enter(btn):
         return btn.startswith("Return:") or btn == chr(13)
@@ -465,6 +547,9 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
 
     def is_Crop(btn):
         return btn.startswith("Crop")
+
+    def is_Original(btn):
+        return btn.startswith("Original")
 
     def is_Next(btn):
         return btn.startswith("Next") or btn == "MouseWheel:Down" # Note mouse not giving any event.
@@ -490,19 +575,15 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     def is_page_mod_key(btn):
         return any((is_Enter(btn), is_Next(btn), is_Prev(btn), is_Zoom(btn)))
 
-    #
-    # Run the main event loop.
-    #
+    ##
+    ## Run the main event loop.
+    ##
 
     zoom = False
     did_crop = False
 
     while True:
-        prev_values_dict = deepcopy(values_dict) # May not need copy.
         btn, values_dict = window.Read()
-        # TODO: below is slow,
-        # BUT it causes update on every key entry, which is annoying and buggy.
-        #call_all_update_funs(update_funs, values_dict)
 
         if btn is None and (values_dict is None or values_dict["PageNumber"] is None):
             break
@@ -510,7 +591,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             break
 
         if is_Enter(btn):
-            call_all_update_funs(update_funs, values_dict, prev_values_dict)
+            call_all_update_funs(update_funs, values_dict)
             try:
                 cur_page = int(values_dict["PageNumber"]) - 1  # check if valid
             except:
@@ -541,19 +622,18 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                 zoom = False
 
         elif is_Crop(btn):
-            # TODO: button "Original" to go back to orig document.
-            call_all_update_funs(update_funs, values_dict, prev_values_dict)
+            call_all_update_funs(update_funs, values_dict)
             document.close()
             page_display_list_cache = [None] * page_count
-            print("uniform combo just before call", values_dict["uniform"])
-            print("samePageSize combo just before call", values_dict["samePageSize"])
-            print("uniform args just before call", args.uniform)
-            print("samePageSize args just before call", args.samePageSize)
             process_pdf_file(input_doc_fname, output_doc_fname)
-            print("uniform args after call", args.uniform)
-            print("samePageSize args after call", args.samePageSize)
             document, page_count = open_document(output_doc_fname)
             did_crop = True
+
+        elif is_Original(btn):
+            call_all_update_funs(update_funs, values_dict)
+            document.close()
+            page_display_list_cache = [None] * page_count
+            document, page_count = open_document(input_doc_fname)
 
         # Update page number.
         cur_page = update_page_number(cur_page, page_count, is_page_mod_key, btn,

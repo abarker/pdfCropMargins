@@ -73,25 +73,26 @@ import sys
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
 
-    cleanup_and_exit = sys.exit # Function to do cleanup and exit before the import.
+    cleanup_and_exit = sys.exit # Function to exit (in finally) before the import.
     exit_code = 0
 
     # Imports are done here inside the try block so some ugly (and useless)
     # traceback info is avoided on user's ^C (KeyboardInterrupt, EOFError on Windows).
     try:
-        from . import external_program_calls as ex # Creates tmp dir as a side effect.
-        cleanup_and_exit = ex.cleanup_and_exit # Switch to the real one, deletes temp dir.
+        # This import creates a tmp dir as a side effect.
+        # Switch cleanup_and_exit to the real one, which deletes temp dir.
+        from .external_program_calls import cleanup_and_exit
 
         # Below import also imports external_program_calls, don't do it first.
-        from . import main_pdfCropMargins
-        main_pdfCropMargins.main_crop()
+        from .main_pdfCropMargins import main_crop
+        main_crop()
 
     except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
               file=sys.stderr)
 
     except SystemExit:
-        exit_code = sys.exc_info()[1]
+        exit_code = int(str(sys.exc_info()[1])) # The number sys.exit(n) called with.
         print()
 
     except:
@@ -105,11 +106,11 @@ def main():
         import traceback
         max_traceback_length = 30
         traceback.print_tb(sys.exc_info()[2], limit=max_traceback_length)
-        # raise # Re-raise the error.
+        # raise
 
     finally:
-        # Some people like to hit multiple ^C chars, which kills cleanup.
-        # Call cleanup again each time.
+        # Clean up the temp file directory.  Note some people like to hit multiple
+        # ^C chars, which kills cleanup.  The loop calls cleanup again each time.
         for i in range(30): # Give up after 30 tries.
             try:
                 cleanup_and_exit(exit_code)
