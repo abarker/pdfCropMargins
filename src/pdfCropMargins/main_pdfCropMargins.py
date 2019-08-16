@@ -355,15 +355,14 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         adj_deltas = [adj_deltas[m_val] + rotated_absolute_offset[p_num][m_val] for m_val in range(4)]
         delta_list.append(adj_deltas)
 
-    print("xxxx args.uniform where used", args.uniform)
     # Handle the '--uniform' options if one was selected.
     if args.uniformOrderPercent:
         percent_val = args.uniformOrderPercent[0]
         if percent_val < 0.0: percent_val = 0.0
         if percent_val > 100.0: percent_val = 100.0
-        args.uniformOrderStat = [int(round(num_pages_to_crop * percent_val / 100.0))]
+        args.uniformOrderStat4 = [int(round(num_pages_to_crop * percent_val / 100.0))] * 4
 
-    if args.uniform or args.uniformOrderStat or args.uniformOrderStat4:
+    if args.uniform or args.uniformOrderStat4:
         if args.verbose:
             print("\nAll the selected pages will be uniformly cropped.")
         # Expand to tuples containing page nums, to better print verbose information.
@@ -378,8 +377,6 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         m_vals = [0, 0, 0, 0]
         if args.uniformOrderStat4:
             m_vals = args.uniformOrderStat4
-        elif args.uniformOrderStat:
-            m_vals = [args.uniformOrderStat[0]] * 4
         fixed_m_vals = []
         for m_val in m_vals:
             if m_val < 0 or m_val >= num_pages_to_crop:
@@ -391,8 +388,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                     m_val = 0
             fixed_m_vals.append(m_val)
         m_vals = fixed_m_vals
-        if args.verbose and (args.uniformOrderStat or args.uniformOrderPercent
-                                                   or args.uniformOrderStat4):
+        if args.verbose and (args.uniformOrderPercent or args.uniformOrderStat4):
             print("\nPer-margin, the", m_vals,
                   "smallest delta values over the selected pages\nwill be ignored"
                   " when choosing common, uniform delta values.")
@@ -788,6 +784,14 @@ def process_command_line_arguments(parsed_args):
     if args.verbose:
         print("\nThe absolute offsets to be applied to each margin, in units of bp,"
               " are:\n   ", args.absoluteOffset4)
+
+    if args.uniformOrderStat and not args.uniformOrderStat4:
+        args.uniformOrderStat4 = args.uniformOrderStat * 4 # expand to 4 offsets
+    if args.uniformOrderStat4:
+        pass # No processing to do.
+    if args.verbose:
+        print("\nThe uniform order statistics to apply to each margin, in units of bp,"
+              " are:\n   ", args.uniformOrderStat4)
 
     #
     # Page ratios.

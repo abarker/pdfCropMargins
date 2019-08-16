@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import os
 import fitz
+from copy import deepcopy
 
 print(fitz.__doc__)
 
@@ -149,7 +150,7 @@ def get_help_for_option_string(cmd_parser, option_string):
     else:
         return None
     help_text = textwrap.dedent(help_text)
-    combined_para = option_list[-1] + ":" + help_text
+    combined_para = " ".join(option_list) + "^^n^^n" + help_text
     formatted_para = wrapper.fill(combined_para)
     formatted_para = formatted_para.replace("^^n", "\n")
     return formatted_para
@@ -158,17 +159,24 @@ def get_help_for_option_string(cmd_parser, option_string):
 # Helper functions for updating the values of elements.
 #
 
-def call_all_update_funs(update_funs, values_dict):
+def call_all_update_funs(update_funs, values_dict, prev_values_dict):
     """Call all the functions."""
     for f in update_funs:
-        f(values_dict)
+        f(values_dict, prev_values_dict)
 
-def float_or_NA(value):
+def to_float_or_NA(value):
     """Convert to float unless the value is 'N/A', which is left unchanged."""
     if value == "N/A":
         return "N/A"
     else:
         return float(value)
+
+def to_float_or_NA_to_str(value):
+    """Convert to float unless the value is 'N/A', which is left unchanged."""
+    if value == "N/A":
+        return "N/A"
+    else:
+        return str(float(value))
 
 def string_to_bool(string):
     """Convert a string "True" or "False" to the boolean True or False, respectively."""
@@ -193,9 +201,9 @@ def update_input_text(input_text_element, value=None, fun_to_apply=None):
     input_text_element.Update(value)
     return value
 
-def update_bool_arg(values_dict, element, element_key, args, attr, fun_to_apply):
+def update_combo_box(values_dict, element, element_key, args, attr, fun_to_apply):
     """Update a non-paired, independent option like `uniform`.  Function `fun_to_apply`
-    is applied to the GUI value to convert to the value `args` expects."""
+    is applied to the GUI value to convert it to the type `args` expects."""
     if values_dict is None:
         return
     #args_attr = getattr(args, attr)
@@ -205,19 +213,25 @@ def update_bool_arg(values_dict, element, element_key, args, attr, fun_to_apply)
     element.Update(str(element_value))
     setattr(args, attr, element_value)
 
-def update_paired_1_and_4_values(element, element_list4, attr, attr4, args):
+def update_paired_1_and_4_values(element, element_list4, attr, attr4, args, values_dict, prev_values_dict):
     """Update all the value for pairs such as `percentRetain` and
     `percentRetain4`, keeping the versions with one vs. four arguments
     synchronized."""
     args_attr = getattr(args, attr)
     args_attr4 = getattr(args, attr4)
 
-    element_text = element.Get()
-    element_text4 = [element_list4[i].Get() for i in [0,1,2,3]]
+    element_text = to_float_or_NA_to_str(element.Get())
+    # TODO: may need to keep the attr stuff, BUT now is being at least set in other place...
+    #velement_text = to_float_or_NA_to_str(values_dict[attr])
+    #prev_velement_text = to_float_or_NA_to_str(prev_values_dict[attr])
+    #assert element_text == velement_text
+    #print("prevs", args_attr[0], prev_velement_text)
+    #assert args_attr[0] == prev_velement_text # FAILS!!!
+    element_text4 = [to_float_or_NA_to_str(element_list4[i].Get()) for i in [0,1,2,3]]
 
     # See if the element value changed.
-    if float_or_NA(element_text) != args_attr[0]:
-        args_attr[0] = update_input_text(element, fun_to_apply=float_or_NA)
+    if to_float_or_NA(element_text) != args_attr[0]:
+        args_attr[0] = update_input_text(element, fun_to_apply=to_float_or_NA)
         for i in [0,1,2,3]:
             args_attr4[i] = update_input_text(element_list4[i], value=args_attr[0])
 
@@ -285,7 +299,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
         return cur_page
 
     #
-    # Code for percentRetain.
+    # Code for percentRetain options.
     #
 
     if len(set(args.percentRetain4)) != 1: # Initial value, if all the same.
@@ -296,10 +310,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     input_text_percentRetain = sg.InputText(args.percentRetain[0],
                                  size=(5, 1), do_not_clear=True, key="percentRetain")
 
-    #
     # Code for percentRetain4.
-    #
-
     text_percentRetain4 = sg.Text("percentRetain4",
                       tooltip=get_help_for_option_string(cmd_parser, "percentRetain4"))
 
@@ -307,15 +318,22 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                                  do_not_clear=True, key="percentRetain4_{}".format(i))
                                  for i in [0,1,2,3]]
 
-    def update_percentRetainValues(values_dict):
+    def update_percentRetainValues(values_dict, prev_values_dict):
         """Update both the percentRetain value and the percentRetain4 values."""
         update_paired_1_and_4_values(input_text_percentRetain,
-                    input_text_percentRetain4, "percentRetain", "percentRetain4", args)
+                    input_text_percentRetain4, "percentRetain", "percentRetain4", args, values_dict, prev_values_dict)
+        # Update the args.  TODO: below is redundant now; how much of above fun can be removed??
+        percentRetain_val = to_float_or_NA(values_dict["percentRetain"])
+        percentRetain_val4 = [float(values_dict["percentRetain4_"+str(i)]) for i in range(4)]
+        if percentRetain_val != "N/A":
+            args.percentRetain4 = [percentRetain_val] * 4
+        else:
+            args.percentRetain4 = percentRetain_val4
 
     update_funs.append(update_percentRetainValues)
 
     #
-    # Code for absoluteOffset.
+    # Code for absoluteOffset options.
     #
 
     if len(set(args.absoluteOffset4)) != 1: # Initial value, if all 4 the same.
@@ -326,10 +344,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     input_text_absoluteOffset = sg.InputText(args.absoluteOffset[0], size=(5, 1),
                       do_not_clear=True, key="absoluteOffset")
 
-    #
     # Code for absoluteOffset4.
-    #
-
     text_absoluteOffset4 = sg.Text("absoluteOffset4",
                       tooltip=get_help_for_option_string(cmd_parser, "absoluteOffset4"))
 
@@ -337,10 +352,17 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                                  do_not_clear=True, key="absoluteOffset4_{}".format(i))
                                  for i in [0,1,2,3]]
 
-    def update_absoluteOffsetValues(values_dict):
+    def update_absoluteOffsetValues(values_dict, prev_values_dict):
         """Update both the absoluteOffset value and the absoluteOffset4 values."""
         update_paired_1_and_4_values(input_text_absoluteOffset, input_text_absoluteOffset4,
-                               "absoluteOffset", "absoluteOffset4", args)
+                               "absoluteOffset", "absoluteOffset4", args, values_dict, prev_values_dict)
+        # Update the args.
+        absoluteOffset_val = to_float_or_NA(values_dict["absoluteOffset"])
+        absoluteOffset_val4 = [float(values_dict["absoluteOffset4_"+str(i)]) for i in range(4)]
+        if absoluteOffset_val != "N/A":
+            args.absoluteOffset4 = [absoluteOffset_val] * 4
+        else:
+            args.absoluteOffset4 = absoluteOffset_val4
 
     update_funs.append(update_absoluteOffsetValues)
 
@@ -355,9 +377,9 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     combo_box_uniform = sg.Combo(["True", "False"], readonly=True, default_value=str(args.uniform),
                                        size=(5, 1), key="uniform")
 
-    def update_uniform(values_dict):
+    def update_uniform(values_dict, prev_values_dict):
         """Update the uniform values."""
-        update_bool_arg(values_dict, combo_box_uniform, "uniform", args, "uniform",
+        update_combo_box(values_dict, combo_box_uniform, "uniform", args, "uniform",
                         fun_to_apply=string_to_bool)
 
     update_funs.append(update_uniform)
@@ -373,9 +395,9 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                                          default_value=str(args.samePageSize), size=(5, 1),
                                          key="samePageSize")
 
-    def update_samePageSize(values_dict):
+    def update_samePageSize(values_dict, prev_values_dict):
         """Update the samePageSize values."""
-        update_bool_arg(values_dict, combo_box_samePageSize, "samePageSize", args, "samePageSize",
+        update_combo_box(values_dict, combo_box_samePageSize, "samePageSize", args, "samePageSize",
                         fun_to_apply=string_to_bool)
 
     update_funs.append(update_samePageSize)
@@ -423,6 +445,13 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     ]
 
     window.Layout(layout)
+    # If you want to call an element's Update method or call a Graph element's
+    # drawing primitives, you must either call Read or Finalize prior to making
+    # those calls.
+    #window.Finalize()
+    btn, values_dict = window.Read(timeout=0) # haven't tried..
+    #print(values_dict)
+    #call_all_update_funs(update_funs, values_dict, values_dict) # Above has initial values, may be enough...
 
     #
     # Define the buttons/events we want to handle.
@@ -469,8 +498,9 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     did_crop = False
 
     while True:
+        prev_values_dict = deepcopy(values_dict) # May not need copy.
         btn, values_dict = window.Read()
-        # TODO: below is slow, but I don't know how to do combo boxes otherwise.
+        # TODO: below is slow,
         # BUT it causes update on every key entry, which is annoying and buggy.
         #call_all_update_funs(update_funs, values_dict)
 
@@ -480,7 +510,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             break
 
         if is_Enter(btn):
-            call_all_update_funs(update_funs, values_dict)
+            call_all_update_funs(update_funs, values_dict, prev_values_dict)
             try:
                 cur_page = int(values_dict["PageNumber"]) - 1  # check if valid
             except:
@@ -512,7 +542,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
 
         elif is_Crop(btn):
             # TODO: button "Original" to go back to orig document.
-            call_all_update_funs(update_funs, values_dict)
+            call_all_update_funs(update_funs, values_dict, prev_values_dict)
             document.close()
             page_display_list_cache = [None] * page_count
             print("uniform combo just before call", values_dict["uniform"])
@@ -534,6 +564,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                                   window_size=window_size, zoom=zoom)
         image_element.Update(data=data)
 
+    window.Close()
     return did_crop
 
 
