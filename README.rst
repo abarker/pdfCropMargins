@@ -67,21 +67,29 @@ Installing
 
 The easiest way to install pdfCropMargins is to install using pip::
 
-   pip install pdfCropMargins
+   pip install pdfCropMargins --user
 
-The ``pip`` program should be automatically installed along with Python.  On
-Windows you can run ``python -m ensurepip`` if it is not, or install from the
-repos in Linux.
+In order to also use the graphical user interface (GUI) with the
+``--gui`` option install like this::
+
+   pip install pdfCropMargins[gui] --user
+
+The ``pip`` program should be automatically installed along with Python.  If
+you cannot find pip you can usually also run it like this::
+
+   python -m pip install pdfCropMargins[gui] --user
 
 The pdfCropMargins program can also be run directly from its source code
-directory tree.  In that case the PyPDF2 package must also be installed and
-available in the Python distribution that will be used to run pdfCropMargins.
-If Ghostscript is unavailable as a system command then the Pillow imaging
-package is also necessary in the Python distribution.  It is also needed for
-certain advanced features which use explicit image analysis, so it is a good
-idea to install it in Python.  Assuming the dependencies are satisfied, run the
-program as ``bin/pdfCropMargins.py``, where the path is relative to the top of
-the source distribution.
+directory tree, provided the dependencies are installed.  In that case the
+PyPDF2 package must also be installed and available in the Python distribution
+that will be used to run pdfCropMargins.  If Ghostscript is unavailable as a
+system command then the Pillow imaging package is also necessary in the Python
+distribution.  It is also needed for certain advanced features which use
+explicit image analysis, so it is a good idea to install it in Python.
+Assuming the dependencies are satisfied, run the program as
+``bin/pdfCropMargins.py``, where the path is relative to the top of the source
+distribution.  The GUI also has dependencies which can be seen in the
+`setup.py` file.
 
 Running
 =======
@@ -338,7 +346,9 @@ The output of that command follows::
                            progress. Without this switch only warning and error
                            messages are printed to the screen.
    
-     -gui, --gui           Run the graphical user interface.
+     -gui, --gui           Run the graphical user interface. This mode allows you
+                           to interactively preview and test different cropping
+                           options without having to re-render the images.
    
      -p PCT, --percentRetain PCT
                            Set the percent of margin space to retain in the

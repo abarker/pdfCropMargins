@@ -39,6 +39,7 @@ from __future__ import print_function, absolute_import
 
 import sys
 import os
+from . import __version__
 from . import external_program_calls as ex
 
 try:
@@ -500,6 +501,20 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     update_funs.append(update_evenodd)
 
     ##
+    ## Code for wait indicator text box.
+    ##
+
+    wait_indicator_text = sg.Text("Calculating the crop,\nthis may take a while...",
+                                  size=(None, None),
+                                  auto_size_text=None,
+                                  relief=sg.RELIEF_GROOVE,
+                                  font=('Lucidia', 11),
+                                  text_color=None,
+                                  background_color="#DDDDDD",
+                                  justification="center",
+                                  visible=False)
+
+    ##
     ## Setup and assign the window's layout.
     ##
 
@@ -526,7 +541,9 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                     [input_text_uniformOrderStat, text_uniformOrderStat],
                     [i for i in input_text_uniformOrderStat4] + [text_uniformOrderStat4],
                     [input_text_pages, text_pages, combo_box_evenodd, text_evenodd],
-                    [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),]
+                    [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
+                    [sg.Text("")], # This is just for vertical space.
+                    [sg.Text("", size=(5, 2)), wait_indicator_text],
                 ]),
             ],
     ]
@@ -585,6 +602,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
 
     zoom = False
     did_crop = False
+    bounding_box_list = None
 
     while True:
         btn, values_dict = window.Read()
@@ -628,10 +646,37 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
         elif is_Crop(btn):
             call_all_update_funs(update_funs, values_dict)
             document.close()
+
+            # Display the wait message.
+            #nonblock_popup = sg.PopupNoWait(
+            #        "Finding the bounding boxes,\nthis may take some time...",
+            #        keep_on_top=True,
+            #        title="pdfCropMargins version {}.".format(__version__),
+            #        button_type=5,
+            #        button_color=None,
+            #        background_color=None,
+            #        text_color=None,
+            #        auto_close=True,
+            #        auto_close_duration=2,
+            #        non_blocking=True,
+            #        icon=None,
+            #        line_width=None,
+            #        font=None,
+            #        no_titlebar=True,
+            #        grab_anywhere=True,
+            #        location=(100,100))
+            wait_indicator_text.Update(visible=True)
+            window.Finalize()
+
+            # Do the crop, saving the bounding box list.
+            bounding_box_list = process_pdf_file(input_doc_fname, output_doc_fname,
+                                                 bounding_box_list)
+
+            # Change the view to the new cropped file.
             page_display_list_cache = [None] * page_count
-            process_pdf_file(input_doc_fname, output_doc_fname)
             document, page_count = open_document(output_doc_fname)
             did_crop = True
+            wait_indicator_text.Update(visible = False)
 
         elif is_Original(btn):
             call_all_update_funs(update_funs, values_dict)

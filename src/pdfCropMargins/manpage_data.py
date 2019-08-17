@@ -261,7 +261,9 @@ cmd_parser.add_argument("-v", "--verbose", action="store_true", help="""
 
 cmd_parser.add_argument("-gui", "--gui", action="store_true", help="""
 
-   Run the graphical user interface.^^n""")
+   Run the graphical user interface.  This mode allows you to interactively
+   preview and test different cropping options without having to re-render
+   the images.^^n""")
 
 cmd_parser.add_argument("-p", "--percentRetain", nargs=1, type=float,
                        metavar="PCT", default=[10.0], help="""
@@ -327,7 +329,7 @@ cmd_parser.add_argument("-u", "--uniform", action="store_true", help="""
    some margin space (relative to the margins obtained by cropping pages
    individually) to some of the pages.  If the pages of the original document
    are all the same size then the cropped pages will again all be the same
-   size.  The '--samePageSize' option can also be used in combination with this
+   size.  The '--samePageSize' option can be used in combination with this
    option to force all pages to be the same size after cropping.^^n""")
 
 cmd_parser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,

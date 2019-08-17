@@ -921,10 +921,15 @@ def process_command_line_arguments(parsed_args):
               "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
     return input_doc_fname, output_doc_fname
 
-def process_pdf_file(input_doc_fname, output_doc_fname):
+def process_pdf_file(input_doc_fname, output_doc_fname, bounding_box_list=None):
     """This function does the real work.  It is called by main() in
     pdfCropMargins.py, which just handles catching exceptions and cleaning up.  It
-    returns the name of the modified file that was written to disk."""
+    returns the name of the modified file that was written to disk.
+
+    If a bounding box list is passed in then the calculation is skipped and
+    that list is used.
+
+    The function returns the bounding box list."""
     ##
     ## Open the input document in a PdfFileReader object.  Due to an apparent bug
     ## in pyPdf we open two PdfFileReader objects for the file.  The time required should
@@ -1062,8 +1067,8 @@ def process_pdf_file(input_doc_fname, output_doc_fname):
 
     full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(
                                                                               input_doc)
-    tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
-                                                            tmp_input_doc, quiet=True)
+    #tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
+    #                                                        tmp_input_doc, quiet=True)
 
     ##
     ## Define a PdfFileWriter object and copy input_doc info over to it.
@@ -1105,13 +1110,15 @@ def process_pdf_file(input_doc_fname, output_doc_fname):
     ## Calculate the bounding_box_list containing tight page bounds for each page.
     ##
 
-    if not args.restore:
+    if not bounding_box_list and not args.restore:
         bounding_box_list = get_bounding_box_list(doc_with_crop_and_media_boxes_name,
                 input_doc, full_page_box_list, page_nums_to_crop, args, PdfFileWriter)
         if args.verbose:
             print("\nThe bounding boxes are:")
             for pNum, b in enumerate(bounding_box_list):
                 print("\t", pNum+1, "\t", b)
+    elif args.verbose:
+        print("\nUsing the bounding box list passed in instead of calculating it.")
 
     ##
     ## Calculate the crop_list based on the fullpage boxes and the bounding boxes.
@@ -1179,6 +1186,7 @@ def process_pdf_file(input_doc_fname, output_doc_fname):
 
     # We're finished with this open file; close it and let temp dir removal delete it.
     fixed_input_doc_file_object.close()
+    return bounding_box_list
 
 def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
     """Handle the options which apply after the file is written such as previewing
