@@ -213,8 +213,6 @@ def update_combo_box(values_dict, element, element_key, args, attr, fun_to_apply
     is applied to the GUI value to convert it to the type `args` expects."""
     if values_dict is None:
         return
-    #args_attr = getattr(args, attr)
-    #print("before", attr, args_attr, type(args_attr))
     element_value = values_dict[element_key]
     element_value = fun_to_apply(element_value)
     element.Update(str(element_value))
@@ -606,10 +604,6 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
 
     while True:
         btn, values_dict = window.Read()
-        print("xxxxxx.....................................args")
-        for i in sorted(args.__dict__.items()):
-            print(i)
-
 
         if btn is None and (values_dict is None or values_dict["PageNumber"] is None):
             break
