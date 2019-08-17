@@ -536,6 +536,26 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     update_funs.append(update_setPageRatios_values)
 
     ##
+    ## Code for restore.
+    ##
+
+    # TODO: need to calc bounding boxes if restore is first option...
+
+    text_restore = sg.Text("restore",
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "restore"))
+
+    combo_box_restore = sg.Combo(["True", "False"], readonly=True,
+                                         default_value=str(args.restore), size=(5, 1),
+                                         key="restore", enable_events=True)
+
+    def update_restore(values_dict):
+        """Update the restore values."""
+        update_combo_box(values_dict, combo_box_restore, "restore", args, "restore",
+                        fun_to_apply=str_to_bool)
+
+    update_funs.append(update_restore)
+
+    ##
     ## Code for wait indicator text box.
     ##
 
@@ -576,7 +596,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                     [input_text_uniformOrderStat, text_uniformOrderStat],
                     [i for i in input_text_uniformOrderStat4] + [text_uniformOrderStat4],
                     [input_text_pages, text_pages, combo_box_evenodd, text_evenodd],
-                    [input_text_setPageRatios, text_setPageRatios],
+                    [input_text_setPageRatios, text_setPageRatios, combo_box_restore, text_restore],
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
                     [sg.Text("")], # This is just for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
@@ -707,6 +727,8 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             # Do the crop, saving the bounding box list.
             bounding_box_list = process_pdf_file(input_doc_fname, output_doc_fname,
                                                  bounding_box_list)
+            if args.restore:
+                combo_box_restore.Update("False")
 
             # Change the view to the new cropped file.
             page_display_list_cache = [None] * page_count
