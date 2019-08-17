@@ -635,7 +635,7 @@ cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
    needed for non-empty passwords.  The resulting cropped file will not be
    encrypted, so use caution if important data is involved.^^n""")
 
-cmd_parser.add_argument("-spr", "--setPageRatios", nargs=1, type=str,
+cmd_parser.add_argument("-spr", "--setPageRatios", type=str,
                         default=[], metavar="FLOAT:FLOAT", help="""
 
    Force all the cropped page ratios to equal the set ratio.  All crops are

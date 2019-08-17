@@ -130,6 +130,29 @@ def parse_page_range_specifiers(spec_string, all_page_nums):
     page_nums_to_crop = page_nums_to_crop & all_page_nums # intersect chosen with actual
     return page_nums_to_crop
 
+def parse_page_ratio_argument(ratio_arg):
+    """Parse the argument passed to setPageRatios."""
+    ratio = ratio_arg.split(":")
+    if len(ratio) > 2:
+        print("\nError in pdfCropMargins: Bad format in aspect ratio command line"
+              " argument.\nToo many colons.", file=sys.stderr)
+        raise ValueError
+    try:
+        if len(ratio) == 2: # Colon form.
+            float_ratio = float(ratio[0])/float(ratio[1])
+        else: # Float form.
+            float_ratio = float(ratio[0])
+    except ValueError:
+        print("\nError in pdfCropMargins: Bad format in argument to "
+              " setPageRatios.\nCannot convert to a float.", file=sys.stderr)
+        raise
+    if float_ratio == 0 or float_ratio == float("inf"):
+        print("\nError in pdfCropMargins: Bad format in argument to "
+              " setPageRatios.\nZero or infinite aspect ratios are not allowed.",
+              file=sys.stderr)
+        raise ValueError
+    return float_ratio
+
 def intersect_boxes(box1, box2):
     """Takes two pyPdf boxes (such as page.mediaBox) and returns the pyPdf
     box which is their intersection."""
@@ -441,7 +464,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     # Set the page ratios if user chose that option.
     if args.setPageRatios:
-        ratio = args.setPageRatios[0]
+        ratio = args.setPageRatios
         left_weight, bottom_weight, right_weight, top_weight = args.pageRatioWeights
         if args.verbose:
             print("\nSetting all page width to height ratios to:", ratio)
@@ -820,22 +843,14 @@ def process_command_line_arguments(parsed_args):
     # Page ratios.
     #
 
-    if args.setPageRatios:
+    if args.setPageRatios and not args.gui: # GUI does its own parsing.
         # Parse the page ratio into a float if user chose that representation.
-        ratio = args.setPageRatios[0].split(":")
-        if len(ratio) > 2:
-            print("\nError in pdfCropMargins: Bad format in aspect ratio command line"
-                  " argument.\nToo many colons.", file=sys.stderr)
-            ex.cleanup_and_exit(1)
+        ratio_arg = args.setPageRatios
         try:
-            if len(ratio) == 2: # Colon form.
-                args.setPageRatios[0] = float(ratio[0])/float(ratio[1])
-            else: # Float form.
-                args.setPageRatios[0] = float(ratio[0])
+            float_ratio = parse_page_ratio_argument(ratio_arg)
         except ValueError:
-            print("\nError in pdfCropMargins: Bad format in argument to "
-                  " setPageRatios.\nCannot convert to a float.", file=sys.stderr)
-            ex.cleanup_and_exit(1)
+            ex.cleanup_and_exit(1) # Parse fun printed error message.
+        args.setPageRatios = float_ratio
 
     if args.pageRatioWeights:
         for w in args.pageRatioWeights:

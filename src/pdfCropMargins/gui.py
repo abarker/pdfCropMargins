@@ -35,6 +35,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
+# TODO: Maybe add setPageRatios, pageRatioWeights, absolutePreCrop, restore.
+# TODO: Make it so in gui mode no file needs to be passed in.
+
 from __future__ import print_function, absolute_import
 
 import sys
@@ -62,7 +65,8 @@ except ImportError:
           "\n   pip install pdfCropMargins[gui]", file=sys.stderr)
     raise
 
-from .main_pdfCropMargins import process_pdf_file, parse_page_range_specifiers
+from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
+                                  parse_page_ratio_argument)
 
 #
 # Helper functions.
@@ -424,7 +428,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     ## Code for uniform.
     ##
 
-    text_uniform = sg.Text("uniform",
+    text_uniform = sg.Text("uniform", pad=((0,20), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniform"))
 
     # BUG: default values not set unless they are strings!
@@ -461,13 +465,13 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     ##
 
     args_dict["pages"] = args.pages if args.pages else ""
-    text_pages = sg.Text("pages",
+    text_pages = sg.Text("pages", pad=((0,25), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "pages"))
     input_text_pages = sg.InputText(args_dict["pages"],
                                  size=(7, 1), do_not_clear=True, key="pages")
 
     def update_pages_values(values_dict):
-        """Update both the pages value and the pages4 values."""
+        """Update the pages value."""
         value = values_dict["pages"]
         try:
             if value:
@@ -501,6 +505,35 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
 
     update_funs.append(update_evenodd)
 
+    ##
+    ## Code for setPageRatios option.
+    ##
+
+    args_dict["setPageRatios"] = args.setPageRatios if args.setPageRatios else ""
+    text_setPageRatios = sg.Text("setPageRatios", pad=((0,25), None),
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "setPageRatios"))
+    input_text_setPageRatios = sg.InputText(args_dict["setPageRatios"],
+                                 size=(7, 1), do_not_clear=True, key="setPageRatios")
+
+    def update_setPageRatios_values(values_dict):
+        """Update the setPageRatios value."""
+        value = values_dict["setPageRatios"]
+        try:
+            if value:
+                parse_page_ratio_argument(value)
+        except ValueError:
+            sg.PopupError("Bad page ratio specifier.")
+            input_text_setPageRatios.Update("")
+            args_dict["setPageRatios"] = ""
+        else:
+            args_dict["setPageRatios"] = values_dict["setPageRatios"]
+        # Copy backing value to the actual args object.
+        if args_dict["setPageRatios"]:
+            args.setPageRatios = parse_page_ratio_argument(args_dict["setPageRatios"])
+        else:
+            args.setPageRatios = None
+
+    update_funs.append(update_setPageRatios_values)
 
     ##
     ## Code for wait indicator text box.
@@ -529,7 +562,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             sg.Text("({})      ".format(page_count)), # Show max page count.
             sg.Button("Toggle Zoom"),
             sg.Text("(arrow keys navigate while zooming)"),
-            sg.Text(" "*30 + "Hover to show option-description tooltips."),
+            sg.Text(" "*20 + "Hover to show option-description tooltips."),
             ],
         [
             image_element,
@@ -543,6 +576,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                     [input_text_uniformOrderStat, text_uniformOrderStat],
                     [i for i in input_text_uniformOrderStat4] + [text_uniformOrderStat4],
                     [input_text_pages, text_pages, combo_box_evenodd, text_evenodd],
+                    [input_text_setPageRatios, text_setPageRatios],
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
                     [sg.Text("")], # This is just for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
