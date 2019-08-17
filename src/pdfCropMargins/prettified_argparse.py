@@ -131,7 +131,7 @@ class RedirectHelp(object):
         def do_fill(match_obj):
             """Fill function for regexp to apply to ^^f matches."""
             st = pretty_str[match_obj.start()+3:match_obj.end()-3] # get substring
-            st = re.sub("\n\s*\n", "^^p", st).split("^^p") # multi-new to para
+            st = re.sub("\n\\s*\n", "^^p", st).split("^^p") # multi-new to para
             st = [" ".join(s.split()) for s in st] # multi-whites to single
             wrapper = textwrap.TextWrapper( # indent formatted paras
                 initial_indent=" "*self.init_indent,

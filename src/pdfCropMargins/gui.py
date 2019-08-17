@@ -42,8 +42,12 @@ import os
 from . import __version__
 from . import external_program_calls as ex
 
+import warnings
+
 try:
-    import fitz
+    with warnings.catch_warnings():
+        #warnings.filterwarnings("ignore",category=DeprecationWarning)
+        import fitz
     if not list(map(int, fitz.VersionBind.split("."))) >= [1, 14, 5]:
         raise ImportError
     if not ex.python_version[0] == "2":
