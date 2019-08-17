@@ -395,7 +395,6 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
         args_dict["uniformOrderStat4"] = [args.uniformOrderStat[0]] * 4
     else:
         args_dict["uniformOrderStat4"] = [0] * 4
-    print("args_dict", args_dict)
     text_uniformOrderStat = sg.Text("uniformOrderStat",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat"))
     input_text_uniformOrderStat = sg.InputText(args_dict["uniformOrderStat"][0],
@@ -489,9 +488,9 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     text_evenodd = sg.Text("evenodd",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "evenodd"))
 
-    combo_box_evenodd = sg.Combo(["True", "False"], readonly=True,
-                                         default_value=str(args.evenodd), size=(5, 1),
-                                         key="evenodd", enable_events=True)
+    # BUG: default values not set unless they are strings!
+    combo_box_evenodd = sg.Combo(["True", "False"], readonly=True, default_value=str(args.evenodd),
+                                       size=(5, 1), key="evenodd", enable_events=True)
 
     def update_evenodd(values_dict):
         """Update the evenodd values."""
@@ -499,6 +498,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                         fun_to_apply=str_to_bool)
 
     update_funs.append(update_evenodd)
+
 
     ##
     ## Code for wait indicator text box.
@@ -606,6 +606,10 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
 
     while True:
         btn, values_dict = window.Read()
+        print("xxxxxx.....................................args")
+        for i in sorted(args.__dict__.items()):
+            print(i)
+
 
         if btn is None and (values_dict is None or values_dict["PageNumber"] is None):
             break
