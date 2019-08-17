@@ -1,5 +1,12 @@
 """
 
+This module contains the routines which calculate the bounding boxes,
+either directly by rendering the pages and analyzing the image or by calling
+Ghostscript to do it.  External programs from the external_program_calls
+module are called when required.
+
+=====================================================================
+
 pdfCropMargins -- a program to crop the margins of PDF files
 Copyright (C) 2014 Allen Barker (Allen.L.Barker@gmail.com)
 
@@ -17,13 +24,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Source code site: https://github.com/abarker/pdfCropMargins
-
-=====================================================================
-
-This module contains the routines which calculate the bounding boxes,
-either directly by rendering the pages and analyzing the image or by calling
-Ghostscript to do it.  External programs from the external_program_calls
-module are called when required.
 
 """
 

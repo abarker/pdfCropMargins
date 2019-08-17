@@ -8,6 +8,9 @@ History
 
 New features:
 
+* Added a graphical user interface (GUI) which allows PDF files to be interactively
+  cropped with different settings without having to re-render the pages.
+
 * An option ``--pageRatiosWeights`` which also takes per-margin weights to determine
   what proportion of the necessary padding to apply to each margin.
 

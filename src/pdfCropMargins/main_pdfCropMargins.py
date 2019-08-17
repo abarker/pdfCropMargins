@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 
+This script is not the starting/entry point script.  If installed with pip you
+can just run `pdf-crop-margins` to run the program.  When pip is not used the
+starting point for the pdfCropMargins program is to import function `main` from
+the `pdfCropMargins.py` script and run it.  The source directory has a
+`__main__.py` file which does this automatically when Python is invoked on the
+directory.  There is also standalone script in the `bin` directory which is the
+preferred way to run the program when it is not installed via pip.
+
+=====================================================================
+
 pdfCropMargins -- a program to crop the margins of PDF files
 Copyright (C) 2014 Allen Barker (Allen.L.Barker@gmail.com)
 
@@ -18,16 +28,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Source code site: https://github.com/abarker/pdfCropMargins
-
-=====================================================================
-
-This script is not the starting/entry point script.  If installed with pip you
-can just run `pdf-crop-margins` to run the program.  When pip is not used the
-starting point for the pdfCropMargins program is to import function `main` from
-the `pdfCropMargins.py` script and run it.  The source directory has a
-`__main__.py` file which does this automatically when Python is invoked on the
-directory.  There is also standalone script in the `bin` directory which is the
-preferred way to run the program when it is not installed via pip.
 
 """
 
@@ -727,8 +727,8 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
 ##############################################################################
 
 def process_command_line_arguments(parsed_args):
-    """Perform an initial processing on the command-line arguments.  This is called
-    first, before any PDF processing is done."""
+    """Perform an initial processing on the some of the command-line arguments.  This
+    is called first, before any PDF processing is done."""
     global args # This is global only to avoid passing it to essentially every function.
     args = parsed_args
 
@@ -1276,7 +1276,7 @@ def main_crop():
     processing on the filenames."""
     parsed_args = parse_command_line_arguments(cmd_parser)
 
-    # Process some of the command-line arguments (also sets args globally). TODO right way??
+    # Process some of the command-line arguments (also sets args globally).
     input_doc_fname, output_doc_fname = process_command_line_arguments(parsed_args)
 
     if args.gui:

@@ -3,6 +3,8 @@
 
 Code to create and execute the GUI when that option is selected.
 
+=========================================================================
+
 This code is heavily modified from example/demo code found here:
 https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Viewer.py
 Below is from original module docstring:
@@ -33,6 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
+from __future__ import print_function, absolute_import
+
 import sys
 import os
 from . import external_program_calls as ex
@@ -51,7 +55,7 @@ except ImportError:
     print("The GUI feature requires Tkinter, pySimpleGUI, and PyMuPDF at least v1.14.5."
           "\nIf installing via pip, use the optional-feature install:"
           "\n   pip install pdfCropMargins[gui]", file=sys.stderr)
-    ex.cleanup_and_exit(1)
+    raise
 
 from .main_pdfCropMargins import process_pdf_file, parse_page_range_specifiers
 
@@ -515,11 +519,12 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             sg.Column([
                     [combo_box_uniform, text_uniform, combo_box_samePageSize, text_samePageSize],
                     [input_text_percentRetain, text_percentRetain],
-                    [*input_text_percentRetain4, text_percentRetain4],
+                    # Python 2 can't unpack in list, so use comprehension.
+                    [i for i in input_text_percentRetain4] + [text_percentRetain4],
                     [input_text_absoluteOffset, text_absoluteOffset],
-                    [*input_text_absoluteOffset4, text_absoluteOffset4],
+                    [i for i in input_text_absoluteOffset4] + [text_absoluteOffset4],
                     [input_text_uniformOrderStat, text_uniformOrderStat],
-                    [*input_text_uniformOrderStat4, text_uniformOrderStat4],
+                    [i for i in input_text_uniformOrderStat4] + [text_uniformOrderStat4],
                     [input_text_pages, text_pages, combo_box_evenodd, text_evenodd],
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),]
                 ]),
@@ -531,7 +536,6 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     # Note from manual: "If you want to call an element's Update method or call
     # a Graph element's drawing primitives, you must either call Read or
     # Finalize prior to making those calls."
-    #window.Finalize()
     btn, values_dict = window.Read(timeout=0)
     #call_all_update_funs(update_funs, values_dict)
 

@@ -56,6 +56,11 @@ setup(
     description="A command-line program to crop the margins of PDF files, with many options.",
     keywords=["pdf", "crop", "margins", "resize"],
     install_requires=["wheel", "pillow", "PyPDF2"], # EITHER Pillow or PIL, NOT BOTH.
+    extras_require={
+                    "gui": ["PySimpleGUI>=4.0.0;python_version>='3.0'",
+                            "PySimpleGUI27>=2.0.0;python_version<'3.0'",
+                            "PyMuPDF>=1.14.5",],
+                    },
     url="https://github.com/abarker/pdfCropMargins",
     entry_points = {
         "console_scripts": ["pdf-crop-margins = pdfCropMargins.pdfCropMargins:main"]
