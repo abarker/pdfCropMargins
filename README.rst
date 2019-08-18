@@ -38,12 +38,12 @@ Features
 
 These are screenshots of the GUI, before and after cropping:
 
-.. image:: einstein_before_crop.png
+.. image:: doc/einstein_before_crop.png
     :width: 200px
     :align: center
     :alt: alternate text
 
-.. image:: einstein_after_crop.png
+.. image:: doc/einstein_after_crop.png
     :width: 200px
     :align: center
     :alt: alternate text
