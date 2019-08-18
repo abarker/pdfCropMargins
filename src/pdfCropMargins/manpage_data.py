@@ -262,8 +262,9 @@ cmd_parser.add_argument("-v", "--verbose", action="store_true", help="""
 cmd_parser.add_argument("-gui", "--gui", action="store_true", help="""
 
    Run the graphical user interface.  This mode allows you to interactively
-   preview and test different cropping options without having to re-render
-   the images.^^n""")
+   preview and test different cropping options without having to recalculate
+   the bounding boxes each time (which can be slow).  All the usual command-line
+   options to the program are still respected.^^n""")
 
 cmd_parser.add_argument("-p", "--percentRetain", nargs=1, type=float,
                        metavar="PCT", default=[10.0], help="""
