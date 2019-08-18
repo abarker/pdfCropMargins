@@ -39,7 +39,7 @@ Features
 This is a screenshots of the optional GUI, before and after cropping a document:
 
 .. image:: doc/combined_gui_image_900w200dpi.png
-    :width: 200px
+    :width: 900px
     :align: center
     :alt: alternate text
 
@@ -49,19 +49,19 @@ Requirements and installing
 Requirements
 ------------
 
-This program depends on either the Ghostscript program or the pdftoppm
-program being installed (and locatable) on the system.  For Window users an
-older version of a pdftoppm binary is packaged with the program and will be
-used as a fallback if no other program can be found.
+This program depends on either the Ghostscript program or the pdftoppm program
+being installed (and locatable) on the system.  For Window users an old version
+(xpdf 3.03) of a pdftoppm binary is packaged with the program and will be used
+as a fallback if no other program can be found.
    
 * **Ghostscript**
 
    Ghostscript is in the repos of most Linux distributions, and is easy to
    install on Windows and in Cygwin.  The Windows install page is `located here
-   <http://www.ghostscript.com/download/gsdnld.html>`_, and the non-commercial
-   GPL version should work fine for most people.
+   <http://www.ghostscript.com/download/gsdnld.html>`_; the non-commercial
+   GPL version on that page should work fine for most people.
 
-*  **pdftoppm**
+* **pdftoppm**
 
    The pdftoppm program is standard in most Linux distributions and is easy to
    install in Cygwin.  It is currently part of the Poppler PDF tools, so that
@@ -69,13 +69,14 @@ used as a fallback if no other program can be found.
 
    In Windows pdftoppm is not as easy to install, but a collection of PDF tools
    `found here <http://www.foolabs.com/xpdf/download.html>`_ includes pdftoppm.
-   That version is bundled with the software and will be used as a fallback if
-   neither Ghostscript nor the system pdftoppm  program can be found.
+   That version is bundled with the software and will be used as a fallback on
+   Windows if neither Ghostscript nor the system pdftoppm program can be
+   found.
 
 Installing 
 ----------
 
-The easiest way to install pdfCropMargins program is to install using pip.
+The easiest way to install pdfCropMargins program is by using pip.
 
 Ubuntu
 ~~~~~~
@@ -98,6 +99,9 @@ Windows
 ~~~~~~~
 
 TODO: Not tested.
+
+As noted above Ghostscript or pdftoppm should be installed or the program will
+fall back to an old copy of pdftoppm that is bundled with it.
 
 The ``pip`` program should be automatically installed along with Python.  If
 you cannot find the pip executable you can usually run it like this::
@@ -384,7 +388,10 @@ The output of that command follows::
    
      -gui, --gui           Run the graphical user interface. This mode allows you
                            to interactively preview and test different cropping
-                           options without having to re-render the images.
+                           options without having to recalculate the bounding
+                           boxes each time (which can be slow). All the usual
+                           command-line options to the program are still
+                           respected.
    
      -p PCT, --percentRetain PCT
                            Set the percent of margin space to retain in the
@@ -627,7 +634,11 @@ The output of that command follows::
                            finding bounding boxes. The default with '-gs' is the
                            CropBox.
    
-     -r, --restore         By default, whenever this program crops a file for the
+     -r, --restore         This is a simple undo operation which essentially
+                           undoes all the crops ever made by pdfCropMargins and
+                           returns to the original margins (provided no other
+                           program modified the Producer metadata or ArtBoxes).
+                           By default, whenever this program crops a file for the
                            first time it saves the MediaBox intersected with the
                            CropBox as the new ArtBox (since the ArtBox is rarely
                            used). The Producer metadata is checked to see if this
@@ -637,13 +648,15 @@ The output of that command follows::
                            such as in Acrobat Reader (but does not completely
                            restore the previous condition in cases where the
                            MediaBox and CropBox differed or the ArtBox had a
-                           previous value). Options such as '-u' which do not
-                           make sense in a restore operation are ignored. Note
-                           that as far as default filenames the operation is
-                           treated as just another crop operation (the default-
-                           generated output filename still has a "_cropped.pdf"
-                           suffix). The '--modifyOriginal' option (or its query
-                           variant) can be used with this option.
+                           previous value). Any options such as '-u', '-p', and
+                           '-a' which do not make sense in a restore operation
+                           are ignored. Note that as far as default filenames the
+                           operation is treated as just another crop operation
+                           (the default-generated output filename still has a
+                           "_cropped.pdf" suffix). The '--modifyOriginal' option
+                           (or its query variant) can be used with this option.
+                           Saving in the ArtBoxes can be disabled by using the '
+                           --noundosave' option.
    
      -A, --noundosave      Do not save any restore data in the ArtBox. This
                            option will need to be selected if the document
@@ -874,5 +887,4 @@ The output of that command follows::
    
    The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.  Released
    under the GNU GPL license, version 3 or later.
-   
    

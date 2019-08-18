@@ -522,13 +522,16 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info):
 
     # Check Producer metadata attribute to see if this program cropped document before.
     producer_mod = PRODUCER_MODIFIER
-    already_cropped_by_this_program = False
     old_producer_string = metadata_info.producer
     if old_producer_string and old_producer_string.endswith(producer_mod):
-        if args.verbose:
-            print("\nThe document was already cropped at least once by this program.")
-        already_cropped_by_this_program = True
         producer_mod = "" # No need to pile up suffixes each time on Producer.
+        if args.verbose:
+            print("\nThe document was already cropped at least once by pdfCropMargins.")
+        already_cropped_by_this_program = True
+    else:
+        already_cropped_by_this_program = False
+        if args.verbose:
+            print("\nThe document was not previously cropped by pdfCropMargins.")
 
     # Note that all None metadata attributes are currently set to the empty string
     # when passing along the metadata information.
@@ -555,8 +558,9 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
     if args.restore and not already_cropped_by_this_program:
         print("\nWarning from pdfCropMargins: The Producer string indicates that"
               "\neither this document was not previously cropped by pdfCropMargins"
-              "\nor else it was modified by another program after that.  Trying the"
-              "\nundo anyway...", file=sys.stderr)
+              "\nor else it was modified by another program after that.  Ignoring the"
+              "\nrestore operation.", file=sys.stderr)
+        return
 
     if args.restore and args.verbose:
         print("\nRestoring the document to margins saved for each page in the ArtBox.")
@@ -612,8 +616,6 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
         if "t" in args.boxesToSet: curr_page.trimBox = new_cropped_box
         if "a" in args.boxesToSet: curr_page.artBox = new_cropped_box
         if "b" in args.boxesToSet: curr_page.bleedBox = new_cropped_box
-
-    return
 
 def setup_output_document(input_doc, tmp_input_doc, metadata_info,
                                                     copy_document_catalog=True):

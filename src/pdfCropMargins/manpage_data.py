@@ -499,18 +499,22 @@ cmd_parser.add_argument("-f", "--fullPageBox", choices=["m", "c", "t", "a", "b"]
 
 cmd_parser.add_argument("-r", "--restore", action="store_true", help="""
 
-   By default, whenever this program crops a file for the first time it saves
-   the MediaBox intersected with the CropBox as the new ArtBox (since the
-   ArtBox is rarely used).  The Producer metadata is checked to see if this was
-   the first time.  If so, the ArtBox for each page is simply copied to the
-   MediaBox and the CropBox for the page.  This restores the earlier view of
-   the document, such as in Acrobat Reader (but does not completely restore the
-   previous condition in cases where the MediaBox and CropBox differed or the
-   ArtBox had a previous value).  Options such as '-u' which do not make sense
-   in a restore operation are ignored.  Note that as far as default filenames
-   the operation is treated as just another crop operation (the
+   This is a simple undo operation which essentially undoes all the crops ever
+   made by pdfCropMargins and returns to the original margins (provided no
+   other program modified the Producer metadata or ArtBoxes).  By default,
+   whenever this program crops a file for the first time it saves the MediaBox
+   intersected with the CropBox as the new ArtBox (since the ArtBox is rarely
+   used).  The Producer metadata is checked to see if this was the first time.
+   If so, the ArtBox for each page is simply copied to the MediaBox and the
+   CropBox for the page.  This restores the earlier view of the document, such
+   as in Acrobat Reader (but does not completely restore the previous condition
+   in cases where the MediaBox and CropBox differed or the ArtBox had a
+   previous value).  Any options such as '-u', '-p', and '-a' which do not make
+   sense in a restore operation are ignored.  Note that as far as default
+   filenames the operation is treated as just another crop operation (the
    default-generated output filename still has a "_cropped.pdf" suffix).  The
    '--modifyOriginal' option (or its query variant) can be used with this
+   option.  Saving in the ArtBoxes can be disabled by using the '--noundosave'
    option.^^n""")
 
 # TODO maybe later an option to choose which box to save to, or none, rather

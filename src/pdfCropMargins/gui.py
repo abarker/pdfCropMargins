@@ -38,6 +38,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # TODO: The restore option is restoring to the previous crop, NOT the original
 # crop.
 
+# TODO: consider setting up so if no input file argument and the gui is used then
+# the file chooser will pop up.
+
 from __future__ import print_function, absolute_import
 
 import sys
@@ -265,7 +268,6 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
     try:
         element_text = str(value_type(element.Get()))
         #element_text = str(value_type(values_dict[attr])) # Also works.
-        print(list(value_type4(element_list4[i].Get()) for i in [0,1,2,3]))
         element_text4 = [str(value_type4(element_list4[i].Get())) for i in [0,1,2,3]]
     except ValueError:
         update_all_from_args_dict() # Replace bad text with saved version.
