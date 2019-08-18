@@ -54,9 +54,6 @@ being installed (and locatable) on the system.  For Window users an old version
 (xpdf 3.03) of a pdftoppm binary is packaged with the program and will be used
 as a fallback if no other program can be found.
  
-.. Without two spaces after the initial asterisks below GitHub formats the content
-   like a blockquote or something.
-
 *  **Ghostscript**
 
    Ghostscript is in the repos of most Linux distributions, and is easy to
@@ -84,7 +81,7 @@ The easiest way to install pdfCropMargins program is by using pip.
 Ubuntu
 ~~~~~~
 
-Be sure to add ``$HOME/.local/bin`` to your ``PATH`` if you are installing via
+Be sure ``$HOME/.local/bin`` is in your ``PATH`` if you are installing via
 pip with the ``--user`` option (otherwise you need to run ``pip3`` with ``sudo``).
 
 Here is the plain install, without a GUI.  Ghostscript is only needed for the
