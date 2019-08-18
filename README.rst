@@ -43,7 +43,7 @@ This is a screenshots of the optional GUI, before and after cropping a document:
     :align: center
     :alt: alternate text
 
- .. image:: doc/combined_gui_image_900w.png
+.. image:: doc/combined_gui_image_900w.png
     :width: 200px
     :align: center
     :alt: alternate text
