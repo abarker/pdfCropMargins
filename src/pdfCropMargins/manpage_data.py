@@ -645,7 +645,8 @@ cmd_parser.add_argument("-spr", "--setPageRatios", type=str,
    equally in order to make the ratio of width to height equal the set value.
    Margins are only ever increased.  The format for the ratio is either a
    string width-to-height ratio such as '4.5:3' or else a floating point number
-   like '0.75' which is the width divided by the height.^^n""")
+   like '0.75' which is the width divided by the height.  This option can be
+   useful in some PDF viewers.^^n""")
 
 cmd_parser.add_argument("-prw", "--pageRatioWeights", nargs=4, type=float,
                         default=[1.0,1.0,1.0,1.0], metavar=("FLOAT", "FLOAT",
