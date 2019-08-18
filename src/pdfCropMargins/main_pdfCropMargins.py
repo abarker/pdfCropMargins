@@ -1061,7 +1061,7 @@ def process_pdf_file(input_doc_fname, output_doc_fname, bounding_box_list=None):
     else:
         page_nums_to_crop = all_page_nums
 
-    # Print out the pages to crop in verbose mode.
+    # In verbose mode print out information about the pages to crop.
     if args.verbose and args.pages:
         print("\nThese pages of the document will be cropped:", end="")
         p_num_list = sorted(list(page_nums_to_crop))

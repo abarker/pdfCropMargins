@@ -307,9 +307,10 @@ cmd_parser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float,
    This option is like '--absoluteOffset' except that the changes are applied
    before any bounding box calculations (or any other operations).  The
    argument is the same, in units of bp.  This is essentially equivalent to
-   first cropping the document retaining 100%% of the margins but applying an
-   absolute offset and then doing any other operations on that pre-cropped
-   file.^^n""")
+   first cropping the document retaining 100% of the margins but applying an
+   absolute offset and then performing all the other operations on that
+   pre-cropped file.  This can be used to ignore text out at the edge of the
+   margins by cropping it out before the bounding boxes are calculated.^^n""")
 
 cmd_parser.add_argument("-ap4", "--absolutePreCrop4", nargs=4, type=float,
                        metavar="BP", help="""
@@ -647,7 +648,7 @@ cmd_parser.add_argument("-spr", "--setPageRatios", type=str,
    like '0.75' which is the width divided by the height.^^n""")
 
 cmd_parser.add_argument("-prw", "--pageRatioWeights", nargs=4, type=float,
-                        default=[1,1,1,1], metavar=("FLOAT", "FLOAT",
+                        default=[1.0,1.0,1.0,1.0], metavar=("FLOAT", "FLOAT",
                         "FLOAT", "FLOAT"), help="""
 
    This option weights any whitespace added by the '--setPageRatios' argument.

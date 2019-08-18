@@ -154,7 +154,7 @@ def get_help_text_string_for_tooltip(cmd_parser, option_string):
     """Extract the help message for an option from an argparse command parser.
     This gets the argparse help string to use as a tooltip."""
     import textwrap
-    wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=75)
+    wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=45)
     for a in cmd_parser._actions:
         if "--" + option_string in a.option_strings:
             help_text = a.help
@@ -226,12 +226,35 @@ def update_combo_box(values_dict, element, element_key, args, attr, fun_to_apply
     element.Update(str(element_value))
     setattr(args, attr, element_value)
 
+def update_4_values(element_list, attr, args_dict, values_dict, value_type=float):
+    """Update four values from a 4-value argument to argparse."""
+    args_attr = args_dict[attr]
+
+    def update_all_from_args_dict():
+        for i in [0,1,2,3]:
+            update_value_and_return_it(element_list[i], value=args_attr[i])
+
+    try:
+        element_text4 = [str(value_type(element_list[i].Get())) for i in [0,1,2,3]]
+    except ValueError:
+        update_all_from_args_dict() # Replace bad text with saved version.
+        return
+
+    for i in [0,1,2,3]:
+        args_attr[i] = update_value_and_return_it(element_list[i],
+                                                    fun_to_apply=value_type)
+
+    # Update all, to convert forms like 5 to 5.0 (which were equal above).
+    update_all_from_args_dict()
+
+
 def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
                                  values_dict, value_type=to_float_or_NA,
                                  value_type4=float):
     """Update all the value for pairs such as `percentRetain` and
     `percentRetain4`, keeping the versions with one vs. four arguments
     synchronized."""
+    print("\ninside update_paired_1_and_4_values", attr, attr4)
     args_attr = args_dict[attr]
     args_attr4 = args_dict[attr4]
 
@@ -241,10 +264,16 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
             update_value_and_return_it(element_list4[i], value=args_attr4[i])
 
     try:
+        print("read single value:", element.Get())
+        print("also single value:", value_type(values_dict[attr]))
         element_text = str(value_type(element.Get()))
-        #velement_text = str(value_type(values_dict[attr])) # Also works.
+        #element_text = str(value_type(values_dict[attr])) # Also works.
+        print("\n", attr)
+        print(list(value_type4(element_list4[i].Get()) for i in [0,1,2,3]))
         element_text4 = [str(value_type4(element_list4[i].Get())) for i in [0,1,2,3]]
+        print(element_text4)
     except ValueError:
+        print("got exception in update_paired_1_and_4_values")
         update_all_from_args_dict() # Replace bad text with saved version.
         return
     # See if the element value changed.
@@ -415,9 +444,11 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
 
     def update_uniformOrderStat_values(values_dict):
         """Update both the uniformOrderStat value and the uniformOrderStat4 values."""
+        print("\nxxx updating uniformOrderStat")
         update_paired_1_and_4_values(input_text_uniformOrderStat,
-              input_text_uniformOrderStat4, "uniformOrderStat", "uniformOrderStat4", args_dict, values_dict,
-              value_type=int, value_type4=int)
+              input_text_uniformOrderStat4, "uniformOrderStat",
+              "uniformOrderStat4", args_dict, values_dict,
+              value_type=to_int_or_NA, value_type4=int)
         # Copy backing values to the actual args object.
         args.uniformOrderStat = args_dict["uniformOrderStat"]
         args.uniformOrderStat4 = args_dict["uniformOrderStat4"]
@@ -431,7 +462,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     text_uniform = sg.Text("uniform", pad=((0,20), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniform"))
 
-    # BUG: default values not set unless they are strings!
+    # BUG in PySimpleGUI?  Default values not set unless they are strings!
     combo_box_uniform = sg.Combo(["True", "False"], readonly=True, default_value=str(args.uniform),
                                        size=(5, 1), key="uniform", enable_events=True)
 
@@ -539,8 +570,6 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     ## Code for restore.
     ##
 
-    # TODO: need to calc bounding boxes if restore is first option...
-
     text_restore = sg.Text("restore",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "restore"))
 
@@ -554,6 +583,56 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                         fun_to_apply=str_to_bool)
 
     update_funs.append(update_restore)
+
+    ##
+    ## Code for pageRatioWeights options.
+    ##
+
+    args_dict["pageRatioWeights"] = args.pageRatioWeights
+    text_pageRatioWeights = sg.Text("pageRatioWeights",
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "pageRatioWeights"))
+    input_text_pageRatioWeights = [sg.InputText(args_dict["pageRatioWeights"][i], size=(5, 1),
+                                 do_not_clear=True, key="pageRatioWeights_{}".format(i))
+                                 for i in [0,1,2,3]]
+
+    def update_pageRatioWeights_values(values_dict):
+        """Update both the pageRatioWeights value and the pageRatioWeights values."""
+        update_4_values(input_text_pageRatioWeights, "pageRatioWeights", args_dict, values_dict)
+
+        # Copy backing values to the actual args object.
+        args.pageRatioWeights = args_dict["pageRatioWeights"]
+
+    update_funs.append(update_pageRatioWeights_values)
+
+    ##
+    ## Code for absolutePreCrop options.
+    ##
+
+    args_dict["absolutePreCrop"] = args.absolutePreCrop
+    if len(set(args.absolutePreCrop4)) != 1: # Set initial value if all the same.
+        args_dict["absolutePreCrop"] = ["N/A"]
+    text_absolutePreCrop = sg.Text("absolutePreCrop",
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "absolutePreCrop"))
+    input_text_absolutePreCrop = sg.InputText(args_dict["absolutePreCrop"][0],
+                                 size=(5, 1), do_not_clear=True, key="absolutePreCrop")
+
+    # Code for absolutePreCrop4.
+    args_dict["absolutePreCrop4"] = args.absolutePreCrop4
+    text_absolutePreCrop4 = sg.Text("absolutePreCrop4",
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "absolutePreCrop4"))
+    input_text_absolutePreCrop4 = [sg.InputText(args_dict["absolutePreCrop4"][i], size=(5, 1),
+                                 do_not_clear=True, key="absolutePreCrop4_{}".format(i))
+                                 for i in [0,1,2,3]]
+
+    def update_absolutePreCrop_values(values_dict):
+        """Update both the absolutePreCrop value and the absolutePreCrop4 values."""
+        update_paired_1_and_4_values(input_text_absolutePreCrop,
+                    input_text_absolutePreCrop4, "absolutePreCrop", "absolutePreCrop4", args_dict, values_dict)
+        # Copy backing values to the actual args object.
+        args.absolutePreCrop = args_dict["absolutePreCrop"]
+        args.absolutePreCrop4 = args_dict["absolutePreCrop4"]
+
+    update_funs.append(update_absolutePreCrop_values)
 
     ##
     ## Code for wait indicator text box.
@@ -582,11 +661,13 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             sg.Text("({})      ".format(page_count)), # Show max page count.
             sg.Button("Toggle Zoom"),
             sg.Text("(arrow keys navigate while zooming)"),
-            sg.Text(" "*20 + "Hover to show option-description tooltips."),
             ],
         [
             image_element,
             sg.Column([
+                    [sg.Text("Quadruples are left, bottom, right, and top margins.\n"
+                             "Hover to show option-description tooltips.",
+                             relief=sg.RELIEF_GROOVE, pad=(None, (0,15)))],
                     [combo_box_uniform, text_uniform, combo_box_samePageSize, text_samePageSize],
                     [input_text_percentRetain, text_percentRetain],
                     # Python 2 can't unpack in list, so use comprehension.
@@ -597,6 +678,9 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                     [i for i in input_text_uniformOrderStat4] + [text_uniformOrderStat4],
                     [input_text_pages, text_pages, combo_box_evenodd, text_evenodd],
                     [input_text_setPageRatios, text_setPageRatios, combo_box_restore, text_restore],
+                    [i for i in input_text_pageRatioWeights] + [text_pageRatioWeights],
+                    [input_text_absolutePreCrop, text_absolutePreCrop],
+                    [i for i in input_text_absolutePreCrop4] + [text_absolutePreCrop4],
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
                     [sg.Text("")], # This is just for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
