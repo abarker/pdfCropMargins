@@ -36,17 +36,10 @@ Features
 - Can deal with at least simple cases of password-encrypted files.
 - Works with Python 2 and Python 3.
 
-This is a screenshots of the optional GUI, before cropping:
+This is a screenshots of the optional GUI, before and after cropping a document:
 
-.. image:: doc/einstein_before_crop.png
-    :width: 75px
-    :align: center
-    :alt: alternate text
-
-This is the same document after cropping:
-
-.. image:: doc/einstein_after_crop.png
-    :width: 75px
+.. image:: doc/combined_gui_image_500w.png
+    :width: 200px
     :align: center
     :alt: alternate text
 
