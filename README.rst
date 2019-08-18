@@ -53,15 +53,18 @@ This program depends on either the Ghostscript program or the pdftoppm program
 being installed (and locatable) on the system.  For Window users an old version
 (xpdf 3.03) of a pdftoppm binary is packaged with the program and will be used
 as a fallback if no other program can be found.
-   
-* **Ghostscript**
+ 
+.. Without two spaces after the initial asterisks below GitHub formats the content
+   like a blockquote or something.
+
+*  **Ghostscript**
 
    Ghostscript is in the repos of most Linux distributions, and is easy to
    install on Windows and in Cygwin.  The Windows install page is `located here
    <http://www.ghostscript.com/download/gsdnld.html>`_; the non-commercial
    GPL version on that page should work fine for most people.
 
-* **pdftoppm**
+*  **pdftoppm**
 
    The pdftoppm program is standard in most Linux distributions and is easy to
    install in Cygwin.  It is currently part of the Poppler PDF tools, so that
