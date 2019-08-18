@@ -60,7 +60,7 @@ try:
         import PySimpleGUI27 as sg
         import Tkinter as tk
 except ImportError:
-    print("The GUI feature requires Tkinter, pySimpleGUI, and PyMuPDF at least v1.14.5."
+    print("\nThe GUI feature requires Tkinter, pySimpleGUI, and PyMuPDF at least v1.14.5."
           "\nIf installing via pip, use the optional-feature install:"
           "\n   pip install pdfCropMargins[gui]", file=sys.stderr)
     raise
