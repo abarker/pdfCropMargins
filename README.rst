@@ -44,11 +44,11 @@ This is a screenshots of the optional GUI, before cropping:
     :alt: alternate text
 
 This is the same document after cropping:
+
 .. image:: doc/einstein_after_crop.png
     :width: 75px
     :align: center
     :alt: alternate text
-
 
 Requirements and installing
 ===========================
