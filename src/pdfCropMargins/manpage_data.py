@@ -301,13 +301,15 @@ cmd_parser.add_argument("-a4", "-aaaa", "--absoluteOffset4", nargs=4, type=float
    offset values, respectively.  See the '--absoluteOffset' option for
    information on the units.^^n""")
 
+# Note the percent sign in text below needs to be a double percent or argument
+# parsing breaks.
 cmd_parser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float,
                        metavar="BP", default=[0.0], help="""
 
    This option is like '--absoluteOffset' except that the changes are applied
    before any bounding box calculations (or any other operations).  The
    argument is the same, in units of bp.  This is essentially equivalent to
-   first cropping the document retaining 100% of the margins but applying an
+   first cropping the document retaining 100%% of the margins but applying an
    absolute offset and then performing all the other operations on that
    pre-cropped file.  This can be used to ignore text out at the edge of the
    margins by cropping it out before the bounding boxes are calculated.^^n""")

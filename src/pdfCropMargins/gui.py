@@ -35,8 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-# TODO: Maybe add setPageRatios, pageRatioWeights, absolutePreCrop, restore.
-# TODO: Make it so in gui mode no file needs to be passed in.
+# TODO: The restore option is restoring to the previous crop, NOT the original
+# crop.
 
 from __future__ import print_function, absolute_import
 
@@ -254,7 +254,6 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
     """Update all the value for pairs such as `percentRetain` and
     `percentRetain4`, keeping the versions with one vs. four arguments
     synchronized."""
-    print("\ninside update_paired_1_and_4_values", attr, attr4)
     args_attr = args_dict[attr]
     args_attr4 = args_dict[attr4]
 
@@ -264,16 +263,11 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
             update_value_and_return_it(element_list4[i], value=args_attr4[i])
 
     try:
-        print("read single value:", element.Get())
-        print("also single value:", value_type(values_dict[attr]))
         element_text = str(value_type(element.Get()))
         #element_text = str(value_type(values_dict[attr])) # Also works.
-        print("\n", attr)
         print(list(value_type4(element_list4[i].Get()) for i in [0,1,2,3]))
         element_text4 = [str(value_type4(element_list4[i].Get())) for i in [0,1,2,3]]
-        print(element_text4)
     except ValueError:
-        print("got exception in update_paired_1_and_4_values")
         update_all_from_args_dict() # Replace bad text with saved version.
         return
     # See if the element value changed.
@@ -444,7 +438,6 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
 
     def update_uniformOrderStat_values(values_dict):
         """Update both the uniformOrderStat value and the uniformOrderStat4 values."""
-        print("\nxxx updating uniformOrderStat")
         update_paired_1_and_4_values(input_text_uniformOrderStat,
               input_text_uniformOrderStat4, "uniformOrderStat",
               "uniformOrderStat4", args_dict, values_dict,

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 
 Only use this script to run pdfCropMargins from the source directory itself.

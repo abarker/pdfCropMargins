@@ -56,8 +56,8 @@ used as a fallback if no other program can be found.
    
 * **Ghostscript**
 
-   Ghostscript is standard in most Linux distributions, and is easy to install
-   on Windows and in Cygwin.  The Windows install page is `located here
+   Ghostscript is in the repos of most Linux distributions, and is easy to
+   install on Windows and in Cygwin.  The Windows install page is `located here
    <http://www.ghostscript.com/download/gsdnld.html>`_, and the non-commercial
    GPL version should work fine for most people.
 
@@ -69,30 +69,58 @@ used as a fallback if no other program can be found.
 
    In Windows pdftoppm is not as easy to install, but a collection of PDF tools
    `found here <http://www.foolabs.com/xpdf/download.html>`_ includes pdftoppm.
+   That version is bundled with the software and will be used as a fallback if
+   neither Ghostscript nor the system pdftoppm  program can be found.
 
-Installing
+Installing 
 ----------
 
-The easiest way to install pdfCropMargins is to install using pip::
+The easiest way to install pdfCropMargins program is to install using pip.
 
-   pip install pdfCropMargins --user
+Ubuntu
+~~~~~~
 
-In order to also use the graphical user interface (GUI) with the
-``--gui`` option install like this::
+Be sure to add ``$HOME/.local/bin`` to your ``PATH`` if you are installing via
+pip with the ``--user`` option (otherwise you need to run ``pip3`` with ``sudo``).
 
-   pip install pdfCropMargins[gui] --user
+Here is the plain install, without a GUI.  Ghostscript is only needed for the
+features that require it::
+
+   sudo apt install python3-pip ghostscript poppler-utils
+   pip3 install pdfCropMargins --user --upgrade
+
+This is the install with the GUI::
+
+   sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
+   pip3 install pdfCropMargins[gui] --user --upgrade
+
+Windows
+~~~~~~~
+
+TODO: Not tested.
 
 The ``pip`` program should be automatically installed along with Python.  If
-you cannot find pip you can usually also run it like this::
+you cannot find the pip executable you can usually run it like this::
 
-   python -m pip install pdfCropMargins[gui] --user
+   python -m pip <arguments-to-pip>
+
+To install without the GUI use::
+
+   pip install pdfCropMargins --user --upgrade
+
+To install with the GUI use::
+
+   pip install pdfCropMargins[gui] --user --upgrade
+
+Running from the source distribution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The pdfCropMargins program can also be run directly from its source code
 directory tree, provided the dependencies are installed.  In that case the
 PyPDF2 package must also be installed and available in the Python distribution
 that will be used to run pdfCropMargins.  If Ghostscript is unavailable as a
 system command then the Pillow imaging package is also necessary in the Python
-distribution.  It is also needed for certain advanced features which use
+distribution.  Pillow is also needed for certain advanced features which use
 explicit image analysis, so it is a good idea to install it in Python.
 Assuming the dependencies are satisfied, run the program as
 ``bin/pdfCropMargins.py``, where the path is relative to the top of the source
@@ -401,8 +429,10 @@ The output of that command follows::
                            is the same, in units of bp. This is essentially
                            equivalent to first cropping the document retaining
                            100% of the margins but applying an absolute offset
-                           and then doing any other operations on that pre-
-                           cropped file.
+                           and then performing all the other operations on that
+                           pre-cropped file. This can be used to ignore text out
+                           at the edge of the margins by cropping it out before
+                           the bounding boxes are calculated.
    
      -ap4 BP BP BP BP, --absolutePreCrop4 BP BP BP BP
                            This is the same as '--absolutePreCrop' except that
@@ -424,9 +454,9 @@ The output of that command follows::
                            individually) to some of the pages. If the pages of
                            the original document are all the same size then the
                            cropped pages will again all be the same size. The '--
-                           samePageSize' option can also be used in combination
-                           with this option to force all pages to be the same
-                           size after cropping.
+                           samePageSize' option can be used in combination with
+                           this option to force all pages to be the same size
+                           after cropping.
    
      -m INT, --uniformOrderStat INT
                            Choosing this option implies the '--uniform' option,
@@ -761,7 +791,8 @@ The output of that command follows::
                            only ever increased. The format for the ratio is
                            either a string width-to-height ratio such as '4.5:3'
                            or else a floating point number like '0.75' which is
-                           the width divided by the height.
+                           the width divided by the height. This option can be
+                           useful in some PDF viewers.
    
      -prw FLOAT FLOAT FLOAT FLOAT, --pageRatioWeights FLOAT FLOAT FLOAT FLOAT
                            This option weights any whitespace added by the '--
@@ -843,4 +874,5 @@ The output of that command follows::
    
    The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.  Released
    under the GNU GPL license, version 3 or later.
+   
    
