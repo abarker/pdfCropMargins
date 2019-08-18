@@ -108,6 +108,9 @@ you cannot find the pip executable you can usually run it like this::
 
    python -m pip <arguments-to-pip>
 
+Note that on some Windows installs the executable is ``py`` rather than
+``python``.
+
 To install without the GUI use::
 
    pip install pdfCropMargins --user --upgrade
