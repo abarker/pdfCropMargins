@@ -894,6 +894,6 @@ The output of that command follows::
                            the program is in a nonstandard location.
    
    
-   The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.  Released
-   under the GNU GPL license, version 3 or later.
+   The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.
+   Released under the GNU GPL license, version 3 or later.
    
