@@ -66,22 +66,31 @@ the program and clean up.
 # 5) An option 'safeAbsolute' which can be turned on to keep absolute crops
 # from exceeding the bounding box sizes.  But need to define semantics with
 # and without uniform cropping and same page size.
+#
+# 6) Unzip a file if a zipped file is detected.  Maybe a `tryUnzip` option.
 
 from __future__ import print_function, division, absolute_import
 import sys
+import signal
 
 def main():
     """Run main, catching any exceptions and cleaning up the temp directories."""
-
     cleanup_and_exit = sys.exit # Function to exit (in finally) before the import.
     exit_code = 0
 
     # Imports are done here inside the try block so some ugly (and useless)
     # traceback info is avoided on user's ^C (KeyboardInterrupt, EOFError on Windows).
     try:
+
         # This import creates a tmp dir as a side effect.
         # Switch cleanup_and_exit to the real one, which deletes temp dir.
         from .external_program_calls import cleanup_and_exit
+
+        # Call cleanup_and_exit at system exit, even with signal kills.
+        # (This could alternately be called just after defining the function.)
+        # Note SIGINT for Ctrl-C is already handled fine by the finally.
+        for s in [signal.SIGABRT, signal.SIGTERM, signal.SIGHUP]:
+            signal.signal(s, cleanup_and_exit)
 
         # Below import also imports external_program_calls, don't do it first.
         from .main_pdfCropMargins import main_crop

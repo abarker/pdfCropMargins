@@ -35,11 +35,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-# TODO: The restore option is restoring to the previous crop, NOT the original
-# crop.
-
 # TODO: consider setting up so if no input file argument and the gui is used then
 # the file chooser will pop up.
+
+# TODO: Page ratio weights should really be paired with the page ratio setting.
+# Also, pages could display the full range at first maybe, and the ratio could
+# be set to 1:1 maybe in the display.
+
+# TODO: Maybe use spinner for orderStat, checkbox for uniform and samepagesize.
+# Maybe not.
 
 from __future__ import print_function, absolute_import
 
@@ -70,6 +74,7 @@ except ImportError:
 
 from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
                                   parse_page_ratio_argument)
+from .external_program_calls import cleanup_and_exit
 
 #
 # Helper functions.
@@ -93,7 +98,15 @@ def open_document(input_doc_fname):
     """Return the document opened by fitz (PyMuPDF)."""
     if not input_doc_fname:
         input_doc_fname = get_filename()
-    document = fitz.open(input_doc_fname)
+    try:
+        document = fitz.open(input_doc_fname)
+    except RuntimeError:
+        print("\nError in pdfCropMargins: The PyMuPDF program could not read"
+              " the document\n   '{}'\nin order to display it in the GUI.   If you have"
+              " Ghostscript installed\nconsider running pdfCropMargins with the"
+              " '--gsFix' option to attempt to repair it."
+              .format(input_doc_fname), file=sys.stderr)
+        ex.cleanup_and_exit(1)
     page_count = len(document)
     return document, page_count
 
@@ -738,6 +751,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     zoom = False
     did_crop = False
     bounding_box_list = None
+    last_pre_crop = None
 
     while True:
         btn, values_dict = window.Read()
@@ -802,6 +816,12 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             #        location=(100,100))
             wait_indicator_text.Update(visible=True)
             window.Finalize()
+
+            # If the pre-crop values changed then bounding boxes must be redone.
+            all_pre_crop = args.absolutePreCrop + args.absolutePreCrop4
+            if last_pre_crop != all_pre_crop:
+                bounding_box_list = None # Kill saved bounding boxes.
+                last_pre_crop = all_pre_crop
 
             # Do the crop, saving the bounding box list.
             bounding_box_list = process_pdf_file(input_doc_fname, output_doc_fname,

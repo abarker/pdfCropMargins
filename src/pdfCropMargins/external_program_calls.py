@@ -207,8 +207,11 @@ def remove_program_temp_directory():
                 print("Cleaning up temp dir...", file=sys.stderr)
                 raise
 
-def cleanup_and_exit(exit_code):
-    """Exit the program, after cleaning up the temporary directory."""
+def cleanup_and_exit(exit_code, stack_frame=None):
+    """Exit the program, after cleaning up the temporary directory.  The `stack_frame`
+    argument is for when `signal.signal` calls the function."""
+    #if stack_frame is not None:
+    #    print("Signal caught.")
     remove_program_temp_directory()
     sys.exit(exit_code)
 
