@@ -53,10 +53,9 @@ General argparse reminders and warnings:
 from __future__ import print_function, division, absolute_import
 
 import argparse
-cmd_parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-    description=
-    """
+import sys
+
+description = """
 Description:
 
 ^^f
@@ -223,11 +222,19 @@ Description:
    negative absolute offset is used).  When a delta value is negative the
    corresponding margin size will increase.
 ^^f
-   """,
+   """
 
-    epilog=
-    """The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.  Released
-under the GNU GPL license, version 3 or later.""")
+epilog = """The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.
+Released under the GNU GPL license, version 3 or later."""
+
+if sys.version_info[0:3] >= (3,5):
+    cmd_parser = argparse.ArgumentParser(allow_abbrev=False,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=description, epilog=epilog)
+else:
+    cmd_parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=description, epilog=epilog)
 
 cmd_parser.add_argument("pdf_input_doc", nargs="+", metavar="PDF_FILE", help="""
 
@@ -728,4 +735,5 @@ cmd_parser.add_argument("-ppp", "--pdftoppmPath", type=str, metavar="PATH",
    Pass in a pathname to the pdftoppm executable that the program should use.
    No globbing is done.  Useful when the program is in a nonstandard
    location.^^n""")
+
 
