@@ -50,9 +50,9 @@ Requirements
 ------------
 
 This program depends on either the Ghostscript program or the pdftoppm program
-being installed (and locatable) on the system.  For Window users an old version
-(xpdf 3.03) of a pdftoppm binary is packaged with the program and will be used
-as a fallback if no other program can be found.
+being installed (and locatable) on the system.  For Window users a version of a
+pdftoppm binary (xpdf 4.01.01) is packaged with the program and will be used as
+a fallback if no other program can be found.
  
 *  **Ghostscript**
 
@@ -81,8 +81,9 @@ The easiest way to install pdfCropMargins program is by using pip.
 Ubuntu
 ~~~~~~
 
-Be sure ``$HOME/.local/bin`` is in your ``PATH`` if you are installing via
-pip with the ``--user`` option (otherwise you need to run ``pip3`` with ``sudo``).
+Be sure ``$HOME/.local/bin`` is in your system ``PATH`` if you are installing
+via pip with the ``--user`` option.  (To install system-wide without ``--user``
+the ``pip3`` command below would also need to be run with ``sudo``.)
 
 Here is the plain install, without a GUI.  Ghostscript is only needed for the
 features that require it::
@@ -98,10 +99,8 @@ This is the install with the GUI::
 Windows
 ~~~~~~~
 
-TODO: Not tested.
-
 As noted above Ghostscript or pdftoppm should be installed or the program will
-fall back to an old copy of pdftoppm that is bundled with it.
+fall back to a copy of pdftoppm that is bundled with it.
 
 The ``pip`` program should be automatically installed along with Python.  If
 you cannot find the pip executable you can usually run it like this::
@@ -113,11 +112,18 @@ Note that on some Windows installs the executable is ``py`` rather than
 
 To install without the GUI use::
 
-   pip install pdfCropMargins --user --upgrade
+   pip install pdfCropMargins --upgrade
 
 To install with the GUI use::
 
-   pip install pdfCropMargins[gui] --user --upgrade
+   pip install pdfCropMargins[gui] --upgrade
+
+In order for the command ``pdf-crop-margins`` to work the ``bin`` directory
+containing it must be on the Windows ``PATH``.  The system-wide ``bin``
+directory should have been automatically modified if you checked the box to
+modify ``PATH`` when you installed Python, otherwise it should be added.  (If
+you install with the ``--user`` option then you need to be sure the *local*
+Python ``bin`` directory is in the Windows ``PATH``.)
 
 Running from the source distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
