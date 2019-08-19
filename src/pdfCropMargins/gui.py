@@ -461,8 +461,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
               "uniformOrderStat4", args_dict, values_dict,
               value_type=to_int_or_NA, value_type4=int)
         # Copy backing values to the actual args object.
-        args.uniformOrderStat = args_dict["uniformOrderStat"]
-        args.uniformOrderStat4 = args_dict["uniformOrderStat4"]
+        args.uniformOrderStat = [] # Not needed with uniformOrderStat4 always set.
+        if all(i == 0 for i in args_dict["uniformOrderStat4"]):
+            args.uniformOrderStat4 = [] # Need to empty it, since it implies uniform option.
+        else:
+            args.uniformOrderStat4 = args_dict["uniformOrderStat4"]
 
     update_funs.append(update_uniformOrderStat_values)
 
@@ -827,6 +830,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                 last_pre_crop = all_pre_crop
 
             # Do the crop, saving the bounding box list.
+            print("\nDEBUG xxx args before crop:", args)
             bounding_box_list = process_pdf_file(input_doc_fname, fixed_input_doc_fname,
                                                  output_doc_fname, bounding_box_list)
             if args.restore:
