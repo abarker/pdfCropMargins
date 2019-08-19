@@ -43,11 +43,8 @@ This is a screenshots of the optional GUI, before and after cropping a document:
     :align: center
     :alt: alternate text
 
-Requirements and installing
-===========================
-
 Requirements
-------------
+============
 
 This program depends on either the Ghostscript program or the pdftoppm program
 being installed (and locatable) on the system.  For Window users a version of a
@@ -74,12 +71,12 @@ a fallback if no other program can be found.
    found.
 
 Installing 
-----------
+==========
 
 The easiest way to install pdfCropMargins program is by using pip.
 
 Ubuntu
-~~~~~~
+------
 
 Be sure ``$HOME/.local/bin`` is in your system ``PATH`` if you are installing
 via pip with the ``--user`` option.  (To install system-wide without ``--user``
@@ -97,7 +94,7 @@ This is the install with the GUI::
    pip3 install pdfCropMargins[gui] --user --upgrade
 
 Windows
-~~~~~~~
+-------
 
 As noted above Ghostscript or pdftoppm should be installed or the program will
 fall back to a copy of pdftoppm that is bundled with it.
@@ -126,7 +123,7 @@ you install with the ``--user`` option then you need to be sure the *local*
 Python ``bin`` directory is in the Windows ``PATH``.)
 
 Running from the source distribution
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------
 
 The pdfCropMargins program can also be run directly from its source code
 directory tree, provided the dependencies are installed.  In that case the
