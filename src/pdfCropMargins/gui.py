@@ -35,12 +35,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-# TODO: consider setting up so if no input file argument and the gui is used then
+# TODO: Pre-crops are (were?) behaving strangely.  Crop with 0% retain, then slowly increase
+# the pre-crop amount.  It shouldn't make a difference for small pre-crop form
+# most files, but it seems to keep cropping closer.
+
+# TODO: Consider setting up so if no input file argument and the gui is used then
 # the file chooser will pop up.
 
 # TODO: Page ratio weights should really be paired with the page ratio setting.
 # Also, pages could display the full range at first maybe, and the ratio could
-# be set to 1:1 maybe in the display.
+# maybe be set to 1:1 in the display.
 
 # TODO: Maybe use spinner for orderStat, checkbox for uniform and samepagesize.
 # Maybe not.
@@ -49,10 +53,9 @@ from __future__ import print_function, absolute_import
 
 import sys
 import os
+import warnings
 from . import __version__
 from . import external_program_calls as ex
-
-import warnings
 
 try:
     with warnings.catch_warnings():
@@ -264,7 +267,6 @@ def update_4_values(element_list, attr, args_dict, values_dict, value_type=float
 
     # Update all, to convert forms like 5 to 5.0 (which were equal above).
     update_all_from_args_dict()
-
 
 def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
                                  values_dict, value_type=to_float_or_NA,
@@ -649,6 +651,76 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     update_funs.append(update_absolutePreCrop_values)
 
     ##
+    ## Code for threshold option.
+    ##
+
+    args_dict["threshold"] = int(args.threshold)
+    text_threshold = sg.Text("threshold", pad=((0,5), None),
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "threshold"))
+    input_num_threshold = sg.InputText(args_dict["threshold"],
+                                 size=(3, 1), do_not_clear=True, key="threshold")
+
+    def update_threshold_values(values_dict):
+        """Update the threshold value."""
+        try:
+            value = int(values_dict["threshold"])
+            args_dict["threshold"] = value
+        except ValueError:
+            value = args_dict["threshold"]
+        input_num_threshold.Update(value)
+        # Copy backing value to the actual args object.
+        args.threshold = args_dict["threshold"]
+
+    update_funs.append(update_threshold_values)
+
+    ##
+    ## Code for numBlurs option.
+    ##
+
+    args_dict["numBlurs"] = int(args.numBlurs)
+    text_numBlurs = sg.Text("numBlurs", pad=((0,5), None),
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "numBlurs"))
+    input_num_numBlurs = sg.InputText(args_dict["numBlurs"],
+                                 size=(2, 1), do_not_clear=True, key="numBlurs")
+
+    def update_numBlurs_values(values_dict):
+        """Update the numBlurs value."""
+        try:
+            value = int(values_dict["numBlurs"])
+            args_dict["numBlurs"] = value
+        except ValueError:
+            value = args_dict["numBlurs"]
+        input_num_numBlurs.Update(value)
+        # Copy backing value to the actual args object.
+        args.numBlurs = args_dict["numBlurs"]
+
+    update_funs.append(update_numBlurs_values)
+
+    ##
+    ## Code for numSmooths option.
+    ##
+
+    args_dict["numSmooths"] = int(args.numSmooths)
+    text_numSmooths = sg.Text("numSmooths", pad=((0,5), None),
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "numSmooths"))
+    input_num_numSmooths = sg.InputText(args_dict["numSmooths"],
+                                 size=(2, 1), do_not_clear=True, key="numSmooths")
+
+    def update_numSmooths_values(values_dict):
+        """Update the numSmooths value."""
+        try:
+            value = int(values_dict["numSmooths"])
+            args_dict["numSmooths"] = value
+        except ValueError:
+            value = args_dict["numSmooths"]
+        input_num_numSmooths.Update(value)
+        # Copy backing value to the actual args object.
+        args.numSmooths = args_dict["numSmooths"]
+
+    update_funs.append(update_numSmooths_values)
+
+
+    ##
     ## Code for wait indicator text box.
     ##
 
@@ -695,6 +767,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     [i for i in input_text_pageRatioWeights] + [text_pageRatioWeights],
                     [input_text_absolutePreCrop, text_absolutePreCrop],
                     [i for i in input_text_absolutePreCrop4] + [text_absolutePreCrop4],
+                    [input_num_threshold, text_threshold, input_num_numBlurs,
+                        text_numBlurs, input_num_numSmooths, text_numSmooths],
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
                     [sg.Text("")], # This is just for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
@@ -757,7 +831,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     zoom = False
     did_crop = False
     bounding_box_list = None
+
     last_pre_crop = None
+    last_threshold = None
+    last_numSmooths = None
+    last_numBlurs = None
 
     while True:
         btn, values_dict = window.Read()
@@ -828,6 +906,16 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             if last_pre_crop != all_pre_crop:
                 bounding_box_list = None # Kill saved bounding boxes.
                 last_pre_crop = all_pre_crop
+            # New thresholding params also require recalculation of bounding boxes.
+            if last_threshold != args.threshold:
+                bounding_box_list = None
+                last_threshold = args.threshold
+            if last_numBlurs != args.numBlurs:
+                bounding_box_list = None
+                last_numBlurs = args.numBlurs
+            if last_numSmooths != args.numSmooths:
+                bounding_box_list = None
+                last_numSmooths = args.numSmooths
 
             # Do the crop, saving the bounding box list.
             print("\nDEBUG xxx args before crop:", args)

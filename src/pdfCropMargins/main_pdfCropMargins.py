@@ -172,24 +172,25 @@ def mod_box_for_rotation(box, angle, undo=False):
     In the case of 90 degree clockwise rotation the left really modifies the
     top, the top really modifies right, and so forth.  In order for the options
     like '--percentRetain4' and '--absoluteOffset4' to work as expected the
-    values need to be shifted to match any "hidden" rotations on any page."""
+    values need to be shifted to match any "hidden" rotations on any page.
+    The `box` argument is a 4-tuple of left, bottom, right, top values."""
 
     def rotate_ninety_degrees_clockwise(box, n):
+        """The `n` here is the number of 90deg rotations to do."""
         if n == 0: return box
         box = rotate_ninety_degrees_clockwise(box, n-1)
         return [box[1], box[2], box[3], box[0]]
 
     # These are for clockwise, swap do and undo to reverse.
-    do_map = {0: 0, 90: 1, 180: 2, 270: 3}
+    do_map = {0: 0, 90: 1, 180: 2, 270: 3} # Map angle to num of 90deg rotations.
     undo_map = {0: 0, 90: 3, 180: 2, 270: 1}
 
     if not undo:
         return rotate_ninety_degrees_clockwise(box, do_map[angle])
     else:
         return rotate_ninety_degrees_clockwise(box, undo_map[angle])
-    return
 
-def get_full_page_box_assigning_media_and_crop(page):
+def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
     """This returns whatever PDF box was selected (by the user option
     '--fullPageBox') to represent the full page size.  All cropping is done
     relative to this box.  The default selection option is the MediaBox
@@ -198,6 +199,7 @@ def get_full_page_box_assigning_media_and_crop(page):
     sets the MediaBox and CropBox to the full-page size and saves the old values
     in the same page namespace, and so it should only be called once for each
     page.  It returns a RectangleObject box."""
+    # Note skip_pre_crop option isn't used, may or may not be useful.
 
     # Find the page rotation angle (degrees).
     # Note rotation is clockwise, and four values are allowed: 0 90 180 270
@@ -235,20 +237,22 @@ def get_full_page_box_assigning_media_and_crop(page):
 
         first_loop = False
 
-    # Do any absolute pre-cropping specified for the page (after modifying any
-    # absolutePreCrop4 arguments to take into account rotations to the page).
-    a = mod_box_for_rotation(args.absolutePreCrop4, rotation)
-    full_box = RectangleObject([float(full_box.lowerLeft[0]) + a[0],
-                                float(full_box.lowerLeft[1]) + a[1],
-                                float(full_box.upperRight[0]) - a[2],
-                                float(full_box.upperRight[1]) - a[3]])
+    if not skip_pre_crop:
+        # Do any absolute pre-cropping specified for the page (after modifying any
+        # absolutePreCrop4 arguments to take into account rotations to the page).
+        precrop_box = mod_box_for_rotation(args.absolutePreCrop4, rotation)
+        full_box = RectangleObject([float(full_box.lowerLeft[0]) + precrop_box[0],
+                                    float(full_box.lowerLeft[1]) + precrop_box[1],
+                                    float(full_box.upperRight[0]) - precrop_box[2],
+                                    float(full_box.upperRight[1]) - precrop_box[3]])
 
     page.mediaBox = full_box
     page.cropBox = full_box
 
     return full_box
 
-def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False):
+def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
+                                                    skip_pre_crop=False):
     """Get a list of all the full-page box values for each page.  The argument
     input_doc should be a PdfFileReader object.  The boxes on the list are in the
     simple 4-float list format used by this program, not RectangleObject format."""
@@ -263,7 +267,8 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False):
 
         # Get the current page and find the full-page box.
         curr_page = input_doc.getPage(page_num)
-        full_page_box = get_full_page_box_assigning_media_and_crop(curr_page)
+        full_page_box = get_full_page_box_assigning_media_and_crop(curr_page,
+                                                                   skip_pre_crop)
 
         if args.verbose and not quiet:
             # want to display page num numbering from 1, so add one
@@ -671,7 +676,7 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
     if "ALL" in doc_cat_blacklist:
         doc_cat_blacklist = ["ALL"]
 
-    # Partially copy over document catalog data from input_doc to output_doc.
+    # Partially copy over the document catalog data from input_doc to output_doc.
     if not copy_document_catalog or (
             not doc_cat_whitelist and doc_cat_blacklist == ["ALL"]):
         # Check this first, to completely skip the possibly problematic code getting
@@ -810,8 +815,6 @@ def process_command_line_arguments(parsed_args):
 
     if args.absolutePreCrop and not args.absolutePreCrop4:
         args.absolutePreCrop4 = args.absolutePreCrop * 4 # expand to 4 offsets
-    if args.absolutePreCrop4:
-        pass # No processing to do.
     if args.verbose:
         print("\nThe absolute pre-crops to be applied to each margin, in units of bp,"
               " are:\n   ", args.absolutePreCrop4)
@@ -819,24 +822,18 @@ def process_command_line_arguments(parsed_args):
     if args.percentRetain and not args.percentRetain4:
         args.percentRetain4 = args.percentRetain * 4 # expand to 4 percents
     # See if all four percents are explicitly set and use those if so.
-    if args.percentRetain4:
-        pass # No processing to do.
     if args.verbose:
         print("\nThe percentages of margins to retain are:\n   ",
               args.percentRetain4)
 
     if args.absoluteOffset and not args.absoluteOffset4:
         args.absoluteOffset4 = args.absoluteOffset * 4 # expand to 4 offsets
-    if args.absoluteOffset4:
-        pass # No processing to do.
     if args.verbose:
         print("\nThe absolute offsets to be applied to each margin, in units of bp,"
               " are:\n   ", args.absoluteOffset4)
 
     if args.uniformOrderStat and not args.uniformOrderStat4:
         args.uniformOrderStat4 = args.uniformOrderStat * 4 # expand to 4 offsets
-    if args.uniformOrderStat4:
-        pass # No processing to do.
     if args.verbose:
         print("\nThe uniform order statistics to apply to each margin, in units of bp,"
               " are:\n   ", args.uniformOrderStat4)
@@ -958,9 +955,9 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     The function returns the bounding box list."""
     ##
     ## Open the input document in a PdfFileReader object.  Due to an apparent bug
-    ## in pyPdf we open two PdfFileReader objects for the file.  The time required should
-    ## still be small relative to finding the bounding boxes of pages.  The bug is
-    ## that writing a PdfFileWriter tends to hang on certain files if 1) pages from
+    ## in pyPdf we open two PdfFileReader objects for the file.  The time required
+    ## should still be small relative to finding the bounding boxes of pages.  The bug
+    ## is that writing a PdfFileWriter tends to hang on certain files if 1) pages from
     ## the same PdfFileReader are shared between two PdfFileWriter objects, or 2)
     ## the PdfFileWriter is written, the pages are modified, and there is an attempt
     ## to write the same PdfFileWriter to a different file.
@@ -1000,12 +997,12 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             print("\nDecrypting with the password from the '--password' option"
                   "\nfailed.", file=sys.stderr)
             ex.cleanup_and_exit(1)
-    else: # try decrypting with an empty password
+    else: # Try decrypting with an empty password.
         try:
             input_doc.decrypt("")
             tmp_input_doc.decrypt("")
         except KeyError:
-            pass # document apparently wasn't encrypted with an empty password
+            pass # Document apparently wasn't encrypted with an empty password.
 
     ##
     ## Print out some data and metadata in verbose mode.
@@ -1085,9 +1082,10 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(
-                                                                              input_doc)
-    #tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
-    #                                                        tmp_input_doc, quiet=True)
+                                                          input_doc, skip_pre_crop=False)
+    # Below return values aren't used, but function has side-effects on tmp_input_doc.
+    tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
+                                            tmp_input_doc, quiet=True, skip_pre_crop=False)
 
     ##
     ## Define a PdfFileWriter object and copy input_doc info over to it.
@@ -1098,7 +1096,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     ##
     ## Write out the PDF document again, with the CropBox and MediaBox reset.
-    ## This temp version is only used for calculating the bounding boxes of
+    ## This temp version is ONLY used for calculating the bounding boxes of
     ## pages.  Note we are writing from tmp_output_doc (due to an apparent bug
     ## discussed above).  After this tmp_input_doc and tmp_output_doc are no longer
     ## needed.

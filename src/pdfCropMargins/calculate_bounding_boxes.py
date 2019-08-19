@@ -61,7 +61,7 @@ PdfFileWriter = None # Initialized in get_bounding_box_list
 
 def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
                        set_of_page_nums_to_crop, argparse_args, chosen_PdfFileWriter):
-    """Calculate a bounding box for each page in the document.  The first
+    """Calculate a bounding box for each page in the document.  The  `input_doc_fname`
     argument is the filename of the document's original PDF file, the second is
     the PdfFileReader for the document.  The argument full_page_box_list is a list
     of the full-page-size boxes (which is used to correct for any nonzero origins
@@ -119,13 +119,11 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
     already been set to the chosen page size before the rendering."""
 
     program_to_use = "pdftoppm" # default to pdftoppm
-    if args.gsRender: program_to_use = "Ghostscript"
+    if args.gsRender:
+        program_to_use = "Ghostscript"
 
     # Threshold value set in range 0-255, where 0 is black, with 191 default.
-    if not args.threshold: args.threshold = 191
     threshold = args.threshold
-    if not args.numSmooths: args.numSmooths = 0
-    if not args.numBlurs: args.numBlurs = 0
 
     temp_dir = ex.program_temp_directory # use the program default; don't delete dir!
 
