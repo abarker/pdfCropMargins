@@ -94,18 +94,20 @@ def get_filename():
 
     return fname
 
-def open_document(input_doc_fname):
+def open_document(doc_fname):
     """Return the document opened by fitz (PyMuPDF)."""
-    if not input_doc_fname:
-        input_doc_fname = get_filename()
+    # TODO: Move the get_filename call to main_pdfCropMargins or
+    # similar if actually used.
+    if not doc_fname:
+        doc_fname = get_filename()
     try:
-        document = fitz.open(input_doc_fname)
+        document = fitz.open(doc_fname)
     except RuntimeError:
         print("\nError in pdfCropMargins: The PyMuPDF program could not read"
               " the document\n   '{}'\nin order to display it in the GUI.   If you have"
               " Ghostscript installed\nconsider running pdfCropMargins with the"
               " '--gsFix' option to attempt to repair it."
-              .format(input_doc_fname), file=sys.stderr)
+              .format(doc_fname), file=sys.stderr)
         ex.cleanup_and_exit(1)
     page_count = len(document)
     return document, page_count
@@ -309,7 +311,8 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
 # The main function with the event loop.
 #
 
-def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
+def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
+               cmd_parser, parsed_args):
     """Create a GUI for running pdfCropMargins with parsed arguments `parsed_args`
     on the PDF file named `pdf_filename`"""
     args = parsed_args
@@ -319,7 +322,7 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
     ## Set up the document and window.
     ##
 
-    document, page_count = open_document(input_doc_fname)
+    document, page_count = open_document(fixed_input_doc_fname)
     cur_page = 0
 
     window_title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
@@ -824,8 +827,8 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
                 last_pre_crop = all_pre_crop
 
             # Do the crop, saving the bounding box list.
-            bounding_box_list = process_pdf_file(input_doc_fname, output_doc_fname,
-                                                 bounding_box_list)
+            bounding_box_list = process_pdf_file(input_doc_fname, fixed_input_doc_fname,
+                                                 output_doc_fname, bounding_box_list)
             if args.restore:
                 combo_box_restore.Update("False")
 
@@ -839,7 +842,8 @@ def create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args):
             call_all_update_funs(update_funs, values_dict)
             document.close()
             page_display_list_cache = [None] * page_count
-            document, page_count = open_document(input_doc_fname)
+            document, page_count = open_document(fixed_input_doc_fname)
+            did_crop = False
 
         # Update page number.
         cur_page = update_page_number(cur_page, page_count, is_page_mod_key, btn,

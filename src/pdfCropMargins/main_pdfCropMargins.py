@@ -936,9 +936,18 @@ def process_command_line_arguments(parsed_args):
     if args.gsBbox and args.numSmooths:
         print("\nWarning in pdfCropMargins: The '--numSmooths' option is ignored"
               "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
-    return input_doc_fname, output_doc_fname
 
-def process_pdf_file(input_doc_fname, output_doc_fname, bounding_box_list=None):
+    if args.gsFix:
+        if args.verbose:
+            print("\nAttempting to fix the PDF input file before reading it...")
+        fixed_input_doc_fname = ex.fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname)
+    else:
+        fixed_input_doc_fname = input_doc_fname
+
+    return input_doc_fname, fixed_input_doc_fname, output_doc_fname
+
+def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
+                     bounding_box_list=None):
     """This function does the real work.  It is called by main() in
     pdfCropMargins.py, which just handles catching exceptions and cleaning up.  It
     returns the name of the modified file that was written to disk.
@@ -956,13 +965,6 @@ def process_pdf_file(input_doc_fname, output_doc_fname, bounding_box_list=None):
     ## the PdfFileWriter is written, the pages are modified, and there is an attempt
     ## to write the same PdfFileWriter to a different file.
     ##
-
-    if args.gsFix:
-        if args.verbose:
-            print("\nAttempting to fix the PDF input file before reading it...")
-        fixed_input_doc_fname = ex.fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname)
-    else:
-        fixed_input_doc_fname = input_doc_fname
 
     # Open the input file object.
     try:
@@ -1302,14 +1304,16 @@ def main_crop():
     parsed_args = parse_command_line_arguments(cmd_parser)
 
     # Process some of the command-line arguments (also sets args globally).
-    input_doc_fname, output_doc_fname = process_command_line_arguments(parsed_args)
+    input_doc_fname, fixed_input_doc_fname, output_doc_fname = (
+                                           process_command_line_arguments(parsed_args))
 
     if args.gui:
         from .gui import create_gui
-        did_crop = create_gui(input_doc_fname, output_doc_fname, cmd_parser, parsed_args)
+        did_crop = create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
+                              cmd_parser, parsed_args)
         if did_crop:
             handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
     else:
-        process_pdf_file(input_doc_fname, output_doc_fname)
+        process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname)
         handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
 
