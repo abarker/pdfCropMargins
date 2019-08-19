@@ -918,7 +918,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                 last_numSmooths = args.numSmooths
 
             # Do the crop, saving the bounding box list.
-            print("\nDEBUG xxx args before crop:", args)
             bounding_box_list = process_pdf_file(input_doc_fname, fixed_input_doc_fname,
                                                  output_doc_fname, bounding_box_list)
             if args.restore:
