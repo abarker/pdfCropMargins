@@ -428,8 +428,11 @@ cmd_parser.add_argument("-t", "--threshold", type=int, default=191,
    value can be from 0 to 255, with 191 the default (75 percent).  This option
    may not be available for some configurations since the PDF must be
    internally rendered as an image of pixels.  In particular, it is ignored
-   when '--gsBbox' is selected.  By default, any pixel value over 191 is
-   considered to be background (white).^^n""")
+   when '--gsBbox' is selected.  Any pixel value over the threshold is
+   considered to be background (white), and any value below it is considered
+   to be text (black).  Lowering the value should tend to make the bounding
+   boxes smaller.  The threshold may need to be lowered, for
+   example, for scanned images with greyish backgrounds.^^n""")
 
 cmd_parser.add_argument("-nb", "--numBlurs", type=int, default=0, metavar="INT",
                         help="""

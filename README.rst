@@ -53,7 +53,7 @@ a fallback if no other program can be found.
  
 *  **Ghostscript**
 
-   Ghostscript is in the repos of most Linux distributions, and is easy to
+   Ghostscript is in the repos of most Linux distributions and is easy to
    install on Windows and in Cygwin.  The Windows install page is `located here
    <http://www.ghostscript.com/download/gsdnld.html>`_; the non-commercial
    GPL version on that page should work fine for most people.
@@ -82,8 +82,7 @@ Be sure ``$HOME/.local/bin`` is in your system ``PATH`` if you are installing
 via pip with the ``--user`` option.  (To install system-wide without ``--user``
 the ``pip3`` command below would also need to be run with ``sudo``.)
 
-Here is the plain install, without a GUI.  Ghostscript is only needed for the
-features that require it::
+Here is the plain install, without a GUI::
 
    sudo apt install python3-pip ghostscript poppler-utils
    pip3 install pdfCropMargins --user --upgrade
@@ -104,8 +103,8 @@ you cannot find the pip executable you can usually run it like this::
 
    python -m pip <arguments-to-pip>
 
-Note that on some Windows installs the executable is ``py`` rather than
-``python``.
+Note that on some Windows installs the executable for Python is ``py`` rather
+than ``python``.
 
 To install without the GUI use::
 
@@ -115,12 +114,12 @@ To install with the GUI use::
 
    pip install pdfCropMargins[gui] --upgrade
 
-In order for the command ``pdf-crop-margins`` to work the ``bin`` directory
-containing it must be on the Windows ``PATH``.  The system-wide ``bin``
-directory should have been automatically modified if you checked the box to
-modify ``PATH`` when you installed Python, otherwise it should be added.  (If
-you install with the ``--user`` option then you need to be sure the *local*
-Python ``bin`` directory is in the Windows ``PATH``.)
+In order for the command ``pdf-crop-margins`` to be found the ``bin`` directory
+it is created in must be on the Windows ``PATH``.  The system-wide ``bin``
+directory should already be there if you checked the box to modify ``PATH``
+when you installed Python; otherwise it should be added.  (If you install with
+the ``--user`` option to pip then you need to be sure the *local* Python
+``bin`` directory is in the Windows ``PATH``.)
 
 Running from the source distribution
 ------------------------------------
@@ -563,8 +562,12 @@ The output of that command follows::
                            available for some configurations since the PDF must
                            be internally rendered as an image of pixels. In
                            particular, it is ignored when '--gsBbox' is selected.
-                           By default, any pixel value over 191 is considered to
-                           be background (white).
+                           Any pixel value over the threshold is considered to be
+                           background (white), and any value below it is
+                           considered to be text (black). Lowering the value
+                           should tend to make the bounding boxes smaller. The
+                           threshold may need to be lowered, for example, for
+                           scanned images with greyish backgrounds.
    
      -nb INT, --numBlurs INT
                            When PDF files are explicitly rendered to image files,

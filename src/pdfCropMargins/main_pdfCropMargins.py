@@ -780,7 +780,7 @@ def process_command_line_arguments(parsed_args):
     input_doc_fname = ex.glob_if_windows_os(args.pdf_input_doc[0], exact_num_args=1)[0]
     if not input_doc_fname.endswith((".pdf",".PDF")):
         print("\nWarning in pdfCropMargins: The file extension is neither '.pdf'"
-              "\nnor '.PDF'; continuing anyway.\n", file=sys.stderr)
+              "\nnor '.PDF'; continuing anyway.", file=sys.stderr)
     if args.verbose:
         print("\nThe input document's filename is:\n   ", input_doc_fname)
     if not os.path.isfile(input_doc_fname):
