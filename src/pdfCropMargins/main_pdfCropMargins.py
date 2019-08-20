@@ -977,11 +977,13 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     except (KeyboardInterrupt, EOFError):
         raise
     except: # Can raise various exceptions, just catch the rest here.
+
         print("\nError in pdfCropMargins: The pyPdf module failed in an attempt"
               "\nto read the input file.  Is the file a PDF file?  If so then it"
-              "\nmay be corrupted.  If you have Ghostscript, try the '--gsFix'"
-              "\noption (assuming you are not using it already).  That option can"
-              "\nalso convert some PostScript files to a readable format.",
+              "\nmay be corrupted.  If you have Ghostscript installed you can"
+              "\nattempt to fix it by using the pdfCropMargins option '--gsFix'"
+              "\n(assuming you are not using that option already).  That option"
+              "\ncan also convert some PostScript files to a readable format.",
               file=sys.stderr)
         ex.cleanup_and_exit(1)
 
