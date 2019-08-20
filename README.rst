@@ -39,7 +39,7 @@ Features
 These are screenshots of the optional GUI, before and after cropping a document:
 
 .. image:: https://raw.githubusercontent.com/abarker/pdfCropMargins/master/doc/einstein_crop_900w.gif
-    :width: 900px
+    :width: 400px
     :align: center
     :alt: alternate text
 
