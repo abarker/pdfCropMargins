@@ -3,7 +3,14 @@
 History
 =======
 
-0.1.5 (2019-??-??)
+0.1.5 (2019-08-18)
+------------------
+
+Bug fixes:
+
+* Added typing dependency for GUI with Python <= 3.4.
+
+0.1.5 (2019-08-18)
 ------------------
 
 New features:

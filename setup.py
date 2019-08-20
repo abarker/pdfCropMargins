@@ -59,6 +59,7 @@ setup(
     extras_require={
                     "gui": ["PySimpleGUI>=4.0.0;python_version>='3.0'",
                             "PySimpleGUI27>=2.0.0;python_version<'3.0'",
+                            "typing;python_version<='3.4'", # PySimpleGUI on Python2 needs this...
                             "PyMuPDF>=1.14.5",],
                     },
     url="https://github.com/abarker/pdfCropMargins",
