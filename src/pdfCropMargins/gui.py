@@ -327,8 +327,10 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     window_size = get_window_size()
     size_for_full_app = (0.65*window_size[0], window_size[1]) # Reduce max width.
 
-    window = sg.Window(title=window_title, return_keyboard_events=True, location=(0, 0),
-                       use_default_focus=False)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Your title is not a string.")
+        window = sg.Window(title=window_title, return_keyboard_events=True, location=(0, 0),
+                           use_default_focus=False)
     # On tooltips done by pySimpleGUI in tkinter, it seems you have to move pointer
     # left over the text to make them appear...
     sg.SetOptions(tooltip_time=500)
