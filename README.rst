@@ -36,12 +36,12 @@ Features
 - Can deal with at least simple cases of password-encrypted files.
 - Works with Python 2 and Python 3.
 
-These are screenshots of the optional GUI, before and after cropping a document:
+This GIF shows the optional GUI, before and after cropping a document:
 
 .. image:: https://raw.githubusercontent.com/abarker/pdfCropMargins/master/doc/einstein_crop_500w.gif
     :width: 400px
     :align: center
-    :alt: alternate text
+    :alt: [GIF of pdfCropMargins]
 
 Requirements
 ============
