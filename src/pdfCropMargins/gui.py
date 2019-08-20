@@ -35,16 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-# TODO: Pre-crops are (were?) behaving strangely.  Crop with 0% retain, then slowly increase
-# the pre-crop amount.  It shouldn't make a difference for small pre-crop form
-# most files, but it seems to keep cropping closer.
-
 # TODO: Consider setting up so if no input file argument and the gui is used then
 # the file chooser will pop up.
-
-# TODO: Page ratio weights should really be paired with the page ratio setting.
-# Also, pages could display the full range at first maybe, and the ratio could
-# maybe be set to 1:1 in the display.
 
 # TODO: Maybe use spinner for orderStat, checkbox for uniform and samepagesize.
 # Maybe not.
@@ -78,6 +70,11 @@ except ImportError:
 from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
                                   parse_page_ratio_argument)
 from .external_program_calls import cleanup_and_exit
+
+# Look and feel.
+#print(sg.ListOfLookAndFeelValues())
+#print(sg.LOOK_AND_FEEL_TABLE)
+#sg.ChangeLookAndFeel("SandyBeach")
 
 #
 # Helper functions.
@@ -333,6 +330,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     window = sg.Window(window_title, return_keyboard_events=True, location=(0, 0),
                        use_default_focus=False)
+    # On tooltips done by pySimpleGUI in tkinter, it seems you have to move pointer
+    # left over the text to make them appear...
     sg.SetOptions(tooltip_time=500)
 
     # Allocate storage for caching page display lists.
