@@ -36,7 +36,7 @@ Features
 - Can deal with at least simple cases of password-encrypted files.
 - Works with Python 2 and Python 3.
 
-This is a screenshots of the optional GUI, before and after cropping a document:
+These are screenshots of the optional GUI, before and after cropping a document:
 
 .. image:: https://raw.githubusercontent.com/abarker/pdfCropMargins/master/doc/combined_gui_image_900w200dpi.png
     :width: 900px
