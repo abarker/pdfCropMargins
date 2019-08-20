@@ -83,7 +83,7 @@ from .external_program_calls import cleanup_and_exit
 def get_filename():
     """Get the filename of the PDF file via GUI if one was not passed in."""
     fname = sg.PopupGetFile("Select file and filetype to open:",
-                            title="Document Browser",
+                            title="pdfCropMargins: Document Browser",
                             file_types=[ # Only PDF files.
                                           ("PDF Files", "*.pdf"),
                                        ],
@@ -328,7 +328,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     window_size = get_window_size()
     size_for_full_app = (0.65*window_size[0], window_size[1]) # Reduce max width.
 
-    window = sg.Window(window_title, return_keyboard_events=True, location=(0, 0),
+    window = sg.Window(title=window_title, return_keyboard_events=True, location=(0, 0),
                        use_default_focus=False)
     # On tooltips done by pySimpleGUI in tkinter, it seems you have to move pointer
     # left over the text to make them appear...
