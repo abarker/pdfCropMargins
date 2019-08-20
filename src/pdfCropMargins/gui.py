@@ -35,6 +35,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
+# Pre-cropping is still broken.
+
 # TODO: Consider setting up so if no input file argument and the gui is used then
 # the file chooser will pop up.
 

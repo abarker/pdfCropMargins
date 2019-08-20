@@ -294,12 +294,13 @@ cmd_parser.add_argument("-a", "--absoluteOffset", nargs=1, type=float,
                        metavar="BP", default=[0.0], help="""
 
    Decrease each margin size by an absolute floating point offset value, to be
-   subtracted from each margin's size.  The units are big points, bp, which is
-   the unit used in PDF files.  There are 72 bp in an inch.  A single bp is
-   approximately equal to a TeX point, pt (with 72.27pt in an inch).  Negative
-   values are allowed; positive numbers always decrease the margin size and
-   negative numbers always increase it.  Absolute offsets are always
-   applied after any percentage change operations.^^n""")
+   subtracted from each margin's size after the 'percentRetain' option is
+   applied.  The units are big points, bp, which is the unit used in PDF files.
+   There are 72 bp in an inch.  A single bp is approximately equal to a TeX
+   point, pt (with 72.27pt in an inch).  Negative values are allowed; positive
+   numbers always decrease the margin size and negative numbers always increase
+   it.  Absolute offsets are always applied after any percentage change
+   operations.^^n""")
 
 cmd_parser.add_argument("-a4", "-aaaa", "--absoluteOffset4", nargs=4, type=float,
                        metavar="BP", help="""
@@ -314,13 +315,17 @@ cmd_parser.add_argument("-a4", "-aaaa", "--absoluteOffset4", nargs=4, type=float
 cmd_parser.add_argument("-ap", "--absolutePreCrop", nargs=1, type=float,
                        metavar="BP", default=[0.0], help="""
 
-   This option is like '--absoluteOffset' except that the changes are applied
-   before any bounding box calculations (or any other operations).  The
-   argument is the same, in units of bp.  This is essentially equivalent to
-   first cropping the document retaining 100%% of the margins but applying an
-   absolute offset and then performing all the other operations on that
-   pre-cropped file.  This can be used to ignore text out at the edge of the
-   margins by cropping it out before the bounding boxes are calculated.^^n""")
+   This option is like '--absoluteOffset' except that it is applied before any
+   bounding box calculations (or any other operations).  The argument is the
+   same, in units of bp.  All successive operations are then relative to this
+   pre-crop box, considered to be the full-page box.  Note that since this
+   absolute crop is applied before any bounding boxes are computed it is
+   relative to the original full-page boxes of the document (unlike
+   'absoluteOffset', which is a crop relative to the newly-cropped margin after
+   'percentRetain' is applied).  As a consequence, the number of points may
+   need to be larger than what would work for 'absoluteOffset'.  This option
+   can be used to ignore text and markings out at the edge of the margins by
+   cropping it out before the bounding boxes are calculated.^^n""")
 
 cmd_parser.add_argument("-ap4", "--absolutePreCrop4", nargs=4, type=float,
                        metavar="BP", help="""
@@ -497,18 +502,19 @@ cmd_parser.add_argument("-f", "--fullPageBox", choices=["m", "c", "t", "a", "b"]
                        metavar="[m|c|t|a|b]", action="append", default=[], help="""
 
    By default the program first (before any cropping is calculated) sets the
-   MediaBox and CropBox of each page in (a copy of) the document to its
-   MediaBox intersected with its CropBox.   This ensures that the cropping is
-   relative to the usual document-view in programs like Acrobat Reader.   This
-   essentially defines what is assumed to be the full size of pages in the
-   document, and all cropping is then performed relative to that full-page
-   size.  This option can be used to alternately use the MediaBox, the CropBox,
-   the TrimBox, the ArtBox, or the BleedBox in defining the full-page size.
-   The option takes one argument, which is the first letter (lowercase) of the
-   type of box to use.  If the option is repeated then the intersection of all
-   the box arguments is used.  Only one choice is allowed in combination with
-   the '-gs' option since Ghostscript does its own internal rendering when
-   finding bounding boxes.  The default with '-gs' is the CropBox.^^n""")
+   MediaBox and CropBox of each page in (a copy of) the document to the
+   intersection of its previous MediaBox and CropBox.   This ensures that the
+   cropping is relative to the usual document-view in programs like Acrobat
+   Reader.   This essentially defines what is assumed to be the full size of
+   pages in the document, and all cropping is then performed relative to that
+   full-page size.  This option can be used to alternately use the MediaBox,
+   the CropBox, the TrimBox, the ArtBox, or the BleedBox in defining the
+   full-page size.  The option takes one argument, which is the first letter
+   (lowercase) of the type of box to use.  If the option is repeated then the
+   intersection of all the box arguments is used.  Only one choice is allowed
+   in combination with the '-gs' option since Ghostscript does its own internal
+   rendering when finding bounding boxes.  The default with '-gs' is the
+   CropBox.^^n""")
 
 cmd_parser.add_argument("-r", "--restore", action="store_true", help="""
 
