@@ -38,7 +38,7 @@ Features
 
 This is a screenshots of the optional GUI, before and after cropping a document:
 
-.. image:: doc/combined_gui_image_900w200dpi.png
+.. image:: https://raw.githubusercontent.com/abarker/pdfCropMargins/master/doc/combined_gui_image_900w200dpi.png
     :width: 900px
     :align: center
     :alt: alternate text
