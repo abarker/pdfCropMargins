@@ -35,13 +35,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-# Pre-cropping is still broken.
-
 # TODO: Consider setting up so if no input file argument and the gui is used then
 # the file chooser will pop up.
 
 # TODO: Maybe use spinner for orderStat, checkbox for uniform and samepagesize.
 # Maybe not.
+
+# pysimplegui issues: 1) warning on Window title in Python2 on some machines, 2) tooltips
+# need pointer to move left to work, 3) non-string initial values not set for Combo.
 
 from __future__ import print_function, absolute_import
 
@@ -90,11 +91,7 @@ def get_filename():
                                           ("PDF Files", "*.pdf"),
                                        ],
                             )
-    if not fname:
-        sg.Popup("Cancelling:", "No filename supplied")
-        raise PdfCropMarginsError("Cancelled: no filename supplied")
-
-    return fname
+    return fname # Might be None.
 
 def open_document(doc_fname):
     """Return the document opened by fitz (PyMuPDF)."""
