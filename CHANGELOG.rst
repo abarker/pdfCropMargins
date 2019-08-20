@@ -28,7 +28,7 @@ New features:
 
 Bug fixes:
 
-* Fixed a bug in the interaction of the `-u`, `-pg`, and `-e` options.
+* Fixed a bug in the interaction of the ``-u``, ``-pg``, and ``-e`` options.
 
 0.1.3 (2017-03-14)
 ------------------
