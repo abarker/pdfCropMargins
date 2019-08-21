@@ -38,7 +38,7 @@ Features
 
 This GIF shows the optional GUI, before and after cropping a document:
 
-.. image:: https://raw.githubusercontent.com/abarker/pdfCropMargins/master/doc/einstein_crop_50pct.gif
+.. image:: https://user-images.githubusercontent.com/1791335/63413846-9c9e3400-c3c8-11e9-90f5-6e429ae2d74b.gif
     :width: 400px
     :align: center
     :alt: [GIF of pdfCropMargins]
