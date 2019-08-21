@@ -1,6 +1,36 @@
 """
 
-pdfCropMargins -- a program to crop the margins of PDF files
+This module defines classes for redirecting sys.stdout and sys.stderr in order
+to postprocess (prettify) the help and usage messages from the argparse class.
+Generally only the `parse_command_line_arguments` function will be imported
+from it.
+
+This module also defines a self-flushing output stream to avoid having to
+explicitly run Python with the '-u' option in Cygwin windows.  It provides the
+function::
+
+   parse_command_line_arguments
+
+which applies the prettifier to an argparse parser and resets sys.stdout to
+an automatic-flushing version.
+
+This file can be copied inline when you really want a single-file script.
+Otherwise, the usage is::
+
+   from prettified_argparse import parse_command_line_arguments
+   from manpage_data import cmdParser
+
+The actual argparse parser and documentation text are in manpage_data.py.
+Somewhere in the calling program, the imported function should be called as::
+
+    args = parse_command_line_arguments(cmdParser)
+
+Note that the standard TextWrapper fill and wrap routines used in argparse do
+not strip out multiple whitespace like many fill programs do.  See the
+`RedirectHelp` comment for the changes to the standard argparse formatting.
+
+=====================================================================
+
 Copyright (C) 2014 Allen Barker (Allen.L.Barker@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
@@ -18,40 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Source code site: https://github.com/abarker/pdfCropMargins
 
-=====================================================================
-
-This module defines classes for redirecting sys.stdout and sys.stderr in order
-to postprocess (prettify) the help and usage messages from the argparse class.
-It also defines a self-flushing output stream to avoid having to explicitly run
-Python with the '-u' option in Cygwin windows.  It provides the function ::
-
-   parse_command_line_arguments
-
-which applies the prettifier to an argparse parser and resets sys.stdout to
-an automatic-flushing version.
-
-This file can be copied inline when you really want a single-file script.
-Otherwise, the usage is:
-
-   from prettified_argparse import parse_command_line_arguments
-   from manpage_data import cmdParser
-
-The actual argparse parser and documentation text are in manpage_data.py.
-Somewhere in the calling program, the imported function should be called as:
-
-    args = parse_command_line_arguments(cmdParser)
-
-Note that the standard TextWrapper fill and wrap routines used in argparse
-do not strip out multiple whitespace like many fill programs do.  See the
-`RedirectHelp` comment for the changes to the standard argparse formatting.
-
 """
-
-# Consider implementing an optional config file to set any of the command-line
-# arguments.  Note that argparse does not depopulate the sys.argv list.
-#
-# See the top answer here:
-# http://stackoverflow.com/questions/6133517/parse-config-file-environment-and-command-line-arguments-to-get-a-single-coll
 
 from __future__ import print_function, division, absolute_import
 import textwrap
@@ -59,6 +56,7 @@ import re
 import sys
 import os
 
+# TODO: This basename may differ when run as an entry point script.
 prog_name = os.path.basename(sys.argv[0])
 # Note when a directory is run as a command name it can be something like "."
 # which looks nicer expanded.  Argparse currently uses the unexpanded form.

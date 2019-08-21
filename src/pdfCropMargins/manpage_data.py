@@ -1,24 +1,6 @@
 """
 
 pdfCropMargins -- a program to crop the margins of PDF files
-Copyright (C) 2014 Allen Barker (Allen.L.Barker@gmail.com)
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Source code site: https://github.com/abarker/pdfCropMargins
-
-=====================================================================
 
 This module sets up an argparse command-line parser, named `cmd_parser`, meant for
 use with the prettifying routines in `prettified_argparse.py`.  The command-line
@@ -47,6 +29,25 @@ General argparse reminders and warnings:
   4) With default values you can always assume some value is assigned.
   5) Use `numargs=1` and `default=[]` to test whether or not, say, an int-valued
      option was selected at all (or you could check for value None).
+
+=====================================================================
+
+Copyright (C) 2014 Allen Barker (Allen.L.Barker@gmail.com)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Source code site: https://github.com/abarker/pdfCropMargins
 
 """
 
