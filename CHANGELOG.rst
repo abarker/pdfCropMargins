@@ -3,10 +3,12 @@
 History
 =======
 
-0.2.0 (2019-08-19)
-------------------
+0.2.[0,1,2] (2019-08-19)
+-------------------------
 
 * Updated documentation.
+
+* Removed typing dependency (fixed in PySimpleGUI27).
 
 0.1.6 (2019-08-18)
 ------------------

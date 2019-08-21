@@ -58,7 +58,7 @@ setup(
     install_requires=["wheel", "pillow", "PyPDF2"], # EITHER Pillow or PIL, NOT BOTH.
     extras_require={
                     "gui": ["PySimpleGUI>=4.0.0;python_version>='3.0'",
-                            "PySimpleGUI27>=2.2.1;python_version<'3.0'",
+                            "PySimpleGUI27>=2.2.0;python_version<'3.0'",
                             #"typing;python_version<='3.4'", # PySimpleGUI on Python2 needed this...
                             "PyMuPDF>=1.14.5",],
                     },
