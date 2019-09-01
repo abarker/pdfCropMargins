@@ -75,8 +75,8 @@ Installing
 
 The easiest way to install pdfCropMargins program is by using pip.
 
-Ubuntu
-------
+Ubuntu/Mint
+-----------
 
 Be sure ``$HOME/.local/bin`` is in your system ``PATH`` if you are installing
 via pip with the ``--user`` option.  (To install system-wide without ``--user``

@@ -666,7 +666,7 @@ cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
 cmd_parser.add_argument("-spr", "--setPageRatios", type=str,
                         default=[], metavar="FLOAT:FLOAT", help="""
 
-   Force all the cropped page ratios to equal the set ratio.  All crops are
+   Force all the cropped page ratios to equal the given ratio.  All crops are
    calculated and applied as usual, but either the left and right margins will
    be increased equally or else the top and bottom margins will be increased
    equally in order to make the ratio of width to height equal the set value.

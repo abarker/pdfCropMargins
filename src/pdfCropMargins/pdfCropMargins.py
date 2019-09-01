@@ -44,8 +44,12 @@ the program and clean up.
 
 # Possible future enhancements:
 #
+# 0) Consider different entry-point scripts for the GUI version vs. the
+# command-line program, just as a convenience.
+#
 # 1) Consider defining a command-line option which will print out either a bash
-# script or a DOS script that users can modify and use.  Or maybe a config file.
+# script or a DOS script that users can modify and use.  Or maybe a config
+# file.
 #
 # 2) Have -ea and -oa options that do absolute crops on even and odd
 # differently.  Similarly, -ea4 and -oa4 for individual margins.  Similarly
@@ -64,8 +68,8 @@ the program and clean up.
 # text changes and use "close enough" for floating point value equality.
 #
 # 5) An option 'safeAbsolute' which can be turned on to keep absolute crops
-# from exceeding the bounding box sizes.  But need to define semantics with
-# and without uniform cropping and same page size.
+# from exceeding the bounding box sizes.  But need to define semantics with and
+# without uniform cropping and same page size.
 #
 # 6) Unzip a file if a zipped file is detected.  Maybe a `tryUnzip` option.
 
