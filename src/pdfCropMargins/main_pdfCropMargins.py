@@ -567,11 +567,14 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
               "\nrestore operation.", file=sys.stderr)
         return
 
-    if args.restore and args.verbose:
-        print("\nRestoring the document to margins saved for each page in the ArtBox.")
+    if args.verbose:
+        if args.restore:
+            print("\nRestoring the document to margins saved for each page in the ArtBox.")
+        else:
+            print("\nNew full page sizes after cropping, in PDF format (lbrt):")
 
-    if args.verbose and not args.restore:
-        print("\nNew full page sizes after cropping, in PDF format (lbrt):")
+    if args.writeCropDataToFile:
+        f = open(args.writeCropDataToFile, "w")
 
     # Copy over each page, after modifying the appropriate PDF boxes.
     for page_num in range(input_doc.getNumPages()):
@@ -611,6 +614,8 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
 
         if args.verbose:
             print("\t"+str(page_num+1)+"\t", new_cropped_box) # page numbering from 1
+        if args.writeCropDataToFile:
+            print("\t"+str(page_num+1)+"\t", new_cropped_box, file=f)
 
         if not args.boxesToSet:
             args.boxesToSet = ["m", "c"]
@@ -621,6 +626,10 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
         if "t" in args.boxesToSet: curr_page.trimBox = new_cropped_box
         if "a" in args.boxesToSet: curr_page.artBox = new_cropped_box
         if "b" in args.boxesToSet: curr_page.bleedBox = new_cropped_box
+
+    if args.writeCropDataToFile:
+        f.close()
+        ex.cleanup_and_exit(0)
 
 def setup_output_document(input_doc, tmp_input_doc, metadata_info,
                                                     copy_document_catalog=True):

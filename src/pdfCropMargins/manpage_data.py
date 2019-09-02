@@ -749,4 +749,9 @@ cmd_parser.add_argument("-ppp", "--pdftoppmPath", type=str, metavar="PATH",
    No globbing is done.  Useful when the program is in a nonstandard
    location.^^n""")
 
+cmd_parser.add_argument("-wcdf", "--writeCropDataToFile", type=str,
+                        default="", metavar="FILEPATH", help="""
+
+   Write out the calculated list of crops to the file with the filename that is
+   passed in and exit.  Mostly used for automated testing and debugging.^^n""")
 
