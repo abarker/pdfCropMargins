@@ -254,8 +254,8 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
 def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
                                                     skip_pre_crop=False):
     """Get a list of all the full-page box values for each page.  The argument
-    input_doc should be a PdfFileReader object.  The boxes on the list are in the
-    simple 4-float list format used by this program, not RectangleObject format."""
+    input_doc should be a `PdfFileReader` object.  The boxes on the list are in the
+    simple 4-float list format used by this program, not `RectangleObject` format."""
 
     full_page_box_list = []
     rotation_list = []
@@ -554,7 +554,6 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info):
           })
 
     return already_cropped_by_this_program
-
 
 def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
                                           already_cropped_by_this_program):
@@ -954,9 +953,9 @@ def process_command_line_arguments(parsed_args):
 
 def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                      bounding_box_list=None):
-    """This function does the real work.  It is called by main() in
-    pdfCropMargins.py, which just handles catching exceptions and cleaning up.  It
-    returns the name of the modified file that was written to disk.
+    """This function does the real work.  It is called by `main()` in
+    `pdfCropMargins.py`, which just handles catching exceptions and cleaning
+    up.  It returns the name of the modified file that was written to disk.
 
     If a bounding box list is passed in then the calculation is skipped and
     that list is used.

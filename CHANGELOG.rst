@@ -3,7 +3,12 @@
 History
 =======
 
-0.2.[0,1,2] (2019-08-19)
+0.2.3 (2019-??-??)
+------------------
+
+* Added a command to write the crops to a file, mostly for testing and debugging.
+
+0.2.[012] (2019-08-19)
 -------------------------
 
 * Updated documentation.
