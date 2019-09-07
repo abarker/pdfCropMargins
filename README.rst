@@ -116,12 +116,13 @@ To install with the GUI use::
 
    pip install pdfCropMargins[gui] --upgrade
 
-In order for the command ``pdf-crop-margins`` to be found the ``bin`` directory
-it is created in by the ``pip`` command must be on the Windows ``PATH``.  The
-system-wide Python ``bin`` directory should already be there if you checked the
-box to modify ``PATH`` when you installed Python; otherwise it should be added.
-(If you install with the ``--user`` option to pip then you need to be sure the
-*local* Python ``bin`` directory is in the Windows ``PATH``.)
+In order for the command ``pdf-crop-margins`` to be found, the ``bin``
+directory it is created in by the ``pip`` command must be on the Windows
+``PATH``.  The system-wide Python ``bin`` directory should already be there if
+you checked the box to modify ``PATH`` when you installed Python; otherwise it
+should be added.  (If you install with the ``--user`` option to pip then you
+need to be sure that the *local* Python ``bin`` directory is in the Windows
+``PATH``.)
 
 Running from the source distribution
 ------------------------------------
