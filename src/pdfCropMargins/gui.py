@@ -41,6 +41,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # TODO: Maybe use spinner for orderStat, checkbox for uniform and samepagesize.
 # Maybe not.
 
+# TODO: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
+# window can be fixed to the initial size or something similar.
+
 # pysimplegui issues: 1) warning on Window title in Python2 on some machines, 2) tooltips
 # need pointer to move left to work, 3) non-string initial values not set for Combo.
 
