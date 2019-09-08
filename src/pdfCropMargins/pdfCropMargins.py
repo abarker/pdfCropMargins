@@ -93,8 +93,9 @@ def main():
         # Call cleanup_and_exit at system exit, even with signal kills.
         # (This could alternately be called just after defining the function.)
         # Note SIGINT for Ctrl-C is already handled fine by the finally.
-        for s in [signal.SIGABRT, signal.SIGTERM, signal.SIGHUP]:
-            signal.signal(s, cleanup_and_exit)
+        for s in ["SIGABRT", "SIGTERM", "SIGHUP"]:
+            if hasattr(signal, s): # Not all systems define the same signals.
+                signal.signal(getattr(signal, s), cleanup_and_exit)
 
         # Below import also imports external_program_calls, don't do it first.
         from .main_pdfCropMargins import main_crop

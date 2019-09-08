@@ -6,7 +6,13 @@ History
 0.2.3 (2019-??-??)
 ------------------
 
+New features:
+
 * Added a command to write the crops to a file, mostly for testing and debugging.
+
+Bug fixes:
+
+* Fixed a bug with catching signals on Windows systems.
 
 0.2.[012] (2019-08-19)
 -------------------------
