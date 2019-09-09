@@ -51,13 +51,6 @@ being installed (and locatable) on the system.  For Window users a version of a
 pdftoppm binary (xpdf 4.01.01) is packaged with the program and will be used as
 a fallback if no other program can be found.
  
-*  **Ghostscript**
-
-   Ghostscript is in the repos of most Linux distributions and is easy to
-   install on Windows and in Cygwin.  The Windows install page is `located here
-   <http://www.ghostscript.com/download/gsdnld.html>`_; the non-commercial
-   GPL version on that page should work fine for most people.
-
 *  **pdftoppm**
 
    The pdftoppm program is standard in most Linux distributions and is easy to
@@ -70,6 +63,25 @@ a fallback if no other program can be found.
    Windows if neither Ghostscript nor the system pdftoppm program can be
    found.
 
+*  **Ghostscript**
+
+   Ghostscript is in the repos of most Linux distributions and is easy to
+   install on Windows and in Cygwin.
+   
+   The Windows install page is `located here
+   <http://www.ghostscript.com/download/gsdnld.html>`_; the non-commercial GPL
+   version on that page should work fine for most people.  Add the directory of
+   the executable ``gswin64c.exe`` (or the 32 bit version if you installed
+   that) to your Windows system path so it is discoverable (and runnable from
+   the command shell).  On Window 10 the place to go is:: 
+
+      Start -> Control Panel -> System and security -> System -> Advanced system settings
+
+   Now click "Environment Variables" and then double click on the user variable
+   ``Path``.  Click "New" and browse to the directory to add, something like
+   ``C:\Program Files\gs\gs9.27\bin``.  Restart your command shell for the
+   change to be recognized.
+   
 Installing 
 ==========
 
