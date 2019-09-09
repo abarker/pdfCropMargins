@@ -35,9 +35,9 @@ with open(os.path.join("src", "pdfCropMargins", "__init__.py")) as f:
 
 # Paths to data files, relative to the main package directory.
 path_to_copied_exe64 = os.path.join(
-               "pdftoppm_windows_local", "xpdfbin_win_3_04", "bin64", "pdftoppm.exe")
+               "pdftoppm_windows_local", "xpdf_tools_win_4_01_01", "bin64", "pdftoppm.exe")
 path_to_copied_exe32 = os.path.join(
-               "pdftoppm_windows_local", "xpdfbin_win_3_04", "bin32", "pdftoppm.exe")
+               "pdftoppm_windows_local", "xpdf_tools_win_4_01_01", "bin32", "pdftoppm.exe")
 
 package_dir = {"": "src"} # Note src isn't used in later dotted package paths, set here!
 packages = find_packages("src") # Finds submodules (otherwise need explicit listing).

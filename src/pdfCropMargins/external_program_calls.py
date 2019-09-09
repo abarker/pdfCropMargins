@@ -56,6 +56,8 @@ system_os = platform.system()
 if system_os[:6].lower() == "cygwin":
     system_os = "Cygwin"
 
+# TODO: Below line seems no longer necessary; the condition is not checked.
+# Either check again or update the man page.
 #system_os = "Windows" # Uncomment ONLY to test Windows on Linux with Wine.
 
 # Find the number of bits the OS supports.
@@ -445,6 +447,7 @@ def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
                   "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.",
                   file=sys.stderr)
 
+        # NOTE: When updating xpdf version, change here and ALSO in setup.py, near top.
         path = os.path.join(project_src_directory, "pdfCropMargins",
                                                    "pdftoppm_windows_local",
                                                    "xpdf_tools_win_4_01_01")
@@ -471,7 +474,8 @@ def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
                               ignore_called_process_errors=ignore_called_process_errors)
         if not local_pdftoppm_executable:
             print("\nWarning from pdfCropMargins: The local pdftoppm.exe program failed"
-                  "\nto execute correctly or was not found.", file=sys.stderr)
+                  "\nto execute correctly or was not found (see additional error"
+                  " message if not found).", file=sys.stderr)
         else:
             pdftoppm_executable = local_pdftoppm_executable
 

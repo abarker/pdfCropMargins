@@ -3,8 +3,8 @@
 History
 =======
 
-0.2.3 (2019-09-08)
-------------------
+0.2.[34] (2019-09-08)
+---------------------
 
 New features:
 
@@ -13,6 +13,8 @@ New features:
 Bug fixes:
 
 * Fixed a bug with catching signals on Windows systems.
+
+* Fixed a bug with Windows finding the fallback pdftoppm from setup.py installs.
 
 0.2.[012] (2019-08-19)
 -------------------------
