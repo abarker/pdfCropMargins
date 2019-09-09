@@ -83,6 +83,8 @@ PRODUCER_MODIFIER = " (Cropped by pdfCropMargins.)"
 
 args = None # Global set during cmd-line processing (since almost all funs use it).
 
+DEFAULT_THRESHOLD_VALUE = 191
+
 ##
 ## Begin general function definitions.
 ##
@@ -932,9 +934,11 @@ def process_command_line_arguments(parsed_args):
         ex.cleanup_and_exit(1)
 
     # Give a warning message if incompatible option combinations have been selected.
-    if args.gsBbox and args.threshold:
-        print("\nWarning in pdfCropMargins: The '--threshold' option is ignored"
-              "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
+    if args.threshold == -1: # Not equal to dummy value, means None (TODO, see gui file).
+        args.threshold = DEFAULT_THRESHOLD_VALUE
+    elif args.gsBbox:
+            print("\nWarning in pdfCropMargins: The '--threshold' option is ignored"
+                "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
     if args.gsBbox and args.numBlurs:
         print("\nWarning in pdfCropMargins: The '--numBlurs' option is ignored"
               "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)

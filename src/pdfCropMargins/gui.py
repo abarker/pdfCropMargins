@@ -44,6 +44,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # TODO: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
 # window can be fixed to the initial size or something similar.
 
+# TODO: Make background darker on Windows or change theme.  It is too bright.
+
+# TODO: When using gs for bboxes the threshold is not allowed, but it is still
+# shown on the GUI (maybe just disable it).  Also gives a warning, so need to
+# covert back to nargs=1 to test if it is not set (the warning needs to know,
+# if gsBox also used).
+
 # pysimplegui issues: 1) warning on Window title in Python2 on some machines, 2) tooltips
 # need pointer to move left to work, 3) non-string initial values not set for Combo.
 

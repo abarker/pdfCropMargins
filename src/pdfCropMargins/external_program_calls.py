@@ -35,6 +35,10 @@ import glob
 import shutil
 import time
 
+# TODO: Clean up finding executable on Windows.  Maybe automatically search for gs if
+# pdftoppm fails?  Doesn't seem to.  Note gs needs to be findable on PATH,
+# but it gets placed in C:\Program Files\gs\gs9.27\bin\gswin64c.exe (for example).
+
 temp_file_prefix = "pdfCropMarginsTmp_"     # prefixed to all temporary filenames
 temp_dir_prefix = "pdfCropMarginsTmpDir_"   # prefixed to all temporary dirnames
 
@@ -511,11 +515,14 @@ def find_and_test_executable(executables, argument_list, string_to_look_for,
     empty executable strings."""
 
     for system_paths in executables:
-        if system_paths[0] != system_os: continue
+        if system_paths[0] != system_os:
+            continue
         executable_paths = [system_paths[1], system_paths[2]]
-        if system_bits == 32: del executable_paths[0] # 64 bit won't run
+        if system_bits == 32:
+            del executable_paths[0] # 64 bit won't run
         for executable_path in executable_paths:
-            if not executable_path: continue # ignore empty strings
+            if not executable_path:
+                continue # ignore empty strings
             run_command_list = [executable_path] + argument_list
             try:
                 run_output = get_external_subprocess_output(run_command_list,

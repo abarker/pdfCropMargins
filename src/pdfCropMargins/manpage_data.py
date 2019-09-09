@@ -427,7 +427,7 @@ cmd_parser.add_argument("-g", "-pg", "--pages", metavar="PAGESTR", help="""
    document are ignored.  Note that restore information is always saved for all
    the pages (in the ArtBox) unless '--noundosave' is selected.^^n""")
 
-cmd_parser.add_argument("-t", "--threshold", type=int, default=191,
+cmd_parser.add_argument("-t", "--threshold", type=int, default=-1, # Dummy default.
                         metavar="BYTEVAL", help="""
 
    Set the threshold for determining what is background space (white).  The
