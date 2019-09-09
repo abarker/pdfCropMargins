@@ -85,7 +85,7 @@ a fallback if no other program can be found.
 Installing 
 ==========
 
-The easiest way to install pdfCropMargins program is by using pip.
+The easiest way to install the pdfCropMargins program is by using pip.
 
 Ubuntu/Mint
 -----------
@@ -128,11 +128,11 @@ To install with the GUI use::
 
 In order for the command ``pdf-crop-margins`` to be found, the ``bin``
 directory it is created in by the ``pip`` command must be on the Windows
-``PATH``.  The system-wide Python ``bin`` directory should already be there if
-you checked the box to modify ``PATH`` when you installed Python; otherwise it
+``Path``.  The system-wide Python ``bin`` directory should already be there if
+you checked the box to modify ``Path`` when you installed Python; otherwise it
 should be added.  (If you install with the ``--user`` option to pip then you
 need to be sure that the *local* Python ``bin`` directory is in the Windows
-``PATH``.)
+``Path``.)
 
 Running from the source distribution
 ------------------------------------
