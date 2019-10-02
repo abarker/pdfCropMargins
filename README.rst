@@ -156,6 +156,10 @@ After installation via pip the program can be run with a command such as::
 
    pdf-crop-margins -v -s -u your-file.pdf
 
+That command prints verbose output, forces all pages to be the same size
+(``-s``) and then crops each page the same amount (``-u``) for a uniform
+appearance, retaining the default of 10% of the margins.
+
 For help, run::
 
    pdf-crop-margins -h | more
