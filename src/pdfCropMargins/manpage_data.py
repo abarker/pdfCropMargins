@@ -576,7 +576,7 @@ cmd_parser.add_argument("-pv", "--preview", metavar="PROG", help="""
 
    Run a PDF viewer on the cropped PDF output.  The viewer process is run in
    the background.  The viewer is launched after pdfCropMargins has finished
-   all the other.  The only exception is when the '--queryModifyOriginal'
+   all the other options.  The only exception is when the '--queryModifyOriginal'
    option is also selected.  In that case the viewer is launched before the
    query so that the user can look at the output before deciding whether or not
    to modify the original.  (Note that answering 'y' will then move the file
