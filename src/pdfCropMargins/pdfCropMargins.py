@@ -57,9 +57,8 @@ the program and clean up.
 # option to easily *only* crop the even or odd pages, so user can run usual
 # program twice.  --even-only (-eo), --odd-only (-oo)
 #
-# 3) It would be possible to ask for changes to any parameters before deleting
-# the temp file.  Then they could be recomputed very quickly, without having to
-# recalculate the bounding boxes.
+# 3) Consider changing nargs for the input files from + to 1, since only one is
+# allowed.  Make sure error message is equally informative, though.
 #
 # 4) An option to run a test comparison would be useful for a test suite.  Just
 # dump both the original crop values and the final ones to a file in some
