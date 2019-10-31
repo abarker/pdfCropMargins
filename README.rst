@@ -43,6 +43,10 @@ This GIF shows the optional GUI, before and after cropping a document:
     :align: center
     :alt: [GIF of pdfCropMargins]
 
+See the `CHANGELOG
+<https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
+recent changes and new features.
+
 Requirements
 ============
 

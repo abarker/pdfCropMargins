@@ -1321,6 +1321,9 @@ def main_crop():
 
     if args.gui:
         from .gui import create_gui
+        if args.verbose:
+            print("\nWaiting for the GUI...")
+
         did_crop = create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                               cmd_parser, parsed_args)
         if did_crop:

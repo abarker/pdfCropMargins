@@ -372,7 +372,6 @@ def set_gs_executable_to_string(gs_executable_path):
     # Maybe test run these, too, at some point.
     global gs_executable
     gs_executable = gs_executable_path
-    return
 
 
 def init_and_test_gs_executable(exit_on_fail=False):
@@ -422,7 +421,6 @@ def set_pdftoppm_executable_to_string(pdftoppm_executable_path):
     # Maybe test run these, too, at some point.
     global pdftoppm_executable
     pdftoppm_executable = pdftoppm_executable_path
-    return
 
 def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
     """Find a pdftoppm executable and test it.  If a good one is found, set
@@ -647,7 +645,7 @@ def render_pdf_file_to_image_files_pdftoppm_pgm(pdf_file_name, root_output_file_
 def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name,
                                                     root_output_file_path,
                                                     res_x=150, res_y=150):
-    """Use Ghostscript to render a PDF file to .png images.  The root_output_file_path
+    """Use Ghostscript to render a PDF file to .png images.  The `root_output_file_path`
     is prepended to all the output files, which have numbers and extensions added.
     Return the command output."""
     # For gs commands see
@@ -663,7 +661,7 @@ def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name,
 def render_pdf_file_to_image_files__ghostscript_bmp(pdf_file_name,
                                                     root_output_file_path,
                                                     res_x=150, res_y=150):
-    """Use Ghostscript to render a PDF file to .bmp images.  The root_output_file_path
+    """Use Ghostscript to render a PDF file to .bmp images.  The `root_output_file_path`
     is prepended to all the output files, which have numbers and extensions added.
     Return the command output."""
     # For gs commands see

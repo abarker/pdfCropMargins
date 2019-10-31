@@ -939,6 +939,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             did_crop = True
             wait_indicator_text.Update(visible = False)
 
+            if parsed_args.verbose:
+                print("\nWaiting for the GUI...")
+
         elif is_Original(btn):
             call_all_update_funs(update_funs, values_dict)
             document.close()

@@ -435,10 +435,13 @@ cmd_parser.add_argument("-t", "--threshold", type=int, default=-1, # Dummy defau
    may not be available for some configurations since the PDF must be
    internally rendered as an image of pixels.  In particular, it is ignored
    when '--gsBbox' is selected.  Any pixel value over the threshold is
-   considered to be background (white), and any value below it is considered
-   to be text (black).  Lowering the value should tend to make the bounding
-   boxes smaller.  The threshold may need to be lowered, for
-   example, for scanned images with greyish backgrounds.^^n""")
+   considered to be background (white), and any value below it is considered to
+   be text (black).  Lowering the value should tend to make the bounding boxes
+   smaller.  The threshold may need to be lowered, for example, for scanned
+   images with greyish backgrounds.  For pages with dark backgrounds and light
+   text a negative threshold can be passed.  Then the absolute value is used as
+   the threshold but the test is modified to consider pixel values greater than
+   or equal to the threshold to be background.^^n""")
 
 cmd_parser.add_argument("-nb", "--numBlurs", type=int, default=0, metavar="INT",
                         help="""

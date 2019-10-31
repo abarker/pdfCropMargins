@@ -124,6 +124,10 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
 
     # Threshold value set in range 0-255, where 0 is black, with 191 default.
     threshold = args.threshold
+    dark_background_light_foreground = False
+    if threshold < 0:
+        threshold = -threshold
+        dark_background_light_foreground = True
 
     temp_dir = ex.program_temp_directory # use the program default; don't delete dir!
 
@@ -185,8 +189,11 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         # Note that the point method calls the function on each pixel, replacing it.
         #im = im.point(lambda p: p > threshold and 255) # create a positive image
         #im = im.point(lambda p: p < threshold and 255)  # create a negative image
-        # Below code is easier to understand than tricky use of "and" in evaluation.
-        im = im.point(lambda p: 255 if p < threshold else 0)  # create a negative image
+        # Below code is easier to understand than the tricky use of "and" in evaluation.
+        if not dark_background_light_foreground:
+            im = im.point(lambda p: 255 if p < threshold else 0) # create negative image
+        else:
+            im = im.point(lambda p: 255 if p >= threshold else 0) # create positive image
 
         if args.showImages:
             im.show() # usually for debugging or param-setting
