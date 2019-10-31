@@ -104,11 +104,11 @@ Description:
 
    Below are several examples using more of the command-line options, each
    applied to an input file called doc.pdf.  The output filename is unspecified
-   in these examples, so the program will automatically generate the filename
-   (or an output filename can always be explicitly provided):
+   in most of these examples, so the program will automatically generate the
+   filename (or an output filename can always be explicitly provided with '-o'):
 ^^f
 
-     Crop doc.pdf so that all the pages are set to the same size and the
+     1) Crop doc.pdf so that all the pages are set to the same size and the
      cropping amount is uniform across all the pages (this gives a nice two-up
      appearance).  The default of retaining 10% of the existing margins is
      used.  Note carefully that '-u' only makes the amount to be cropped uniform
@@ -117,59 +117,65 @@ Description:
 
         pdf-crop-margins -u -s doc.pdf
 
-     Crop each page of doc.pdf individually (i.e., not uniformly), keeping 50%
+     2) Crop each page of doc.pdf individually (i.e., not uniformly), keeping 50%
      of the existing margins.
 
         pdf-crop-margins -p 50 doc.pdf
 
-     Crop doc.pdf uniformly, keeping 50% of the left margin, 20% of the bottom
+     3) Crop doc.pdf uniformly, keeping 50% of the left margin, 20% of the bottom
      margin, 40% of the right margin, and 10% of the top margin.
 
         pdf-crop-margins -u -p4 50 20 40 10 doc.pdf
 
-     Crop doc.pdf retaining 20% of the margins, and then reduce the right page
+     4) Crop doc.pdf retaining 20% of the margins, and then reduce the right page
      margins only by an absolute 12 points.
 
         pdf-crop-margins -p 20 -a4 0 0 12 0 doc.pdf
 
-     Pre-crop the document by 5 points on each side before computing the
-     bounding boxes.  Then crop retaining 50% of the computed margins.  This
-     can be useful for difficult documents such as scanned books with page-edge
-     noise or other "features" inside the current margins.
+     5) Add a constant 5bp around the bare bounding boxes on all pages (note the
+     negative value passed to the `-a` option, which adds space rather than
+     removing it).
+
+        pdf-crop-margins -p 0 -a -5 doc.pdf
+
+     6) Pre-crop the document by 5bp on each side before computing the bounding
+     boxes.  Then crop retaining 50% of the computed margins.  This can be
+     useful for difficult documents such as scanned books with page-edge noise
+     or other "features" inside the current margins.
 
         pdf-crop-margins -ap 5 -p 50 doc.pdf
 
-     Crop doc.pdf, re-naming the cropped output file doc.pdf and backing
+     7) Crop doc.pdf, re-naming the cropped output file doc.pdf and backing
      up the original file in a file named backup_doc.pdf.
 
         pdf-crop-margins -mo -pf -su "backup" doc.pdf
 
-     Crop the margins of doc.pdf to 120% of their original size, increasing the
-     margins.  Use Ghostscript to find the bounding boxes (in general this is
-     often faster if Ghostscript is available and no rendering operations are
+     8) Crop the margins of doc.pdf to 120% of their original size, increasing the
+     margins.  Use Ghostscript to find the bounding boxes (in general this can
+     often be faster if Ghostscript is available and no rendering operations are
      needed).
 
         pdf-crop-margins -p 120 -gs doc.pdf
 
-     Crop the margins of doc.pdf ignoring the 10 largest margins on each edge
+     9) Crop the margins of doc.pdf ignoring the 10 largest margins on each edge
      (over the whole document).  This is especially good for noisy documents
      where all the pages have very similar margins, or when you want to ignore
      marginal annotations which only occur on a few pages.
 
         pdf-crop-margins -m 10 doc.pdf
 
-     Crop doc.pdf, launch the acroread viewer on the cropped output, and then
+     10) Crop doc.pdf, launch the acroread viewer on the cropped output, and then
      query as to whether or not to rename the cropped file doc.pdf and back up
      the original file as doc_uncropped.pdf.
 
         pdf-crop-margins -mo -q doc.pdf
 
-     Crop pages 1-100 of doc.pdf, cropping all even pages uniformly and all odd
+     11) Crop pages 1-100 of doc.pdf, cropping all even pages uniformly and all odd
      pages uniformly.
 
         pdf-crop-margins -g 1-100 -e doc.pdf
 
-     Try to restore doc.pdf to its original margins, assuming it was cropped
+     12) Try to restore doc.pdf to its original margins, assuming it was cropped
      with pdfCropMargins previously.  Note that the default output filename is
      still named doc_cropped.pdf, even though it is the recovered file.
 
