@@ -1,6 +1,6 @@
 # Tested on these, should usually work with newer.
 olefile==0.44
-Pillow==4.0.0
+Pillow==6.2.0
 py==1.4.32
 PyPDF2==1.26.0
 pytest==3.0.6
