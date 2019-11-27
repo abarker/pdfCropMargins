@@ -108,8 +108,8 @@ This is the install with the GUI::
    sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
    pip3 install pdfCropMargins[gui] --user --upgrade
 
-If you get an error "Failed building wheel for pymupdf" you can try forcing a binary
-install of pyMuPDF::
+If you get an error "Failed building wheel for pymupdf" with the GUI install
+you can try forcing a binary install of pyMuPDF::
 
    pip3 install pdfCropMargins[gui] --user --upgrade --only-binary pymupdf
 
