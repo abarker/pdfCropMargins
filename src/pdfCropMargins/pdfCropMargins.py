@@ -66,11 +66,22 @@ the program and clean up.
 # checked; basically dump the verbose output except not so sensitive to minor
 # text changes and use "close enough" for floating point value equality.
 #
-# 5) An option 'safeAbsolute' which can be turned on to keep absolute crops
+# 5) An option `--safeAbsolute` which can be turned on to keep absolute crops
 # from exceeding the bounding box sizes.  But need to define semantics with and
 # without uniform cropping and same page size.
 #
-# 6) Unzip a file if a zipped file is detected.  Maybe a `tryUnzip` option.
+# 6) Unzip a file if a zipped file is detected.  Maybe a `--tryUnzip` option.
+#
+# 7) A GUI option checkbox (and command-line option) `--cumulative` which
+# re-crops the current cropped page.  Then you can do some pages differently
+# by specifying their page numbers, etc.
+#
+# 8) An option to take `-` as the output filename and then dump to stdout.
+# Okular, at least, can read stdin with that argument.
+#
+# 9) An option to delete the original after renaming the cropped.  Then the
+# program with the preview option (or ';') can be used as an output viewer in
+# Lyx, etc.
 
 from __future__ import print_function, division, absolute_import
 import sys
