@@ -22,7 +22,8 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 This module contains all the function calls to external programs (Ghostscript
 and pdftoppm).  All the system-specific information is also localized here.
-Note for cleanup that this module creates a temp dir at time of initialization.
+
+Note for cleanup: This module creates a temp dir at time of initialization.
 
 """
 
@@ -36,7 +37,7 @@ import shutil
 import time
 
 # TODO: Clean up finding executable on Windows.  Maybe automatically search for gs if
-# pdftoppm fails?  Doesn't seem to.  Note gs needs to be findable on PATH,
+# pdftoppm fails?  Current code doesn't seem to.  Note gs needs to be findable on PATH,
 # but it gets placed in C:\Program Files\gs\gs9.27\bin\gswin64c.exe (for example).
 
 temp_file_prefix = "pdfCropMarginsTmp_"     # prefixed to all temporary filenames
@@ -104,7 +105,8 @@ def get_temporary_filename(extension="", use_program_temp_dir=True):
     expected to open and close it as necessary and call os.remove on it after
     finishing with it.  (Note the entire programTempDir will be deleted on cleanup.)"""
     dir_name = None # uses the regular system temp dir if None
-    if use_program_temp_dir: dir_name = program_temp_directory
+    if use_program_temp_dir:
+        dir_name = program_temp_directory
     tmp_output_file = tempfile.NamedTemporaryFile(delete=False,
                      prefix=temp_file_prefix, suffix=extension, dir=dir_name, mode="wb")
     tmp_output_file.close() # this deletes the file, too, but it is empty in this case
@@ -117,11 +119,14 @@ def get_temporary_directory():
 
 def get_directory_location():
     """Find the location of the directory where the module that runs this
-    function is located.  An empty directory_locator.py file is assumed to be in
+    function is located.  An empty `directory_locator.py` file is assumed to be in
     the same directory as the module.  Note that there are other ways to do
     this, but this way seems reasonably robust and portable.  (As long as
     the directory is a package the import will always look at the current
-    directory first.)"""
+    directory first.)
+
+    The source-directory location is currently used to find the package data
+    directories holding the Windows executables."""
     from . import directory_locator
     return get_canonical_absolue_expanded_dirname(directory_locator.__file__)
 
@@ -149,14 +154,16 @@ def get_parent_directory(path):
     """Like os.path.dirname except it returns the absolute name of the parent
     of the dirname directory.  No symbolic link expansion (os.path.realpath)
     or user expansion (os.path.expanduser) is done."""
-    if not os.path.isdir(path): path = os.path.dirname(path)
+    if not os.path.isdir(path):
+        path = os.path.dirname(path)
     return os.path.abspath(os.path.join(path, os.path.pardir))
 
 def glob_if_windows_os(path, exact_num_args=False):
     """Expands any globbing if system_os is Windows (DOS doesn't do it).  The
     argument exactNumFiles can be set to an integer to check for an exact
     number of matching files.  Returns a list."""
-    if system_os != "Windows": return [path]
+    if system_os != "Windows":
+        return [path]
     globbed = glob.glob(path)
     if not globbed:
         print("\nWarning in pdfCropMargins: The wildcards in the path\n   "
@@ -174,10 +181,12 @@ def convert_windows_path_to_cygwin(path):
     """Convert a Windows path to a Cygwin path.  Just handles the basic case."""
     if len(path) > 2 and path[1] == ":" and path[2] == "\\":
         newpath = cygwin_full_path_prefix + "/" + path[0]
-        if len(path) > 3: newpath += "/" + path[3:]
+        if len(path) > 3:
+            newpath += "/" + path[3:]
         path = newpath
     path = path.replace("\\", "/")
     return path
+
 
 # Set some additional variables that this module exposes to other modules.
 program_code_directory = get_directory_location()
@@ -193,6 +202,7 @@ program_temp_directory = get_temporary_directory()
 # for its temporary files (to be sure they get deleted).
 gs_environment = os.environ.copy()
 gs_environment["TMPDIR"] = program_temp_directory
+
 
 def remove_program_temp_directory():
     """Remove the global temp directory and all its contents."""
@@ -220,27 +230,6 @@ def cleanup_and_exit(exit_code, stack_frame=None):
         print("\nProcess killed by a signal...", file=sys.stderr)
     remove_program_temp_directory()
     sys.exit(exit_code)
-
-def which(program):
-    """This function is for possible future reference and modification, from
-    stackexchange.  Not currently used."""
-    # import os # already imported
-
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-    return None
-
 
 ##
 ## General utility functions for running external processes.
@@ -291,28 +280,19 @@ def call_external_subprocess(command_list,
     """Run the command and arguments in the command_list.  Will search the system
     PATH for commands to execute, but no shell is started.  Redirects any selected
     outputs to the given filename.  Waits for command completion."""
-
-    if stdin_filename: stdin = open(stdin_filename, "r")
-    else: stdin = None
-    if stdout_filename: stdout = open(stdout_filename, "w")
-    else: stdout = None
-    if stderr_filename: stderr = open(stderr_filename, "w")
-    else: stderr = None
+    stdin = open(stdin_filename, "r") if stdin_filename else None
+    stdout = open(stdout_filename, "w") if stdout_filename else None
+    stderr = open(stderr_filename, "w") if stderr_filename else None
 
     subprocess.check_call(command_list, stdin=stdin, stdout=stdout, stderr=stderr,
                           env=env)
 
-    if stdin_filename: stdin.close()
-    if stdout_filename: stdout.close()
-    if stderr_filename: stderr.close()
-
-    # The older way to do the above with os.system is below, just for reference.
-    # command = " ".join(command_list)
-    # if stdin_filename: command += " < " + stdin_filename
-    # if stdout_filename: command += " > " + stdout_filename
-    # if stderr_filename: command += " 2> " + stderr_filename
-    # os.system(command)
-    return
+    if stdin_filename:
+        stdin.close()
+    if stdout_filename:
+        stdout.close()
+    if stderr_filename:
+        stderr.close()
 
 def run_external_subprocess_in_background(command_list, env=None):
     """Runs the command and arguments in the list as a background process."""
@@ -325,43 +305,6 @@ def run_external_subprocess_in_background(command_list, env=None):
                 stderr=None, close_fds=True, env=env)
     return p # ignore the returned process if not needed
 
-
-##
-## Run a program in Python with a time limit (experimental, not currently used).
-##
-
-def my_function(name): # debug test
-    """Unused test function, experimental feature."""
-    print("name is", name)
-    time.sleep(7)
-    print("afterward name is", name)
-    return
-
-def function_call_with_timeout(fun_name, fun_args, secs=5):
-    """Run a Python function with a timeout.  No interprocess communication or
-    return values are handled.  Setting secs to 0 gives infinite timeout."""
-    from multiprocessing import Process, Queue
-    p = Process(target=fun_name, args=tuple(fun_args))
-    p.start()
-    curr_secs = 0
-    no_timeout = False
-    if secs == 0: no_timeout = True
-    else: timeout = secs
-    while p.is_alive() and not no_timeout:
-        if curr_secs > timeout:
-            print("Process time has exceeded timeout, terminating it.")
-            p.terminate()
-            return False
-        time.sleep(0.1)
-        curr_secs += 0.1
-    p.join() # Blocks if process hasn't terminated.
-    return True
-
-# debug test
-#funcallWithTimeout(my_function, ["bob"])
-#cleanup_and_exit(0)
-
-
 ##
 ## Functions to find and test whether an external program is there and runs.
 ##
@@ -372,7 +315,6 @@ def set_gs_executable_to_string(gs_executable_path):
     # Maybe test run these, too, at some point.
     global gs_executable
     gs_executable = gs_executable_path
-
 
 def init_and_test_gs_executable(exit_on_fail=False):
     """Find a Ghostscript executable and test it.  If a good one is found, set
@@ -427,7 +369,6 @@ def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
     this module's global pdftoppm_executable variable to that path and return
     that string.  Otherwise return None.  Any path string set from the
     command line gets priority, and is not tested."""
-
     ignore_called_process_errors = False
 
     global pdftoppm_executable
@@ -511,7 +452,6 @@ def find_and_test_executable(executables, argument_list, string_to_look_for,
     32 bit version is always tried if the 64 bit version fails.  Returns the
     working executable name for the system, or the None if both fail.  Ignores
     empty executable strings."""
-
     for system_paths in executables:
         if system_paths[0] != system_os:
             continue
@@ -544,7 +484,6 @@ def fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname):
     """Attempt to fix a bad PDF file with a Ghostscript command, writing the output
     PDF to a temporary file and returning the filename.  Caller is responsible for
     deleting the file."""
-
     if not gs_executable: init_and_test_gs_executable(exit_on_fail=True)
     temp_file_name = get_temporary_filename(extension=".pdf")
     gs_run_command = [gs_executable, "-dSAFER", "-o", temp_file_name,
@@ -567,16 +506,19 @@ def fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname):
 def get_bounding_box_list_ghostscript(input_doc_fname, res_x, res_y, full_page_box):
     """Call Ghostscript to get the bounding box list.  Cannot set a threshold
     with this method."""
+    if not gs_executable:
+        init_and_test_gs_executable(exit_on_fail=True)
 
-    if not gs_executable: init_and_test_gs_executable(exit_on_fail=True)
     res = str(res_x) + "x" + str(res_y)
     box_arg = "-dUseMediaBox" # should be default, but set anyway
     if "c" in full_page_box: box_arg = "-dUseCropBox"
     if "t" in full_page_box: box_arg = "-dUseTrimBox"
     if "a" in full_page_box: box_arg = "-dUseArtBox"
     if "b" in full_page_box: box_arg = "-dUseBleedBox" # may not be defined in gs
+
     gs_run_command = [gs_executable, "-dSAFER", "-dNOPAUSE", "-dBATCH", "-sDEVICE=bbox",
                     box_arg, "-r"+res, input_doc_fname]
+
     # Set printOutput to True for debugging or extra-verbose with Ghostscript's output.
     # Note Ghostscript writes the data to stderr, so the command below must capture it.
     try:
@@ -618,8 +560,8 @@ def render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name, root_output_file_
     root_output_file_path is prepended to all the output files, which have numbers
     and extensions added.  Extra arguments can be passed as a list in extra_args.
     Return the command output."""
-
-    if extra_args is None: extra_args = []
+    if extra_args is None:
+        extra_args = []
 
     if not pdftoppm_executable:
         init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=True)
