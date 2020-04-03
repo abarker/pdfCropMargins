@@ -225,9 +225,11 @@ def remove_program_temp_directory():
 
 def cleanup_and_exit(exit_code, stack_frame=None):
     """Exit the program, after cleaning up the temporary directory.  The `stack_frame`
-    argument is for when `signal.signal` calls the function."""
+    argument is for when `signal.signal` calls the function.  The returned `exit_code`
+    is the signal number."""
     if stack_frame is not None:
-        print("\nProcess killed by a signal...", file=sys.stderr)
+        print("\nThe process of pdf-crop-margins was killed by signal {}..."
+                .format(exit_code), file=sys.stderr)
     remove_program_temp_directory()
     sys.exit(exit_code)
 
