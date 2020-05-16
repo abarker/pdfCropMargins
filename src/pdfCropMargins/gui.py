@@ -77,12 +77,12 @@ try:
 except ImportError:
     print("\nThe GUI feature requires Tkinter, pySimpleGUI, and PyMuPDF at least"
           "\n v1.14.5.  If installing via pip, use the optional-feature install:"
-          "\n   pip install pdfCropMargins[gui] --upgrade --user", file=sys.stderr)
-    raise
+          "\n   pip install pdfCropMargins[gui] --upgrade --user"
+          "\n\nExiting pdf-crop-margins...", file=sys.stderr)
+    ex.cleanup_and_exit(1)
 
 from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
                                   parse_page_ratio_argument)
-from .external_program_calls import cleanup_and_exit
 
 # Look and feel.
 #print(sg.ListOfLookAndFeelValues())
@@ -762,7 +762,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             image_element,
             sg.Column([
                     [sg.Text("Quadruples are left, bottom, right, and top margins.\n"
-                             "Hover to show option-description tooltips.",
+                             "Move mouse left over option names to show descriptions.",
                              relief=sg.RELIEF_GROOVE, pad=(None, (0,15)))],
                     [combo_box_uniform, text_uniform, combo_box_samePageSize, text_samePageSize],
                     [input_text_percentRetain, text_percentRetain],

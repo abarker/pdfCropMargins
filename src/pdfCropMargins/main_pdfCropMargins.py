@@ -56,9 +56,7 @@ from . import __version__ # Get the version number from the __init__.py file.
 from .manpage_data import cmd_parser
 from .prettified_argparse import parse_command_line_arguments
 
-# Import the module that calls external programs and gets system info.
 from . import external_program_calls as ex
-python_version = ex.python_version
 project_src_directory = ex.project_src_directory
 
 try:
@@ -774,6 +772,7 @@ def process_command_line_arguments(parsed_args):
 
     if args.verbose:
         print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
+        print("Python version is", ex.python_version)
         print("System type:", ex.system_os)
 
     if len(args.pdf_input_doc) > 1:
