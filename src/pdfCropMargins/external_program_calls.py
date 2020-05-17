@@ -268,7 +268,7 @@ def get_external_subprocess_output(command_list, print_output=False, indent_stri
     except:
         from .main_pdfCropMargins import args
         if args.verbose:
-            print("\npdfCropMargins: Exception when trying to run this subprocess"
+            print("\nException when trying to run this subprocess"
                   " command:\n   {}".format(command_list), file=sys.stderr)
         raise
 
