@@ -11,8 +11,6 @@ Docs on the setup function kwargs:
 
 """
 
-# TODO: Look into possibly using the setuptools-git package from PyPI.
-
 from __future__ import absolute_import, print_function
 import glob
 import os.path

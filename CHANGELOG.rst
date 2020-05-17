@@ -2,7 +2,8 @@
 
 History
 =======
-0.2.7 (2019-??-??)
+
+0.2.7 (2020-05-16)
 ------------------
 
 New features:
@@ -10,6 +11,10 @@ New features:
 * Negative threshold values are now allowed, and reverse the test for
   background vs. foreground.  This can be used for PDFs with dark backgrounds
   and light foregrounds.
+
+Bug fixes:
+
+* Minor improvements.
 
 0.2.[3456] (2019-09-08)
 -----------------------
