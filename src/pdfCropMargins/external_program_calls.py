@@ -72,8 +72,9 @@ else:
     system_bits = 32
 
 # Executable paths for Ghostscript, one line for each system OS, with the
-# system_os string followed by the 32 and 64 bit executable pathnames.  Will
-# use the PATH for the system.
+# system_os string followed by the 64 and 32 bit executable pathnames.  Will
+# use the PATH for the system.  On 64 bit systems the 32 bit name is tried
+# if the 64 bit one fails.
 gs_executables = (
     ("Linux", "gs", "gs"),
     ("Cygwin", "gs", "gs"),
@@ -265,8 +266,10 @@ def get_external_subprocess_output(command_list, print_output=False, indent_stri
             output = subprocess.check_output(command_list, stderr=subprocess.STDOUT,
                                              shell=False, env=env)
     except:
-        print("pdfCropMargins: Exception when trying to run this subprocess"
-              " command:\n   {}\n".format(command_list), file=sys.stderr)
+        from .main_pdfCropMargins import args
+        if args.verbose:
+            print("\npdfCropMargins: Exception when trying to run this subprocess"
+                  " command:\n   {}".format(command_list), file=sys.stderr)
         raise
 
     output = output.decode("utf-8")
@@ -492,7 +495,9 @@ def fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname):
     """Attempt to fix a bad PDF file with a Ghostscript command, writing the output
     PDF to a temporary file and returning the filename.  Caller is responsible for
     deleting the file."""
-    if not gs_executable: init_and_test_gs_executable(exit_on_fail=True)
+    if not gs_executable:
+        init_and_test_gs_executable(exit_on_fail=True)
+
     temp_file_name = get_temporary_filename(extension=".pdf")
     gs_run_command = [gs_executable, "-dSAFER", "-o", temp_file_name,
                     "-dPDFSETTINGS=/prepress", "-sDEVICE=pdfwrite", input_doc_fname]
