@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# Note that using the shebang "usr/bin/env python" does not set the process
-# name to pdfCropMargins in Linux (for things like top, ps, and killall).
 """
 
 pdfCropMargins -- a program to crop the margins of PDF files
