@@ -126,7 +126,7 @@ def main():
         print()
         exit_code = 1
         import traceback
-        max_traceback_length = 30
+        max_traceback_length = 60
         traceback.print_tb(sys.exc_info()[2], limit=max_traceback_length)
         # raise
 

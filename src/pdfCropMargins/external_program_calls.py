@@ -250,18 +250,24 @@ def get_external_subprocess_output(command_list, print_output=False, indent_stri
 
     print_output = False # Useful for debugging to set True.
 
-    use_popen = True # Needs to be True to set ignore_called_process_errors True
-    if use_popen: # Use lower-level Popen call.
-        p = subprocess.Popen(command_list, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT, env=env)
-        output, errout = p.communicate()
-        returncode = p.poll()
-        if not ignore_called_process_errors and returncode != 0:
-            raise subprocess.CalledProcessError(returncode, command_list, output=output)
-    else: # Use a check_output call.
-        # Note this does not work correctly if shell=True.
-        output = subprocess.check_output(command_list, stderr=subprocess.STDOUT,
-                                         shell=False, env=env)
+    try:
+        use_popen = True # Needs to be True to set ignore_called_process_errors True
+        if use_popen: # Use lower-level Popen call.
+            p = subprocess.Popen(command_list, stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT, env=env)
+            output, errout = p.communicate()
+            returncode = p.poll()
+            if not ignore_called_process_errors and returncode != 0:
+                raise subprocess.CalledProcessError(returncode, command_list,
+                                                    output=output)
+        else: # Use a check_output call.
+            # Note this does not work correctly if shell=True.
+            output = subprocess.check_output(command_list, stderr=subprocess.STDOUT,
+                                             shell=False, env=env)
+    except:
+        print("pdfCropMargins: Exception when trying to run this subprocess"
+              " command:\n   {}\n".format(command_list), file=sys.stderr)
+        raise
 
     output = output.decode("utf-8")
 
