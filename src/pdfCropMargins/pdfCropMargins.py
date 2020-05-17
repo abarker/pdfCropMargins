@@ -48,8 +48,8 @@ the program and clean up.
 # command-line program, just as a convenience.
 #
 # 1) Consider defining a command-line option which will print out either a bash
-# script or a DOS script that users can modify and use.  Or maybe a config
-# file.
+# script or a DOS script that users can modify and use.  Or maybe implement
+# config files.
 #
 # 2) Have -ea and -oa options that do absolute crops on even and odd
 # differently.  Similarly, -ea4 and -oa4 for individual margins.  Similarly
@@ -58,7 +58,7 @@ the program and clean up.
 # program twice.  --even-only (-eo), --odd-only (-oo)
 #
 # 3) Consider changing nargs for the input files from + to 1, since only one is
-# allowed.  Make sure error message is equally informative, though.
+# allowed.  Make sure the error message is equally informative, though.
 #
 # 4) An option to run a test comparison would be useful for a test suite.  Just
 # dump both the original crop values and the final ones to a file in some

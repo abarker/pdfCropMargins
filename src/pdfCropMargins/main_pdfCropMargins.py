@@ -69,7 +69,6 @@ except ImportError:
           " was found.\n", file=sys.stderr)
     raise
 
-# Import the general function for calculating a list of bounding boxes.
 from .calculate_bounding_boxes import get_bounding_box_list
 
 ##

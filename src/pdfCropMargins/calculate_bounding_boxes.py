@@ -48,12 +48,12 @@ except ImportError:
     hasPIL = False
 
 #
-# A few globals used in this module.
+# A few globals used in this module, shared when passed into get_bounding_box_list.
 #
 
 args = None # Command-line arguments; set in get_bounding_box_list.
-page_nums_to_crop = None # Set of pages to crop; initialized in get_bounding_box_list.
-PdfFileWriter = None # Initialized in get_bounding_box_list
+page_nums_to_crop = None # Set of pages to crop.
+PdfFileWriter = None
 
 #
 # The main functions of the module.
@@ -244,12 +244,12 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
 def calculate_bounding_box_from_image(im, curr_page):
     """This function uses a PIL routine to get the bounding box of the rendered
     image."""
-    xMax, y_max = im.size
+    x_max, y_max = im.size
     bounding_box = im.getbbox() # note this uses ltrb convention
     if not bounding_box:
         #print("\nWarning: could not calculate a bounding box for this page."
         #      "\nAn empty page is assumed.", file=sys.stderr)
-        bounding_box = (xMax/2, y_max/2, xMax/2, y_max/2)
+        bounding_box = (x_max/2, y_max/2, x_max/2, y_max/2)
 
     bounding_box = list(bounding_box) # make temporarily mutable
 
@@ -261,7 +261,7 @@ def calculate_bounding_box_from_image(im, curr_page):
 
     # Convert pixel units to PDF's bp units.
     convert_x = float(full_page_box.getUpperRight_x()
-                     - full_page_box.getLowerLeft_x()) / xMax
+                     - full_page_box.getLowerLeft_x()) / x_max
     convert_y = float(full_page_box.getUpperRight_y()
                      - full_page_box.getLowerLeft_y()) / y_max
 
