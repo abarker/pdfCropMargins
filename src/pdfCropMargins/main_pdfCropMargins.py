@@ -771,7 +771,7 @@ def process_command_line_arguments(parsed_args):
 
     if args.verbose:
         print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
-        print("Python version is", ex.python_version)
+        print("Python version:", ex.python_version)
         print("System type:", ex.system_os)
 
     if len(args.pdf_input_doc) > 1:
