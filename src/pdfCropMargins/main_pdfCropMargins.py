@@ -572,6 +572,7 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
             print("\nNew full page sizes after cropping, in PDF format (lbrt):")
 
     if args.writeCropDataToFile:
+        args.writeCropDataToFile = os.path.expanduser(args.writeCropDataToFile)
         f = open(args.writeCropDataToFile, "w")
 
     # Copy over each page, after modifying the appropriate PDF boxes.
@@ -786,6 +787,7 @@ def process_command_line_arguments(parsed_args):
     #
 
     input_doc_fname = ex.glob_if_windows_os(args.pdf_input_doc[0], exact_num_args=1)[0]
+    input_doc_fname = os.path.expanduser(input_doc_fname)
     if not input_doc_fname.endswith((".pdf",".PDF")):
         print("\nWarning in pdfCropMargins: The file extension is neither '.pdf'"
               "\nnor '.PDF'; continuing anyway.", file=sys.stderr)
@@ -798,10 +800,12 @@ def process_command_line_arguments(parsed_args):
         ex.cleanup_and_exit(1)
 
     if not args.outfile:
-        if args.verbose: print("\nUsing the default-generated output filename.")
+        if args.verbose:
+            print("\nUsing the default-generated output filename.")
         output_doc_fname = generate_default_filename(input_doc_fname)
     else:
         output_doc_fname = ex.glob_if_windows_os(args.outfile[0], exact_num_args=1)[0]
+    output_doc_fname = os.path.expanduser(output_doc_fname)
     if args.verbose:
         print("\nThe output document's filename will be:\n   ", output_doc_fname)
 

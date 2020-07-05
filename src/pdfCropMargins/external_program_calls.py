@@ -160,8 +160,8 @@ def get_parent_directory(path):
     return os.path.abspath(os.path.join(path, os.path.pardir))
 
 def glob_if_windows_os(path, exact_num_args=False):
-    """Expands any globbing if system_os is Windows (DOS doesn't do it).  The
-    argument exactNumFiles can be set to an integer to check for an exact
+    """Expands any globbing if `system_os` is Windows (DOS doesn't do it).  The
+    argument `exact_num_args` can be set to an integer to check for an exact
     number of matching files.  Returns a list."""
     if system_os != "Windows":
         return [path]
