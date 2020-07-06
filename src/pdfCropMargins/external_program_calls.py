@@ -182,28 +182,36 @@ def get_temporary_filename(extension="", use_program_temp_dir=True):
         dir_name = program_temp_directory
     tmp_output_file = tempfile.NamedTemporaryFile(delete=True,
                      prefix=temp_file_prefix, suffix=extension, dir=dir_name, mode="wb")
+    tmp_output_filename = tmp_output_file.name
     tmp_output_file.close() # This deletes the file, too, but it is empty in this case.
-    return tmp_output_file.name
+    return tmp_output_filename
 
 
 # The global directory that all temporary files are written to.  Other modules
 # all use the definition from this module.  This makes it easy to clean up all
 # the possibly large files, even on KeyboardInterrupt, by just deleting this
-# directory.  Set by `create_temporary_directory`.
-program_temp_directory = None
+# directory.
+program_temp_directory = None # Set by `create_temporary_directory`.
+
+# Set up an environment variable so Ghostscript will use program_temp_directory
+# for its temporary files (to be sure they get deleted).
+gs_environment = os.environ.copy()
+gs_environment["TMPDIR"] = None # Set by `create_temporary_directory`.
 
 @contextlib.contextmanager
 def create_temporary_directory():
     """Create and set the `program_temp_directory` temporary directory and return the
-    name."""
+    name.  Cleanup on exit from the context manager."""
     global program_temp_directory
     program_temp_directory = tempfile.mkdtemp(prefix=temp_dir_prefix)
+    gs_environment["TMPDIR"] = program_temp_directory
 
     try:
         yield program_temp_directory
     finally:
         remove_program_temp_directory()
         program_temp_directory = None
+        gs_environment["TMPDIR"] = None
 
 def remove_program_temp_directory():
     """Remove the global temp directory and all its contents."""
@@ -238,11 +246,6 @@ def cleanup_and_exit(exit_code, stack_frame=None):
 # Set some additional variables that this module exposes to other modules.
 program_code_directory = get_directory_location()
 project_src_directory = get_parent_directory(program_code_directory)
-
-# Set up an environment variable so Ghostscript will use program_temp_directory
-# for its temporary files (to be sure they get deleted).
-gs_environment = os.environ.copy()
-gs_environment["TMPDIR"] = program_temp_directory
 
 
 ##
