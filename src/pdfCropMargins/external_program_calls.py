@@ -109,7 +109,7 @@ def get_temporary_filename(extension="", use_program_temp_dir=True):
     dir_name = None # uses the regular system temp dir if None
     if use_program_temp_dir:
         dir_name = program_temp_directory
-    tmp_output_file = tempfile.NamedTemporaryFile(delete=False,
+    tmp_output_file = tempfile.NamedTemporaryFile(delete=True,
                      prefix=temp_file_prefix, suffix=extension, dir=dir_name, mode="wb")
     tmp_output_file.close() # This deletes the file, too, but it is empty in this case.
     return tmp_output_file.name
