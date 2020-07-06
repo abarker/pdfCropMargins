@@ -187,7 +187,14 @@ Description:
    convenient to make a simple shell script (batch file) which invokes the
    program with those particular options and settings.  Simple template scripts
    for Bash and Windows are packaged with the program, in the bin directory.
+   The program can also be called from a user's Python program (when discoverable
+   in the Python path) by using code such as
+^^f
 
+        from pdfCropMargins import crop
+        crop(["-p", "20", "-u", "-s", "paper.pdf"])
+
+^^f
    When printing a document with closely-cropped pages it may be necessary to
    use options such as "Fit to Printable Area".  It may also be necessary to
    fine-tune the size of the retained margins if the edges of the text are

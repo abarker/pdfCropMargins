@@ -35,6 +35,7 @@ import tempfile
 import glob
 import shutil
 import time
+import contextlib
 
 # TODO: Clean up finding executable on Windows.  Maybe automatically search for gs if
 # pdftoppm fails?  Current code doesn't seem to.  Note gs needs to be findable on PATH,
@@ -99,25 +100,6 @@ old_pdftoppm_version = False # Program will check the version and set this if tr
 ##
 ## General utility functions for paths and finding the directory path.
 ##
-
-def get_temporary_filename(extension="", use_program_temp_dir=True):
-    """Return the string for a temporary file with the given extension or
-    suffix.  For a file extension like .pdf the dot should also be in the
-    passed string.  Caller is expected to open and close it as necessary and
-    call os.remove on it after finishing with it.  (Note the entire
-    `program_temp_directory` will be deleted on cleanup.)"""
-    dir_name = None # uses the regular system temp dir if None
-    if use_program_temp_dir:
-        dir_name = program_temp_directory
-    tmp_output_file = tempfile.NamedTemporaryFile(delete=True,
-                     prefix=temp_file_prefix, suffix=extension, dir=dir_name, mode="wb")
-    tmp_output_file.close() # This deletes the file, too, but it is empty in this case.
-    return tmp_output_file.name
-
-def get_temporary_directory():
-    """Create a temporary directory and return the name.  The caller is responsible
-    for deleting it (e.g., with shutil.rmtree) after using it."""
-    return tempfile.mkdtemp(prefix=temp_dir_prefix)
 
 def get_directory_location():
     """Find the location of the directory where the module that runs this
@@ -189,26 +171,43 @@ def convert_windows_path_to_cygwin(path):
     path = path.replace("\\", "/")
     return path
 
+def get_temporary_filename(extension="", use_program_temp_dir=True):
+    """Return the string for a temporary file with the given extension or
+    suffix.  For a file extension like .pdf the dot should also be in the
+    passed string.  Caller is expected to open and close it as necessary and
+    call os.remove on it after finishing with it.  (Note the entire
+    `program_temp_directory` will be deleted on cleanup.)"""
+    dir_name = None # Uses the regular system temp dir if None.
+    if use_program_temp_dir:
+        dir_name = program_temp_directory
+    tmp_output_file = tempfile.NamedTemporaryFile(delete=True,
+                     prefix=temp_file_prefix, suffix=extension, dir=dir_name, mode="wb")
+    tmp_output_file.close() # This deletes the file, too, but it is empty in this case.
+    return tmp_output_file.name
 
-# Set some additional variables that this module exposes to other modules.
-program_code_directory = get_directory_location()
-project_src_directory = get_parent_directory(program_code_directory)
 
 # The global directory that all temporary files are written to.  Other modules
 # all use the definition from this module.  This makes it easy to clean up all
 # the possibly large files, even on KeyboardInterrupt, by just deleting this
-# directory.
-program_temp_directory = get_temporary_directory()
+# directory.  Set by `create_temporary_directory`.
+program_temp_directory = None
 
-# Set up an environment variable so Ghostscript will use program_temp_directory
-# for its temporary files (to be sure they get deleted).
-gs_environment = os.environ.copy()
-gs_environment["TMPDIR"] = program_temp_directory
+@contextlib.contextmanager
+def create_temporary_directory():
+    """Create and set the `program_temp_directory` temporary directory and return the
+    name."""
+    global program_temp_directory
+    program_temp_directory = tempfile.mkdtemp(prefix=temp_dir_prefix)
 
+    try:
+        yield program_temp_directory
+    finally:
+        remove_program_temp_directory()
+        program_temp_directory = None
 
 def remove_program_temp_directory():
     """Remove the global temp directory and all its contents."""
-    if os.path.exists(program_temp_directory):
+    if program_temp_directory and os.path.exists(program_temp_directory):
         max_retries = 3
         curr_retries = 0
         time_between_retries = 1
@@ -234,6 +233,17 @@ def cleanup_and_exit(exit_code, stack_frame=None):
                 .format(exit_code), file=sys.stderr)
     remove_program_temp_directory()
     sys.exit(exit_code)
+
+
+# Set some additional variables that this module exposes to other modules.
+program_code_directory = get_directory_location()
+project_src_directory = get_parent_directory(program_code_directory)
+
+# Set up an environment variable so Ghostscript will use program_temp_directory
+# for its temporary files (to be sure they get deleted).
+gs_environment = os.environ.copy()
+gs_environment["TMPDIR"] = program_temp_directory
+
 
 ##
 ## General utility functions for running external processes.

@@ -78,45 +78,42 @@ the program and clean up.
 # Okular, at least, can read stdin with that argument.
 #
 # 9) An option to delete the original after renaming the cropped.  Then the
-# program with the preview option (or ';') can be used as an output viewer in
-# Lyx, etc.
+# program with the preview option (or shell ';') can be used as an output viewer
+# in Lyx, etc.
 
 from __future__ import print_function, division, absolute_import
 import sys
 import signal
 
 def main():
-    """Run main, catching any exceptions and cleaning up the temp directories."""
+    """Crop with the arguments in `sys.argv`, catching any exceptions and cleaning
+    up the temp directory.  Called as the entry point for `pdf-crop-margins` script.
+    Only use for running as a standalone script."""
     cleanup_and_exit = sys.exit # Function to exit (in finally) before the import.
     exit_code = 0
 
-    # Imports are done here inside the try block so some ugly (and useless)
-    # traceback info is avoided on user's ^C (KeyboardInterrupt, EOFError on Windows).
+    # Imports are done here inside the try block so some ugly (and useless) traceback
+    # info is avoided on user's Ctrl-C (`KeyboardInterrupt`, `EOFError` on Windows)
+    # during startup.
     try:
-
-        # This import creates a tmp dir as a side effect.
-        # Switch cleanup_and_exit to the real one, which deletes temp dir.
-        from .external_program_calls import cleanup_and_exit
+        from .external_program_calls import cleanup_and_exit, create_temporary_directory
+        from .main_pdfCropMargins import main_crop
 
         # Call cleanup_and_exit at system exit, even with signal kills.
-        # (This could alternately be called just after defining the function.)
         # Note SIGINT for Ctrl-C is already handled fine by the finally.
+        # (This signal-catching is probably no longer be needed for cleanup now that the
+        # temp dir is created with a context manager, but it gives nicer exit messages.)
         for s in ["SIGABRT", "SIGTERM", "SIGHUP"]:
             if hasattr(signal, s): # Not all systems define the same signals.
                 signal.signal(getattr(signal, s), cleanup_and_exit)
 
-        # Below import also imports external_program_calls, don't do it first.
-        from .main_pdfCropMargins import main_crop
-        main_crop()
-
+        crop()
     except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
               file=sys.stderr)
-
     except SystemExit:
         exit_code = int(str(sys.exc_info()[1])) # The number sys.exit(n) called with.
         print()
-
     except:
         # Echo back the unexpected error so the user can see it.
         print("\nCaught an unexpected exception in the pdfCropMargins program.",
@@ -129,7 +126,6 @@ def main():
         max_traceback_length = 60
         traceback.print_tb(sys.exc_info()[2], limit=max_traceback_length)
         # raise
-
     finally:
         # Clean up the temp file directory.  Note some people like to hit multiple
         # ^C chars, which kills cleanup.  The loop calls cleanup again each time.
@@ -139,4 +135,14 @@ def main():
             except (KeyboardInterrupt, EOFError):
                 continue
 
+def crop(argv_list=None):
+    """Crop the PDF file using the arguments specified in `sys.argv`.  If a list is
+    passed as `argv_list` then it is used instead of `sys.argv`.  This function
+    can be called as a library routine of the `pdfCropMargins` package."""
+    # Imports are done (or redone) here so that when called as a library routine
+    # the caller can handle any `KeyboardInterrupt` or `SystemExit`.
+    from .external_program_calls import create_temporary_directory
+    from .main_pdfCropMargins import main_crop
+    with create_temporary_directory():
+        main_crop(argv_list)
 
