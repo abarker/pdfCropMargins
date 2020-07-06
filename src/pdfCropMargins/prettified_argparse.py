@@ -1,9 +1,9 @@
 """
 
-This module defines classes for redirecting sys.stdout and sys.stderr in order
-to postprocess (prettify) the help and usage messages from the argparse class.
-Generally only the `parse_command_line_arguments` function will be imported
-from it.
+This module defines classes for redirecting `sys.stdout` and `sys.stderr` in
+order to postprocess (prettify) the help and usage messages from the argparse
+class.  Generally only the `parse_command_line_arguments` function will be
+imported from it.
 
 This module also defines a self-flushing output stream to avoid having to
 explicitly run Python with the '-u' option in Cygwin windows.  It provides the
@@ -14,20 +14,19 @@ function::
 which applies the prettifier to an argparse parser and resets sys.stdout to
 an automatic-flushing version.
 
-This file can be copied inline when you really want a single-file script.
-Otherwise, the usage is::
+The usage is::
 
    from prettified_argparse import parse_command_line_arguments
    from manpage_data import cmdParser
 
-The actual argparse parser and documentation text are in manpage_data.py.
+The actual argparse parser and documentation text are in `manpage_data.py`.
 Somewhere in the calling program, the imported function should be called as::
 
     args = parse_command_line_arguments(cmdParser)
 
-Note that the standard TextWrapper fill and wrap routines used in argparse do
-not strip out multiple whitespace like many fill programs do.  See the
-`RedirectHelp` comment for the changes to the standard argparse formatting.
+Note that the standard `TextWrapper` fill and wrap routines used in `argparse`
+do not strip out multiple whitespace like many fill programs do.  See the
+`RedirectHelp` comment for the changes to the standard `argparse` formatting.
 
 =====================================================================
 
@@ -168,10 +167,11 @@ class SelfFlushingOutstream(object):
         return getattr(self.outstream, attr)
 
 
-def parse_command_line_arguments(argparse_parser, init_indent=5, subs_indent=5,
-                                 line_width=76):
+def parse_command_line_arguments(argparse_parser, argv_list=None, init_indent=5,
+                                 subs_indent=5, line_width=76, self_flushing=False):
     """Main routine to call to execute the command parsing.  Returns an object
-    from argparse's parse_args() routine."""
+    from argparse's `parse_args()` routine.  If `argv_list` is set then it will
+    be used instead of `sys.argv`."""
     # Redirect stdout and stderr to prettify help or usage output from argparse.
     old_stdout = sys.stdout # save stdout
     old_stderr = sys.stderr # save stderr
@@ -181,13 +181,17 @@ def parse_command_line_arguments(argparse_parser, init_indent=5, subs_indent=5,
             init_indent, subs_indent, line_width) # redirect stderr to add postprocessor
 
     # Run the actual argument-parsing operation via argparse.
-    args = argparse_parser.parse_args()
+    args = argparse_parser.parse_args(args=argv_list)
 
     # The argparse class has finished its argument-processing, so now no more
     # usage or help messages will be printed.  So restore stdout and stderr
-    # to their usual settings, except with self-flushing added.
-    sys.stdout = SelfFlushingOutstream(old_stdout)
-    sys.stderr = SelfFlushingOutstream(old_stderr)
+    # to their usual settings.
+    if self_flushing:
+        sys.stdout = SelfFlushingOutstream(old_stdout)
+        sys.stderr = SelfFlushingOutstream(old_stderr)
+    else:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
     return args
 

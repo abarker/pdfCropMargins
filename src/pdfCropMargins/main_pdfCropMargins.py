@@ -1312,10 +1312,11 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
     if args.verbose:
         print("\nFinished this run of pdfCropMargins.\n")
 
-def main_crop():
+def main_crop(argv_list=None):
     """Process command-line arguments, do the PDF processing, and then perform final
-    processing on the filenames."""
-    parsed_args = parse_command_line_arguments(cmd_parser)
+    processing on the filenames.  If `argv_list` is set then it is used instead of
+    `sys.argv`."""
+    parsed_args = parse_command_line_arguments(cmd_parser, argv_list=argv_list)
 
     # Process some of the command-line arguments (also sets args globally).
     input_doc_fname, fixed_input_doc_fname, output_doc_fname = (
