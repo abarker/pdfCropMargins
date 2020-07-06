@@ -101,16 +101,17 @@ old_pdftoppm_version = False # Program will check the version and set this if tr
 ##
 
 def get_temporary_filename(extension="", use_program_temp_dir=True):
-    """Return the string for a temporary file with the given extension or suffix.  For a
-    file extension like .pdf the dot should also be in the passed string.  Caller is
-    expected to open and close it as necessary and call os.remove on it after
-    finishing with it.  (Note the entire programTempDir will be deleted on cleanup.)"""
+    """Return the string for a temporary file with the given extension or
+    suffix.  For a file extension like .pdf the dot should also be in the
+    passed string.  Caller is expected to open and close it as necessary and
+    call os.remove on it after finishing with it.  (Note the entire
+    `program_temp_directory` will be deleted on cleanup.)"""
     dir_name = None # uses the regular system temp dir if None
     if use_program_temp_dir:
         dir_name = program_temp_directory
     tmp_output_file = tempfile.NamedTemporaryFile(delete=False,
                      prefix=temp_file_prefix, suffix=extension, dir=dir_name, mode="wb")
-    tmp_output_file.close() # this deletes the file, too, but it is empty in this case
+    tmp_output_file.close() # This deletes the file, too, but it is empty in this case.
     return tmp_output_file.name
 
 def get_temporary_directory():
@@ -152,7 +153,7 @@ def samefile(path1, path2):
             get_canonical_absolute_expanded_path(path2))
 
 def get_parent_directory(path):
-    """Like os.path.dirname except it returns the absolute name of the parent
+    """Like `os.path.dirname` except it returns the absolute name of the parent
     of the dirname directory.  No symbolic link expansion (os.path.realpath)
     or user expansion (os.path.expanduser) is done."""
     if not os.path.isdir(path):

@@ -1113,7 +1113,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
     ## Write out the PDF document again, with the CropBox and MediaBox reset.
     ## This temp version is ONLY used for calculating the bounding boxes of
-    ## pages.  Note we are writing from tmp_output_doc (due to an apparent bug
+    ## pages.  Note we are writing from `tmp_output_doc` (due to an apparent bug
     ## discussed above).  After this tmp_input_doc and tmp_output_doc are no longer
     ## needed.
     ##
