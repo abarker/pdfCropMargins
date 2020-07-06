@@ -284,8 +284,12 @@ cmd_parser.add_argument("-gui", "--gui", action="store_true", help="""
 
    Run the graphical user interface.  This mode allows you to interactively
    preview and test different cropping options without having to recalculate
-   the bounding boxes each time (which can be slow).  All the usual command-line
-   options to the program are still respected.^^n""")
+   the bounding boxes each time (which can be slow).  All the usual
+   command-line options to the program are still respected.  Note that
+   successive changes to the margins in the GUI are not cumulative: settings
+   are always applied to the original document as it was passed in to the
+   program.  The 'Original' button reverts the display to that original
+   version.^^n""")
 
 cmd_parser.add_argument("-p", "--percentRetain", nargs=1, type=float,
                        metavar="PCT", default=[10.0], help="""
