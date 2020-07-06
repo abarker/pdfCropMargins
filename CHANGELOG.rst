@@ -3,6 +3,14 @@
 History
 =======
 
+0.2.9 (2020-XX-XX)
+------------------
+
+New features:
+
+* Users can now call the program from their Python code by importing the `crop`
+  function.
+
 0.2.[78] (2020-05-16)
 ---------------------
 

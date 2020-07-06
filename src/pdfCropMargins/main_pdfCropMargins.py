@@ -119,13 +119,11 @@ def parse_page_range_specifiers(spec_string, all_page_nums):
         else:
             left_arg = int(split_range[0])-1
             right_arg = int(split_range[1])
-            print(range(left_arg, right_arg))
             if left_arg >= right_arg:
                 print("Error in pdfCropMargins: left argument of range cannot be less"
                       " than the right one.", file=sys.stderr)
                 raise ValueError
-            page_nums_to_crop.update(
-                set(range(left_arg, right_arg)))
+            page_nums_to_crop.update(set(range(left_arg, right_arg)))
     page_nums_to_crop = page_nums_to_crop & all_page_nums # intersect chosen with actual
     return page_nums_to_crop
 
