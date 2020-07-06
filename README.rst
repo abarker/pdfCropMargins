@@ -432,7 +432,14 @@ The output of that command follows::
                            options without having to recalculate the bounding
                            boxes each time (which can be slow). All the usual
                            command-line options to the program are still
-                           respected.
+                           respected. Clicking the 'Crop' button in the GUI crops
+                           with the current settings, writing out a cropped PDF
+                           file to the same filename that the command-line
+                           version would write to. Note that successive changes
+                           to the margins in the GUI are not cumulative: settings
+                           are always applied to the original document as it was
+                           passed in to the program. The 'Original' button
+                           reverts the display back to that original version.
    
      -p PCT, --percentRetain PCT
                            Set the percent of margin space to retain in the
@@ -736,17 +743,16 @@ The output of that command follows::
                            forth. This option is often helpful if the program
                            hangs or raises an error due to a corrupted PDF file.
                            Note that when re-cropping a file already cropped by
-                           pdfCropMargins this option is probably not be
-                           necessary, and if it is used in a re-crop (at least
-                           with current versions of Ghostscript) it will reset
-                           the Producer metadata which the pdfCropMargins program
-                           uses to tell if the file was already cropped by the
-                           program (the '--restore' option will then restore to
-                           the previous cropping, not the original cropping). So
-                           this option is not recommended as something to use by
-                           default unless you encounter many corrupted PDF files
-                           and do not need to restore back to the original
-                           margins.
+                           pdfCropMargins this option is probably not necessary,
+                           and if it is used in a re-crop (at least with current
+                           versions of Ghostscript) it will reset the Producer
+                           metadata which the pdfCropMargins program uses to tell
+                           if the file was already cropped by the program (so the
+                           '--restore' option will not work in combination with
+                           this option). This option is not recommended as
+                           something to use by default unless you encounter many
+                           corrupted PDF files and do not need to restore back to
+                           the original margins.
    
      -nc, --noclobber      Never overwrite an existing file as the output
                            file.
