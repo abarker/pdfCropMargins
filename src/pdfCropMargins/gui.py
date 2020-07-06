@@ -88,9 +88,9 @@ from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
 #print(sg.ListOfLookAndFeelValues())
 #print(sg.LOOK_AND_FEEL_TABLE)
 if ex.system_os == "Windows":
-    sg.change_look_and_feel("TanBlue")
+    sg.ChangeLookAndFeel("TanBlue")
 else:
-    sg.change_look_and_feel("SystemDefault")
+    sg.ChangeLookAndFeel("SystemDefault")
 
 #
 # Helper functions.
