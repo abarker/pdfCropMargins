@@ -508,7 +508,7 @@ def find_and_test_executable(executables, argument_list, string_to_look_for,
 def fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname):
     """Attempt to fix a bad PDF file with a Ghostscript command, writing the output
     PDF to a temporary file and returning the filename.  Caller is responsible for
-    deleting the file."""
+    deleting the file (but it is created in the temp directory)."""
     if not gs_executable:
         init_and_test_gs_executable(exit_on_fail=True)
 

@@ -90,7 +90,7 @@ from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
 if ex.system_os == "Windows":
     sg.change_look_and_feel("TanBlue")
 else:
-    sg.change_look_and_feel("DefaultNoMoreNagging")
+    sg.change_look_and_feel("SystemDefault")
 
 #
 # Helper functions.

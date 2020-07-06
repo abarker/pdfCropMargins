@@ -1118,24 +1118,21 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     if not args.restore:
         doc_with_crop_and_media_boxes_name = ex.get_temporary_filename(".pdf")
-        doc_with_crop_and_media_boxes_object = open(
-                                     doc_with_crop_and_media_boxes_name, "wb")
+        with open(doc_with_crop_and_media_boxes_name, "wb"
+                                          ) as doc_with_crop_and_media_boxes_object:
+            if args.verbose:
+                print("\nWriting out the PDF with the CropBox and MediaBox redefined.")
 
-        if args.verbose:
-            print("\nWriting out the PDF with the CropBox and MediaBox redefined.")
-
-        try:
-            tmp_output_doc.write(doc_with_crop_and_media_boxes_object)
-        except (KeyboardInterrupt, EOFError):
-            raise
-        except: # PyPDF2 can raise various exceptions.
-            print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
-                  "\nwrite out a PDF file of the document.  The document may be"
-                  "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
-                  "\noption (assuming you are not already using it).", file=sys.stderr)
-            ex.cleanup_and_exit(1)
-
-        doc_with_crop_and_media_boxes_object.close()
+            try:
+                tmp_output_doc.write(doc_with_crop_and_media_boxes_object)
+            except (KeyboardInterrupt, EOFError):
+                raise
+            except: # PyPDF2 can raise various exceptions.
+                print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
+                      "\nwrite out a PDF file of the document.  The document may be"
+                      "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
+                      "\noption (assuming you are not already using it).", file=sys.stderr)
+                ex.cleanup_and_exit(1)
 
     ##
     ## Calculate the bounding_box_list containing tight page bounds for each page.
