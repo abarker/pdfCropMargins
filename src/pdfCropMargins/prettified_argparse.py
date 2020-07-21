@@ -17,12 +17,12 @@ an automatic-flushing version.
 The usage is::
 
    from prettified_argparse import parse_command_line_arguments
-   from manpage_data import cmdParser
+   from manpage_data import cmd_parser
 
 The actual argparse parser and documentation text are in `manpage_data.py`.
 Somewhere in the calling program, the imported function should be called as::
 
-    args = parse_command_line_arguments(cmdParser)
+    args = parse_command_line_arguments(cmd_parser)
 
 Note that the standard `TextWrapper` fill and wrap routines used in `argparse`
 do not strip out multiple whitespace like many fill programs do.  See the
@@ -181,7 +181,7 @@ def parse_command_line_arguments(argparse_parser, argv_list=None, init_indent=5,
             init_indent, subs_indent, line_width) # redirect stderr to add postprocessor
 
     # Run the actual argument-parsing operation via argparse.
-    args = argparse_parser.parse_args(args=argv_list)
+    parsed_args = argparse_parser.parse_args(args=argv_list)
 
     # The argparse class has finished its argument-processing, so now no more
     # usage or help messages will be printed.  So restore stdout and stderr
@@ -193,5 +193,5 @@ def parse_command_line_arguments(argparse_parser, argv_list=None, init_indent=5,
         sys.stdout = old_stdout
         sys.stderr = old_stderr
 
-    return args
+    return parsed_args
 

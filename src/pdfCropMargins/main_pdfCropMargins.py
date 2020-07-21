@@ -1313,7 +1313,7 @@ def main_crop(argv_list=None):
     `sys.argv`."""
     parsed_args = parse_command_line_arguments(cmd_parser, argv_list=argv_list)
 
-    # Process some of the command-line arguments (also sets args globally).
+    # Process some of the command-line arguments (also sets `args` globally).
     input_doc_fname, fixed_input_doc_fname, output_doc_fname = (
                                            process_command_line_arguments(parsed_args))
 
