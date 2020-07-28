@@ -52,7 +52,7 @@ setup(
     version=__version__, # <majorVersion>.<minorVersion>.<patch> format, (see PEP440)
     description="A command-line program to crop the margins of PDF files, with many options.",
     keywords=["pdf", "crop", "margins", "resize"],
-    install_requires=["wheel", "pillow>=6.2.2", "PyPDF2"], # EITHER Pillow or PIL, NOT BOTH.
+    install_requires=["wheel", "pillow>=7.1.0", "PyPDF2"], # EITHER Pillow or PIL, NOT BOTH.
     extras_require={
                     "gui": ["PySimpleGUI>=4.0.0;python_version>='3.0'",
                             "PySimpleGUI27>=2.2.0;python_version<'3.0'",
