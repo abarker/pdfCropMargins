@@ -53,6 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # pysimplegui issues: 1) warning on Window title in Python2 on some machines, 2) tooltips
 # need pointer to move left to work, 3) non-string initial values not set for Combo.
+# The showing/hiding of the `Calculating the crop...` message doesn't work on Windows.
 
 from __future__ import print_function, absolute_import
 
