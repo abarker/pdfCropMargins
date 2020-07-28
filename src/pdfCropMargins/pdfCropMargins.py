@@ -27,17 +27,6 @@ document is printed or displayed on a screen -- because the fonts appear
 larger.  Margin-cropping is also useful at times when one PDF is included in
 another as a graphic.  Many options are available.
 
-To see the formatted documentation, run::
-   pdfCropMargins -h | more
-or::
-   python pdfCropMargins -h | more
-
-This is the initial starting script, but it just calls `mainCrop` from
-`main_pdfCropMargins.py`, which does the real work.  Its only purpose is to
-handle errors and make sure that any temp directories are cleaned up.  It tries
-to gracefully handle ^C characters from the user (`KeyboardInterrupt`) to stop
-the program and clean up.
-
 """
 
 # Possible future enhancements:
@@ -139,8 +128,9 @@ def crop(argv_list=None):
     """Crop the PDF file using the arguments specified in `sys.argv`.  If a list is
     passed as `argv_list` then it is used instead of `sys.argv`.  This function
     can be called as a library routine of the `pdfCropMargins` package."""
-    # Imports are done (or redone) here so that when called as a library routine
-    # the caller can handle any `KeyboardInterrupt` or `SystemExit`.
+    # Imports are done here so that when called as a library routine
+    # the caller can handle any `KeyboardInterrupt`, `SystemExit`, or other
+    # exceptions.
     from .external_program_calls import create_temporary_directory
     from .main_pdfCropMargins import main_crop
     with create_temporary_directory():
