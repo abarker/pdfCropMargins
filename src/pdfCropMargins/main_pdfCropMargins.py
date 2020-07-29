@@ -1116,7 +1116,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## needed.
     ##
 
-    if not args.restore:
+    if not bounding_box_list and not args.restore:
         doc_with_crop_and_media_boxes_name = ex.get_temporary_filename(".pdf")
         with open(doc_with_crop_and_media_boxes_name, "wb"
                                           ) as doc_with_crop_and_media_boxes_object:
@@ -1145,7 +1145,9 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             print("\nThe bounding boxes are:")
             for pNum, b in enumerate(bounding_box_list):
                 print("\t", pNum+1, "\t", b)
-    elif args.verbose:
+        os.remove(doc_with_crop_and_media_boxes_name) # No longer needed.
+
+    elif args.verbose and not args.restore:
         print("\nUsing the bounding box list passed in instead of calculating it.")
 
     ##
@@ -1154,7 +1156,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     if not args.restore:
         crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
-                                     rotation_list, page_nums_to_crop)
+                                        rotation_list, page_nums_to_crop)
     else:
         crop_list = None # Restore, not needed in this case.
 
