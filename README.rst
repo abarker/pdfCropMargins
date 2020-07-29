@@ -91,25 +91,31 @@ Installing
 
 The easiest way to install the pdfCropMargins program is by using pip.
 
-Ubuntu/Mint
------------
+Linux
+-----
 
 Be sure ``$HOME/.local/bin`` is in your system ``PATH`` if you are installing
 via pip with the ``--user`` option.  (To install system-wide without ``--user``
 the ``pip3`` command below would also need to be run with ``sudo``.)
 
-Here is the plain install, without a GUI::
+Here is the plain install, without a GUI:
+
+.. code-block:: sh
 
    sudo apt install python3-pip ghostscript poppler-utils
    pip3 install pdfCropMargins --user --upgrade
 
-This is the install with the GUI::
+This is the install with the GUI:
+
+.. code-block:: sh
 
    sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
    pip3 install pdfCropMargins[gui] --user --upgrade
 
 If you get an error "Failed building wheel for pymupdf" with the GUI install
-you can try forcing a binary install of pyMuPDF::
+you can try forcing a binary install of pyMuPDF:
+
+.. code-block:: sh
 
    pip3 install pdfCropMargins[gui] --user --upgrade --only-binary pymupdf
 
@@ -137,11 +143,11 @@ To install with the GUI use::
 
 In order for the command ``pdf-crop-margins`` to be found, the ``bin``
 directory it is created in by the ``pip`` command must be on the Windows
-``Path``.  The system-wide Python ``bin`` directory should already be there if
-you checked the box to modify ``Path`` when you installed Python; otherwise it
-should be added.  (If you install with the ``--user`` option to pip then you
-need to be sure that the *local* Python ``bin`` directory is in the Windows
-``Path``.)
+``Path``.  The system-wide Python ``bin`` directory should already be on the
+path if you checked the box to modify ``Path`` when you installed Python;
+otherwise it should be added.  (If you install with the ``--user`` option to
+pip then you need to be sure that the *local* Python ``bin`` directory is in
+the Windows ``Path``.)
 
 Running
 =======
@@ -152,7 +158,9 @@ from a Python program, or from the source repo.
 Running from the command line
 -----------------------------
 
-After installation via pip the program can be run with a command such as::
+After installation via pip the program can be run with a command such as:
+
+.. code-block:: sh
 
    pdf-crop-margins -v -s -u your-file.pdf
 
@@ -160,10 +168,13 @@ That command prints verbose output, forces all pages to be the same size
 (``-s``) and then crops each page the same amount (``-u``) for a uniform
 appearance, retaining the default of 10% of the margins.
 
-For help, run::
+For help and to see the many options available, run:
+
+.. code-block:: sh
 
    pdf-crop-margins -h | more
 
+The output of that command is also listed below, at the bottom of this page.
 On Windows you may need to explicitly put the Python distribution's ``Scripts``
 directory into your environment ``PATH`` in order to avoid having to use the
 full pathname.
