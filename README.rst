@@ -143,23 +143,14 @@ should be added.  (If you install with the ``--user`` option to pip then you
 need to be sure that the *local* Python ``bin`` directory is in the Windows
 ``Path``.)
 
-Running from the source distribution
-------------------------------------
-
-The pdfCropMargins program can also be run directly from its source code
-directory tree, provided the dependencies are installed.  In that case the
-PyPDF2 package must also be installed and available in the Python distribution
-that will be used to run pdfCropMargins.  If Ghostscript is unavailable as a
-system command then the Pillow imaging package is also necessary in the Python
-distribution.  Pillow is also needed for certain advanced features which use
-explicit image analysis, so it is a good idea to install it in Python.
-Assuming the dependencies are satisfied, run the program as
-``bin/pdfCropMargins.py``, where the path is relative to the top of the source
-distribution.  The GUI also has dependencies which can be seen in the
-`setup.py` file.
-
 Running
 =======
+
+The program can be run from the command line, from the command line with a GUI,
+from a Python program, or from the source repo.
+
+Running from the command line
+-----------------------------
 
 After installation via pip the program can be run with a command such as::
 
@@ -177,14 +168,59 @@ On Windows you may need to explicitly put the Python distribution's ``Scripts``
 directory into your environment ``PATH`` in order to avoid having to use the
 full pathname.
 
-To diagnose unexpected crops, try running with the ``-v`` verbose argument.  It
-will tell you the page with the smallest crop amount for a margin.  Running
-without the ``-u`` or ``-s`` options will crop each page separately, so you can
-see which pages might be causing problems (such as pages with noise near the
-borders or margin text).  To get cropped pages all the same size be sure to use
-both ``-s`` to make pages the same size and ``-u`` to crop each page by the
-same amount.  Sometimes a small pre-crop is needed (``-ap`` or ``-ap4``) to get
-past small, unwanted markings near the edges of pages.
+Running with the GUI
+--------------------
+
+To run the GUI, assuming it has been installed, just pass the `-gui` flag in
+addition to any other flags.  The program is still a command-line application,
+and still respects all the flags, but the GUI lets you fine-tune the values of
+some of the command-line arguments such as the percent to crop, etc.  The
+output filenames, etc., are all the same as for the command-line version.
+
+The display shows the effect of each crop.  Multiple cropping calls are also
+faster because usually the PDF pages only need to be rendered once to images.
+
+Python interface
+----------------
+
+The program can also be called from a user's Python program (when discoverable
+in the Python path).  Just import the `crop` function and then call it with a list
+containing the usual command-line arguments.  For example:
+  
+.. code-block:: python
+
+   from pdfCropMargins import crop
+   crop(["-p", "20", "-u", "-s", "paper.pdf"])
+
+Running from the source distribution
+------------------------------------
+
+The pdfCropMargins program can also be run directly from its source code
+directory tree, provided the dependencies are installed (see `setup.py`).  Just
+clone the repo and run the program as ``bin/pdfCropMargins.py``, where the path
+is relative to the top-level of the source distribution.
+
+To pip install the program and its dependencies from the cloned repo rather
+than from PyPI just go to the root of the source directory and run `pip install
+.[gui]` for the GUI version or `pip install .` for the non-GUI version.  (As
+usual, for code development use the `-e` option to make the code editable.)
+
+Getting good crops
+------------------
+
+* To diagnose unexpected crops, try running with the ``-v`` verbose argument.
+  It will tell you the page with the smallest crop amount for a margin, among
+  other data.
+
+* Running without the ``-u`` or ``-s`` options will crop each page separately,
+  so you can see which pages might be causing problems (such as pages with
+  noise near the borders or margin text).
+
+* To get cropped pages all the same size be sure to use both ``-s`` to first
+  make pages the same size and ``-u`` to crop each page by the same amount.
+
+* Sometimes a small pre-crop is needed (``-ap`` or ``-ap4``) to get past small,
+  unwanted markings near the edges of pages.
 
 Documentation
 =============
