@@ -59,7 +59,8 @@ a fallback if no other program can be found.
 
    The pdftoppm program is standard in most Linux distributions and is easy to
    install in Cygwin.  It is currently part of the Poppler PDF tools, so that
-   package should be installed on Linux and Cygwin.
+   package should be installed on Linux and Cygwin if the `pdftoppm` command
+   is not available.
 
    In Windows pdftoppm is not as easy to install, but a collection of PDF tools
    `found here <http://www.foolabs.com/xpdf/download.html>`_ includes pdftoppm.
@@ -91,22 +92,22 @@ Installing
 
 The easiest way to install the pdfCropMargins program is by using pip.
 
-Linux
------
+Linux/Ubuntu
+------------
 
 Be sure ``$HOME/.local/bin`` is in your system ``PATH`` if you are installing
 via pip with the ``--user`` option.  (To install system-wide without ``--user``
 the ``pip3`` command below would also need to be run with ``sudo``.)
 
-Here is the plain install, without a GUI::
-
-   sudo apt install python3-pip ghostscript poppler-utils
-   pip3 install pdfCropMargins --user --upgrade
-
-This is the install with the GUI::
+This is the full install, with the GUI::
 
    sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
    pip3 install pdfCropMargins[gui] --user --upgrade
+
+Here is the plain install, without the GUI.  It has fewer dependencies::
+
+   sudo apt install python3-pip ghostscript poppler-utils
+   pip3 install pdfCropMargins --user --upgrade
 
 If you get an error "Failed building wheel for pymupdf" with the GUI install
 you can try forcing a binary install of pyMuPDF::
@@ -127,13 +128,13 @@ you cannot find the pip executable you can usually run it like this::
 Note that on some Windows installs the executable for Python is ``py`` rather
 than ``python``.
 
-To install without the GUI use::
-
-   pip install pdfCropMargins --upgrade
-
 To install with the GUI use::
 
    pip install pdfCropMargins[gui] --upgrade
+
+To install without the GUI use::
+
+   pip install pdfCropMargins --upgrade
 
 In order for the command ``pdf-crop-margins`` to be found, the ``bin``
 directory it is created in by the ``pip`` command must be on the Windows
@@ -164,10 +165,10 @@ For help and to see the many options available, run::
 
    pdf-crop-margins -h | more
 
-The output of that command is also listed below, at the bottom of this page.
-On Windows you may need to explicitly put the Python distribution's ``Scripts``
-directory into your environment ``PATH`` in order to avoid having to use the
-full pathname.
+The full output of that command is also listed below, at the bottom of this
+page.  On Windows you may need to explicitly put the Python distribution's
+``Scripts`` directory into your environment ``PATH`` in order to avoid having
+to use the full pathname.
 
 Running with the GUI
 --------------------
@@ -177,19 +178,20 @@ addition to any other flags.  The program is still a command-line application,
 and still respects all the flags, but the GUI lets you fine-tune the values of
 some of the command-line arguments such as the percent to crop, etc.  The
 output filenames, etc., are all the same as for the command-line version.
-Options modifiable from the GUI are initially set to any values passed in from
+Options modifiable from the GUI are initially set to any values passed in on
 the command line.
 
 The graphical display shows the effect of each crop.  Multiple cropping calls
-are also faster because the PDF pages usually only need to be rendered to
-images one time.
+for the same document are also faster because the PDF pages usually only need
+to be rendered to images one time.
 
 Python interface
 ----------------
 
-The program can also be called from a user's Python program (when discoverable
-in the Python path).  Just import the `crop` function and then call it with a list
-containing the usual command-line arguments.  For example:
+The program can also be called from a user's Python program (when the
+`pdfCropMargins` package is discoverable in the Python path).  Just import the
+`crop` function and then call it with a list containing the usual command-line
+arguments as separate items.  For example:
   
 .. code-block:: python
 
@@ -200,10 +202,10 @@ containing the usual command-line arguments.  For example:
 Running from the source distribution
 ------------------------------------
 
-The pdfCropMargins program can also be run directly from its source code
-directory tree, provided the dependencies are installed (see `setup.py`).  Just
-clone the repo and run the program as ``bin/pdfCropMargins.py``, where the path
-is relative to the top-level of the source distribution.
+The pdfCropMargins program can be run directly from the source code directory
+tree, provided the dependencies are installed (see `setup.py`).  Just clone the
+repo and run the program as ``bin/pdfCropMargins.py``, where the path is
+relative to the top-level of the source distribution.
 
 To pip install the program and its dependencies from the cloned repo rather
 than from PyPI just go to the root of the source directory and run `pip install
