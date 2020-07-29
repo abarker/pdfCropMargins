@@ -1,4 +1,4 @@
-
+==============
 pdfCropMargins
 ==============
 
@@ -98,24 +98,18 @@ Be sure ``$HOME/.local/bin`` is in your system ``PATH`` if you are installing
 via pip with the ``--user`` option.  (To install system-wide without ``--user``
 the ``pip3`` command below would also need to be run with ``sudo``.)
 
-Here is the plain install, without a GUI:
-
-.. code-block:: sh
+Here is the plain install, without a GUI::
 
    sudo apt install python3-pip ghostscript poppler-utils
    pip3 install pdfCropMargins --user --upgrade
 
-This is the install with the GUI:
-
-.. code-block:: sh
+This is the install with the GUI::
 
    sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
    pip3 install pdfCropMargins[gui] --user --upgrade
 
 If you get an error "Failed building wheel for pymupdf" with the GUI install
-you can try forcing a binary install of pyMuPDF:
-
-.. code-block:: sh
+you can try forcing a binary install of pyMuPDF::
 
    pip3 install pdfCropMargins[gui] --user --upgrade --only-binary pymupdf
 
@@ -158,9 +152,7 @@ from a Python program, or from the source repo.
 Running from the command line
 -----------------------------
 
-After installation via pip the program can be run with a command such as:
-
-.. code-block:: sh
+After installation via pip the program can be run with a command such as::
 
    pdf-crop-margins -v -s -u your-file.pdf
 
@@ -168,9 +160,7 @@ That command prints verbose output, forces all pages to be the same size
 (``-s``) and then crops each page the same amount (``-u``) for a uniform
 appearance, retaining the default of 10% of the margins.
 
-For help and to see the many options available, run:
-
-.. code-block:: sh
+For help and to see the many options available, run::
 
    pdf-crop-margins -h | more
 
@@ -187,9 +177,12 @@ addition to any other flags.  The program is still a command-line application,
 and still respects all the flags, but the GUI lets you fine-tune the values of
 some of the command-line arguments such as the percent to crop, etc.  The
 output filenames, etc., are all the same as for the command-line version.
+Options modifiable from the GUI are initially set to any values passed in from
+the command line.
 
-The display shows the effect of each crop.  Multiple cropping calls are also
-faster because usually the PDF pages only need to be rendered once to images.
+The graphical display shows the effect of each crop.  Multiple cropping calls
+are also faster because the PDF pages usually only need to be rendered to
+images one time.
 
 Python interface
 ----------------
@@ -201,7 +194,8 @@ containing the usual command-line arguments.  For example:
 .. code-block:: python
 
    from pdfCropMargins import crop
-   crop(["-p", "20", "-u", "-s", "paper.pdf"])
+   crop(["-p", "20", "-u", "-s", "paper1.pdf"])
+   crop(["-p", "0", "-gui", "paper2.pdf"])
 
 Running from the source distribution
 ------------------------------------
