@@ -78,13 +78,13 @@ a fallback if no other program can be found.
    version on that page should work fine for most people.  Add the directory of
    the executable ``gswin64c.exe`` (or the 32 bit version if you installed
    that) to your Windows system path so it is discoverable (and runnable from
-   the command shell).  On Window 10 the place to go is:: 
+   the command shell).  On Windows 10 the place to go is:: 
 
       Start -> Control Panel -> System and security -> System -> Advanced system settings
 
    Now click "Environment Variables" and then double click on the user variable
-   ``Path``.  Click "New" and browse to the directory to add, something like
-   ``C:\Program Files\gs\gs9.27\bin``.  Restart your command shell for the
+   ``Path``.  Click "New" and browse to the directory to add (something like
+   ``C:\Program Files\gs\gs9.27\bin``).  Restart your command shell for the
    change to be recognized.
    
 Installing 
@@ -117,8 +117,8 @@ you can try forcing a binary install of pyMuPDF::
 Windows
 -------
 
-As noted above Ghostscript or pdftoppm should be installed or the program will
-fall back to a copy of pdftoppm that is bundled with it.
+As noted above, Ghostscript or pdftoppm should be installed or else the program
+will fall back to a copy of pdftoppm that is bundled with it.
 
 The ``pip`` program should be automatically installed along with Python.  If
 you cannot find the pip executable you can usually run it like this::
@@ -161,7 +161,7 @@ That command prints verbose output, forces all pages to be the same size
 (``-s``) and then crops each page the same amount (``-u``) for a uniform
 appearance, retaining the default of 10% of the margins.
 
-For help and to see the many options available, run::
+For help and to see the many command-line options that are available, run::
 
    pdf-crop-margins -h | more
 
@@ -173,24 +173,24 @@ to use the full pathname.
 Running with the GUI
 --------------------
 
-To run the GUI, assuming it has been installed, just pass the `-gui` flag in
-addition to any other flags.  The program is still a command-line application,
-and still respects all the flags, but the GUI lets you fine-tune the values of
-some of the command-line arguments such as the percent to crop, etc.  The
-output filenames, etc., are all the same as for the command-line version.
-Options modifiable from the GUI are initially set to any values passed in on
-the command line.
+To run the GUI, assuming that version has been installed, just pass the ``-gui``
+flag in addition to any other flags.  The program is still a command-line
+application, and still respects all the flags, but the GUI lets you fine-tune
+the values of some of the command-line arguments such as the percent to crop,
+etc.  The output filenames, etc., are all the same as for the command-line
+version.  Options modifiable from the GUI are initially set to any values
+passed in on the command line.
 
 The graphical display shows the effect of each crop.  Multiple cropping calls
-for the same document are also faster because the PDF pages usually only need
+for the same document tend to be faster because the PDF pages usually only need
 to be rendered to images one time.
 
 Python interface
 ----------------
 
 The program can also be called from a user's Python program (when the
-`pdfCropMargins` package is discoverable in the Python path).  Just import the
-`crop` function and then call it with a list containing the usual command-line
+``pdfCropMargins`` package is discoverable in the Python path).  Just import the
+``crop`` function and then call it with a list containing the usual command-line
 arguments as separate items.  For example:
   
 .. code-block:: python
@@ -203,14 +203,14 @@ Running from the source distribution
 ------------------------------------
 
 The pdfCropMargins program can be run directly from the source code directory
-tree, provided the dependencies are installed (see `setup.py`).  Just clone the
+tree, provided the dependencies are installed (see ``setup.py``).  Just clone the
 repo and run the program as ``bin/pdfCropMargins.py``, where the path is
 relative to the top-level of the source distribution.
 
 To pip install the program and its dependencies from the cloned repo rather
-than from PyPI just go to the root of the source directory and run `pip install
-.[gui]` for the GUI version or `pip install .` for the non-GUI version.  (As
-usual, for code development use the `-e` option to make the code editable.)
+than from PyPI just go to the root of the source directory and run ``pip install
+.[gui]`` for the GUI version or ``pip install .`` for the non-GUI version.  (As
+usual, for code development use the ``-e`` option to make the code editable.)
 
 Getting good crops
 ------------------
