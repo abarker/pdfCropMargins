@@ -14,6 +14,11 @@ package_dir = os.path.abspath(os.path.join(bin_dir, "..", "src"))
 sys.path.insert(0, package_dir)
 from pdfCropMargins import crop
 
+try:
+    crop(["~/papersToRead/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-Zv"])
+except BaseException as e:
+    print("\nBad command args!  Exception is:\n", e, sep="")
+
 crop(["~/papersToRead/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-v"])
 crop(["~/papersToRead/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf", "-gui", "-v"])
 
