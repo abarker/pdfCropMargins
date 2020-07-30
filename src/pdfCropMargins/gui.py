@@ -44,12 +44,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # TODO: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
 # window can be fixed to the initial size or something similar.
 
-# TODO: Make background darker on Windows or change theme.  It is too bright.
-
-# TODO: When using gs for bboxes the threshold is not allowed, but it is still
-# shown on the GUI (maybe just disable it).  Also gives a warning, so need to
-# covert back to nargs=1 to test if it is not set (the warning needs to know,
-# if gsBox also used).
+# Note: When using gs for bboxes the threshold is not allowed (or blurs or
+# smooths).  Currently writing "---" but would look better disabled altogether
+# in that case.
 
 # pysimplegui issues: 1) warning on Window title in Python2 on some machines, 2) tooltips
 # need pointer to move left to work, 3) non-string initial values not set for Combo.
@@ -668,7 +665,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for threshold option.
     ##
 
-    args_dict["threshold"] = int(args.threshold)
+    args_dict["threshold"] = int(args.threshold[0]) if not args.gsBbox else "----"
     text_threshold = sg.Text("threshold", pad=((0,5), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "threshold"))
     input_num_threshold = sg.InputText(args_dict["threshold"],
@@ -676,6 +673,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def update_threshold_values(values_dict):
         """Update the threshold value."""
+        if args.gsBbox:
+            input_num_threshold.Update("----")
+            return
         try:
             value = int(values_dict["threshold"])
             args_dict["threshold"] = value
@@ -683,7 +683,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             value = args_dict["threshold"]
         input_num_threshold.Update(value)
         # Copy backing value to the actual args object.
-        args.threshold = args_dict["threshold"]
+        args.threshold = [args_dict["threshold"]]
 
     update_funs.append(update_threshold_values)
 
@@ -691,7 +691,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for numBlurs option.
     ##
 
-    args_dict["numBlurs"] = int(args.numBlurs)
+    args_dict["numBlurs"] = int(args.numBlurs) if not args.gsBbox else "--"
     text_numBlurs = sg.Text("numBlurs", pad=((0,5), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "numBlurs"))
     input_num_numBlurs = sg.InputText(args_dict["numBlurs"],
@@ -699,6 +699,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def update_numBlurs_values(values_dict):
         """Update the numBlurs value."""
+        if args.gsBbox:
+            input_num_numBlurs.Update("--")
+            return
         try:
             value = int(values_dict["numBlurs"])
             args_dict["numBlurs"] = value
@@ -714,7 +717,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for numSmooths option.
     ##
 
-    args_dict["numSmooths"] = int(args.numSmooths)
+    args_dict["numSmooths"] = int(args.numSmooths) if not args.gsBbox else "--"
     text_numSmooths = sg.Text("numSmooths", pad=((0,5), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "numSmooths"))
     input_num_numSmooths = sg.InputText(args_dict["numSmooths"],
@@ -722,6 +725,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def update_numSmooths_values(values_dict):
         """Update the numSmooths value."""
+        if args.gsBbox:
+            input_num_numSmooths.Update("--")
+            return
         try:
             value = int(values_dict["numSmooths"])
             args_dict["numSmooths"] = value
@@ -921,9 +927,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                 bounding_box_list = None # Kill saved bounding boxes.
                 last_pre_crop = all_pre_crop
             # New thresholding params also require recalculation of bounding boxes.
-            if last_threshold != args.threshold:
+            if last_threshold != args.threshold[0]:
                 bounding_box_list = None
-                last_threshold = args.threshold
+                last_threshold = args.threshold[0]
             if last_numBlurs != args.numBlurs:
                 bounding_box_list = None
                 last_numBlurs = args.numBlurs

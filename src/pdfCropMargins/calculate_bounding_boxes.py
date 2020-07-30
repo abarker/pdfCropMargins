@@ -123,7 +123,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         program_to_use = "Ghostscript"
 
     # Threshold value set in range 0-255, where 0 is black, with 191 default.
-    threshold = args.threshold
+    threshold = args.threshold[0]
     dark_background_light_foreground = False
     if threshold < 0:
         threshold = -threshold
@@ -144,7 +144,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
 
     if args.verbose:
         print("\nAnalyzing the page images with PIL to find bounding boxes,"
-              "\nusing the threshold " + str(args.threshold) + "."
+              "\nusing the threshold " + str(args.threshold[0]) + "."
               "  Finding the bounding box for page:\n")
 
     bounding_box_list = []

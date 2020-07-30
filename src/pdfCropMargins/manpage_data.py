@@ -56,6 +56,8 @@ from __future__ import print_function, division, absolute_import
 import argparse
 import sys
 
+DEFAULT_THRESHOLD_VALUE = 191
+
 description = """
 Description:
 
@@ -446,8 +448,8 @@ cmd_parser.add_argument("-g", "-pg", "--pages", metavar="PAGESTR", help="""
    document are ignored.  Note that restore information is always saved for all
    the pages (in the ArtBox) unless '--noundosave' is selected.^^n""")
 
-cmd_parser.add_argument("-t", "--threshold", type=int, default=-1, # Dummy default.
-                        metavar="BYTEVAL", help="""
+cmd_parser.add_argument("-t", "--threshold", type=int, nargs=1,
+               default=[DEFAULT_THRESHOLD_VALUE], metavar="BYTEVAL", help="""
 
    Set the threshold for determining what is background space (white).  The
    value can be from 0 to 255, with 191 the default (75 percent).  This option
@@ -458,9 +460,9 @@ cmd_parser.add_argument("-t", "--threshold", type=int, default=-1, # Dummy defau
    be text (black).  Lowering the value should tend to make the bounding boxes
    smaller.  The threshold may need to be lowered, for example, for scanned
    images with greyish backgrounds.  For pages with dark backgrounds and light
-   text a negative threshold can be passed.  Then the absolute value is used as
-   the threshold but the test is modified to consider pixel values greater than
-   or equal to the threshold to be background.^^n""")
+   text a negative threshold value can be used.  In that case the absolute
+   value is used as the threshold but the test is reversed to consider pixel
+   values greater than or equal to the threshold to be background.^^n""")
 
 cmd_parser.add_argument("-nb", "--numBlurs", type=int, default=0, metavar="INT",
                         help="""
