@@ -199,6 +199,8 @@ arguments as separate items.  For example:
    crop(["-p", "20", "-u", "-s", "paper1.pdf"])
    crop(["-p", "0", "-gui", "paper2.pdf"])
 
+Any necessary exception handling is should be done by the calling code.
+
 Running from the source distribution
 ------------------------------------
 
