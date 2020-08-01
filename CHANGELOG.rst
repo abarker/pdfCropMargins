@@ -3,12 +3,20 @@
 History
 =======
 
+0.2.10 (2020-XX-XX)
+-------------------
+
+Bug fixes:
+
+* Fixed minor bug in handling negative thresholds and improved display in GUI when
+  ``--gsBbox`` is selected.
+
 0.2.9 (2020-07-28)
 ------------------
 
 New features:
 
-* Users can now call the program from their Python code by importing the `crop`
+* Users can now call the program from their Python code by importing the ``crop``
   function.
 
 0.2.[78] (2020-05-16)
