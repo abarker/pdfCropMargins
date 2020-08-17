@@ -63,20 +63,25 @@ from . import external_program_calls as ex
 try:
     with warnings.catch_warnings():
         #warnings.filterwarnings("ignore",category=DeprecationWarning)
+        requires = "PyMuPDF at least v1.14.5"
         import fitz
-    if not list(map(int, fitz.VersionBind.split("."))) >= [1, 14, 5]:
+    if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 14, 5]:
         raise ImportError
     if not ex.python_version[0] == "2":
+        requires = "PySimpleGUI"
         import PySimpleGUI as sg
+        requires = "tkinter"
         import tkinter as tk
     else:
+        requires = "PySimpleGUI"
         import PySimpleGUI27 as sg
+        requires = "Tkinter"
         import Tkinter as tk
 except ImportError:
-    print("\nThe GUI feature requires Tkinter, pySimpleGUI, and PyMuPDF at least"
-          "\n v1.14.5.  If installing via pip, use the optional-feature install:"
+    print("\nError in pdfCropMargins: The GUI feature requires {}."
+          "\nIf installing via pip, use the optional-feature install, e.g.:"
           "\n   pip install pdfCropMargins[gui] --upgrade --user"
-          "\n\nExiting pdf-crop-margins...", file=sys.stderr)
+          "\n\nExiting pdf-crop-margins...".format(requires), file=sys.stderr)
     ex.cleanup_and_exit(1)
 
 from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
