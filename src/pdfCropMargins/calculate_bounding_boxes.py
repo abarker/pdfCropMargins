@@ -60,7 +60,7 @@ PdfFileWriter = None
 #
 
 def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
-                       set_of_page_nums_to_crop, argparse_args, chosen_PdfFileWriter):
+                          set_of_page_nums_to_crop, argparse_args, chosen_PdfFileWriter):
     """Calculate a bounding box for each page in the document.  The  `input_doc_fname`
     argument is the filename of the document's original PDF file, the second is
     the PdfFileReader for the document.  The argument full_page_box_list is a list

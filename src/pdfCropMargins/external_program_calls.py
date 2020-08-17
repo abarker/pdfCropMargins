@@ -570,10 +570,7 @@ def get_bounding_box_list_ghostscript(input_doc_fname, res_x, res_y, full_page_b
                 continue
             # Note gs reports values in order left, bottom, right, top,
             # i.e., lower left point followed by top right point.
-            bounding_box_list.append([float(split_line[0]),
-                                    float(split_line[1]),
-                                    float(split_line[2]),
-                                    float(split_line[3])])
+            bounding_box_list.append([float(bbox_val) for bbox_val in split_line])
 
     if not bounding_box_list:
         print("\nError in pdfCropMargins: Ghostscript failed to find any bounding"
