@@ -536,7 +536,7 @@ def get_bounding_box_list_ghostscript(input_doc_fname, res_x, res_y, full_page_b
     if not gs_executable:
         init_and_test_gs_executable(exit_on_fail=True)
 
-    res = str(res_x) + "x" + str(res_y)
+    res = "{}x{}".format(res_x, res_y)
     box_arg = "-dUseMediaBox" # should be default, but set anyway
     if "c" in full_page_box: box_arg = "-dUseCropBox"
     if "t" in full_page_box: box_arg = "-dUseTrimBox"
