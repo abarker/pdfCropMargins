@@ -189,11 +189,14 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
     """This returns whatever PDF box was selected (by the user option
     '--fullPageBox') to represent the full page size.  All cropping is done
     relative to this box.  The default selection option is the MediaBox
-    intersected with the CropBox so multiple crops work as expected.  The
-    argument page should be a pyPdf page object.  This function also by default
-    sets the MediaBox and CropBox to the full-page size and saves the old values
-    in the same page namespace, and so it should only be called once for each
-    page.  It returns a RectangleObject box."""
+    intersected with the CropBox so multiple crops work as expected.
+
+    The argument page should be a pyPdf page object.
+
+    This function also sets the MediaBox and CropBox of the page to the
+    full-page size and saves the old values in the same page namespace, so it
+    should only be called once for each page.  It returns a `RectangleObject`
+    box."""
     # Note skip_pre_crop option isn't used, may or may not be useful.
 
     # Find the page rotation angle (degrees).
@@ -756,7 +759,7 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
 
 ##############################################################################
 #
-# Begin the main script.
+# Functions implementing the major operations.
 #
 ##############################################################################
 
@@ -1093,23 +1096,24 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(
                                                           input_doc, skip_pre_crop=False)
-    # Below return values aren't used, but function has side-effects on tmp_input_doc.
+    # The below return values aren't used, but the function is called to replicate
+    # it's side-effects on `tmp_input_doc`.
     tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
                                             tmp_input_doc, quiet=True, skip_pre_crop=False)
 
     ##
-    ## Define a PdfFileWriter object and copy input_doc info over to it.
+    ## Define a PdfFileWriter object and copy `input_doc` info over to it.
     ##
 
     output_doc, tmp_output_doc, already_cropped_by_this_program = setup_output_document(
-                                                   input_doc, tmp_input_doc, metadata_info)
+                                                input_doc, tmp_input_doc, metadata_info)
 
     ##
     ## Write out the PDF document again, with the CropBox and MediaBox reset.
     ## This temp version is ONLY used for calculating the bounding boxes of
     ## pages.  Note we are writing from `tmp_output_doc` (due to an apparent bug
-    ## discussed above).  After this tmp_input_doc and tmp_output_doc are no longer
-    ## needed.
+    ## discussed above).  After this `tmp_input_doc` and `tmp_output_doc` are no
+    ## longer needed.
     ##
 
     if not bounding_box_list and not args.restore:
@@ -1131,7 +1135,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                 ex.cleanup_and_exit(1)
 
     ##
-    ## Calculate the bounding_box_list containing tight page bounds for each page.
+    ## Calculate the `bounding_box_list` containing tight page bounds for each page.
     ##
 
     if not bounding_box_list and not args.restore:
@@ -1147,7 +1151,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         print("\nUsing the bounding box list passed in instead of calculating it.")
 
     ##
-    ## Calculate the crop_list based on the fullpage boxes and the bounding boxes.
+    ## Calculate the `crop_list` based on the fullpage boxes and the bounding boxes.
     ##
 
     if not args.restore:
