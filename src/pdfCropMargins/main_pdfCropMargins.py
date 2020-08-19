@@ -273,7 +273,7 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
             print("\t"+str(page_num+1), "  rot =",
                   curr_page.rotationAngle, "\t", full_page_box)
 
-        # Convert the RectangleObject to floats in an ordinary list and append.
+        # Convert the `RectangleObject` to floats in an ordinary list and append.
         ordinary_box = [float(b) for b in full_page_box]
         full_page_box_list.append(ordinary_box)
 
@@ -595,10 +595,12 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
 
         # Do the save to ArtBox if that option is chosen and Producer is set.
         if not args.noundosave and not already_cropped_by_this_program:
-            curr_page.artBox = intersect_boxes(curr_page.mediaBox, curr_page.cropBox)
+            curr_page.artBox = intersect_boxes(curr_page.originalMediaBox,
+                                               curr_page.originalCropBox)
 
         # Reset the CropBox and MediaBox to their saved original values
-        # (which were set in getFullPageBox, in the curr_page object's namespace).
+        # (they were saved by `get_full_page_box_assigning_media_and_crop`
+        # in the `curr_page` object's namespace).
         curr_page.mediaBox = curr_page.originalMediaBox
         curr_page.cropBox = curr_page.originalCropBox
 
@@ -607,7 +609,7 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
         if page_num not in page_nums_to_crop:
             continue
 
-        # Convert the computed "box to crop to" into a RectangleObject (for pyPdf).
+        # Convert the computed "box to crop to" into a `RectangleObject` (for pyPdf).
         new_cropped_box = RectangleObject(crop_list[page_num])
 
         if args.verbose:
@@ -618,7 +620,7 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
         if not args.boxesToSet:
             args.boxesToSet = ["m", "c"]
 
-        # Now set any boxes which were selected to be set via the --boxesToSet option.
+        # Now set any boxes which were selected to be set via the '--boxesToSet' option.
         if "m" in args.boxesToSet: curr_page.mediaBox = new_cropped_box
         if "c" in args.boxesToSet: curr_page.cropBox = new_cropped_box
         if "t" in args.boxesToSet: curr_page.trimBox = new_cropped_box
