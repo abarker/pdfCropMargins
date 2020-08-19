@@ -1091,18 +1091,19 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
     ## Get a list with the full-page boxes for each page: (left,bottom,right,top)
     ## This function also sets the MediaBox and CropBox of the pages to the
-    ## chosen full-page size as a side-effect, saving the old boxes.
+    ## chosen full-page size as a side-effect, saving the old boxes.  Any absolute
+    ## pre-crop is also applied here.
     ##
 
     full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(
                                                           input_doc, skip_pre_crop=False)
     # The below return values aren't used, but the function is called to replicate
-    # it's side-effects on `tmp_input_doc`.
+    # its side-effects on `tmp_input_doc`.
     tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
                                             tmp_input_doc, quiet=True, skip_pre_crop=False)
 
     ##
-    ## Define a PdfFileWriter object and copy `input_doc` info over to it.
+    ## Define a `PdfFileWriter` object and copy `input_doc` info over to it.
     ##
 
     output_doc, tmp_output_doc, already_cropped_by_this_program = setup_output_document(
