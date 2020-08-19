@@ -11,6 +11,9 @@ Bug fixes:
 * Fixed minor bug in handling negative thresholds and improved display in GUI when
   ``--gsBbox`` is selected.
 
+* Fixed a bug in the restore option which caused it to fail when pre-cropping was
+  used.  It previously saved (and restored) the modified pre-crop values.
+
 0.2.9 (2020-07-28)
 ------------------
 
