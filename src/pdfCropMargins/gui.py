@@ -757,7 +757,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                   text_color=None,
                                   background_color="#DDDDDD",
                                   justification="center",
-                                  visible=False)
+                                  # Workaround possible bug, initialize visible.  Below
+                                  # it is updated to be invisible before the event loop.
+                                  visible=True)
 
     ##
     ## Setup and assign the window's layout.
@@ -806,48 +808,57 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     # Note from manual: "If you want to call an element's Update method or call
     # a Graph element's drawing primitives, you must either call Read or
     # Finalize prior to making those calls."
-    btn, values_dict = window.Read(timeout=0)
+    #btn, values_dict = window.Read(timeout=0) # Now use Finalize below.
     #call_all_update_funs(update_funs, values_dict)
+
+    # For some reason I also had to add this in order to make the `wait_indicator_text`
+    # properly become visible and invisible.  Fixes a problem that occurred with newer
+    # PySimpleGU versions in 2020.  The box is initialized above as visible, but
+    # here it is updated to be invisible (until a crop is being performed).  Otherwise
+    # it never displays at all.
+    window.Finalize()
+    wait_indicator_text.Update(visible=False)
+
 
     ##
     ## Define the buttons/events we want to handle.
     ##
 
-    def is_Enter(btn):
+    def is_enter(btn):
         return btn.startswith("Return:") or btn == chr(13)
 
-    def is_Exit(btn):
+    def is_exit(btn):
         return btn == chr(27) or btn.startswith("Escape:") or btn.startswith("Exit")
 
-    def is_Crop(btn):
+    def is_crop(btn):
         return btn.startswith("Crop")
 
-    def is_Original(btn):
+    def is_original(btn):
         return btn.startswith("Original")
 
-    def is_Next(btn):
+    def is_next(btn):
         return btn.startswith("Next") or btn == "MouseWheel:Down" # Note mouse not giving any event.
 
-    def is_Prev(btn):
+    def is_prev(btn):
         return btn.startswith("Prior:") or btn.startswith("Prev") or btn == "MouseWheel:Up"
 
-    def is_Up(btn):
+    def is_up(btn):
         return btn.startswith("Up:")
 
-    def is_Down(btn):
+    def is_down(btn):
         return btn.startswith("Down:")
 
-    def is_Left(btn):
+    def is_left(btn):
         return btn.startswith("Left:")
 
-    def is_Right(btn):
+    def is_right(btn):
         return btn.startswith("Right:")
 
-    def is_Zoom(btn):
+    def is_zoom(btn):
         return btn.startswith("Toggle Zoom")
 
     def is_page_mod_key(btn):
-        return any((is_Enter(btn), is_Next(btn), is_Prev(btn), is_Zoom(btn)))
+        return any((is_enter(btn), is_next(btn), is_prev(btn), is_zoom(btn)))
 
     ##
     ## Run the main event loop.
@@ -867,45 +878,45 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         if btn is None and (values_dict is None or values_dict["PageNumber"] is None):
             break
-        if is_Exit(btn):
+        if is_exit(btn):
             break
 
-        if is_Enter(btn):
+        if is_enter(btn):
             call_all_update_funs(update_funs, values_dict)
             try:
                 cur_page = int(values_dict["PageNumber"]) - 1  # check if valid
             except:
                 cur_page = 0
 
-        elif is_Next(btn):
+        elif is_next(btn):
             cur_page += 1
 
-        elif is_Prev(btn):
+        elif is_prev(btn):
             cur_page -= 1
 
-        elif is_Up(btn) and zoom:
+        elif is_up(btn) and zoom:
             zoom = (clip_pos, 0, -1)
 
-        elif is_Down(btn) and zoom:
+        elif is_down(btn) and zoom:
             zoom = (clip_pos, 0, 1)
 
-        elif is_Left(btn) and zoom:
+        elif is_left(btn) and zoom:
             zoom = (clip_pos, -1, 0)
 
-        elif is_Right(btn) and zoom:
+        elif is_right(btn) and zoom:
             zoom = (clip_pos, 1, 0)
 
-        elif is_Zoom(btn): # Toggle.
+        elif is_zoom(btn): # Toggle.
             if not zoom:
                 zoom = (clip_pos, 0, 0)
             else:
                 zoom = False
 
-        elif is_Crop(btn):
+        elif is_crop(btn):
             call_all_update_funs(update_funs, values_dict)
             document.close()
 
-            # Display the wait message.
+            # Display the wait message as a popup (unused alternative).
             #nonblock_popup = sg.PopupNoWait(
             #        "Finding the bounding boxes,\nthis may take some time...",
             #        keep_on_top=True,
@@ -957,7 +968,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             if parsed_args.verbose:
                 print("\nWaiting for the GUI...")
 
-        elif is_Original(btn):
+        elif is_original(btn):
             call_all_update_funs(update_funs, values_dict)
             document.close()
             page_display_list_cache = [None] * page_count
