@@ -934,7 +934,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             #        grab_anywhere=True,
             #        location=(100,100))
             wait_indicator_text.Update(visible=True)
-            window.Finalize()
+            window.Refresh()
 
             # If the pre-crop values changed then bounding boxes must be redone.
             all_pre_crop = args.absolutePreCrop + args.absolutePreCrop4
