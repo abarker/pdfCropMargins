@@ -480,12 +480,12 @@ cmd_parser.add_argument("-ns", "--numSmooths", type=int, default=0, metavar="INT
 
 cmd_parser.add_argument("-gs", "--gsBbox", action="store_true", help="""
 
-   Use Ghostscript to find the bounding boxes for the pages.  The alternative
-   is to explicitly render the PDF pages to image files and calculate bounding
-   boxes from the images.  This method tends to be much faster, but it does not
-   work with scanned PDF documents.  It also does not allow for choosing the
-   threshold value, applying blurs, etc.  Any resolution options are passed to
-   the Ghostscript bbox device.  This option requires that Ghostscript be
+   Use Ghostscript to find the bounding boxes for the pages.  (The default is
+   to explicitly render the PDF pages to image files and calculate bounding
+   boxes from the images.)  This method tends to be much faster, but it does
+   not work with scanned PDF documents.  It also does not allow for choosing
+   the threshold value, applying blurs, etc.  Any resolution options are passed
+   to the Ghostscript bbox device.  This option requires that Ghostscript be
    available in the PATH as "gswin32c.exe" or "gswin64c.exe" on Windows, or as
    "gs" on Linux.  When this option is set the PIL image library for Python is
    not required.^^n""")
