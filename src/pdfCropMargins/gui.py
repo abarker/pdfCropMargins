@@ -819,7 +819,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     window.Finalize()
     wait_indicator_text.Update(visible=False)
 
-
     ##
     ## Define the buttons/events we want to handle.
     ##
