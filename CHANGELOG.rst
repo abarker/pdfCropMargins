@@ -14,6 +14,9 @@ Bug fixes:
 * Fixed a bug in the restore option which caused it to fail when pre-cropping was
   used.  It previously saved (and restored) the modified pre-crop values.
 
+* Fixed the wait-indicator message (displayed during cropping) not becoming
+  visible in recent versions of PySimpleGUI.
+
 0.2.9 (2020-07-28)
 ------------------
 
