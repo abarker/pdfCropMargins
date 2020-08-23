@@ -801,7 +801,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
                 ]),
             ],
-    ]
+        ]
 
     window.Layout(layout)
 
@@ -963,7 +963,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             page_display_list_cache = [None] * page_count
             document, page_count = open_document(output_doc_fname)
             did_crop = True
-            wait_indicator_text.Update(visible = False)
+            wait_indicator_text.Update(visible=False)
 
             if parsed_args.verbose:
                 print("\nWaiting for the GUI...")
