@@ -3,6 +3,13 @@
 History
 =======
 
+0.2.11 (2020-XX-XX)
+-------------------
+
+New features:
+
+* The GUI interface has been updated slightly to be easier to use.
+
 0.2.10 (2020-08-23)
 -------------------
 
