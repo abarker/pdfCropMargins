@@ -35,14 +35,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-# TODO: Consider setting up so if no input file argument and the gui is used then
+# Todo: Consider setting up so if no input file argument and the gui is used then
 # the file chooser will pop up.
 
-# TODO: Maybe use spinner for orderStat, checkbox for uniform and samepagesize.
-# Maybe not.
+# Todo: Maybe use a spinner for the orderStat entries.
 
-# TODO: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
-# window can be fixed to the initial size or something similar.
+# Todo: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
+# window can (or should) be fixed to the initial size or something similar.
 
 # Note: When using gs for bboxes the threshold is not allowed (or blurs or
 # smooths).  Currently writing "---" but would look better disabled altogether
@@ -50,7 +49,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # pysimplegui issues: 1) warning on Window title in Python2 on some machines, 2) tooltips
 # need pointer to move left to work, 3) non-string initial values not set for Combo.
-# The showing/hiding of the `Calculating the crop...` message doesn't work on Windows.
 
 from __future__ import print_function, absolute_import
 
@@ -187,7 +185,8 @@ def get_help_text_string_for_tooltip(cmd_parser, option_string):
     """Extract the help message for an option from an argparse command parser.
     This gets the argparse help string to use as a tooltip."""
     import textwrap
-    wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=45)
+    wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=45,
+                                   break_on_hyphens=False)
     for a in cmd_parser._actions:
         if "--" + option_string in a.option_strings:
             help_text = a.help
@@ -256,7 +255,18 @@ def update_combo_box(values_dict, element, element_key, args, attr, fun_to_apply
         return
     element_value = values_dict[element_key]
     element_value = fun_to_apply(element_value)
-    element.Update(str(element_value))
+    #element.Update(str(element_value)) # Redundant.
+    setattr(args, attr, element_value)
+
+def update_checkbox(values_dict, element, element_key, args, attr, fun_to_apply=None):
+    """Update a non-paired, independent option like `uniform`.  Function `fun_to_apply`
+    is applied to the GUI value to convert it to the type `args` expects."""
+    if values_dict is None:
+        return
+    element_value = values_dict[element_key]
+    if fun_to_apply:
+        element_value = fun_to_apply(element_value)
+    #element.Update(element_value) # Redundant.
     setattr(args, attr, element_value)
 
 def update_4_values(element_list, attr, args_dict, values_dict, value_type=float):
@@ -450,6 +460,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         args_dict["uniformOrderStat"] = args.uniformOrderStat
     else:
         args_dict["uniformOrderStat"] = [0]
+
     if args.uniformOrderStat4:
         args_dict["uniformOrderStat4"] = args.uniformOrderStat4
         if len(set(args.uniformOrderStat4)) != 1: # Set initial value if all the same.
@@ -460,6 +471,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         args_dict["uniformOrderStat4"] = [args.uniformOrderStat[0]] * 4
     else:
         args_dict["uniformOrderStat4"] = [0] * 4
+
     text_uniformOrderStat = sg.Text("uniformOrderStat",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat"))
     input_text_uniformOrderStat = sg.InputText(args_dict["uniformOrderStat"][0],
@@ -484,6 +496,12 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             args.uniformOrderStat4 = [] # Need to empty it, since it implies uniform option.
         else:
             args.uniformOrderStat4 = args_dict["uniformOrderStat4"]
+        # Disable the uniform checkbox (this option implies uniform cropping).
+        if args.uniformOrderStat4:
+            checkbox_uniform.Update(disabled=True)
+        else:
+            checkbox_uniform.Update(disabled=False)
+
 
     update_funs.append(update_uniformOrderStat_values)
 
@@ -491,17 +509,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for uniform.
     ##
 
-    text_uniform = sg.Text("uniform", pad=((0,20), None),
-                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniform"))
-
-    # BUG in PySimpleGUI?  Default values not set unless they are strings!
-    combo_box_uniform = sg.Combo(["True", "False"], readonly=True, default_value=str(args.uniform),
-                                       size=(5, 1), key="uniform", enable_events=True)
+    checkbox_uniform = sg.Checkbox("uniform", pad=((0,10), None), key="uniform",
+                                    tooltip=get_help_text_string_for_tooltip(cmd_parser,
+                                        "uniform"),
+                                    enable_events=True, default=args.uniform)
 
     def update_uniform(values_dict):
         """Update the uniform values."""
-        update_combo_box(values_dict, combo_box_uniform, "uniform", args, "uniform",
-                        fun_to_apply=str_to_bool)
+        update_checkbox(values_dict, checkbox_uniform, "uniform", args, "uniform")
 
     update_funs.append(update_uniform)
 
@@ -509,19 +524,34 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for samePageSize.
     ##
 
-    text_samePageSize = sg.Text("samePageSize",
-                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "samePageSize"))
-
-    combo_box_samePageSize = sg.Combo(["True", "False"], readonly=True,
-                                         default_value=str(args.samePageSize), size=(5, 1),
-                                         key="samePageSize", enable_events=True)
+    checkbox_samePageSize = sg.Checkbox("samePageSize", pad=((0,10), None),
+                                         key="samePageSize", enable_events=True,
+                                         tooltip=get_help_text_string_for_tooltip(
+                                             cmd_parser, "samePageSize"),
+                                         default=args.samePageSize)
 
     def update_samePageSize(values_dict):
         """Update the samePageSize values."""
-        update_combo_box(values_dict, combo_box_samePageSize, "samePageSize", args, "samePageSize",
-                        fun_to_apply=str_to_bool)
+        update_checkbox(values_dict, checkbox_samePageSize, "samePageSize", args,
+                         "samePageSize")
 
     update_funs.append(update_samePageSize)
+
+    ##
+    ## Code for evenodd option.
+    ##
+
+    checkbox_evenodd = sg.Checkbox("evenodd", pad=((0,0), None),
+                                    key="evenodd", enable_events=True,
+                                    tooltip=get_help_text_string_for_tooltip(
+                                        cmd_parser, "evenodd"),
+                                    default=args.evenodd)
+
+    def update_evenodd(values_dict):
+        """Update the evenodd values."""
+        update_checkbox(values_dict, checkbox_evenodd, "evenodd", args, "evenodd")
+
+    update_funs.append(update_evenodd)
 
     ##
     ## Code for pages option.
@@ -551,22 +581,22 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     update_funs.append(update_pages_values)
 
     ##
-    ## Code for evenodd option.
+    ## Code for restore.
     ##
 
-    text_evenodd = sg.Text("evenodd",
-                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "evenodd"))
+    text_restore = sg.Text("restore",
+                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "restore"))
 
-    # BUG: default values not set unless they are strings!
-    combo_box_evenodd = sg.Combo(["True", "False"], readonly=True, default_value=str(args.evenodd),
-                                       size=(5, 1), key="evenodd", enable_events=True)
+    combo_box_restore = sg.Combo(["True", "False"], readonly=True,
+                                         default_value=str(args.restore), size=(5, 1),
+                                         key="restore", enable_events=True)
 
-    def update_evenodd(values_dict):
-        """Update the evenodd values."""
-        update_combo_box(values_dict, combo_box_evenodd, "evenodd", args, "evenodd",
+    def update_restore(values_dict):
+        """Update the restore values."""
+        update_combo_box(values_dict, combo_box_restore, "restore", args, "restore",
                         fun_to_apply=str_to_bool)
 
-    update_funs.append(update_evenodd)
+    update_funs.append(update_restore)
 
     ##
     ## Code for setPageRatios option.
@@ -597,24 +627,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             args.setPageRatios = None
 
     update_funs.append(update_setPageRatios_values)
-
-    ##
-    ## Code for restore.
-    ##
-
-    text_restore = sg.Text("restore",
-                      tooltip=get_help_text_string_for_tooltip(cmd_parser, "restore"))
-
-    combo_box_restore = sg.Combo(["True", "False"], readonly=True,
-                                         default_value=str(args.restore), size=(5, 1),
-                                         key="restore", enable_events=True)
-
-    def update_restore(values_dict):
-        """Update the restore values."""
-        update_combo_box(values_dict, combo_box_restore, "restore", args, "restore",
-                        fun_to_apply=str_to_bool)
-
-    update_funs.append(update_restore)
 
     ##
     ## Code for pageRatioWeights options.
@@ -781,7 +793,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     [sg.Text("Quadruples are left, bottom, right, and top margins.\n"
                              "Move mouse left over option names to show descriptions.",
                              relief=sg.RELIEF_GROOVE, pad=(None, (0,15)))],
-                    [combo_box_uniform, text_uniform, combo_box_samePageSize, text_samePageSize],
+                    [checkbox_uniform, checkbox_samePageSize, checkbox_evenodd],
                     [input_text_percentRetain, text_percentRetain],
                     # Python 2 can't unpack in list, so use comprehension.
                     [i for i in input_text_percentRetain4] + [text_percentRetain4],
@@ -789,13 +801,13 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     [i for i in input_text_absoluteOffset4] + [text_absoluteOffset4],
                     [input_text_uniformOrderStat, text_uniformOrderStat],
                     [i for i in input_text_uniformOrderStat4] + [text_uniformOrderStat4],
-                    [input_text_pages, text_pages, combo_box_evenodd, text_evenodd],
-                    [input_text_setPageRatios, text_setPageRatios, combo_box_restore, text_restore],
+                    [input_text_setPageRatios, text_setPageRatios],
                     [i for i in input_text_pageRatioWeights] + [text_pageRatioWeights],
                     [input_text_absolutePreCrop, text_absolutePreCrop],
                     [i for i in input_text_absolutePreCrop4] + [text_absolutePreCrop4],
                     [input_num_threshold, text_threshold, input_num_numBlurs,
                         text_numBlurs, input_num_numSmooths, text_numSmooths],
+                    [input_text_pages, text_pages, combo_box_restore, text_restore],
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
                     [sg.Text("")], # This is just for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
@@ -804,19 +816,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         ]
 
     window.Layout(layout)
-
-    # Note from manual: "If you want to call an element's Update method or call
-    # a Graph element's drawing primitives, you must either call Read or
-    # Finalize prior to making those calls."
-    #btn, values_dict = window.Read(timeout=0) # Now use Finalize below.
-    #call_all_update_funs(update_funs, values_dict)
-
-    # For some reason I also had to add this in order to make the `wait_indicator_text`
-    # properly become visible and invisible.  Fixes a problem that occurred with newer
-    # PySimpleGU versions in 2020.  The box is initialized above as visible, but
-    # here it is updated to be invisible (until a crop is being performed).  Otherwise
-    # it never displays at all.
-    window.Finalize()
+    window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
 
     ##
