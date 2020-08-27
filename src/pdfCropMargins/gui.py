@@ -55,10 +55,12 @@ from __future__ import print_function, absolute_import
 import sys
 import os
 import warnings
+import textwrap
+
 from . import __version__
 from . import external_program_calls as ex
 
-try:
+try: # Extra dependencies for the GUI version.  Make sure they are installed.
     with warnings.catch_warnings():
         #warnings.filterwarnings("ignore",category=DeprecationWarning)
         requires = "PyMuPDF at least v1.14.5"
@@ -181,12 +183,12 @@ def get_window_size():
     root.destroy()
     return width, height
 
+wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=45,
+                               break_on_hyphens=False)
+
 def get_help_text_string_for_tooltip(cmd_parser, option_string):
     """Extract the help message for an option from an argparse command parser.
     This gets the argparse help string to use as a tooltip."""
-    import textwrap
-    wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=45,
-                                   break_on_hyphens=False)
     for a in cmd_parser._actions:
         if "--" + option_string in a.option_strings:
             help_text = a.help
