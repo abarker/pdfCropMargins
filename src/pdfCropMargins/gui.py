@@ -101,6 +101,8 @@ else:
 
 def get_filename():
     """Get the filename of the PDF file via GUI if one was not passed in."""
+    # TODO: This isn't used now, but the code works to pop up a file chooser.
+    # Incorporate it to interactively find the file to crop if none passed in.
     fname = sg.PopupGetFile("Select file and filetype to open:",
                             title="pdfCropMargins: Document Browser",
                             file_types=[ # Only PDF files.
@@ -111,10 +113,6 @@ def get_filename():
 
 def open_document(doc_fname):
     """Return the document opened by fitz (PyMuPDF)."""
-    # TODO: Move the get_filename call to main_pdfCropMargins or
-    # similar if actually used.
-    if not doc_fname:
-        doc_fname = get_filename()
     try:
         document = fitz.open(doc_fname)
     except RuntimeError:
@@ -348,8 +346,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Set up the document and window.
     ##
 
-    document, page_count = open_document(fixed_input_doc_fname)
-    cur_page = 0
+    document, num_pages = open_document(fixed_input_doc_fname)
+    curr_page = 0
 
     window_title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
     window_size = get_window_size()
@@ -364,9 +362,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     sg.SetOptions(tooltip_time=500)
 
     # Allocate storage for caching page display lists.
-    page_display_list_cache = [None] * page_count
+    page_display_list_cache = [None] * num_pages
 
-    data, clip_pos = get_page(cur_page,  # Read first page.
+    data, clip_pos = get_page(curr_page,  # Read first page.
                               page_display_list_cache,
                               document,
                               window_size=size_for_full_app,  # image max dim
@@ -381,18 +379,18 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for handling page numbers.
     ##
 
-    input_text_page_num = sg.InputText(str(cur_page + 1), size=(5, 1),
+    input_text_page_num = sg.InputText(str(curr_page + 1), size=(5, 1),
                                        do_not_clear=True, key="PageNumber")
     text_page_num = sg.Text("Page:")
 
-    def update_page_number(cur_page, page_count, is_page_mod_key, btn,
+    def update_page_number(curr_page, prev_curr_page, num_pages, btn,
                            input_text_element):
-        cur_page = max(cur_page, 0)
-        cur_page = min(cur_page, page_count-1)
+        curr_page = max(curr_page, 0)
+        curr_page = min(curr_page, num_pages-1)
         # Update page number field.
-        if is_page_mod_key(btn):
-            input_text_element.Update(str(cur_page + 1))
-        return cur_page
+        if curr_page != prev_curr_page:
+            input_text_element.Update(str(curr_page + 1))
+        return curr_page
 
     ##
     ## Code for percentRetain options.
@@ -570,7 +568,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         value = values_dict["pages"]
         try:
             if value:
-                parse_page_range_specifiers(value, set(range(page_count)))
+                parse_page_range_specifiers(value, set(range(num_pages)))
         except ValueError:
             sg.PopupError("Bad page specifier.")
             input_text_pages.Update("")
@@ -785,7 +783,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             sg.Button("Next"),
             text_page_num,
             input_text_page_num,
-            sg.Text("({})      ".format(page_count)), # Show max page count.
+            sg.Text("({})      ".format(num_pages)), # Show max page count.
             sg.Button("Toggle Zoom"),
             sg.Text("(arrow keys navigate while zooming)"),
             ],
@@ -849,6 +847,12 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     def is_down(btn):
         return btn.startswith("Down:")
 
+    def is_home(btn):
+        return btn.startswith("Home:")
+
+    def is_end(btn):
+        return btn.startswith("End:")
+
     def is_left(btn):
         return btn.startswith("Left:")
 
@@ -859,7 +863,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         return btn.startswith("Toggle Zoom")
 
     def is_page_mod_key(btn):
-        return any((is_enter(btn), is_next(btn), is_prev(btn), is_zoom(btn)))
+        return any((is_enter(btn), is_next(btn), is_prev(btn), is_home(btn),
+                   is_end(btn), is_zoom(btn)))
 
     ##
     ## Run the main event loop.
@@ -875,6 +880,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     last_numBlurs = None
 
     while True:
+        prev_curr_page = curr_page
         btn, values_dict = window.Read()
 
         if btn is None and (values_dict is None or values_dict["PageNumber"] is None):
@@ -885,21 +891,27 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         if is_enter(btn):
             call_all_update_funs(update_funs, values_dict)
             try:
-                cur_page = int(values_dict["PageNumber"]) - 1  # check if valid
+                curr_page = int(values_dict["PageNumber"]) - 1  # check if valid
             except:
-                cur_page = 0
+                curr_page = 0
 
         elif is_next(btn):
-            cur_page += 1
+            curr_page += 1
 
         elif is_prev(btn):
-            cur_page -= 1
+            curr_page -= 1
 
         elif is_up(btn) and zoom:
             zoom = (clip_pos, 0, -1)
 
         elif is_down(btn) and zoom:
             zoom = (clip_pos, 0, 1)
+
+        elif is_home(btn):
+            curr_page = 0
+
+        elif is_end(btn):
+            curr_page = num_pages - 1
 
         elif is_left(btn) and zoom:
             zoom = (clip_pos, -1, 0)
@@ -961,8 +973,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                 combo_box_restore.Update("False")
 
             # Change the view to the new cropped file.
-            page_display_list_cache = [None] * page_count
-            document, page_count = open_document(output_doc_fname)
+            page_display_list_cache = [None] * num_pages
+            document, num_pages = open_document(output_doc_fname)
             did_crop = True
             wait_indicator_text.Update(visible=False)
 
@@ -972,16 +984,16 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         elif is_original(btn):
             call_all_update_funs(update_funs, values_dict)
             document.close()
-            page_display_list_cache = [None] * page_count
-            document, page_count = open_document(fixed_input_doc_fname)
+            page_display_list_cache = [None] * num_pages
+            document, num_pages = open_document(fixed_input_doc_fname)
             did_crop = False
 
         # Update page number.
-        cur_page = update_page_number(cur_page, page_count, is_page_mod_key, btn,
+        curr_page = update_page_number(curr_page, prev_curr_page, num_pages, btn,
                                       input_text_page_num)
 
         # Get the current page and display it.
-        data, clip_pos = get_page(cur_page, page_display_list_cache, document,
+        data, clip_pos = get_page(curr_page, page_display_list_cache, document,
                                   window_size=window_size, zoom=zoom)
         image_element.Update(data=data)
 
