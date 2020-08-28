@@ -862,10 +862,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     def is_zoom(btn):
         return btn.startswith("Toggle Zoom")
 
-    def is_page_mod_key(btn):
-        return any((is_enter(btn), is_next(btn), is_prev(btn), is_home(btn),
-                   is_end(btn), is_zoom(btn)))
-
     ##
     ## Run the main event loop.
     ##
