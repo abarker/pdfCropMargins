@@ -59,14 +59,9 @@ import textwrap
 
 from . import __version__
 from . import external_program_calls as ex
+from . pymupdf_routines import open_document, get_page
 
 try: # Extra dependencies for the GUI version.  Make sure they are installed.
-    with warnings.catch_warnings():
-        #warnings.filterwarnings("ignore",category=DeprecationWarning)
-        requires = "PyMuPDF at least v1.14.5"
-        import fitz
-    if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 14, 5]:
-        raise ImportError
     if not ex.python_version[0] == "2":
         requires = "PySimpleGUI"
         import PySimpleGUI as sg
@@ -87,9 +82,10 @@ except ImportError:
 from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
                                   parse_page_ratio_argument)
 
-# Look and feel.
+# Uncomment for look and feel preview.
 #print(sg.ListOfLookAndFeelValues())
 #print(sg.LOOK_AND_FEEL_TABLE)
+
 if ex.system_os == "Windows":
     sg.ChangeLookAndFeel("TanBlue")
 else:
@@ -110,68 +106,6 @@ def get_filename():
                                        ],
                             )
     return fname # Might be None.
-
-def open_document(doc_fname):
-    """Return the document opened by fitz (PyMuPDF)."""
-    try:
-        document = fitz.open(doc_fname)
-    except RuntimeError:
-        print("\nError in pdfCropMargins: The PyMuPDF program could not read"
-              " the document\n   '{}'\nin order to display it in the GUI.   If you have"
-              " Ghostscript installed\nconsider running pdfCropMargins with the"
-              " '--gsFix' option to attempt to repair it."
-              .format(doc_fname), file=sys.stderr)
-        ex.cleanup_and_exit(1)
-    page_count = len(document)
-    return document, page_count
-
-def get_page(page_num, page_display_list_cache, document, window_size, zoom=False):
-    """Return a `tkinter.PhotoImage` or a PNG image for a document page number.
-    - The `page_num` argument is a 0-based page number.
-    - The `zoom` argument is the top-left of old clip rect, and one of -1, 0,
-      +1 for dim. x or y to indicate the arrow key pressed.
-    - The `max_size` argument is the (width, height) of available image area.
-      """
-    zoom_x = 1
-    zoom_y = 1
-    scale = fitz.Matrix(zoom_x, zoom_y)
-    page_display_list = page_display_list_cache[page_num]
-    if not page_display_list:  # Create if not yet there.
-        page_display_list_cache[page_num] = document[page_num].getDisplayList()
-        page_display_list = page_display_list_cache[page_num]
-
-    rect = page_display_list.rect  # The page rectangle.
-    clip = rect
-
-    # Make sure that the image will fits the screen.
-    zoom_0 = 1
-    if window_size:
-        zoom_0 = min(1, window_size[0] / rect.width, window_size[1] / rect.height)
-        if zoom_0 == 1:
-            zoom_0 = min(window_size[0] / rect.width, window_size[1] / rect.height)
-    mat_0 = fitz.Matrix(zoom_0, zoom_0)
-
-    if not zoom:  # Show the total page.
-        pixmap = page_display_list.getPixmap(matrix=mat_0, alpha=False)
-    else:
-        w2 = rect.width / 2  # we need these ...
-        h2 = rect.height / 2  # a few times
-        clip = rect * 0.5  # clip rect size is a quarter page
-        tl = zoom[0]  # old top-left
-        tl.x += zoom[1] * (w2 / 2)  # adjust top-left ...
-        tl.x = max(0, tl.x)  # according to ...
-        tl.x = min(w2, tl.x)  # arrow key ...
-        tl.y += zoom[2] * (h2 / 2)  # provided, but ...
-        tl.y = max(0, tl.y)  # stay within ...
-        tl.y = min(h2, tl.y)  # the page rect
-        clip = fitz.Rect(tl, tl.x + w2, tl.y + h2)
-
-        # Clip rect is ready, now fill it.
-        mat = mat_0 * fitz.Matrix(2, 2)  # The zoom matrix.
-        pixmap = page_display_list.getPixmap(alpha=False, matrix=mat, clip=clip)
-
-    image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
-    return image_ppm, clip.tl  # Return image, clip position.
 
 def get_window_size():
     """Get physical screen dimension to determine the page image max size."""
@@ -357,8 +291,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         warnings.filterwarnings("ignore", message="Your title is not a string.")
         window = sg.Window(title=window_title, return_keyboard_events=True, location=(0, 0),
                            use_default_focus=False)
-    # On tooltips done by pySimpleGUI in tkinter, it seems you have to move pointer
-    # left over the text to make them appear...
+
     sg.SetOptions(tooltip_time=500)
 
     # Allocate storage for caching page display lists.
@@ -445,7 +378,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     def update_absoluteOffset_values(values_dict):
         """Update both the absoluteOffset value and the absoluteOffset4 values."""
         update_paired_1_and_4_values(input_text_absoluteOffset,
-                    input_text_absoluteOffset4, "absoluteOffset", "absoluteOffset4", args_dict, values_dict)
+                    input_text_absoluteOffset4, "absoluteOffset", "absoluteOffset4",
+                    args_dict, values_dict)
         # Copy backing values to the actual args object.
         args.absoluteOffset = args_dict["absoluteOffset"]
         args.absoluteOffset4 = args_dict["absoluteOffset4"]
@@ -671,7 +605,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     def update_absolutePreCrop_values(values_dict):
         """Update both the absolutePreCrop value and the absolutePreCrop4 values."""
         update_paired_1_and_4_values(input_text_absolutePreCrop,
-                    input_text_absolutePreCrop4, "absolutePreCrop", "absolutePreCrop4", args_dict, values_dict)
+                    input_text_absolutePreCrop4, "absolutePreCrop", "absolutePreCrop4",
+                    args_dict, values_dict)
         # Copy backing values to the actual args object.
         args.absolutePreCrop = args_dict["absolutePreCrop"]
         args.absolutePreCrop4 = args_dict["absolutePreCrop4"]
