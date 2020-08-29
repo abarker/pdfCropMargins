@@ -54,8 +54,8 @@ setup(
     keywords=["pdf", "crop", "margins", "resize"],
     install_requires=["wheel", "pillow>=7.1.0", "PyPDF2"], # EITHER Pillow or PIL, NOT BOTH.
     extras_require={
-                    "gui": ["PySimpleGUI>=4.0.0;python_version>='3.0'",
-                            "PySimpleGUI27>=2.2.0;python_version<'3.0'",
+                    "gui": ["PySimpleGUI>=4.28.0;python_version>='3.0'",
+                            "PySimpleGUI27>=2.4.1;python_version<'3.0'",
                             #"typing;python_version<='3.4'", # PySimpleGUI on Python2 needed this...
                             "PyMuPDF>=1.14.5",],
                     },

@@ -265,6 +265,53 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
     # Update all, to convert forms like 5 to 5.0 (which were equal above).
     update_all_from_args_dict()
 
+##
+## Define the buttons/events we want to handle in the event loop.
+##
+
+class Events:
+    """The events to handle in the event loop.  The class is just used as a
+    namespace for holding the event tests."""
+    # When no longer supporting Python2 consider making this a SimpleNamespace instance.
+    def is_enter(btn):
+        return btn.startswith("Return:") or btn == chr(13)
+
+    def is_exit(btn):
+        return btn == chr(27) or btn.startswith("Escape:") or btn.startswith("Exit")
+
+    def is_crop(btn):
+        return btn.startswith("Crop")
+
+    def is_original(btn):
+        return btn.startswith("Original")
+
+    def is_next(btn):
+        return btn.startswith("Next") or btn == "MouseWheel:Down" # Note mouse not giving any event.
+
+    def is_prev(btn):
+        return btn.startswith("Prior:") or btn.startswith("Prev") or btn == "MouseWheel:Up"
+
+    def is_up(btn):
+        return btn.startswith("Up:")
+
+    def is_down(btn):
+        return btn.startswith("Down:")
+
+    def is_home(btn):
+        return btn.startswith("Home:")
+
+    def is_end(btn):
+        return btn.startswith("End:")
+
+    def is_left(btn):
+        return btn.startswith("Left:")
+
+    def is_right(btn):
+        return btn.startswith("Right:")
+
+    def is_zoom(btn):
+        return btn.startswith("Toggle Zoom")
+
 #
 # The main function with the event loop.
 #
@@ -755,49 +802,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     wait_indicator_text.Update(visible=False)
 
     ##
-    ## Define the buttons/events we want to handle.
-    ##
-
-    def is_enter(btn):
-        return btn.startswith("Return:") or btn == chr(13)
-
-    def is_exit(btn):
-        return btn == chr(27) or btn.startswith("Escape:") or btn.startswith("Exit")
-
-    def is_crop(btn):
-        return btn.startswith("Crop")
-
-    def is_original(btn):
-        return btn.startswith("Original")
-
-    def is_next(btn):
-        return btn.startswith("Next") or btn == "MouseWheel:Down" # Note mouse not giving any event.
-
-    def is_prev(btn):
-        return btn.startswith("Prior:") or btn.startswith("Prev") or btn == "MouseWheel:Up"
-
-    def is_up(btn):
-        return btn.startswith("Up:")
-
-    def is_down(btn):
-        return btn.startswith("Down:")
-
-    def is_home(btn):
-        return btn.startswith("Home:")
-
-    def is_end(btn):
-        return btn.startswith("End:")
-
-    def is_left(btn):
-        return btn.startswith("Left:")
-
-    def is_right(btn):
-        return btn.startswith("Right:")
-
-    def is_zoom(btn):
-        return btn.startswith("Toggle Zoom")
-
-    ##
     ## Run the main event loop.
     ##
 
@@ -816,47 +820,47 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         if btn is None and (values_dict is None or values_dict["PageNumber"] is None):
             break
-        if is_exit(btn):
+        if Events.is_exit(btn):
             break
 
-        if is_enter(btn):
+        if Events.is_enter(btn):
             call_all_update_funs(update_funs, values_dict)
             try:
                 curr_page = int(values_dict["PageNumber"]) - 1  # check if valid
             except:
                 curr_page = 0
 
-        elif is_next(btn):
+        elif Events.is_next(btn):
             curr_page += 1
 
-        elif is_prev(btn):
+        elif Events.is_prev(btn):
             curr_page -= 1
 
-        elif is_up(btn) and zoom:
+        elif Events.is_up(btn) and zoom:
             zoom = (clip_pos, 0, -1)
 
-        elif is_down(btn) and zoom:
+        elif Events.is_down(btn) and zoom:
             zoom = (clip_pos, 0, 1)
 
-        elif is_home(btn):
+        elif Events.is_home(btn):
             curr_page = 0
 
-        elif is_end(btn):
+        elif Events.is_end(btn):
             curr_page = num_pages - 1
 
-        elif is_left(btn) and zoom:
+        elif Events.is_left(btn) and zoom:
             zoom = (clip_pos, -1, 0)
 
-        elif is_right(btn) and zoom:
+        elif Events.is_right(btn) and zoom:
             zoom = (clip_pos, 1, 0)
 
-        elif is_zoom(btn): # Toggle.
+        elif Events.is_zoom(btn): # Toggle.
             if not zoom:
                 zoom = (clip_pos, 0, 0)
             else:
                 zoom = False
 
-        elif is_crop(btn):
+        elif Events.is_crop(btn):
             call_all_update_funs(update_funs, values_dict)
             document.close()
 
@@ -912,7 +916,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             if parsed_args.verbose:
                 print("\nWaiting for the GUI...")
 
-        elif is_original(btn):
+        elif Events.is_original(btn):
             call_all_update_funs(update_funs, values_dict)
             document.close()
             page_display_list_cache = [None] * num_pages
