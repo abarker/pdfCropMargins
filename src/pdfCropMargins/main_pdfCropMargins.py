@@ -532,9 +532,9 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info):
             print("\nThe document was already cropped at least once by pdfCropMargins.")
         already_cropped_by_this_program = True
     else:
-        already_cropped_by_this_program = False
         if args.verbose:
             print("\nThe document was not previously cropped by pdfCropMargins.")
+        already_cropped_by_this_program = False
 
     # Note that all None metadata attributes are currently set to the empty string
     # when passing along the metadata information.
@@ -633,23 +633,26 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
 
 def setup_output_document(input_doc, tmp_input_doc, metadata_info,
                                                     copy_document_catalog=True):
-    """Create the output `PdfFileWriter` objects and copy over the relevant info."""
+    """Create the output `PdfFileWriter` objects and copy over the relevant info.
+    Returns the writer objects `output_doc`, `tmp_output_doc`, and the boolean
+    `already_cropped_by_this_program`.  This function also sets the metadata for
+    the cropped output file."""
     # NOTE: Inserting pages from a PdfFileReader into multiple PdfFileWriters
     # seems to cause problems (writer can hang on write), so only one is used.
     # This is why the tmp_input_doc file was created earlier, to get copies of
     # the page objects which are independent of those in input_doc.  An ugly
     # hack for a nasty bug to track down.
 
-    # NOTE: You can get the _root_object attribute (dict for the document
-    # catalog) from the output document after calling cloneReaderDocumentRoot
-    # or else you can just directly get it from the input_doc.trailer dict, as
-    # below (which is from the code for cloneReaderDocumentRoot), but you
-    # CANNOT set the full _root_object to be the _root_object attribute for the
-    # actual output_doc or else only blank pages show up in acroread (whether
+    # NOTE: You can get the `_root_object` attribute (dict for the document
+    # catalog) from the output document after calling `cloneReaderDocumentRoot`
+    # or else you can just directly get it from the `input_doc.trailer dict`, as
+    # below (which is from the code for `cloneReaderDocumentRoot`), but you
+    # CANNOT set the full `_root_object` to be the `_root_object` attribute for
+    # the actual output_doc or else only blank pages show up in acroread (whether
     # or not there is any attempt to explicitly copy the pages over).  The same
-    # is true for using cloneDocumentFromReader (which just calls
-    # cloneReaderDocumentRoot followed by appendPagesFromReader).  At least the
-    # '/Pages' key and value in _root_object cause problems, so they are
+    # is true for using `cloneDocumentFromReader` (which just calls
+    # `cloneReaderDocumentRoot` followed by `appendPagesFromReader`).  At least
+    # the '/Pages' key and value in `_root_object` cause problems, so they are
     # skipped in the partial copy.  Probably a bug in PyPDF2.  See the original
     # code for the routines on the github pages below.
     #
@@ -658,7 +661,7 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
     #
     # Files still can change zoom mode on clicking outline links, but that is
     # an Adobe implementation problem, and happens even in the uncropped files:
-    # https://superuser.com/questions/278302/
+    #    https://superuser.com/questions/278302/
 
     output_doc = PdfFileWriter()
 
@@ -771,6 +774,10 @@ def process_command_line_arguments(parsed_args):
     global args # This is global only to avoid passing it to essentially every function.
     args = parsed_args
 
+    if args.version:
+        print(__version__, end="")
+        ex.cleanup_and_exit(0)
+
     if args.verbose:
         print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
         print("Python version:", ex.python_version)
@@ -852,7 +859,7 @@ def process_command_line_arguments(parsed_args):
               " are:\n   ", args.uniformOrderStat4)
 
     #
-    # Page ratios.
+    # Process page ratios.
     #
 
     if args.setPageRatios and not args.gui: # GUI does its own parsing.
@@ -910,7 +917,7 @@ def process_command_line_arguments(parsed_args):
             if args.verbose:
                 print("\nNo pdftoppm executable found; using Ghostscript for rendering.")
 
-    # If any options require Ghostscript, make sure it it installed.
+    # If any options require Ghostscript, make sure it is installed.
     if args.gsBbox or args.gsFix or args.gsRender:
         found_gs = ex.init_and_test_gs_executable()
         if args.verbose:
@@ -965,7 +972,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     If a bounding box list is passed in then the calculation is skipped and
     that list is used.
 
-    The function returns the bounding box list."""
+    Returns the bounding box list."""
     ##
     ## Open the input document in a PdfFileReader object.  Due to an apparent bug
     ## in pyPdf we open two PdfFileReader objects for the file.  The time required
@@ -1060,8 +1067,8 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## (There are a few optimizations for expensive operations like finding
     ## bounding boxes; the rest is negligible).  This keeps the correspondence
     ## between page numbers and the positions of boxes in the box lists.  The
-    ## function apply_crop_list then just ignores the cropping information for any
-    ## pages which were not selected.
+    ## function `apply_crop_list` then just ignores the cropping information
+    ## for any pages which were not selected.
     ##
 
     all_page_nums = set(range(0, input_doc.getNumPages()))
@@ -1110,6 +1117,19 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     output_doc, tmp_output_doc, already_cropped_by_this_program = setup_output_document(
                                                 input_doc, tmp_input_doc, metadata_info)
+
+    if False: #args.prevCropped:
+        # TODO: Consider as new options.  But a lot of work done above to get this info...
+        # How do the other options interact with these if they are set?  Don't want GUI.
+        if already_cropped_by_this_program and args.skipPrevCropped:
+            ex.cleanup_and_exit(0)
+        fixed_input_doc_file_object.close()
+        if already_cropped_by_this_program:
+            print("y", end="")
+            ex.cleanup_and_exit(0)
+        else:
+            print("n", end="")
+            ex.cleanup_and_exit(1)
 
     ##
     ## Write out the PDF document again, with the CropBox and MediaBox reset.

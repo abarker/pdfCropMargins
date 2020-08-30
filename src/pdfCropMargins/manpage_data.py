@@ -561,7 +561,7 @@ cmd_parser.add_argument("-r", "--restore", action="store_true", help="""
    option.  Saving in the ArtBoxes can be disabled by using the '--noundosave'
    option.^^n""")
 
-# TODO maybe later an option to choose which box to save to, or none, rather
+# Todo maybe later: an option to choose which box to save to, or none, rather
 # than just turn off ArtBox.
 cmd_parser.add_argument("-A", "--noundosave", action="store_true", help="""
 
@@ -771,6 +771,11 @@ cmd_parser.add_argument("-ppp", "--pdftoppmPath", type=str, metavar="PATH",
    Pass in a pathname to the pdftoppm executable that the program should use.
    No globbing is done.  Useful when the program is in a nonstandard
    location.^^n""")
+
+cmd_parser.add_argument("--version", action="store_true", help="""
+
+   Return the pdfCropMargins version number and exit immediately.  All
+   other options are ignored.^^n""")
 
 cmd_parser.add_argument("-wcdf", "--writeCropDataToFile", type=str,
                         default="", metavar="FILEPATH", help="""

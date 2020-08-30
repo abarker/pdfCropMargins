@@ -8,6 +8,9 @@ History
 
 New features:
 
+* Added a new option``--version`` that just prints out the pdfCropMargins
+  version number.
+
 * The GUI interface has been updated slightly to be easier to use.
 
 0.2.10 (2020-08-23)
