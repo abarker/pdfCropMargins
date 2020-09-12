@@ -3,15 +3,15 @@
 History
 =======
 
-0.2.11 (2020-XX-XX)
+0.2.11 (2020-09-12)
 -------------------
 
 New features:
 
+* The GUI interface has been updated slightly to be easier to use.
+
 * Added a new option``--version`` that just prints out the pdfCropMargins
   version number.
-
-* The GUI interface has been updated slightly to be easier to use.
 
 0.2.10 (2020-08-23)
 -------------------
