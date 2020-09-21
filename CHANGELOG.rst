@@ -3,6 +3,13 @@
 History
 =======
 
+0.2.11 (2020-09-21)
+-------------------
+
+Bug fixes:
+
+* Fixed a recently-introduced bug in GUI events when running Python2.
+
 0.2.11 (2020-09-12)
 -------------------
 
