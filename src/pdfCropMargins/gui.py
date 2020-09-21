@@ -59,7 +59,7 @@ import textwrap
 
 from . import __version__
 from . import external_program_calls as ex
-from . pymupdf_routines import open_document, get_page
+from . pymupdf_routines import DocumentPages
 
 try: # Extra dependencies for the GUI version.  Make sure they are installed.
     if not ex.python_version[0] == "2":
@@ -273,42 +273,55 @@ class Events:
     """The events to handle in the event loop.  The class is just used as a
     namespace for holding the event tests."""
     # When no longer supporting Python2 consider making this a SimpleNamespace instance.
+    @staticmethod
     def is_enter(btn):
         return btn.startswith("Return:") or btn == chr(13)
 
+    @staticmethod
     def is_exit(btn):
         return btn == chr(27) or btn.startswith("Escape:") or btn.startswith("Exit")
 
+    @staticmethod
     def is_crop(btn):
         return btn.startswith("Crop")
 
+    @staticmethod
     def is_original(btn):
         return btn.startswith("Original")
 
+    @staticmethod
     def is_next(btn):
         return btn.startswith("Next") or btn == "MouseWheel:Down" # Note mouse not giving any event.
 
+    @staticmethod
     def is_prev(btn):
         return btn.startswith("Prior:") or btn.startswith("Prev") or btn == "MouseWheel:Up"
 
+    @staticmethod
     def is_up(btn):
         return btn.startswith("Up:")
 
+    @staticmethod
     def is_down(btn):
         return btn.startswith("Down:")
 
+    @staticmethod
     def is_home(btn):
         return btn.startswith("Home:")
 
+    @staticmethod
     def is_end(btn):
         return btn.startswith("End:")
 
+    @staticmethod
     def is_left(btn):
         return btn.startswith("Left:")
 
+    @staticmethod
     def is_right(btn):
         return btn.startswith("Right:")
 
+    @staticmethod
     def is_zoom(btn):
         return btn.startswith("Toggle Zoom")
 
@@ -327,7 +340,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Set up the document and window.
     ##
 
-    document, num_pages = open_document(fixed_input_doc_fname)
+    document_pages = DocumentPages()
+    num_pages = document_pages.open_document(fixed_input_doc_fname)
     curr_page = 0
 
     window_title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
@@ -341,15 +355,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     sg.SetOptions(tooltip_time=500)
 
-    # Allocate storage for caching page display lists.
-    page_display_list_cache = [None] * num_pages
-
-    data, clip_pos = get_page(curr_page,  # Read first page.
-                              page_display_list_cache,
-                              document,
-                              window_size=size_for_full_app,  # image max dim
-                              zoom=False,  # Not zooming yet.
-                              )
+    data, clip_pos = document_pages.get_page(curr_page,  # Read first page.
+                                             window_size=size_for_full_app,  # image max dim
+                                             zoom=False,)  # Not zooming yet.
 
     image_element = sg.Image(data=data)  # make image element
 
@@ -862,7 +870,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         elif Events.is_crop(btn):
             call_all_update_funs(update_funs, values_dict)
-            document.close()
+            document_pages.close_document()
 
             # Display the wait message as a popup (unused alternative).
             #nonblock_popup = sg.PopupNoWait(
@@ -908,8 +916,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                 combo_box_restore.Update("False")
 
             # Change the view to the new cropped file.
-            page_display_list_cache = [None] * num_pages
-            document, num_pages = open_document(output_doc_fname)
+            num_pages = document_pages.open_document(output_doc_fname)
             did_crop = True
             wait_indicator_text.Update(visible=False)
 
@@ -918,9 +925,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         elif Events.is_original(btn):
             call_all_update_funs(update_funs, values_dict)
-            document.close()
-            page_display_list_cache = [None] * num_pages
-            document, num_pages = open_document(fixed_input_doc_fname)
+            document_pages.close_document()
+            num_pages = document_pages.open_document(fixed_input_doc_fname)
             did_crop = False
 
         # Update page number.
@@ -928,8 +934,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                       input_text_page_num)
 
         # Get the current page and display it.
-        data, clip_pos = get_page(curr_page, page_display_list_cache, document,
-                                  window_size=window_size, zoom=zoom)
+        data, clip_pos = document_pages.get_page(curr_page,
+                                                 window_size=window_size, zoom=zoom)
         image_element.Update(data=data)
 
     window.Close()

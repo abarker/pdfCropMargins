@@ -19,6 +19,6 @@ try:
 except BaseException as e:
     print("\nBad command args!  Exception is:\n", e, sep="")
 
-crop(["~/papersToRead/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-v"])
-crop(["~/papersToRead/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf", "-gui", "-v"])
+crop(["~/papersToRead/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf", "-gui", "-pf", "-v"])
+crop(["~/papersToRead/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-pf", "-v"])
 
