@@ -68,7 +68,7 @@ try: # Extra dependencies for the GUI version.  Make sure they are installed.
         requires = "tkinter"
         import tkinter as tk
     else:
-        requires = "PySimpleGUI"
+        requires = "PySimpleGUI27"
         import PySimpleGUI27 as sg
         requires = "Tkinter"
         import Tkinter as tk

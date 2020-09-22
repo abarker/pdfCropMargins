@@ -3,14 +3,16 @@
 History
 =======
 
-0.2.1[23] (2020-09-22)
--------------------
+0.2.1[234] (2020-09-22)
+-----------------------
 
 Bug fixes:
 
 * Fixed a recently-introduced bug in GUI events when running Python2.
 
 * Downgrade Pillow requirement for Python 2 (newer versions not supported).
+  Also include ``typing`` backport requirement for Python 2 versions of
+  PySimpleGUI27.
 
 0.2.11 (2020-09-12)
 -------------------

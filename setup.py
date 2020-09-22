@@ -55,11 +55,11 @@ setup(
     install_requires=["wheel",
                       "pillow>=7.1.0; python_version>='3.0.0'", # Security issue, DOS.
                       "pillow==6.2.2; python_version< '3.0.0'",
-                      "PyPDF2"], # EITHER Pillow or PIL, NOT BOTH.
+                      "PyPDF2"],
     extras_require={
                     "gui": ["PySimpleGUI>=4.28.0;python_version>='3.0'",
                             "PySimpleGUI27>=2.4.1;python_version<'3.0'",
-                            #"typing;python_version<='3.4'", # PySimpleGUI on Python2 needed this...
+                            "typing;python_version<='3.4'", # PySimpleGUI27 on Python2 needs this.
                             "PyMuPDF>=1.14.5",],
                     },
     url="https://github.com/abarker/pdfCropMargins",
