@@ -95,9 +95,9 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
                                              args.resX, args.resY, args.fullPageBox)
     else:
         if not hasPIL:
-            print("\nError in pdfCropMargins: No version of the PIL package (or a"
-                  "\nfork like Pillow) was found.  Either install that Python"
-                  "\npackage or use the Ghostscript flag '--gsBbox' (or '-gs') if you"
+            print("\nError in pdfCropMargins: No version of the Python 'pillow'"
+                  "\npackage was found.  Either install that Python package or use"
+                  "\nthe Ghostscript flag '--gsBbox' (or '-gs') if you"
                   "\nhave Ghostscript installed.", file=sys.stderr)
             ex.cleanup_and_exit(1)
         bbox_list = get_bounding_box_list_render_image(input_doc_fname, input_doc)
