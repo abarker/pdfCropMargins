@@ -42,10 +42,22 @@ from . import external_program_calls as ex
 try:
     # The Pillow fork uses the same import command, so this import works either
     # way (but Pillow can't co-exist with PIL).
-    from PIL import Image, ImageFilter
+    from PIL import Image, ImageFilter, __version__ as pillow_version
     hasPIL = True
 except ImportError:
     hasPIL = False
+
+if hasPIL:
+    pillow_version_tuple = tuple(int(i) for i in pillow_version.split("."))
+    if pillow_version_tuple < (7,1,0):
+        from warnings import warn
+        warn("Your installed pillow version {} is < 7.1.0. "
+             "There are several moderate severity security vulnerabilities "
+             "in Pillow 6.2.2 which have since been fixed.  Python 2 support was "
+             "dropped for versions after 7.0.0, however.  If you cannot upgrade "
+             "it is recommended to use the '--gsBbox' option to find bounding boxes. "
+             "Unfortunately, that method does not work with scanned documents."
+             .format(pillow_version))
 
 #
 # A few globals used in this module, shared when passed into get_bounding_box_list.

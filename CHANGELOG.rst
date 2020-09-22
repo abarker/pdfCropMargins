@@ -10,9 +10,12 @@ Bug fixes:
 
 * Fixed a recently-introduced bug in GUI events when running Python2.
 
-* Downgrade Pillow requirement for Python 2 (newer versions not supported).
-  Also include ``typing`` backport requirement for Python 2 versions of
-  PySimpleGUI27.
+* Drop Pillow requirement for Python 2 (versions newer than 7.0.0 not supported
+  and have security vulnerabilities).  Add a warning on importing old Pillow
+  versions they might have installed or choose to install.  Also include
+  ``typing`` backport requirement for Python 2 versions of PySimpleGUI27.
+
+* Import ``readline`` so prompts are sent to stdout instead of stderr.
 
 0.2.11 (2020-09-12)
 -------------------

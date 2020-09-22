@@ -53,8 +53,8 @@ setup(
     description="A command-line program to crop the margins of PDF files, with many options.",
     keywords=["pdf", "crop", "margins", "resize"],
     install_requires=["wheel",
-                      "pillow>=7.1.0; python_version>='3.0.0'", # Security issue, DOS.
-                      "pillow==6.2.2; python_version< '3.0.0'",
+                      "pillow>=7.1.0; python_version>='3.0.0'", # Security issues on older.
+                      #"pillow>=6.2.2,<7.0.0; python_version<'3.0.0'", # Last supporting 2.7.
                       "PyPDF2"],
     extras_require={
                     "gui": ["PySimpleGUI>=4.28.0;python_version>='3.0'",
