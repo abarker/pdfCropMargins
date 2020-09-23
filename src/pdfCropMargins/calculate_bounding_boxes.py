@@ -31,7 +31,7 @@ from __future__ import print_function, division, absolute_import
 import sys
 import os
 import glob
-import shutil
+#import shutil # DELETE after testing (and search DELETE)
 import time
 from . import external_program_calls as ex
 
@@ -64,8 +64,8 @@ if hasPIL:
 #
 
 args = None # Command-line arguments; set in get_bounding_box_list.
-page_nums_to_crop = None # Set of pages to crop.
-PdfFileWriter = None
+#page_nums_to_crop = None # Set of pages to crop. # DELETE after testing.
+#PdfFileWriter = None # DELETE after testing.
 
 #
 # The main functions of the module.
@@ -73,20 +73,23 @@ PdfFileWriter = None
 
 def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
                           set_of_page_nums_to_crop, argparse_args, chosen_PdfFileWriter):
-    """Calculate a bounding box for each page in the document.  The  `input_doc_fname`
-    argument is the filename of the document's original PDF file, the second is
-    the PdfFileReader for the document.  The argument full_page_box_list is a list
-    of the full-page-size boxes (which is used to correct for any nonzero origins
-    in the PDF coordinates).  The set_of_page_nums_to_crop argument is the set of page
-    numbers to crop; it is passed so that unnecessary calculations can be
-    skipped.  The argparse_args argument should be passed the args parsed from
-    the command line by argparse.  The chosen_PdfFileWriter is the PdfFileWriter
-    class from whichever pyPdf package was chosen by the main program.  The
-    function returns the list of bounding boxes."""
-    global args, page_nums_to_crop, PdfFileWriter
+    """Calculate a bounding box for each page in the document.  The
+    `input_doc_fname` argument is the filename of the document's original PDF
+    file, `input_doc` is the `PdfFileReader` for the document.  The argument
+    `full_page_box_list` is a list of the full-page-size boxes (which is used
+    to correct for any nonzero origins in the PDF coordinates).  The
+    `set_of_page_nums_to_crop` argument is the set of page numbers to crop; it
+    is passed so that unnecessary calculations can be skipped.  The
+    `argparse_args` argument should be passed the args parsed from the command
+    line by argparse.  The `chosen_PdfFileWriter` is the PdfFileWriter class
+    from whichever pyPdf package was chosen by the main program.  The function
+    returns the list of bounding boxes."""
+    #global page_nums_to_crop # DELETE after testing
+    global args
+    #global PdfFileWriter # DELETE after testing
     args = argparse_args # Make args available to all funs in module, as a global.
-    page_nums_to_crop = set_of_page_nums_to_crop # Make the set of pages global, too.
-    PdfFileWriter = chosen_PdfFileWriter # Be sure correct PdfFileWriter is set.
+    #page_nums_to_crop = set_of_page_nums_to_crop # Make the set of pages global, too. # DELETE after testing
+    #PdfFileWriter = chosen_PdfFileWriter # Be sure correct PdfFileWriter is set. # DELETE after testing
 
     if args.gsBbox:
         if args.verbose:
@@ -127,7 +130,7 @@ def correct_bounding_box_list_for_nonzero_origin(bbox_list, full_box_list):
 
 def get_bounding_box_list_render_image(pdf_file_name, input_doc):
     """Calculate the bounding box list by directly rendering each page of the PDF as
-    an image file.  The MediaBox and CropBox values in input_doc should have
+    an image file.  The MediaBox and CropBox values in `input_doc` should have
     already been set to the chosen page size before the rendering."""
 
     program_to_use = "pdftoppm" # default to pdftoppm
@@ -278,11 +281,10 @@ def calculate_bounding_box_from_image(im, curr_page):
                      - full_page_box.getLowerLeft_y()) / y_max
 
     # Get final box; note conversion to lower-left point, upper-right point format.
-    final_box = [
-        bounding_box[0] * convert_x,
-        bounding_box[3] * convert_y,
-        bounding_box[2] * convert_x,
-        bounding_box[1] * convert_y]
+    final_box = [bounding_box[0] * convert_x,
+                 bounding_box[3] * convert_y,
+                 bounding_box[2] * convert_x,
+                 bounding_box[1] * convert_y]
 
     return final_box
 
