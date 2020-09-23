@@ -119,11 +119,15 @@ def parse_page_range_specifiers(spec_string, all_page_nums):
             left_arg = int(split_range[0])-1
             right_arg = int(split_range[1])
             if left_arg >= right_arg:
-                print("Error in pdfCropMargins: left argument of range cannot be less"
-                      " than the right one.", file=sys.stderr)
+                print("Error in pdfCropMargins: Left argument of page range '{}' cannot"
+                      " be less than the right one.".format(spec_string), file=sys.stderr)
                 raise ValueError
             page_nums_to_crop.update(set(range(left_arg, right_arg)))
     page_nums_to_crop = page_nums_to_crop & all_page_nums # intersect chosen with actual
+    if not page_nums_to_crop: # Empty set of pages.
+        print("Error in pdfCropMargins: Page range selection '{}' results in empty"
+                " set.".format(spec_string), file=sys.stderr)
+        raise ValueError
     return page_nums_to_crop
 
 def parse_page_ratio_argument(ratio_arg):

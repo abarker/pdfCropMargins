@@ -556,10 +556,10 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         """Update the pages value."""
         value = values_dict["pages"]
         try:
-            if value:
+            if value: # Parse here only to test for errors.
                 parse_page_range_specifiers(value, set(range(num_pages)))
         except ValueError:
-            sg.PopupError("Bad page specifier.")
+            sg.PopupError("Bad page specifier '{}'.".format(value))
             input_text_pages.Update("")
             args_dict["pages"] = ""
         else:
