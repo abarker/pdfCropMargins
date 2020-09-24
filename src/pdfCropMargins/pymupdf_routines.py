@@ -47,7 +47,7 @@ except ImportError:
 
 class DocumentPages:
     """Holds `pyMuPDF` document and rendered pages of the document for the GUI
-    display."""
+    display.  Note that page numbering convention is from zero."""
     def __init__(self):
         self.clear_cache()
 
@@ -85,8 +85,11 @@ class DocumentPages:
             self.page_display_list_cache[page_num] = self.document[page_num].getDisplayList()
             page_display_list = self.page_display_list_cache[page_num]
 
+        # Note, Matrix(2,2) gives more resolution.
+        # https://github.com/pymupdf/PyMuPDF/issues/322 # Also info on opening in Pillow.
         mat_0 = fitz.Matrix(1, 1)
         pixmap = page_display_list.getPixmap(matrix=mat_0, alpha=False)
+        # Maybe pgm below??
         image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
         return image_ppm
 

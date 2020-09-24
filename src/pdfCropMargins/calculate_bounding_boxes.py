@@ -104,11 +104,11 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
                   "\nthe Ghostscript flag '--gsBbox' (or '-gs') if you"
                   "\nhave Ghostscript installed.", file=sys.stderr)
             ex.cleanup_and_exit(1)
+
         bbox_list = get_bounding_box_list_render_image(input_doc_fname, input_doc)
 
     # Now we need to use the full page boxes to translate for non-zero origin.
-    bbox_list = correct_bounding_box_list_for_nonzero_origin(bbox_list,
-                                                             full_page_box_list)
+    bbox_list = correct_bounding_box_list_for_nonzero_origin(bbox_list, full_page_box_list)
 
     return bbox_list
 
@@ -128,15 +128,21 @@ def correct_bounding_box_list_for_nonzero_origin(bbox_list, full_box_list):
                                  bbox[2]+left_x, bbox[3]+lower_y])
     return corrected_box_list
 
-
 def get_bounding_box_list_render_image(pdf_file_name, input_doc):
     """Calculate the bounding box list by directly rendering each page of the PDF as
     an image file.  The MediaBox and CropBox values in `input_doc` should have
     already been set to the chosen page size before the rendering."""
-
-    program_to_use = "pdftoppm" # default to pdftoppm
-    if args.gsRender:
+    args.renderer = "m" # DEBUG
+    if args.renderer == "m":
+        program_to_use = "mupdf"
+    elif args.renderer == "p":
+        program_to_use = "pdftoppm"
+    elif args.renderer == "g" or args.gsRender:
         program_to_use = "Ghostscript"
+
+    if args.verbose:
+        print("\nRendering the PDF to images using the " + program_to_use + " program,"
+              "\nthis may take a while...")
 
     # Threshold value set in range 0-255, where 0 is black, with 191 default.
     threshold = args.threshold[0]
@@ -145,18 +151,21 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         threshold = -threshold
         dark_background_light_foreground = True
 
-    temp_dir = ex.program_temp_directory # use the program default; don't delete dir!
+    if program_to_use == "mupdf":
+        image_list = get_image_list_mupdf(pdf_file_name) # Images are PPM bytes objects.
+        print("len is xxxxxxxxxxx", len(image_list))
+        outfiles = [None] * len(image_list)
 
-    temp_image_file_root = os.path.join(temp_dir, ex.temp_file_prefix + "PageImage")
-    if args.verbose:
-        print("\nRendering the PDF to images using the " + program_to_use + " program,"
-              "\nthis may take a while...")
+    else:
+        temp_dir = ex.program_temp_directory # use the program default; don't delete dir!
 
-    # Do the rendering of all the files.
-    render_pdf_file_to_image_files(pdf_file_name, temp_image_file_root, program_to_use)
+        temp_image_file_root = os.path.join(temp_dir, ex.temp_file_prefix + "PageImage")
 
-    # Currently assuming that sorting the output will always put them in correct order.
-    outfiles = sorted(glob.glob(temp_image_file_root + "*"))
+        # Do the rendering of all the files.
+        render_pdf_file_to_image_files(pdf_file_name, temp_image_file_root, program_to_use)
+
+        # Currently assuming that sorting the output will always put them in correct order.
+        outfiles = sorted(glob.glob(temp_image_file_root + "*"))
 
     if args.verbose:
         print("\nAnalyzing the page images with PIL to find bounding boxes,"
@@ -169,33 +178,41 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         curr_page = input_doc.getPage(page_num)
 
         # Open the image in PIL.  Retry a few times on fail in case race conditions.
-        max_num_tries = 3
-        time_between_tries = 1
-        curr_num_tries = 0
-        while True:
-            try:
-                # PIL for some reason fails in Python 3.4 if you open the image
-                # from a file you opened yourself.  Works in Python 2 and earlier
-                # Python 3.  So original code is commented out, and path passed.
-                #
-                # tmpImageFile = open(tmpImageFileName)
-                # im = Image.open(tmpImageFile)
-                im = Image.open(tmp_image_file_name)
-                break
-            except (IOError, UnicodeDecodeError) as e:
-                curr_num_tries += 1
-                if args.verbose:
-                    print("Warning: Exception opening image", tmp_image_file_name,
-                          "on try", curr_num_tries, "\nError is", e, file=sys.stderr)
-                # tmpImageFile.close() # see above comment
-                if curr_num_tries > max_num_tries: raise # re-raise exception
-                time.sleep(time_between_tries)
+        if program_to_use == "mupdf":
+            import io
+            image = image_list[page_num]
+            # Opening directly in Pillow: https://github.com/pymupdf/PyMuPDF/issues/322
+            pil_im = Image.open(io.BytesIO(image))
+
+        else:
+            max_num_tries = 3
+            time_between_tries = 1
+            curr_num_tries = 0
+            while True:
+                try:
+                    # PIL for some reason fails in Python 3.4 if you open the image
+                    # from a file you opened yourself.  Works in Python 2 and earlier
+                    # Python 3.  So original code is commented out, and path passed.
+                    #
+                    # tmpImageFile = open(tmpImageFileName)
+                    # im = Image.open(tmpImageFile)
+                    pil_im = Image.open(tmp_image_file_name)
+                    break
+                except (IOError, UnicodeDecodeError) as e:
+                    curr_num_tries += 1
+                    if args.verbose:
+                        print("Warning: Exception opening image", tmp_image_file_name,
+                              "on try", curr_num_tries, "\nError is", e, file=sys.stderr)
+                    # tmpImageFile.close() # see above comment
+                    if curr_num_tries > max_num_tries:
+                        raise
+                    time.sleep(time_between_tries)
 
         # Apply any blur or smooth operations specified by the user.
         for i in range(args.numBlurs):
-            im = im.filter(ImageFilter.BLUR)
+            pil_im = pil_im.filter(ImageFilter.BLUR)
         for i in range(args.numSmooths):
-            im = im.filter(ImageFilter.SMOOTH_MORE)
+            pil_im = pil_im.filter(ImageFilter.SMOOTH_MORE)
 
         # Convert the image to black and white, according to a threshold.
         # Make a negative image, because that works with the PIL getbbox routine.
@@ -207,20 +224,22 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         #im = im.point(lambda p: p < threshold and 255)  # create a negative image
         # Below code is easier to understand than the tricky use of "and" in evaluation.
         if not dark_background_light_foreground:
-            im = im.point(lambda p: 255 if p < threshold else 0) # create negative image
+            pil_im = pil_im.point(lambda p: 255 if p < threshold else 0) # create negative image
         else:
-            im = im.point(lambda p: 255 if p >= threshold else 0) # create positive image
+            pil_im = pil_im.point(lambda p: 255 if p >= threshold else 0) # create positive image
 
         if args.showImages:
-            im.show() # usually for debugging or param-setting
+            pil_im.show() # usually for debugging or param-setting
 
         # Calculate the bounding box of the negative image, and append to list.
-        bounding_box = calculate_bounding_box_from_image(im, curr_page)
+        bounding_box = calculate_bounding_box_from_image(pil_im, curr_page)
+        print(bounding_box)
         bounding_box_list.append(bounding_box)
 
         # Clean up the image files after they are no longer needed.
         # tmpImageFile.close() # see above comment
-        os.remove(tmp_image_file_name)
+        if tmp_image_file_name:
+            os.remove(tmp_image_file_name)
 
     if args.verbose:
         print()
@@ -240,10 +259,10 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
 
     if program_to_use == "Ghostscript":
         if ex.system_os == "Windows": # Windows PIL is more likely to know BMP
-            ex.render_pdf_file_to_image_files__ghostscript_bmp(
+            ex.render_pdf_file_to_image_files_ghostscript_bmp(
                                   pdf_file_name, output_filename_root, res_x, res_y)
         else: # Linux and Cygwin should be fine with PNG
-            ex.render_pdf_file_to_image_files__ghostscript_png(
+            ex.render_pdf_file_to_image_files_ghostscript_png(
                                   pdf_file_name, output_filename_root, res_x, res_y)
 
     elif program_to_use == "pdftoppm":
@@ -255,16 +274,20 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
             ex.render_pdf_file_to_image_files_pdftoppm_ppm(
                 pdf_file_name, output_filename_root, res_x, res_y)
 
-    elif program_to_use == "pymupdf": # TODO: Integrate this as a new option, list of PPM.
-        document_pages = pymupdf_routines.DocumentPages()
-        num_pages = document_pages.open_document(pdf_file_name)
-        page_images = [document_pages.get_page_ppm(i) for i in range(1, num_pages)]
-        return page_images
-
     else:
         print("Error in renderPdfFileToImageFile: Unrecognized external program.",
               file=sys.stderr)
         ex.cleanup_and_exit(1)
+
+def get_image_list_mupdf(pdf_file_name):
+    """Get the bounding boxes by rendering the pages with PyMuPDF and calculating
+    them."""
+    document_pages = pymupdf_routines.DocumentPages()
+    num_pages = document_pages.open_document(pdf_file_name)
+
+    # Note that the images here are PPM bytes objects.
+    page_images = [document_pages.get_page_ppm(i) for i in range(num_pages)]
+    return page_images
 
 def calculate_bounding_box_from_image(im, curr_page):
     """This function uses a PIL routine to get the bounding box of the rendered

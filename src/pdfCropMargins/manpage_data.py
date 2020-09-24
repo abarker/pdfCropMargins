@@ -478,24 +478,38 @@ cmd_parser.add_argument("-ns", "--numSmooths", type=int, default=0, metavar="INT
    operation to the resulting images this many times.  This can be useful for
    noisy images.^^n""")
 
+cmd_parser.add_argument("-n", "--renderer", choices=["m", "p", "g"],
+                       metavar="[m|p|g]", default="p", help="""
+
+   Choose the method to render pdf files.  The options are MuPDF ('m'),
+   pdftoppm ('p') or Ghostscript ('g').  The default is currently '-n p', but
+   that may change.  For pdftoppm or Ghostscript rendering the program must be
+   installed and locatable (see the path-setting options below if the default
+   locator fails).  For MuPDF rendering the Python PyMuPDF package must be
+   installed, as it is in the GUI install.^^n""")
+
 cmd_parser.add_argument("-gs", "--gsBbox", action="store_true", help="""
 
-   Use Ghostscript to find the bounding boxes for the pages.  (The default is
-   to explicitly render the PDF pages to image files and calculate bounding
-   boxes from the images.)  This method tends to be much faster, but it does
-   not work with scanned PDF documents.  It also does not allow for choosing
-   the threshold value, applying blurs, etc.  Any resolution options are passed
-   to the Ghostscript bbox device.  This option requires that Ghostscript be
-   available in the PATH as "gswin32c.exe" or "gswin64c.exe" on Windows, or as
-   "gs" on Linux.  When this option is set the PIL image library for Python is
-   not required.^^n""")
+   Use Ghostscript to directly find the bounding boxes for the pages, with no
+   explict rendering of the pages.  (The default is to explicitly render the
+   PDF pages to image files and calculate bounding boxes from the images.)
+   This method tends to be much faster, but it does not work with scanned PDF
+   documents.  It also does not allow for choosing the threshold value,
+   applying blurs, etc.  Any resolution options are passed to the Ghostscript
+   bbox device.  This option requires that Ghostscript be available in the PATH
+   as "gswin32c.exe" or "gswin64c.exe" on Windows, or as "gs" on Linux.  When
+   this option is set the Pillow image library for Python is not
+   required.^^n""")
 
 cmd_parser.add_argument("-gsr", "--gsRender", action="store_true", help="""
 
-   Use Ghostscript to render the PDF pages to images.  By default the pdftoppm
+   This is maintained for backward compatibility.  Use '-n g' instead.  Use
+   Ghostscript to render the PDF pages to images.  By default the pdftoppm
    program will be preferred for the rendering, if it is found.  Note that this
    option has no effect if '--gsBbox' is chosen, since then no explicit
    rendering is done.^^n""")
+   # TODO: make sure that these options, including new -n option, are processed
+   # right in main_ prog.
 
 cmd_parser.add_argument("-x", "--resX", type=int, default=150,
                        metavar="DPI", help="""

@@ -608,7 +608,7 @@ def render_pdf_file_to_image_files_pdftoppm_pgm(pdf_file_name, root_output_file_
                                         root_output_file_path, res_x, res_y, ["-gray"])
     return comm_output
 
-def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name,
+def render_pdf_file_to_image_files_ghostscript_png(pdf_file_name,
                                                     root_output_file_path,
                                                     res_x=150, res_y=150):
     """Use Ghostscript to render a PDF file to .png images.  The `root_output_file_path`
@@ -624,7 +624,7 @@ def render_pdf_file_to_image_files__ghostscript_png(pdf_file_name,
     comm_output = get_external_subprocess_output(command, env=gs_environment)
     return comm_output
 
-def render_pdf_file_to_image_files__ghostscript_bmp(pdf_file_name,
+def render_pdf_file_to_image_files_ghostscript_bmp(pdf_file_name,
                                                     root_output_file_path,
                                                     res_x=150, res_y=150):
     """Use Ghostscript to render a PDF file to .bmp images.  The `root_output_file_path`
