@@ -479,14 +479,14 @@ cmd_parser.add_argument("-ns", "--numSmooths", type=int, default=0, metavar="INT
    noisy images.^^n""")
 
 cmd_parser.add_argument("-n", "--renderer", choices=["m", "p", "g"],
-                       metavar="[m|p|g]", default="p", help="""
+                       metavar="[m|p|g]", default="*", help="""
 
    Choose the method to render pdf files.  The options are MuPDF ('m'),
-   pdftoppm ('p') or Ghostscript ('g').  The default is currently '-n p', but
-   that may change.  For pdftoppm or Ghostscript rendering the program must be
-   installed and locatable (see the path-setting options below if the default
-   locator fails).  For MuPDF rendering the Python PyMuPDF package must be
-   installed, as it is in the GUI install.^^n""")
+   pdftoppm ('p') or Ghostscript ('g').  The default will use MuPDF if the
+   PyMuPDF program is installed, otherwise it will search for and use pdftoppm
+   and Ghostscript, in that order.  For pdftoppm or Ghostscript rendering the
+   program must be installed and locatable (see the path-setting options below
+   if the default locator fails).^^n""")
 
 cmd_parser.add_argument("-gs", "--gsBbox", action="store_true", help="""
 

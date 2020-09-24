@@ -56,6 +56,7 @@ import readline # Makes prompts go to stdout rather than stderr.
 from . import __version__ # Get the version number from the __init__.py file.
 from .manpage_data import cmd_parser, DEFAULT_THRESHOLD_VALUE
 from .prettified_argparse import parse_command_line_arguments
+from .pymupdf_routines import has_mupdf
 
 from . import external_program_calls as ex
 project_src_directory = ex.project_src_directory
@@ -887,6 +888,17 @@ def process_command_line_arguments(parsed_args):
     # Process options dealing with rendering and external programs.
     #
 
+    if args.gsRender:
+        args.renderer = "g" # Backward compat.
+    if args.renderer == "m" and not has_mupdf:
+        print("Error in pdfCropMargins: The option '--renderer m' was selected"
+              "\nbut PyMuPDF (at least v1.14.5) was not installed in Python."
+              "\nInstalling pdfCropMargins with the GUI option will include that"
+              "\ndependency.", file=sys.stderr)
+        ex.cleanup_and_exit(1)
+    if args.renderer == "*" and has_mupdf and not args.gsBbox: # Default to PyMuPDF.
+        args.renderer = "m"
+
     if args.gsBbox and len(args.fullPageBox) > 1:
         print("\nWarning: only one --fullPageBox value can be used with the -gs option.",
               "\nIgnoring all but the first one.", file=sys.stderr)
@@ -911,27 +923,29 @@ def process_command_line_arguments(parsed_args):
     # explicitly rendered.  In that case we either need pdftoppm or gs to do the
     # rendering.
     gs_render_fallback_set = False # Set True if we switch to gs option as a fallback.
-    if args.renderer == "p" or (not args.gsBbox and not args.gsRender):
+    if args.renderer == "p" or args.renderer == "*" and not args.gsBbox:
         found_pdftoppm = ex.init_and_test_pdftoppm_executable(
                                                    prefer_local=args.pdftoppmLocal)
         if args.verbose:
             print("\nFound pdftoppm program at:", found_pdftoppm)
-        if not found_pdftoppm:
+        if found_pdftoppm:
+            args.pdftoppm = "p"
+        else:
             if args.renderer == "p":
                 print("\nError in pdfCropMargins: The '--renderer p' option was specified "
                       "\nbut the pdftoppm executable could not be located.  Is it"
                       "\ninstalled and in the PATH for command execution?\n",
                       file=sys.stderr)
                 ex.cleanup_and_exit(1)
-            # Fallback to gs.
-            #args.gsRender = True # Old way, DELETE after testing.
-            args.renderer = "g"
+
+            # Try fallback to gs.
             gs_render_fallback_set = True
+            args.renderer = "g"
             if args.verbose:
                 print("\nNo pdftoppm executable found; using Ghostscript for rendering.")
 
     # If any options require Ghostscript, make sure it is installed.
-    if args.renderer == "g" or args.gsBbox or args.gsFix or args.gsRender:
+    if gs_render_fallback_set or args.renderer == "g" or args.gsBbox or args.gsFix:
         found_gs = ex.init_and_test_gs_executable()
         if args.verbose:
             print("\nFound Ghostscript program at:", found_gs)
@@ -945,11 +959,11 @@ def process_command_line_arguments(parsed_args):
               "\nthe Ghostscript executable could not be located.  Is it"
               "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
         ex.cleanup_and_exit(1)
-    if (args.renderer == "g" or args.gsRender) and not found_gs:
+    if (args.renderer == "g" or gs_render_fallback_set) and not found_gs:
         if gs_render_fallback_set:
             print("\nError in pdfCropMargins: Neither Ghostscript nor pdftoppm"
                   "\nwas found in the PATH for command execution.  At least one is"
-                  "\nrequired.\n", file=sys.stderr)
+                  "\nrequired without PyMuPDF installed.\n", file=sys.stderr)
         else:
             print("\nError in pdfCropMargins: The '--renderer g' or the '--gsRender' option"
                   "\nwas specified but the Ghostscript executable could not be located.  Is "

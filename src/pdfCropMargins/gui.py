@@ -59,7 +59,15 @@ import textwrap
 
 from . import __version__
 from . import external_program_calls as ex
-from . pymupdf_routines import DocumentPages
+from . pymupdf_routines import has_mupdf, DocumentPages
+
+if not has_mupdf:
+    print("\nError in pdfCropMargins: The GUI feature requires PyMuPDF"
+          "\nat least v1.14.5. If installing via pip, use the"
+          "\noptional-feature install, e.g.:"
+          "\n   pip install pdfCropMargins[gui] --upgrade --user"
+          "\n\nExiting pdf-crop-margins...")
+    ex.cleanup_and_exit(1)
 
 try: # Extra dependencies for the GUI version.  Make sure they are installed.
     if not ex.python_version[0] == "2":

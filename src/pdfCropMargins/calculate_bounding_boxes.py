@@ -132,7 +132,6 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
     """Calculate the bounding box list by directly rendering each page of the PDF as
     an image file.  The MediaBox and CropBox values in `input_doc` should have
     already been set to the chosen page size before the rendering."""
-    args.renderer = "m" # DEBUG
     if args.renderer == "m":
         program_to_use = "mupdf"
     elif args.renderer == "p":
@@ -153,7 +152,6 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
 
     if program_to_use == "mupdf":
         image_list = get_image_list_mupdf(pdf_file_name) # Images are PPM bytes objects.
-        print("len is xxxxxxxxxxx", len(image_list))
         outfiles = [None] * len(image_list)
 
     else:
