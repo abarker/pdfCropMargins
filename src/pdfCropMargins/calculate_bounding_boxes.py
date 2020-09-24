@@ -34,6 +34,7 @@ import glob
 #import shutil # DELETE after testing (and search DELETE)
 import time
 from . import external_program_calls as ex
+from . import pymupdf_routines
 
 #
 # Image-processing imports.
@@ -236,6 +237,7 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
 
     res_x = str(args.resX)
     res_y = str(args.resY)
+
     if program_to_use == "Ghostscript":
         if ex.system_os == "Windows": # Windows PIL is more likely to know BMP
             ex.render_pdf_file_to_image_files__ghostscript_bmp(
@@ -243,6 +245,7 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
         else: # Linux and Cygwin should be fine with PNG
             ex.render_pdf_file_to_image_files__ghostscript_png(
                                   pdf_file_name, output_filename_root, res_x, res_y)
+
     elif program_to_use == "pdftoppm":
         use_gray = False # this is currently hardcoded, but can be changed to use pgm
         if use_gray:
@@ -251,6 +254,13 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
         else:
             ex.render_pdf_file_to_image_files_pdftoppm_ppm(
                 pdf_file_name, output_filename_root, res_x, res_y)
+
+    elif program_to_use == "pymupdf": # TODO: Integrate this as a new option, list of PPM.
+        document_pages = pymupdf_routines.DocumentPages()
+        num_pages = document_pages.open_document(pdf_file_name)
+        page_images = [document_pages.get_page_ppm(i) for i in range(1, num_pages)]
+        return page_images
+
     else:
         print("Error in renderPdfFileToImageFile: Unrecognized external program.",
               file=sys.stderr)
