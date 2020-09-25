@@ -56,6 +56,7 @@ if has_mupdf:
             """Clear the cache of rendered document pages."""
             self.num_pages = 0
             self.page_display_list_cache = []
+            self.page_crop_image_list_cache = []
 
         def open_document(self, doc_fname):
             """Open the document with fitz (PyMuPDF) and return the number of pages."""
@@ -70,6 +71,7 @@ if has_mupdf:
                 ex.cleanup_and_exit(1)
             self.num_pages = len(self.document)
             self.page_display_list_cache = [None] * self.num_pages
+            self.page_crop_image_list_cache = [None] * self.num_pages
             return self.num_pages
 
         def close_document(self):
@@ -77,18 +79,31 @@ if has_mupdf:
             self.document.close()
             self.clear_cache()
 
-        def get_page_ppm(self, page_num):
-            """Return an unscaled and unclipped `.ppm` file for the page."""
-            page_display_list = self.page_display_list_cache[page_num]
-            if not page_display_list:  # Create if not yet there.
-                self.page_display_list_cache[page_num] = self.document[page_num].getDisplayList()
-                page_display_list = self.page_display_list_cache[page_num]
+        def get_page_ppm_for_crop(self, page_num):
+            """Return an unscaled and unclipped `.ppm` file suitable for cropping the page.
+            Not indended for displaying in the GUI."""
+            # See: https://pymupdf.readthedocs.io/en/latest/colorspace.html#colorspace
+            # Use grayscale for lower memory requirement; good enough for cropping.
+            colorspace = fitz.csGRAY # or fitz.csRGB, or see above.
+
+            page_crop_image_list = self.page_crop_image_list_cache[page_num]
+            if not page_crop_image_list:  # Create if not yet there.
+                self.page_crop_image_list_cache[page_num] = self.document[page_num].getDisplayList()
+                page_crop_image_list = self.page_crop_image_list_cache[page_num]
 
             # Note, Matrix(2,2) gives more resolution.
             # https://github.com/pymupdf/PyMuPDF/issues/322 # Also info on opening in Pillow.
             # TODO: Above page also lists faster way than getting ppm first.
+            #       Use in above: fitz.csGRAY and mode R (did he mean mode L?)
+            # https://pillow.readthedocs.io/en/stable/reference/Image.html
+            # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes
+            # https://pymupdf.readthedocs.io/en/latest/pixmap.html#Pixmap.__init__
+            # https://pymupdf.readthedocs.io/en/latest/page.html#Page.getPixmap
             mat_0 = fitz.Matrix(1, 1)
-            pixmap = page_display_list.getPixmap(matrix=mat_0, alpha=False)
+            # New in PyMuPDF version 1.16.0, annots kwarg for whether to ignore them.
+            pixmap = page_crop_image_list.getPixmap(matrix=fitz.Identity,
+                                                    colorspace=colorspace,
+                                                    clip=None, alpha=False)
             # Maybe pgm below??
             image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
             return image_ppm

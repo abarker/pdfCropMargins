@@ -284,7 +284,7 @@ def get_image_list_mupdf(pdf_file_name):
     num_pages = document_pages.open_document(pdf_file_name)
 
     # Note that the images here are PPM bytes objects.
-    page_images = [document_pages.get_page_ppm(i) for i in range(num_pages)]
+    page_images = [document_pages.get_page_ppm_for_crop(i) for i in range(num_pages)]
     return page_images
 
 def calculate_bounding_box_from_image(im, curr_page):
