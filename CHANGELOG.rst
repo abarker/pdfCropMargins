@@ -3,6 +3,21 @@
 History
 =======
 
+0.3.0 (2020-XX-XX)
+------------------
+
+New features:
+
+* The preferred way to select a renderer has changed.  Use '--renderer' with
+  one of 'm' (MuPDF), 'p' (pdftoppm), or 'g' (Ghostscript) as the argument.
+
+* The MuPDF program can now be used to calculate the crops.  This is done
+  in-memory, and tends to be fast.  It requires PyMuPDF to be installed in
+  Python -- it is already installed with the GUI option, or can be
+  user-installed enable the option without the GUI dependencies. Ths is now the
+  default method of cropping if PyMuPDF is detected and importable.  To
+  explicitly select this method, use the '--renderer m' or '-n m' option.
+
 0.2.1[2345] (2020-09-22)
 ------------------------
 
