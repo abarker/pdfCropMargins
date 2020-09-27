@@ -100,12 +100,14 @@ If you are installing via pip with the ``--user`` option be sure
 without ``--user`` the ``pip3`` command below would also need to be run with
 ``sudo``.)
 
-This is the full install, with the GUI and external programs::
+This is the full install, with the GUI and external utility programs::
 
    sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
    pip3 install pdfCropMargins[gui] --user --upgrade
 
-Here is the plain install, without the GUI.  It has fewer dependencies::
+Here is the plain install, without the GUI or MuPDF bounding-box calculations.
+It has fewer dependencies, but it requires that either pdftoppm or Ghostscript
+be installed.  Not all options are available. ::
 
    sudo apt install python3-pip ghostscript poppler-utils
    pip3 install pdfCropMargins --user --upgrade
@@ -130,23 +132,25 @@ To install with the GUI use::
 
    pip install pdfCropMargins[gui] --upgrade
 
-To install without the GUI use::
+The install without the GUI has fewer dependencies, but requires either
+Ghostscript or pdftoppm to be installed.  A version of pdftoppm is supplied for
+Windows, which will be used as a fallback.  To install without the GUI use::
 
    pip install pdfCropMargins --upgrade
 
-In order for the command ``pdf-crop-margins`` to be found, the ``bin``
-directory it is created in by the ``pip`` command must be on the Windows
-``Path``.  The system-wide Python ``bin`` directory should already be on the
-path if you checked the box to modify ``Path`` when you installed Python;
-otherwise it should be added.  (If you install with the ``--user`` option to
-pip then you need to be sure that the *local* Python ``bin`` directory is in
-the Windows ``Path``.)
+In order for the command ``pdf-crop-margins`` to work from the command line the
+``bin`` directory that it is created in (by the ``pip`` command) must be on the
+Windows ``Path``.  The system-wide Python ``bin`` directory should already be
+on the path if you checked the box to modify ``Path`` when you installed
+Python; otherwise it should be added.  (If you install with the ``--user``
+option to pip then you need to be sure that the *local* Python ``bin``
+directory is in the Windows ``Path``.)
 
 Running
 =======
 
-The program can be run from the command line, from the command line with a GUI,
-from a Python program, or from the source repo.
+The program can be run 1) from the command line, 2) from the command line with
+a GUI, 3) from a Python program, or 3) from the source repo.
 
 Running from the command line
 -----------------------------
@@ -156,8 +160,11 @@ After installation via pip the program can be run with a command such as::
    pdf-crop-margins -v -s -u your-file.pdf
 
 That command prints verbose output, forces all pages to be the same size
-(``-s``) and then crops each page the same amount (``-u``) for a uniform
-appearance, retaining the default of 10% of the margins.
+(``-s``) and then crops each page by the same amount (``-u``) for a uniform
+appearance, retaining the default of 10% of the margins.  To run the
+same command with the GUI for fine-tuning, use::
+
+   pdf-crop-margins -v -s -u -gui your-file.pdf
 
 For help and to see the many command-line options that are available, run::
 
@@ -171,25 +178,25 @@ to use the full pathname.
 Running with the GUI
 --------------------
 
-To run the GUI, assuming that version has been installed, just pass the ``-gui``
-flag in addition to any other flags.  The program is still a command-line
-application, and still respects all the flags, but the GUI lets you fine-tune
-the values of some of the command-line arguments such as the percent to crop,
-etc.  The output filenames, etc., are all the same as for the command-line
-version.  Options modifiable from the GUI are initially set to any values
-passed in on the command line.
+To run the GUI, assuming that version of pdfCropMargins has been installed,
+just pass the ``-gui`` flag in addition to any other flags.  The program is
+still a command-line application, and still respects all the flags, but the GUI
+lets you fine-tune the values of some of the command-line arguments such as the
+percent to crop, etc.  The output filenames, etc., are all the same as for the
+command-line version.  Options modifiable from the GUI are initially set to any
+values passed in on the command line.
 
-The graphical display shows the effect of each crop.  Multiple cropping calls
-for the same document tend to be faster because the PDF pages usually only need
-to be rendered to images one time.
+The graphical display shows the effect of each crop when you hit the 'Crop'
+button.  Multiple cropping calls for the same document tend to be faster
+because the PDF pages usually only need to be rendered to images one time.
 
 Python interface
 ----------------
 
 The program can also be called from a user's Python program (when the
-``pdfCropMargins`` package is discoverable in the Python path).  Just import the
-``crop`` function and then call it with a list containing the usual command-line
-arguments as separate items.  For example:
+``pdfCropMargins`` package is discoverable in the Python path).  Just import
+the ``crop`` function and then call it with a list containing the usual
+command-line arguments as separate items.  For example:
   
 .. code-block:: python
 
@@ -204,8 +211,7 @@ Running from the source distribution
 
 The pdfCropMargins program can be run directly from the source code directory
 tree, provided the dependencies are installed (see ``setup.py``).  Just clone the
-repo and run the program as ``bin/pdfCropMargins.py``, where the path is
-relative to the top-level of the source distribution.
+repo and run the program ``pdfCropMargins.py`` located in the ``bin`` directory.
 
 To pip install the program and its dependencies from the cloned repo rather
 than from PyPI just go to the root of the source directory and run ``pip install
