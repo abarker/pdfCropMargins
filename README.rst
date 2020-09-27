@@ -85,12 +85,19 @@ Installing
 
 The easiest way to install the pdfCropMargins program is by using pip.
 
-The basic features work with only the default install, but some options require
-the external program pdftoppm or Ghostscript.  For information on installing
-those programs on Linux and Windows, see: `Installing pdftoppm and/or
-Ghostscript`
+The basic features work out of the box with the GUI install, but the default
+install and some of the options require either the external program
+pdftoppm or Ghostscript.  For information on installing those programs on Linux
+and Windows, see: `Installing pdftoppm and/or Ghostscript`
 <https://github.com/abarker/pdfCropMargins/tree/master/doc/installing_pdftoppm_and_ghostscript.rst>`_
 .
+
+**Note on Python 2 installs:** The program still runs and installs on Python 2,
+but the Pillow dependency will not be automatically installed because the most
+recent version available for Python 2 has several moderate severity security
+vulnerabilities.  You can choose to install it yourself via ``pip install
+pillow --user``; otherwise, only the ``--gsBbox`` method of calculating crops
+will work.
 
 Linux/Ubuntu
 ------------
