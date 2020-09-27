@@ -52,16 +52,12 @@ recent changes and new features.
 
 **New in version 1.0.0**
 
-* The default installation now includes the GUI and its dependencies.
-  Installing ``pdfCropMargins`` is equivalent to installing
-  ``pdfCropMargins[gui]``.  To get the version without the extra dependencies,
-  install ``pdfCropMargins[lite]``.
-
-* The new default method for rendering pages to calculate crops is the Python
-  ``PyMuPDF`` program, if it is detected.  It is included in the GUI install.
-  This method works in-memory and tends to be faster.  To get the old default
-  behavior (searching for ``pdftoppm`` and then ``Ghostscript``) use the option
-  ``--calcbb olddefault`` or the shortcut ``-c o``.  
+* The new default method for rendering pages to calculate crops uses the Python
+  ``PyMuPDF`` package, if it is detected.  It is included in the GUI install
+  but not in the base install.  This method works in-memory and tends to be
+  faster.  To get the old default behavior (i.e., searching first for
+  ``pdftoppm`` and then for ``Ghostscript``) use the option ``--calcbb
+  olddefault`` or the shortcut ``-c o``.  
 
 * The new preferred way to select the method of calculating bounding boxes is
   the option ``--calcbb``  or the shortcut ``-c``.  The options are:
