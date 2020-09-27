@@ -516,14 +516,14 @@ cmd_parser.add_argument("-x", "--resX", type=int, default=150,
 
    The x-resolution in dots per inch to use when the image is rendered to find
    the bounding boxes.  The default is 150.  Higher values produce more precise
-   bounding boxes.^^n""")
+   bounding boxes but require more time and memory.^^n""")
 
 cmd_parser.add_argument("-y", "--resY", type=int, default=150,
                        metavar="DPI", help="""
 
    The y-resolution in dots per inch to use when the image is rendered to find
    the bounding boxes.  The default is 150.  Higher values produce more precise
-   bounding boxes.^^n""")
+   bounding boxes but require more time and memory.^^n""")
 
 cmd_parser.add_argument("-b", "--boxesToSet", choices=["m", "c", "t", "a", "b"],
                        metavar="[m|c|t|a|b]", action="append", default=[], help="""

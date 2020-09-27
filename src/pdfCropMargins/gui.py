@@ -348,7 +348,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Set up the document and window.
     ##
 
-    document_pages = DocumentPages()
+    document_pages = DocumentPages(args)
     num_pages = document_pages.open_document(fixed_input_doc_fname)
     curr_page = 0
 

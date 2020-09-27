@@ -280,7 +280,7 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
 def get_image_list_mupdf(pdf_file_name):
     """Get the bounding boxes by rendering the pages with PyMuPDF and calculating
     them."""
-    document_pages = pymupdf_routines.DocumentPages()
+    document_pages = pymupdf_routines.DocumentPages(args)
     num_pages = document_pages.open_document(pdf_file_name)
 
     # Note that the images here are PPM bytes objects.

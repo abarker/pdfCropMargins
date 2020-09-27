@@ -37,9 +37,10 @@ try: # Extra dependencies for the GUI version.  Make sure they are installed.
     with warnings.catch_warnings():
         #warnings.filterwarnings("ignore",category=DeprecationWarning)
         import fitz
-    if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 14, 5]:
+    if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 16, 17]:
         has_mupdf = False
         DocumentPages = None
+
 except ImportError:
     has_mupdf = False
     DocumentPages = None
@@ -47,16 +48,21 @@ except ImportError:
 if has_mupdf:
 
     class DocumentPages:
-        """Holds `pyMuPDF` document and rendered pages of the document for the GUI
-        display.  Note that page numbering convention is from zero."""
-        def __init__(self):
+        """Holds `pyMuPDF` document and PyMuPDF pages of the document for the GUI
+        to display.  Has methods to get rendered images.  Note that the page numbering
+        convention is from zero."""
+        def __init__(self, args=None):
+            """Initialize an empty object.  The `args` parameter should be passed a
+            parsed command-line argument object from argparse with the user-selected
+            command-line options."""
+            self.args = args
             self.clear_cache()
 
         def clear_cache(self):
             """Clear the cache of rendered document pages."""
             self.num_pages = 0
             self.page_display_list_cache = []
-            self.page_crop_image_list_cache = []
+            self.page_crop_display_list_cache = []
 
         def open_document(self, doc_fname):
             """Open the document with fitz (PyMuPDF) and return the number of pages."""
@@ -71,7 +77,7 @@ if has_mupdf:
                 ex.cleanup_and_exit(1)
             self.num_pages = len(self.document)
             self.page_display_list_cache = [None] * self.num_pages
-            self.page_crop_image_list_cache = [None] * self.num_pages
+            self.page_crop_display_list_cache = [None] * self.num_pages
             return self.num_pages
 
         def close_document(self):
@@ -79,41 +85,58 @@ if has_mupdf:
             self.document.close()
             self.clear_cache()
 
-        def get_page_ppm_for_crop(self, page_num):
+        def get_page_ppm_for_crop(self, page_num, cache=False):
             """Return an unscaled and unclipped `.ppm` file suitable for cropping the page.
             Not indended for displaying in the GUI."""
-            # See: https://pymupdf.readthedocs.io/en/latest/colorspace.html#colorspace
+
+            # NOTE: The calculated bounding boxes are already saved in GUI, so
+            # there is no need to cache these.  After crops the PDF is written
+            # out and re-read, which would clear the cache, anyway.
+
+            # NOTE: The default DPI with the identity matrix is 72 DPI.
+            # Ghostscript default is 72 DPI and pdftoppm is 150 DPI (the
+            # current pdfCropMargins default).
+            # https://github.com/pymupdf/PyMuPDF/issues/181
+
             # Use grayscale for lower memory requirement; good enough for cropping.
+            # See: https://pymupdf.readthedocs.io/en/latest/colorspace.html#colorspace
             colorspace = fitz.csGRAY # or fitz.csRGB, or see above.
 
-            page_crop_image_list = self.page_crop_image_list_cache[page_num]
-            if not page_crop_image_list:  # Create if not yet there.
-                self.page_crop_image_list_cache[page_num] = self.document[page_num].getDisplayList()
-                page_crop_image_list = self.page_crop_image_list_cache[page_num]
+            if cache:
+                page_crop_display_list = self.page_crop_display_list_cache[page_num]
+                if not page_crop_display_list:  # Create if not yet there.
+                    self.page_crop_display_list_cache[page_num] = self.document[page_num].getDisplayList()
+                    page_crop_display_list = self.page_crop_display_list_cache[page_num]
+            else:
+                page_crop_display_list = self.document[page_num].getDisplayList()
 
-            # Note, Matrix(2,2) gives more resolution.
             # https://github.com/pymupdf/PyMuPDF/issues/322 # Also info on opening in Pillow.
             # TODO: Above page also lists faster way than getting ppm first.
-            #       Use in above: fitz.csGRAY and mode R (did he mean mode L?)
-            # https://pillow.readthedocs.io/en/stable/reference/Image.html
-            # https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes
-            # https://pymupdf.readthedocs.io/en/latest/pixmap.html#Pixmap.__init__
-            # https://pymupdf.readthedocs.io/en/latest/page.html#Page.getPixmap
+
+            # Pillow Image: https://pillow.readthedocs.io/en/stable/reference/Image.html
+            # Pillow modes: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes
+            # PyMuPDF Pixmap: https://pymupdf.readthedocs.io/en/latest/pixmap.html#Pixmap.__init__
+            # PyMuPDF getPixmap: https://pymupdf.readthedocs.io/en/latest/page.html#Page.getPixmap
+
             mat_0 = fitz.Matrix(1, 1)
             # New in PyMuPDF version 1.16.0, annots kwarg for whether to ignore them.
-            pixmap = page_crop_image_list.getPixmap(matrix=fitz.Identity,
-                                                    colorspace=colorspace,
-                                                    clip=None, alpha=False)
+            pixmap = page_crop_display_list.getPixmap(matrix=fitz.Identity,
+                                                      colorspace=colorspace,
+                                                      clip=None, alpha=False)
+            if self.args:
+                resolution = self.args.resX, self.args.resY
+            pixmap.setResolution(*resolution) # New setResolution in PyMuPDF 1.16.17.
+
             # Maybe pgm below??
             image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
             return image_ppm
 
         def get_page(self, page_num, window_size, zoom=False, fit_screen=True):
             """Return a `tkinter.PhotoImage` or a PNG image for a document page number.
-            - The `page_num` argument is a 0-based page number.
-            - The `zoom` argument is the top-left of old clip rect, and one of -1, 0,
-              +1 for dim. x or y to indicate the arrow key pressed.
-            - The `max_size` argument is the (width, height) of available image area.
+                - The `page_num` argument is a 0-based page number.
+                - The `zoom` argument is the top-left of old clip rect, and one of -1, 0,
+                  +1 for dim. x or y to indicate the arrow key pressed.
+                - The `max_size` argument is the (width, height) of available image area.
             """
             zoom_x = 1
             zoom_y = 1
@@ -124,29 +147,30 @@ if has_mupdf:
                 self.page_display_list_cache[page_num] = self.document[page_num].getDisplayList()
                 page_display_list = self.page_display_list_cache[page_num]
 
-            rect = page_display_list.rect  # The page rectangle.
-            clip = rect
+            page_rect = page_display_list.rect  # The page rectangle.
+            clip = page_rect
 
             # Make sure that the image will fits the screen.
             zoom_0 = 1
             if window_size:
-                zoom_0 = min(1, window_size[0] / rect.width, window_size[1] / rect.height)
+                zoom_0 = min(1, window_size[0] / page_rect.width, window_size[1] / page_rect.height)
                 if zoom_0 == 1:
-                    zoom_0 = min(window_size[0] / rect.width, window_size[1] / rect.height)
+                    zoom_0 = min(window_size[0] / page_rect.width, window_size[1] / page_rect.height)
             mat_0 = fitz.Matrix(zoom_0, zoom_0)
 
             if zoom:
-                w2 = rect.width / 2        # we need these ...
-                h2 = rect.height / 2       # a few times
-                clip = rect * 0.5          # clip rect size is a quarter page
-                tl = zoom[0]               # old top-left
-                tl.x += zoom[1] * (w2 / 2) # adjust top-left ...
-                tl.x = max(0, tl.x)        # according to ...
-                tl.x = min(w2, tl.x)       # arrow key ...
-                tl.y += zoom[2] * (h2 / 2) # provided, but ...
-                tl.y = max(0, tl.y)        # stay within ...
-                tl.y = min(h2, tl.y)       # the page rect
-                clip = fitz.Rect(tl, tl.x + w2, tl.y + h2)
+                width2 = page_rect.width / 2
+                height2 = page_rect.height / 2
+
+                clip = page_rect * 0.5     # clip rect size is a quarter page
+                top_left = zoom[0]
+                top_left.x += zoom[1] * (width2 / 2)     # adjust top-left ...
+                top_left.x = max(0, top_left.x)          # according to ...
+                top_left.x = min(width2, top_left.x)     # arrow key ...
+                top_left.y += zoom[2] * (height2 / 2)    # provided, but ...
+                top_left.y = max(0, top_left.y)          # stay within ...
+                top_left.y = min(height2, top_left.y)    # the page rect
+                clip = fitz.Rect(top_left, top_left.x + width2, top_left.y + height2)
 
                 # Clip rect is ready, now fill it.
                 mat = mat_0 * fitz.Matrix(2, 2)  # The zoom matrix.

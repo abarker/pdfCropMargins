@@ -43,63 +43,68 @@ This GIF shows the optional GUI, before and after cropping a document:
     :align: center
     :alt: [GIF of pdfCropMargins]
 
+What's New
+==========
+
 See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-Requirements
-============
+**New in version 1.0.0**
 
-This program depends on either the Ghostscript program or the pdftoppm program
-being installed (and locatable) on the system.  For Window users a version of a
-pdftoppm binary (xpdf 4.01.01) is packaged with the program and will be used as
-a fallback if no other program can be found.
- 
-*  **pdftoppm**
+* The default installation now includes the GUI and its dependencies.
+  Installing ``pdfCropMargins`` is equivalent to installing
+  ``pdfCropMargins[gui]``.  To get the version without the extra dependencies,
+  install ``pdfCropMargins[lite]``.
 
-   The pdftoppm program is standard in most Linux distributions and is easy to
-   install in Cygwin.  It is currently part of the Poppler PDF tools, so that
-   package should be installed on Linux and Cygwin if the `pdftoppm` command
-   is not available.
+* The new default method for rendering pages to calculate crops is the Python
+  ``PyMuPDF`` program, if it is detected.  It is included in the GUI install.
+  This method works in-memory and tends to be faster.  To get the old default
+  behavior (searching for ``pdftoppm`` and then ``Ghostscript``) use the option
+  ``--calcbb olddefault`` or the shortcut ``-c o``.  
 
-   In Windows pdftoppm is not as easy to install, but a collection of PDF tools
-   `found here <http://www.foolabs.com/xpdf/download.html>`_ includes pdftoppm.
-   That version is bundled with the software and will be used as a fallback on
-   Windows if neither Ghostscript nor the system pdftoppm program can be
-   found.
+* The new preferred way to select the method of calculating bounding boxes is
+  the option ``--calcbb``  or the shortcut ``-c``.  The options are:
 
-*  **Ghostscript**
+  * ``-c d`` or ``-c default``: The default, look for PyMuPDF, pdftoppm, and
+    Ghostscript, in that order.
 
-   Ghostscript is in the repos of most Linux distributions and is easy to
-   install on Windows and in Cygwin.
-   
-   The Windows install page is `located here
-   <http://www.ghostscript.com/download/gsdnld.html>`_; the non-commercial GPL
-   version on that page should work fine for most people.  Add the directory of
-   the executable ``gswin64c.exe`` (or the 32 bit version if you installed
-   that) to your Windows system path so it is discoverable (and runnable from
-   the command shell).  On Windows 10 the place to go is:: 
+  * ``-c m`` or ``-c mupdf``: Force the use of PyMuPDF rendering.
 
-      Start -> Control Panel -> System and security -> System -> Advanced system settings
+  * ``-c p`` or ``-c pdftoppm``: Force the use of pdftoppm rendering.
 
-   Now click "Environment Variables" and then double click on the user variable
-   ``Path``.  Click "New" and browse to the directory to add (something like
-   ``C:\Program Files\gs\gs9.27\bin``).  Restart your command shell for the
-   change to be recognized.
-   
+  * ``-c gr`` or ``-c gsrender``: Force the use of Ghostscript rendering
+    (equivalent to ``--gsRender``).
+
+  * ``-c gb`` or ``-c gsbbox``: Use Ghostscript to directly calculate the
+    bounding boxes (equivalent to ``--gsBbox``).  This does not work for
+    scanned documents.
+
+  * ``-c o`` or ``-c olddefault``: Revert to the old default behavior.
+
+  The old method-selection options still work, only the default has changed.
+
 Installing 
 ==========
 
 The easiest way to install the pdfCropMargins program is by using pip.
 
+The basic features work with only the default install, but some options require
+the external program pdftoppm or Ghostscript.  For information on installing
+those programs on Linux and Windows, see: `Installing pdftoppm and/or
+Ghostscript`
+<https://github.com/abarker/pdfCropMargins/tree/master/doc/installing_pdftoppm_and_ghostscript.rst>`_
+.
+
 Linux/Ubuntu
 ------------
 
-Be sure ``$HOME/.local/bin`` is in your system ``PATH`` if you are installing
-via pip with the ``--user`` option.  (To install system-wide without ``--user``
-the ``pip3`` command below would also need to be run with ``sudo``.)
+If you are installing via pip with the ``--user`` option be sure
+``$HOME/.local/bin`` is in your system ``PATH``.  (To install system-wide
+without ``--user`` the ``pip3`` command below would also need to be run with
+``sudo``.)
 
-This is the full install, with the GUI::
+This is the full install, with the GUI and external programs::
 
    sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
    pip3 install pdfCropMargins[gui] --user --upgrade
@@ -116,9 +121,6 @@ you can try forcing a binary install of pyMuPDF::
 
 Windows
 -------
-
-As noted above, Ghostscript or pdftoppm should be installed or else the program
-will fall back to a copy of pdftoppm that is bundled with it.
 
 The ``pip`` program should be automatically installed along with Python.  If
 you cannot find the pip executable you can usually run it like this::

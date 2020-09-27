@@ -14,7 +14,7 @@ Docs on the setup function kwargs:
 from __future__ import absolute_import, print_function
 import glob
 import os.path
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Distribution
 import codecs # Use a consistent encoding.
 import shutil
 import re
@@ -47,21 +47,27 @@ current_dir = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(current_dir, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
+install_requires = ["wheel",
+                    "pillow>=7.1.0; python_version>='3.0.0'", # Security issues on older.
+                    #"pillow>=6.2.2,<7.0.0; python_version<'3.0.0'", # Last supporting 2.7.
+                    "PyPDF2"]
+
+# A default extras group would be nice, to have 'lite' be a light version and 'gui' be
+# the default, but not yet implemented: https://github.com/pypa/setuptools/issues/1139
+extras_require={
+                "gui": ["PySimpleGUI>=4.28.0;python_version>='3.0'",
+                        "PySimpleGUI27>=2.4.1;python_version<'3.0'",
+                        "typing;python_version<='3.4'", # PySimpleGUI27 on Python2 needs this.
+                        "PyMuPDF>=1.16.17",],
+                }
+
 setup(
     name="pdfCropMargins",
     version=__version__, # <majorVersion>.<minorVersion>.<patch> format, (see PEP440)
     description="A command-line program to crop the margins of PDF files, with many options.",
     keywords=["pdf", "crop", "margins", "resize"],
-    install_requires=["wheel",
-                      "pillow>=7.1.0; python_version>='3.0.0'", # Security issues on older.
-                      #"pillow>=6.2.2,<7.0.0; python_version<'3.0.0'", # Last supporting 2.7.
-                      "PyPDF2"],
-    extras_require={
-                    "gui": ["PySimpleGUI>=4.28.0;python_version>='3.0'",
-                            "PySimpleGUI27>=2.4.1;python_version<'3.0'",
-                            "typing;python_version<='3.4'", # PySimpleGUI27 on Python2 needs this.
-                            "PyMuPDF>=1.14.5",],
-                    },
+    install_requires=install_requires,
+    extras_require=extras_require,
     url="https://github.com/abarker/pdfCropMargins",
     entry_points = {
         "console_scripts": ["pdf-crop-margins = pdfCropMargins.pdfCropMargins:main"]
@@ -87,6 +93,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         # uncomment if you test on these interpreters:
