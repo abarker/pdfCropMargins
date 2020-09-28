@@ -254,7 +254,7 @@ To see the documentation, run::
    pdf-crop-margins -h | more
 
 The output of that command follows::
-
+   
    Usage: pdf-crop-margins [-h] [-o OUTFILE_NAME] [-v] [-gui] [-p PCT]
                            [-p4 PCT PCT PCT PCT] [-a BP] [-a4 BP BP BP BP]
                            [-ap BP] [-ap4 BP BP BP BP] [-u] [-m INT]
@@ -296,25 +296,20 @@ The output of that command follows::
         computed cropped size. After this the view of the document in most
         programs will be the new, cropped view.
    
-        When cropping a file not produced by the pdfCropMargins program the
-        default is also to save the intersection of the MediaBox and any
-        existing CropBox in the ArtBox. This saves the "usual" view of the
-        original document in programs like Acrobat Reader. Subsequent crops of
-        a file produced by pdfCropMargins do not by default alter the ArtBox.
-        This allows for an approximate "restore to original margin-sizes"
-        option ('--restore') which simply copies the saved values back to the
-        MarginBox and CropBox. Note, though, that this assumes the ArtBox is
-        unused (it is rarely used, and this feature can be turned off with the
-        -A option).
-   
-        These defaults are designed to reduce the number of copies of a
-        document which need to be saved. This is especially useful if
-        annotations, highlighting, etc., are added to the document. If a
-        document is cropped twice with this program it still stores the
-        original margin settings. At least an approximate version of the
-        original document's margin-formatting can be recovered by using the '--
-        restore' option. Programs which change the "Producer" string in the PDF
-        may interfere with this feature.
+        In order to reduce the number of copies of a document which must be
+        saved, a basic '--restore' option is provided. When cropping a file not
+        produced by the pdfCropMargins program the default is to save the
+        intersection of the MediaBox and any existing CropBox in the ArtBox.
+        This saves the "usual" view of the original document in programs like
+        Acrobat Reader. Subsequent crops of a file produced by pdfCropMargins
+        do not by default alter the ArtBox. The restore option simply copies
+        the saved values back to the MarginBox and CropBox. Note that this
+        assumes the ArtBox is unused (it is rarely used, and this feature can
+        be turned off with the -A option). So, for example, you can make
+        annotations to a file with cropped margins and still produce a version
+        with the annotations which viewers display as the original margins.
+        Programs which change the "Producer" string in the PDF may interfere
+        with this feature.
    
         Below are several examples using more of the command-line options, each
         applied to an input file called doc.pdf. The output filename is
@@ -364,12 +359,11 @@ The output of that command follows::
    
            pdf-crop-margins -mo -pf -su "backup" doc.pdf
    
-        8) Crop the margins of doc.pdf to 120% of their original size, increasing the
-        margins.  Use Ghostscript to find the bounding boxes (in general this can
-        often be faster if Ghostscript is available and no rendering operations are
-        needed).
+        8) Crop the margins of doc.pdf to 120% of their original size, increasing
+        the margins.  Use Ghostscript to find the bounding boxes without explicit
+        rendering by pdfCropMargins.
    
-           pdf-crop-margins -p 120 -gs doc.pdf
+           pdf-crop-margins -p 120 -c gb doc.pdf
    
         9) Crop the margins of doc.pdf ignoring the 10 largest margins on each edge
         (over the whole document).  This is especially good for noisy documents
@@ -391,7 +385,8 @@ The output of that command follows::
    
         12) Try to restore doc.pdf to its original margins, assuming it was cropped
         with pdfCropMargins previously.  Note that the default output filename is
-        still named doc_cropped.pdf, even though it is the recovered file.
+        still named doc_cropped.pdf, even though it is the recovered file.  Use the
+        '-mo' option to modify doc.pdf and backup the previous version.
    
            pdf-crop-margins -r doc.pdf
    
@@ -420,10 +415,9 @@ The output of that command follows::
            gs -o repaired.pdf -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress corrupted.pdf
    
         This command can also be used to convert some PostScript (.ps) files to
-        PDF. In Windows the executable would be something like "gswin32c.exe"
-        rather than "gs". The option '--gsFix' (or '-gsf') will automatically
-        attempt to apply this fix, provided Ghostscript is available. See the
-        description of that option for more information.
+        PDF. The option '--gsFix' (or '-gsf') will automatically attempt to
+        apply this fix, provided Ghostscript is available. See the description
+        of that option for more information.
    
         The pdfCropMargins program handles rotated pages (such as pages in
         landscape mode versus portrait mode) as follows. All rotated pages are
@@ -431,20 +425,20 @@ The output of that command follows::
         calculated. Finally, as the crops are applied to the pages, the
         rotation is re-applied. This may give unexpected results in documents
         which mix pages at different rotations, especially with the '--uniform'
-        or '--samePageSize' options. The arguments of all the options which
-        take four arguments, one for each margin, are shifted so the left,
-        bottom, right, and top margins correspond to the screen appearance
-        (regardless of any internal rotation).
+        or '--samePageSize' options. For rotated pages the arguments of all the
+        options which take four arguments, one for each margin, are shifted so
+        the left, bottom, right, and top margins correspond to the screen
+        appearance (regardless of any internal rotation).
    
         All the command-line options to pdfCropMargins are described below. The
         following definition is useful in precisely defining what several of
-        the options do. Let the delta values be the absolute reduction lengths,
+        the options do. The "delta values" are the absolute reduction lengths,
         in points, which are applied to each original page to get the final
         cropped page. There is a delta value for each margin, on each page. In
         the usual case where all the margin sizes decrease, all the deltas are
-        positive. A delta value can, however, be negative (when percentRetain >
-        100 or when a negative absolute offset is used). When a delta value is
-        negative the corresponding margin size will increase.
+        positive. A delta value can, however, be negative (e.g., when
+        percentRetain > 100 or when a negative absolute offset is used). When a
+        delta value is negative the corresponding margin size will increase.
       
    
    Positional arguments:
