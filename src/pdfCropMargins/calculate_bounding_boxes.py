@@ -234,7 +234,6 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
 
         # Calculate the bounding box of the negative image, and append to list.
         bounding_box = calculate_bounding_box_from_image(pil_im, curr_page)
-        print(bounding_box)
         bounding_box_list.append(bounding_box)
 
         # Clean up the image files after they are no longer needed.
