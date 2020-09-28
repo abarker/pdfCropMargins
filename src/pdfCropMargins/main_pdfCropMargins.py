@@ -40,10 +40,10 @@ Source code site: https://github.com/abarker/pdfCropMargins
 # is slightly different.
 #
 # This program (like the Ghostscript program) uses the PDF ordering convention
-# (lbrt) for listing margins and defining boxes.  Note that PIL uses some
+# (lbrt) for listing margins and defining boxes.  Note that Pillow uses some
 # different conventions.  The origin in PDFs is the lower left going up but the
-# origin in PIL images is the upper left going down.  Also, the bounding box
-# routine of PIL returns ltrb instead of lbrt.  Keep in mind that the program
+# origin in Pillow images is the upper left going down.  Also, the bounding box
+# routine of Pillow returns ltrb instead of lbrt.  Keep in mind that the program
 # needs to make these conversions when rendering explicitly to images.
 
 from __future__ import print_function, division, absolute_import

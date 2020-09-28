@@ -44,11 +44,11 @@ try:
     # The Pillow fork uses the same import command, so this import works either
     # way (but Pillow can't co-exist with PIL).
     from PIL import Image, ImageFilter, __version__ as pillow_version
-    hasPIL = True
+    has_pillow = True
 except ImportError:
-    hasPIL = False
+    has_pillow = False
 
-if hasPIL:
+if has_pillow:
     pillow_version_tuple = tuple(int(i) for i in pillow_version.split("."))
     if pillow_version_tuple < (7,1,0):
         from warnings import warn
@@ -98,7 +98,7 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
         bbox_list = ex.get_bounding_box_list_ghostscript(input_doc_fname,
                                              args.resX, args.resY, args.fullPageBox)
     else:
-        if not hasPIL:
+        if not has_pillow:
             print("\nError in pdfCropMargins: No version of the Python 'pillow'"
                   "\npackage was found.  Either install that Python package or use"
                   "\nGhostscript directly ('--calcbb gb' or '--gsBbox') if you"
@@ -169,7 +169,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         outfiles = sorted(glob.glob(temp_image_file_root + "*"))
 
     if args.verbose:
-        print("\nAnalyzing the page images with PIL to find bounding boxes,"
+        print("\nAnalyzing the page images with Pillow to find bounding boxes,"
               "\nusing the threshold " + str(args.threshold[0]) + "."
               "  Finding the bounding box for page:\n")
 
@@ -178,7 +178,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
     for page_num, tmp_image_file_name in enumerate(outfiles):
         curr_page = input_doc.getPage(page_num)
 
-        # Open the image in PIL.  Retry a few times on fail in case race conditions.
+        # Open the image in Pillow.  Retry a few times on fail in case race conditions.
         if program_to_use == "mupdf":
             import io
             image = image_list[page_num]
@@ -216,7 +216,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
             pil_im = pil_im.filter(ImageFilter.SMOOTH_MORE)
 
         # Convert the image to black and white, according to a threshold.
-        # Make a negative image, because that works with the PIL getbbox routine.
+        # Make a negative image, because that works with the Pillow getbbox routine.
 
         if args.verbose:
             print(page_num+1, end=" ") # page num numbering from 1
@@ -253,7 +253,7 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
     deleting any directories or image files.  The program program_to_use,
     currently either the string "pdftoppm" or the string "Ghostscript", will be
     called externally.  The image type that the PDF is converted into must to be
-    directly openable by PIL."""
+    directly openable by Pillow."""
 
     res_x = str(args.resX)
     res_y = str(args.resY)
@@ -291,7 +291,7 @@ def get_image_list_mupdf(pdf_file_name):
     return page_images
 
 def calculate_bounding_box_from_image(im, curr_page):
-    """This function uses a PIL routine to get the bounding box of the rendered
+    """This function uses a Pillow routine to get the bounding box of the rendered
     image."""
     x_max, y_max = im.size
     bounding_box = im.getbbox() # note this uses ltrb convention
