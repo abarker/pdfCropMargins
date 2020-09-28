@@ -24,6 +24,11 @@ New features:
 * The default rendering resolution is now 72 dpi instead of 150 dpi.
   Resolution can still be set with the ``-x`` and ``-y`` options.
 
+Bug fixes:
+
+* Remove a debug print statement of bounding boxes that was left after a 0.2.10
+  negative-threshold fix.
+
 0.2.1[2345] (2020-09-22)
 ------------------------
 
