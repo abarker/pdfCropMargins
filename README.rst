@@ -50,12 +50,12 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-**New in version 1.0.0**
+**New in version 1.0.0 [not yet finalized and pushed to PyPI]**
 
 * The new default method for rendering pages to calculate crops uses the Python
-  ``PyMuPDF`` package, if it is detected.  It is included in the GUI install
-  but not in the base install.  This method works in-memory and tends to be
-  faster.  To get the old default behavior (i.e., searching first for
+  ``PyMuPDF`` package, if it is detected.  That package is included in the GUI
+  install but not in the base install.  This method works in-memory and tends
+  to be faster.  To get the old default behavior (i.e., searching first for
   ``pdftoppm`` and then for ``Ghostscript``) use the option ``--calcbb
   olddefault`` or the shortcut ``-c o``.  
 

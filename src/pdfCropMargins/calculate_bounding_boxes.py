@@ -136,7 +136,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         program_to_use = "mupdf"
     elif args.calcbb == "p":
         program_to_use = "pdftoppm"
-    elif args.calcbb == "gr" or args.gsRender:
+    elif args.calcbb == "gr":
         program_to_use = "Ghostscript"
     else:
         raise ValueError("Attempting render pages when no rendering method was specified"

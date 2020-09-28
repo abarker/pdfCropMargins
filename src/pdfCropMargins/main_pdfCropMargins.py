@@ -900,10 +900,10 @@ def process_command_line_arguments(parsed_args):
         ex.cleanup_and_exit(1)
     if args.calcbb == "d" and has_mupdf:
         args.calcbb = "m" # Default to PyMuPDF.
-    else:
-        args.calcbb = "o" # Revert to old method.
+    elif args.calcbb == "d": # Rendering without PyMuPDF.
+        args.calcbb = "o"     # Revert to old method.
 
-    if args.calcbb == "gc" and len(args.fullPageBox) > 1:
+    if args.calcbb == "gb" and len(args.fullPageBox) > 1:
         print("\nWarning: only one --fullPageBox value can be used with the '--calcbb gb'"
               "\nor '--gsBbox' option. Ignoring all but the first one.", file=sys.stderr)
         args.fullPageBox = [args.fullPageBox[0]]
@@ -931,15 +931,14 @@ def process_command_line_arguments(parsed_args):
         if args.verbose:
             print("\nFound pdftoppm program at:", found_pdftoppm)
         if found_pdftoppm:
-            args.pdftoppm = "p"
-        else:
-            if args.calcbb == "p":
+            args.calcbb = "p"
+        elif args.calcbb == "p":
                 print("\nError in pdfCropMargins: The '--calcbb p' option was specified "
                       "\nbut the pdftoppm executable could not be located.  Is it"
                       "\ninstalled and in the PATH for command execution?\n",
                       file=sys.stderr)
                 ex.cleanup_and_exit(1)
-
+        else:
             # Try fallback to gs.
             gs_render_fallback_set = True
             args.calcbb = "gr"
