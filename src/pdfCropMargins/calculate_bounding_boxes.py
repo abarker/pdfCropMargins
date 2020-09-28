@@ -56,7 +56,7 @@ if hasPIL:
              "There are several moderate severity security vulnerabilities "
              "in Pillow 6.2.2 which have since been fixed.  Python 2 support was "
              "dropped for versions after 7.0.0, however.  If you cannot upgrade "
-             "it is recommended to use the '--gsBbox' option to find bounding boxes. "
+             "it is recommended to use the '--calcbb gb' option to find bounding boxes. "
              "Unfortunately, that method does not work with scanned documents."
              .format(pillow_version))
 
@@ -92,7 +92,7 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
     #page_nums_to_crop = set_of_page_nums_to_crop # Make the set of pages global, too. # DELETE after testing
     #PdfFileWriter = chosen_PdfFileWriter # Be sure correct PdfFileWriter is set. # DELETE after testing
 
-    if args.gsBbox:
+    if args.calcbb == "gb":
         if args.verbose:
             print("\nUsing Ghostscript to calculate the bounding boxes.")
         bbox_list = ex.get_bounding_box_list_ghostscript(input_doc_fname,
@@ -101,7 +101,7 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
         if not hasPIL:
             print("\nError in pdfCropMargins: No version of the Python 'pillow'"
                   "\npackage was found.  Either install that Python package or use"
-                  "\nthe Ghostscript flag '--gsBbox' (or '-gs') if you"
+                  "\nGhostscript directly ('--calcbb gb' or '--gsBbox') if you"
                   "\nhave Ghostscript installed.", file=sys.stderr)
             ex.cleanup_and_exit(1)
 
@@ -132,12 +132,15 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
     """Calculate the bounding box list by directly rendering each page of the PDF as
     an image file.  The MediaBox and CropBox values in `input_doc` should have
     already been set to the chosen page size before the rendering."""
-    if args.renderer == "m":
+    if args.calcbb == "m":
         program_to_use = "mupdf"
-    elif args.renderer == "p":
+    elif args.calcbb == "p":
         program_to_use = "pdftoppm"
-    elif args.renderer == "g" or args.gsRender:
+    elif args.calcbb == "gr" or args.gsRender:
         program_to_use = "Ghostscript"
+    else:
+        raise ValueError("Attempting render pages when no rendering method was specified"
+                "\nPassed 'calcbb' argument of '{}'.".format(args.calcbb))
 
     if args.verbose:
         print("\nRendering the PDF to images using the " + program_to_use + " program,"

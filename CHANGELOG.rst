@@ -8,15 +8,21 @@ History
 
 New features:
 
-* The preferred way to select a renderer has changed.  Use '--renderer' with
-  one of 'm' (MuPDF), 'p' (pdftoppm), or 'g' (Ghostscript) as the argument.
-
 * The MuPDF program can now be used to calculate the crops.  This is done
   in-memory, and tends to be fast.  It requires PyMuPDF to be installed in
   Python -- it is already installed with the GUI option, or can be
-  user-installed enable the option without the GUI dependencies. Ths is now the
-  default method of cropping if PyMuPDF is detected and importable.  To
-  explicitly select this method, use the '--renderer m' or '-n m' option.
+  user-installed enable the option without the GUI dependencies. This is now
+  the default method of cropping if PyMuPDF is detected and importable.  To
+  force using this method, use the ``--calcbb m`` or ``-c m`` option.
+
+* The preferred way to select the method of calculating bounding boxes has
+  changed.  Use ``--calcbb`` or the shortcut ``-c`` with one of 'm' (MuPDF),
+  'p' (pdftoppm), 'gr' (Ghostscript rendering), or 'gb' (direct Ghostscript
+  bounding box calculation) as the argument.  The default selection sequence is
+  'd'.  Passing 'o' reverts to the older (before MuPDF) sequence.
+
+* The default rendering resolution is now 72 dpi instead of 150 dpi.
+  Resolution can still be set with the ``-x`` and ``-y`` options.
 
 0.2.1[2345] (2020-09-22)
 ------------------------
@@ -39,7 +45,7 @@ New features:
 
 * The GUI interface has been updated slightly to be easier to use.
 
-* Added a new option``--version`` that just prints out the pdfCropMargins
+* Added a new option ``--version`` that just prints out the pdfCropMargins
   version number.
 
 0.2.10 (2020-08-23)

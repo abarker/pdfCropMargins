@@ -889,21 +889,25 @@ def process_command_line_arguments(parsed_args):
     #
 
     if args.gsRender:
-        args.renderer = "g" # Backward compat.
-    if args.renderer == "m" and not has_mupdf:
-        print("Error in pdfCropMargins: The option '--renderer m' was selected"
+        args.calcbb = "gr" # Backward compat.
+    if args.gsBbox:
+        args.calcbb = "gb" # Backward compat.
+    if args.calcbb == "m" and not has_mupdf:
+        print("Error in pdfCropMargins: The option '--calcbb m' was selected"
               "\nbut PyMuPDF (at least v1.14.5) was not installed in Python."
               "\nInstalling pdfCropMargins with the GUI option will include that"
               "\ndependency.", file=sys.stderr)
         ex.cleanup_and_exit(1)
-    if args.renderer == "*" and has_mupdf and not args.gsBbox: # Default to PyMuPDF.
-        args.renderer = "m"
+    if args.calcbb == "d" and has_mupdf:
+        args.calcbb = "m" # Default to PyMuPDF.
+    else:
+        args.calcbb = "o" # Revert to old method.
 
-    if args.gsBbox and len(args.fullPageBox) > 1:
-        print("\nWarning: only one --fullPageBox value can be used with the -gs option.",
-              "\nIgnoring all but the first one.", file=sys.stderr)
+    if args.calcbb == "gc" and len(args.fullPageBox) > 1:
+        print("\nWarning: only one --fullPageBox value can be used with the '--calcbb gb'"
+              "\nor '--gsBbox' option. Ignoring all but the first one.", file=sys.stderr)
         args.fullPageBox = [args.fullPageBox[0]]
-    elif args.gsBbox and not args.fullPageBox:
+    elif args.calcbb == "gb" and not args.fullPageBox:
         args.fullPageBox = ["c"] # gs default
     elif not args.fullPageBox:
         args.fullPageBox = ["m", "c"] # usual default
@@ -918,12 +922,10 @@ def process_command_line_arguments(parsed_args):
     if args.ghostscriptPath:
         ex.set_gs_executable_to_string(args.ghostscriptPath)
 
-    # If the option settings require pdftoppm, make sure we have a running
-    # version.  If '--gsBbox' isn't chosen then assume that PDF pages are to be
-    # explicitly rendered.  In that case we either need pdftoppm or gs to do the
-    # rendering.
+    # If the option settings require pdftoppm, make sure we have a running version.
     gs_render_fallback_set = False # Set True if we switch to gs option as a fallback.
-    if args.renderer == "p" or args.renderer == "*" and not args.gsBbox:
+    if args.calcbb in ["p", "o"]:
+        # Note that after this block, the `--calcbb o` option is converted to 'p' or 'gr'.
         found_pdftoppm = ex.init_and_test_pdftoppm_executable(
                                                    prefer_local=args.pdftoppmLocal)
         if args.verbose:
@@ -931,8 +933,8 @@ def process_command_line_arguments(parsed_args):
         if found_pdftoppm:
             args.pdftoppm = "p"
         else:
-            if args.renderer == "p":
-                print("\nError in pdfCropMargins: The '--renderer p' option was specified "
+            if args.calcbb == "p":
+                print("\nError in pdfCropMargins: The '--calcbb p' option was specified "
                       "\nbut the pdftoppm executable could not be located.  Is it"
                       "\ninstalled and in the PATH for command execution?\n",
                       file=sys.stderr)
@@ -940,18 +942,18 @@ def process_command_line_arguments(parsed_args):
 
             # Try fallback to gs.
             gs_render_fallback_set = True
-            args.renderer = "g"
+            args.calcbb = "gr"
             if args.verbose:
                 print("\nNo pdftoppm executable found; using Ghostscript for rendering.")
 
     # If any options require Ghostscript, make sure it is installed.
-    if gs_render_fallback_set or args.renderer == "g" or args.gsBbox or args.gsFix:
+    if args.calcbb == "gr" or args.calcbb == "gb" or args.gsFix:
         found_gs = ex.init_and_test_gs_executable()
         if args.verbose:
             print("\nFound Ghostscript program at:", found_gs)
-    if args.gsBbox and not found_gs:
-        print("\nError in pdfCropMargins: The '--gsBbox' option was specified but"
-              "\nthe Ghostscript executable could not be located.  Is it"
+    if args.calcbb == "gb" and not found_gs:
+        print("\nError in pdfCropMargins: The '--calcbb gb' or '--gsBbox' option was"
+              "\nspecified but the Ghostscript executable could not be located.  Is it"
               "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
         ex.cleanup_and_exit(1)
     if args.gsFix and not found_gs:
@@ -959,27 +961,30 @@ def process_command_line_arguments(parsed_args):
               "\nthe Ghostscript executable could not be located.  Is it"
               "\ninstalled and in the PATH for command execution?\n", file=sys.stderr)
         ex.cleanup_and_exit(1)
-    if (args.renderer == "g" or gs_render_fallback_set) and not found_gs:
+    if (args.calcbb == "gr" or gs_render_fallback_set) and not found_gs:
         if gs_render_fallback_set:
             print("\nError in pdfCropMargins: Neither Ghostscript nor pdftoppm"
                   "\nwas found in the PATH for command execution.  At least one is"
                   "\nrequired without PyMuPDF installed.\n", file=sys.stderr)
         else:
-            print("\nError in pdfCropMargins: The '--renderer g' or the '--gsRender' option"
+            print("\nError in pdfCropMargins: The '--calcbb gr' or the '--gsRender' option"
                   "\nwas specified but the Ghostscript executable could not be located.  Is "
                   "\nit installed and in the PATH for command execution?\n", file=sys.stderr)
         ex.cleanup_and_exit(1)
 
     # Give a warning message if incompatible option combinations have been selected.
-    if args.threshold[0] != DEFAULT_THRESHOLD_VALUE and args.gsBbox:
+    if args.threshold[0] != DEFAULT_THRESHOLD_VALUE and args.calcbb == "gb":
             print("\nWarning in pdfCropMargins: The '--threshold' option is ignored"
-                "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
-    if args.gsBbox and args.numBlurs:
+                "\nwhen the '--calcbb gb' or '--gsBbox' option is also selected.\n",
+                file=sys.stderr)
+    if args.calcbb == "gb" and args.numBlurs:
         print("\nWarning in pdfCropMargins: The '--numBlurs' option is ignored"
-              "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
-    if args.gsBbox and args.numSmooths:
+              "\nwhen the '--calcbb gb' or '--gsBbox' option is also selected.\n",
+              file=sys.stderr)
+    if args.calcbb == "gb" and args.numSmooths:
         print("\nWarning in pdfCropMargins: The '--numSmooths' option is ignored"
-              "\nwhen the '--gsBbox' option is also selected.\n", file=sys.stderr)
+              "\nwhen the '--calcbb gb' or '--gsBbox' option is also selected.\n",
+              file=sys.stderr)
 
     if args.gsFix:
         if args.verbose:

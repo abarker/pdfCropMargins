@@ -62,23 +62,25 @@ recent changes and new features.
 * The new preferred way to select the method of calculating bounding boxes is
   the option ``--calcbb``  or the shortcut ``-c``.  The options are:
 
-  * ``-c d`` or ``-c default``: The default, look for PyMuPDF, pdftoppm, and
-    Ghostscript, in that order.
+  * ``-c d``: The default, look for PyMuPDF, pdftoppm, and Ghostscript, in that
+    order.
 
-  * ``-c m`` or ``-c mupdf``: Force the use of PyMuPDF rendering.
+  * ``-c m``: Force the use of PyMuPDF rendering.
 
-  * ``-c p`` or ``-c pdftoppm``: Force the use of pdftoppm rendering.
+  * ``-c p``: Force the use of pdftoppm rendering.
 
-  * ``-c gr`` or ``-c gsrender``: Force the use of Ghostscript rendering
-    (equivalent to ``--gsRender``).
+  * ``-c gr``: Force the use of Ghostscript rendering (equivalent to
+    ``--gsRender``).
 
-  * ``-c gb`` or ``-c gsbbox``: Use Ghostscript to directly calculate the
-    bounding boxes (equivalent to ``--gsBbox``).  This does not work for
-    scanned documents.
+  * ``-c gb``: Use Ghostscript to directly calculate the bounding boxes
+    (equivalent to ``--gsBbox``).  This does not work for scanned documents.
 
-  * ``-c o`` or ``-c olddefault``: Revert to the old default behavior.
+  * ``-c o``: Revert to the old default behavior.
 
-  The old method-selection options still work, only the default has changed.
+  The older method-selection options still work, only the default has changed.
+
+* The default rendering resolution is now 72 dpi instead of 150 dpi.  Resolution
+  can still be set with the ``-x`` and ``-y`` options.
 
 Installing 
 ==========
@@ -94,10 +96,10 @@ and Windows, see: `Installing pdftoppm and/or Ghostscript`
 
 **Note on Python 2 installs:** The program still runs and installs on Python 2,
 but the Pillow dependency will not be automatically installed because the most
-recent version available for Python 2 has several moderate severity security
+recent version available for Python 2 has several moderate-severity security
 vulnerabilities.  You can choose to install it yourself via ``pip install
-pillow --user``; otherwise, only the ``--gsBbox`` method of calculating crops
-will work.
+pillow --user``; otherwise, only the ``--bbcalc gb`` or ``--gsBbox`` method of
+calculating crops will work (with Ghostscript).
 
 Linux/Ubuntu
 ------------

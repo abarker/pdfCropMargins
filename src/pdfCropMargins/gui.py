@@ -680,7 +680,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for threshold option.
     ##
 
-    args_dict["threshold"] = int(args.threshold[0]) if not args.gsBbox else "----"
+    args_dict["threshold"] = int(args.threshold[0]) if args.calcbb != "gb" else "----"
     text_threshold = sg.Text("threshold", pad=((0,5), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "threshold"))
     input_num_threshold = sg.InputText(args_dict["threshold"],
@@ -688,7 +688,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def update_threshold_values(values_dict):
         """Update the threshold value."""
-        if args.gsBbox:
+        if args.calcbb == "gb":
             input_num_threshold.Update("----")
             return
         try:
@@ -706,7 +706,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for numBlurs option.
     ##
 
-    args_dict["numBlurs"] = int(args.numBlurs) if not args.gsBbox else "--"
+    args_dict["numBlurs"] = int(args.numBlurs) if args.calcbb != "gb" else "--"
     text_numBlurs = sg.Text("numBlurs", pad=((0,5), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "numBlurs"))
     input_num_numBlurs = sg.InputText(args_dict["numBlurs"],
@@ -714,7 +714,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def update_numBlurs_values(values_dict):
         """Update the numBlurs value."""
-        if args.gsBbox:
+        if args.calcbb == "gb":
             input_num_numBlurs.Update("--")
             return
         try:
@@ -732,7 +732,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for numSmooths option.
     ##
 
-    args_dict["numSmooths"] = int(args.numSmooths) if not args.gsBbox else "--"
+    args_dict["numSmooths"] = int(args.numSmooths) if args.calcbb != "gb" else "--"
     text_numSmooths = sg.Text("numSmooths", pad=((0,5), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "numSmooths"))
     input_num_numSmooths = sg.InputText(args_dict["numSmooths"],
@@ -740,7 +740,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def update_numSmooths_values(values_dict):
         """Update the numSmooths value."""
-        if args.gsBbox:
+        if args.calcbb == "gb":
             input_num_numSmooths.Update("--")
             return
         try:
