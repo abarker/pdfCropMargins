@@ -123,8 +123,9 @@ be installed.  Not all options are available. :
    sudo apt install python3-pip ghostscript poppler-utils
    pip3 install pdfCropMargins --user --upgrade
 
-If you have problems with the install of PyMuPDF, the first thing to try is to
-upgrade your version of the pip program and then retry:
+**Troubleshooting:** If you have problems with the install of PyMuPDF, the
+first thing to try is to upgrade your version of the pip program and then
+retry:
 
 .. code-block:: sh
 
