@@ -124,6 +124,9 @@ if has_mupdf:
                                                       colorspace=colorspace,
                                                       clip=None, alpha=False)
             if self.args:
+                # TODO: Is this working right?  Here, you change matrix in getPixmap:
+                # https://stackoverflow.com/questions/63821179/extract-images-from-pdf-in-high-resolution-with-python
+                # Is setting actually changing the matrix?
                 resolution = self.args.resX, self.args.resY
             pixmap.setResolution(*resolution) # New setResolution in PyMuPDF 1.16.17.
 
