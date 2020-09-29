@@ -31,7 +31,6 @@ from __future__ import print_function, division, absolute_import
 import sys
 import os
 import glob
-#import shutil # DELETE after testing (and search DELETE)
 import time
 from . import external_program_calls as ex
 from . import pymupdf_routines
@@ -65,8 +64,6 @@ if has_pillow:
 #
 
 args = None # Command-line arguments; set in get_bounding_box_list.
-#page_nums_to_crop = None # Set of pages to crop. # DELETE after testing.
-#PdfFileWriter = None # DELETE after testing.
 
 #
 # The main functions of the module.
@@ -85,12 +82,8 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
     line by argparse.  The `chosen_PdfFileWriter` is the PdfFileWriter class
     from whichever pyPdf package was chosen by the main program.  The function
     returns the list of bounding boxes."""
-    #global page_nums_to_crop # DELETE after testing
     global args
-    #global PdfFileWriter # DELETE after testing
     args = argparse_args # Make args available to all funs in module, as a global.
-    #page_nums_to_crop = set_of_page_nums_to_crop # Make the set of pages global, too. # DELETE after testing
-    #PdfFileWriter = chosen_PdfFileWriter # Be sure correct PdfFileWriter is set. # DELETE after testing
 
     if args.calcbb == "gb":
         if args.verbose:
@@ -158,8 +151,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
         outfiles = [None] * len(image_list)
 
     else:
-        temp_dir = ex.program_temp_directory # use the program default; don't delete dir!
-
+        temp_dir = ex.program_temp_directory
         temp_image_file_root = os.path.join(temp_dir, ex.temp_file_prefix + "PageImage")
 
         # Do the rendering of all the files.
@@ -266,7 +258,7 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
                                   pdf_file_name, output_filename_root, res_x, res_y)
 
     elif program_to_use == "pdftoppm":
-        use_gray = False # this is currently hardcoded, but can be changed to use pgm
+        use_gray = False # This is currently hardcoded, but can be changed to use pgm.
         if use_gray:
             ex.render_pdf_file_to_image_files_pdftoppm_pgm(
                 pdf_file_name, output_filename_root, res_x, res_y)
@@ -290,28 +282,28 @@ def get_image_list_mupdf(pdf_file_name):
     return page_images
 
 def calculate_bounding_box_from_image(im, curr_page):
-    """This function uses a Pillow routine to get the bounding box of the rendered
-    image."""
+    """This function uses a Pillow routine to get the bounding box, in bp, of
+    the rendered image."""
     x_max, y_max = im.size
-    bounding_box = im.getbbox() # note this uses ltrb convention
+    bounding_box = im.getbbox() # Note this uses ltrb convention.
     if not bounding_box:
         #print("\nWarning: could not calculate a bounding box for this page."
         #      "\nAn empty page is assumed.", file=sys.stderr)
         bounding_box = (x_max/2, y_max/2, x_max/2, y_max/2)
 
-    bounding_box = list(bounding_box) # make temporarily mutable
+    bounding_box = list(bounding_box) # Make temporarily mutable.
 
     # Compensate for reversal of the image y convention versus PDF.
     bounding_box[1] = y_max - bounding_box[1]
     bounding_box[3] = y_max - bounding_box[3]
 
-    full_page_box = curr_page.mediaBox # should have been set already to chosen box
+    full_page_box = curr_page.mediaBox # Should have been set already to chosen box.
 
     # Convert pixel units to PDF's bp units.
     convert_x = float(full_page_box.getUpperRight_x()
-                     - full_page_box.getLowerLeft_x()) / x_max
+                    - full_page_box.getLowerLeft_x()) / x_max
     convert_y = float(full_page_box.getUpperRight_y()
-                     - full_page_box.getLowerLeft_y()) / y_max
+                    - full_page_box.getLowerLeft_y()) / y_max
 
     # Get final box; note conversion to lower-left point, upper-right point format.
     final_box = [bounding_box[0] * convert_x,
