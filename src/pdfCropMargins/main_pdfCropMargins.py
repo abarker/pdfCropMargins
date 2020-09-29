@@ -67,9 +67,10 @@ try:
                                 FloatObject, IndirectObject)
     from PyPDF2.utils import PdfReadError
 except ImportError:
-    print("\nError in pdfCropMargins: No system pyPdf Python package"
-          " was found.\n", file=sys.stderr)
-    raise
+    print("\nError in pdfCropMargins: No system PyPDF2 Python package"
+          "\nwas found.  Reinstall pdfCropMargins via pip or install that"
+          "\ndependency ('pip install pypdf2').\n", file=sys.stderr)
+    ex.cleanup_and_exit(1)
 
 from .calculate_bounding_boxes import get_bounding_box_list
 
