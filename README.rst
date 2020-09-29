@@ -107,25 +107,33 @@ If you are installing via pip with the ``--user`` option be sure
 without ``--user`` the ``pip3`` command below would also need to be run with
 ``sudo``.)
 
-This is the full install, with the GUI and external utility programs::
+This is the full install, with the GUI and external utility programs:
+
+.. code-block:: sh
 
    sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
    pip3 install pdfCropMargins[gui] --user --upgrade
 
 Here is the plain install, without the GUI or MuPDF bounding-box calculations.
 It has fewer dependencies, but it requires that either pdftoppm or Ghostscript
-be installed.  Not all options are available. ::
+be installed.  Not all options are available. :
+
+.. code-block:: sh
 
    sudo apt install python3-pip ghostscript poppler-utils
    pip3 install pdfCropMargins --user --upgrade
 
 If you have problems with the install of PyMuPDF, the first thing to try is to
-upgrade your version of the pip program and then retry::
+upgrade your version of the pip program and then retry:
+
+.. code-block:: sh
 
    pip3 install pip --upgrade --user
 
 If you still get an error "Failed building wheel for pymupdf" with the GUI install
-you can try forcing a binary install of pyMuPDF::
+you can try forcing a binary install of pyMuPDF:
+
+.. code-block:: sh
 
    pip3 install pdfCropMargins[gui] --user --upgrade --only-binary pymupdf
 
@@ -133,20 +141,26 @@ Windows
 -------
 
 The ``pip`` program should be automatically installed along with Python.  If
-you cannot find the pip executable you can usually run it like this::
+you cannot find the pip executable you can usually run it like this:
+
+.. code-block:: sh
 
    python -m pip <arguments-to-pip>
 
 Note that on some Windows installs the executable for Python is ``py`` rather
 than ``python``.
 
-To install with the GUI use::
+To install with the GUI use:
+
+.. code-block:: sh
 
    pip install pdfCropMargins[gui] --upgrade
 
 The install without the GUI has fewer dependencies, but requires either
 Ghostscript or pdftoppm to be installed.  A version of pdftoppm is supplied for
-Windows, which will be used as a fallback.  To install without the GUI use::
+Windows, which will be used as a fallback.  To install without the GUI use:
+
+.. code-block:: sh
 
    pip install pdfCropMargins --upgrade
 
@@ -167,18 +181,24 @@ a GUI, 3) from a Python program, or 3) from the source repo.
 Running from the command line
 -----------------------------
 
-After installation via pip the program can be run with a command such as::
+After installation via pip the program can be run with a command such as:
+
+.. code-block:: sh
 
    pdf-crop-margins -v -s -u your-file.pdf
 
 That command prints verbose output, forces all pages to be the same size
 (``-s``) and then crops each page by the same amount (``-u``) for a uniform
 appearance, retaining the default of 10% of the margins.  To run the
-same command with the GUI for fine-tuning, use::
+same command with the GUI for fine-tuning, use:
+
+.. code-block:: sh
 
    pdf-crop-margins -v -s -u -gui your-file.pdf
 
-For help and to see the many command-line options that are available, run::
+For help and to see the many command-line options that are available, run:
+
+.. code-block:: sh
 
    pdf-crop-margins -h | more
 
