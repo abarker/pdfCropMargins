@@ -281,7 +281,7 @@ class Events:
     """The events to handle in the event loop.  The class is just used as a
     namespace for holding the event tests."""
     # When no longer supporting Python2 consider making this a SimpleNamespace instance.
-    @staticmethod
+    @staticmethod # Python 2 needs these to be staticmethods.
     def is_enter(btn):
         return btn.startswith("Return:") or btn == chr(13)
 
@@ -355,19 +355,23 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     window_title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
     window_size = get_window_size()
     size_for_full_app = (0.65*window_size[0], window_size[1]) # Reduce max width.
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="Your title is not a string.")
-        window = sg.Window(title=window_title, return_keyboard_events=True, location=(0, 0),
-                           use_default_focus=False)
-
     sg.SetOptions(tooltip_time=500)
 
-    data, clip_pos = document_pages.get_page(curr_page,  # Read first page.
+    data, clip_pos = document_pages.get_display_page(curr_page,  # Read first page.
                                              window_size=size_for_full_app,  # image max dim
                                              zoom=False,)  # Not zooming yet.
 
     image_element = sg.Image(data=data)  # make image element
+    # TODO: This sort of works to keep constant size pages, but need to select sizes somehow.
+    # Or at least turn on the scrolling option for overflowing images.  Image scaling algorithm
+    # sometimes does strange things; refactor and reconsider.
+    #image_column = sg.Column([[image_element]], size=(750,750))
+
+    # Create the main window.
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Your title is not a string.")
+        window = sg.Window(title=window_title, return_keyboard_events=True, location=(0, 0),
+                           use_default_focus=False)
 
     update_funs = [] # A list of all the updating functions (defined below).
 
@@ -832,51 +836,51 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     while True:
         prev_curr_page = curr_page
-        btn, values_dict = window.Read()
+        event, values_dict = window.Read()
 
-        if btn is None and (values_dict is None or values_dict["PageNumber"] is None):
+        if event is None and (values_dict is None or values_dict["PageNumber"] is None):
             break
-        if Events.is_exit(btn):
+        if event == sg.WIN_CLOSED or Events.is_exit(event):
             break
 
-        if Events.is_enter(btn):
+        if Events.is_enter(event):
             call_all_update_funs(update_funs, values_dict)
             try:
                 curr_page = int(values_dict["PageNumber"]) - 1  # check if valid
             except:
                 curr_page = 0
 
-        elif Events.is_next(btn):
+        elif Events.is_next(event):
             curr_page += 1
 
-        elif Events.is_prev(btn):
+        elif Events.is_prev(event):
             curr_page -= 1
 
-        elif Events.is_up(btn) and zoom:
+        elif Events.is_up(event) and zoom:
             zoom = (clip_pos, 0, -1)
 
-        elif Events.is_down(btn) and zoom:
+        elif Events.is_down(event) and zoom:
             zoom = (clip_pos, 0, 1)
 
-        elif Events.is_home(btn):
+        elif Events.is_home(event):
             curr_page = 0
 
-        elif Events.is_end(btn):
+        elif Events.is_end(event):
             curr_page = num_pages - 1
 
-        elif Events.is_left(btn) and zoom:
+        elif Events.is_left(event) and zoom:
             zoom = (clip_pos, -1, 0)
 
-        elif Events.is_right(btn) and zoom:
+        elif Events.is_right(event) and zoom:
             zoom = (clip_pos, 1, 0)
 
-        elif Events.is_zoom(btn): # Toggle.
+        elif Events.is_zoom(event): # Toggle.
             if not zoom:
                 zoom = (clip_pos, 0, 0)
             else:
                 zoom = False
 
-        elif Events.is_crop(btn):
+        elif Events.is_crop(event):
             call_all_update_funs(update_funs, values_dict)
             document_pages.close_document()
 
@@ -931,18 +935,18 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             if parsed_args.verbose:
                 print("\nWaiting for the GUI...")
 
-        elif Events.is_original(btn):
+        elif Events.is_original(event):
             call_all_update_funs(update_funs, values_dict)
             document_pages.close_document()
             num_pages = document_pages.open_document(fixed_input_doc_fname)
             did_crop = False
 
         # Update page number.
-        curr_page = update_page_number(curr_page, prev_curr_page, num_pages, btn,
+        curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
                                       input_text_page_num)
 
         # Get the current page and display it.
-        data, clip_pos = document_pages.get_page(curr_page,
+        data, clip_pos = document_pages.get_display_page(curr_page,
                                                  window_size=window_size, zoom=zoom)
         image_element.Update(data=data)
 

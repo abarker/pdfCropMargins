@@ -22,8 +22,7 @@ Features
   to deal with noisy scanned PDFs.
 - Can automatically apply a Ghostscript repair operation to attempt to fix
   corrupt PDF files.
-- Implements a rudimentary 'undo' capability by default. 
-- Crops rotated pages according to their appearance in the document viewer.
+- A rudimentary 'undo' capability is implemented by default. 
 - Can crop pages uniformly based on the nth smallest crop values, which helps
   with noisy images or documents where a few pages have unwanted markings in
   their margins.
@@ -31,6 +30,7 @@ Features
 - The format of automatically-generated output-file names is easily
   modifiable.
 - Preserves document catalog information such as outlines if possible.
+- Crops rotated pages according to their appearance in the document viewer.
 - Can deal with at least simple cases of password-encrypted files.
 - Works with Python 3 and Python 2.
 
@@ -63,7 +63,7 @@ recent changes and new features.
   * ``-c d``: The default, look for PyMuPDF, pdftoppm, and Ghostscript, in that
     order.
 
-  * ``-c m``: Force the use of PyMuPDF rendering.
+  * ``-c m``: Force the use of MuPDF (PyMuPDF) rendering.
 
   * ``-c p``: Force the use of pdftoppm rendering.
 
@@ -71,9 +71,10 @@ recent changes and new features.
     ``--gsRender``).
 
   * ``-c gb``: Use Ghostscript to directly calculate the bounding boxes
-    (equivalent to ``--gsBbox``).  This does not work for scanned documents.
+    (equivalent to ``--gsBbox``).  This method does not work for scanned
+    documents.
 
-  * ``-c o``: Revert to the old default behavior.
+  * ``-c o``: Revert to the old default behavior (pdftoppm then Ghostscript).
 
   The older method-selection options still work, only the default has changed.
 

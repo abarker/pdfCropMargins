@@ -134,13 +134,16 @@ if has_mupdf:
             image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
             return image_ppm
 
-        def get_page(self, page_num, window_size, zoom=False, fit_screen=True):
+        def get_display_page(self, page_num, window_size, zoom=False, fit_screen=True):
             """Return a `tkinter.PhotoImage` or a PNG image for a document page number.
                 - The `page_num` argument is a 0-based page number.
                 - The `zoom` argument is the top-left of old clip rect, and one of -1, 0,
                   +1 for dim. x or y to indicate the arrow key pressed.
                 - The `max_size` argument is the (width, height) of available image area.
             """
+            # TODO: Newer demo version is cleaner, update to parts of it:
+            # https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Viewer.py
+
             zoom_x = 1
             zoom_y = 1
             scale = fitz.Matrix(zoom_x, zoom_y)
