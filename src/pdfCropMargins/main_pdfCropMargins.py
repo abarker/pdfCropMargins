@@ -51,7 +51,10 @@ import sys
 import os
 import shutil
 import time
-import readline # Makes prompts go to stdout rather than stderr.
+try:
+    import readline # Makes prompts go to stdout rather than stderr.
+except ImportError: # Not available on Windows.
+    pass
 
 from . import __version__ # Get the version number from the __init__.py file.
 from .manpage_data import cmd_parser, DEFAULT_THRESHOLD_VALUE
