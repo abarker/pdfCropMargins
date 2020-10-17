@@ -776,10 +776,8 @@ cmd_parser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
    This option is only available on Windows machines; it is ignored otherwise.
    By default the first pdftoppm executable found in the directories in the
    PATH environment variable is used.  On Windows the program will revert to
-   this option if PDF image-rendering is required and no system pdftoppm or
-   Ghostscript executable can be found.  The locally-packaged pdftoppm
-   executable is a few years old, but for page-cropping it only needs to get
-   the margins right.^^n""")
+   this option if PDF image-rendering is required, PyMuPDF is not installed,
+   and no system pdftoppm or Ghostscript executable can be found.^^n""")
 
 cmd_parser.add_argument("-gsp", "--ghostscriptPath", type=str, metavar="PATH",
                         default="", help="""

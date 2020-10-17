@@ -406,19 +406,21 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     # percent>100.  They are added (lb) or subtracted (tr) as appropriate.
 
     delta_list = []
-    for p_num, t_box, f_box in zip(list(range(len(full_page_box_list))),
-                                               bounding_box_list, full_page_box_list):
-        deltas = [abs(t_box[m_val] - f_box[m_val]) for m_val in range(4)]
+    for p_num, (b_box, f_box) in enumerate(zip(bounding_box_list, full_page_box_list)):
+        deltas = [abs(b_box[m_val] - f_box[m_val]) for m_val in range(4)]
         adj_deltas = [deltas[m_val] * (100.0-rotated_percent_retain[p_num][m_val]) / 100.0
-                     for m_val in range(4)]
-        adj_deltas = [adj_deltas[m_val] + rotated_absolute_offset[p_num][m_val] for m_val in range(4)]
+                                                                    for m_val in range(4)]
+        adj_deltas = [adj_deltas[m_val] + rotated_absolute_offset[p_num][m_val]
+                                                                    for m_val in range(4)]
         delta_list.append(adj_deltas)
 
     # Handle the '--uniform' options if one was selected.
     if args.uniformOrderPercent:
         percent_val = args.uniformOrderPercent[0]
-        if percent_val < 0.0: percent_val = 0.0
-        if percent_val > 100.0: percent_val = 100.0
+        if percent_val < 0.0:
+            percent_val = 0.0
+        if percent_val > 100.0:
+            percent_val = 100.0
         args.uniformOrderStat4 = [int(round(num_pages_to_crop * percent_val / 100.0))] * 4
 
     if args.uniform or args.uniformOrderStat4:
@@ -565,7 +567,7 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info):
 
 def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
                                           already_cropped_by_this_program):
-    """Apply the crop list to the pages of the input PdfFileReader object."""
+    """Apply the crop list to the pages of the input `PdfFileReader` object."""
 
     if args.restore and not already_cropped_by_this_program:
         print("\nWarning from pdfCropMargins: The Producer string indicates that"
