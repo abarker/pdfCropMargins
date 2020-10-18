@@ -55,6 +55,7 @@ from __future__ import print_function, division, absolute_import
 
 import argparse
 import sys
+from . import __version__ # Get the version number from the __init__.py file.
 
 DEFAULT_THRESHOLD_VALUE = 191
 
@@ -803,7 +804,8 @@ cmd_parser.add_argument("-ppp", "--pdftoppmPath", type=str, metavar="PATH",
    No globbing is done.  Useful when the program is in a nonstandard
    location.^^n""")
 
-cmd_parser.add_argument("--version", action="store_true", help="""
+cmd_parser.add_argument("--version", action="version",
+                        version="pdfCropMargins {}".format(__version__), help="""
 
    Return the pdfCropMargins version number and exit immediately.  All
    other options are ignored.^^n""")

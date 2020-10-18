@@ -795,10 +795,6 @@ def process_command_line_arguments(parsed_args):
     global args # This is global only to avoid passing it to essentially every function.
     args = parsed_args
 
-    if args.version:
-        print(__version__, end="")
-        ex.cleanup_and_exit(0)
-
     if args.verbose:
         print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
         print("Python version:", ex.python_version)

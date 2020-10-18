@@ -35,6 +35,8 @@ Bug fixes:
 * Remove a debug print statement of bounding boxes that was left after a 0.2.10
   negative-threshold fix.
 
+* Fixed bug in ``--version`` argument.
+
 0.2.1[2345] (2020-09-22)
 ------------------------
 
