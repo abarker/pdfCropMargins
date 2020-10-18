@@ -555,6 +555,22 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     update_funs.append(update_evenodd)
 
     ##
+    ## Code for percentText.
+    ##
+
+    checkbox_percentText = sg.Checkbox("percentText", pad=((0,10), None), key="percentText",
+                                    tooltip=get_help_text_string_for_tooltip(cmd_parser,
+                                        "percentText"),
+                                    enable_events=True, default=args.percentText)
+
+    def update_percentText(values_dict):
+        """Update the percentText values."""
+        update_checkbox(values_dict, checkbox_percentText, "percentText", args, "percentText")
+
+    update_funs.append(update_percentText)
+
+
+    ##
     ## Code for pages option.
     ##
 
@@ -796,7 +812,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                              "Move mouse left over option names to show descriptions.",
                              relief=sg.RELIEF_GROOVE, pad=(None, (0,15)))],
                     [checkbox_uniform, checkbox_samePageSize, checkbox_evenodd],
-                    [input_text_percentRetain, text_percentRetain],
+                    [input_text_percentRetain, text_percentRetain, checkbox_percentText],
                     # Python 2 can't unpack in list, so use comprehension.
                     [i for i in input_text_percentRetain4] + [text_percentRetain4],
                     [input_text_absoluteOffset, text_absoluteOffset],
