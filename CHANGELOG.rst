@@ -37,8 +37,8 @@ Bug fixes:
 
 * Fixed bug in ``--version`` argument.
 
-0.2.1[2345] (2020-09-22)
-------------------------
+0.2.1[23456] (2020-09-22)
+-------------------------
 
 Bug fixes:
 
@@ -49,7 +49,8 @@ Bug fixes:
   versions they might have installed or choose to install.  Also include
   ``typing`` backport requirement for Python 2 versions of PySimpleGUI27.
 
-* Import ``readline`` so prompts are sent to stdout instead of stderr.
+* Import ``readline`` so prompts are sent to stdout instead of stderr, except
+  on Windows Python which doesn't support readline.
 
 0.2.11 (2020-09-12)
 -------------------
