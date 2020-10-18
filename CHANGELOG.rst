@@ -3,7 +3,7 @@
 History
 =======
 
-0.3.0 (2020-XX-XX)
+1.0.0 (2020-XX-XX)
 ------------------
 
 New features:
@@ -23,6 +23,12 @@ New features:
 
 * The default rendering resolution is now 72 dpi instead of 150 dpi.
   Resolution can still be set with the ``-x`` and ``-y`` options.
+
+* A new option flag ``--percentText`` which changes the interpretation of
+  the percentage values passed to ``--percentRetain`` and ``--percentRetain4``.
+  With this flag the left and right margins are set to a percentage of the
+  bounding box width and the top and bottom margins are set to a percentage
+  of the bounding box height.
 
 Bug fixes:
 

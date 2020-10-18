@@ -316,6 +316,16 @@ cmd_parser.add_argument("-p4", "-pppp", "--percentRetain4", nargs=4,
    left, bottom, right, and top margins, respectively.  The four arguments
    should be percent values.^^n""")
 
+cmd_parser.add_argument("-pt", "--percentText", action="store_true", help="""
+
+   Normally the percentage values passed to '--percentRetain' or
+   '--percentRetain4' define the percentage of existing margins to retain.
+   This flag alters the interpretation of those percent values.  The margins
+   are instead set to the given percentage of the text width or height.  The
+   left and right margins are set to a percentage of the bounding box width and
+   the bottom and top margins are set to a percentage of the bounding box
+   height.^^n""")
+
 cmd_parser.add_argument("-a", "--absoluteOffset", nargs=1, type=float,
                         metavar="BP", default=[0.0], help="""
 

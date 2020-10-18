@@ -81,6 +81,12 @@ recent changes and new features.
 * The default rendering resolution is now 72 dpi instead of 150 dpi.  Resolution
   can still be set with the ``-x`` and ``-y`` options.
 
+* A new option flag ``--percentText`` which changes the interpretation of the
+  percentage values passed to ``--percentRetain`` and ``--percentRetain4``.
+  With this flag the left and right margins are set to a percentage of the text
+  (bounding box) width and the top and bottom margins are set to a percentage
+  of the text height.
+
 Installing 
 ==========
 

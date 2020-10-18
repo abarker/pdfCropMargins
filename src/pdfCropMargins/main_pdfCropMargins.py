@@ -407,9 +407,18 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     delta_list = []
     for p_num, (b_box, f_box) in enumerate(zip(bounding_box_list, full_page_box_list)):
+        # Calculate margin percentages.
+        pct_fracs = [rotated_percent_retain[p_num][m_val] / 100.0 for m_val in range(4)]
         deltas = [abs(b_box[m_val] - f_box[m_val]) for m_val in range(4)]
-        adj_deltas = [deltas[m_val] * (100.0-rotated_percent_retain[p_num][m_val]) / 100.0
-                                                                    for m_val in range(4)]
+        if not args.percentText:
+            adj_deltas = [deltas[m_val] * (1.0-pct_fracs[m_val]) for m_val in range(4)]
+        else:
+            text_size = (b_box[2]-b_box[0], b_box[3]-b_box[1], # Text size for each margin.
+                         b_box[2]-b_box[0], b_box[3]-b_box[1])
+            adj_deltas = [deltas[m_val] - text_size[m_val] * pct_fracs[m_val]
+                                                                 for m_val in range(4)]
+
+        # Calculate absolute offsets.
         adj_deltas = [adj_deltas[m_val] + rotated_absolute_offset[p_num][m_val]
                                                                     for m_val in range(4)]
         delta_list.append(adj_deltas)
