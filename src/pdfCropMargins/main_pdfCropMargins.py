@@ -1385,7 +1385,7 @@ def main_crop(argv_list=None):
                                            process_command_line_arguments(parsed_args))
 
     if args.gui:
-        from .gui import create_gui
+        from .gui import create_gui # Import here; tkinter might not be installed.
         if args.verbose:
             print("\nWaiting for the GUI...")
 

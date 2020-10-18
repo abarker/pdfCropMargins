@@ -123,12 +123,15 @@ This is the full install, with the GUI and external utility programs:
 
 Here is the plain install, without the GUI or MuPDF bounding-box calculations.
 It has fewer dependencies, but it requires that either pdftoppm or Ghostscript
-be installed.  Not all options are available. :
+be installed.  Not all options are available.
 
 .. code-block:: sh
 
    sudo apt install python3-pip ghostscript poppler-utils
    pip3 install pdfCropMargins --user --upgrade
+
+To get the MuPDF rendering features without the GUI dependencies you can
+alternately use ``pdfCropMargins[mupdf]`` in the above command.
 
 **Troubleshooting:** If you have problems with the install of PyMuPDF, the
 first thing to try is to upgrade your version of the pip program and then
@@ -138,8 +141,8 @@ retry:
 
    pip3 install pip --upgrade --user
 
-If you still get an error "Failed building wheel for pymupdf" with the GUI install
-you can try forcing a binary install of pyMuPDF:
+If you still get an error "Failed building wheel for pymupdf" with the GUI
+install you can try forcing a binary install of pyMuPDF:
 
 .. code-block:: sh
 
@@ -164,7 +167,7 @@ To install with the GUI use:
 
    pip install pdfCropMargins[gui] --upgrade
 
-The install without the GUI has fewer dependencies, but requires either
+The plain install, without the GUI, has fewer dependencies but requires either
 Ghostscript or pdftoppm to be installed.  A version of pdftoppm is supplied for
 Windows, which will be used as a fallback.  To install without the GUI use:
 
@@ -179,6 +182,9 @@ on the path if you checked the box to modify ``Path`` when you installed
 Python; otherwise it should be added.  (If you install with the ``--user``
 option to pip then you need to be sure that the *local* Python ``bin``
 directory is in the Windows ``Path``.)
+
+To get the MuPDF rendering features without the GUI dependencies you can
+alternately use ``pdfCropMargins[mupdf]`` in the plain install above.
 
 Running
 =======
