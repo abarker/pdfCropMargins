@@ -51,7 +51,7 @@ if has_mupdf:
         """Holds `pyMuPDF` document and PyMuPDF pages of the document for the GUI
         to display.  Has methods to get rendered images.  Note that the page numbering
         convention is from zero."""
-        def __init__(self, args=None):
+        def __init__(self, args):
             """Initialize an empty object.  The `args` parameter should be passed a
             parsed command-line argument object from argparse with the user-selected
             command-line options."""
@@ -70,11 +70,34 @@ if has_mupdf:
                 self.document = fitz.open(doc_fname)
             except RuntimeError:
                 print("\nError in pdfCropMargins: The PyMuPDF program could not read"
-                      " the document\n   '{}'\nin order to display it in the GUI.   If you have"
-                      " Ghostscript installed\nconsider running pdfCropMargins with the"
+                      " the document\n   '{}'\nin order to display it in the GUI.   If you"
+                      " have Ghostscript installed\nconsider running pdfCropMargins with the"
                       " '--gsFix' option to attempt to repair it."
                       .format(doc_fname), file=sys.stderr)
                 ex.cleanup_and_exit(1)
+
+            # Decrypt if necessary.
+            if self.document.isEncrypted:
+                if self.args.password:
+                    # Returned code is positive for success, negative for failure.  If positive,
+                    #   bit 0 set = no password required
+                    #   bit 1 set = user password authenticated
+                    #   bit 2 set = owner password authenticated
+                    authenticate_code = self.document.authenticate(self.args.password)
+                    if self.document.isEncrypted:
+                        print("\nError in pdfCropMargins: The document was not correctly "
+                              "decrypted by PyMuPDF using the password passed in.",
+                              file=sys.stderr)
+                        ex.cleanup_and_exit(1)
+                else: # Try an empty password.
+                    authenticate_code = self.document.authenticate("")
+                    if self.document.isEncrypted:
+                        print("\nError in pdfCropMargins: The document is encrypted "
+                              "and the empty password does not work.  Try passing in a "
+                              "password with the '--password' option.",
+                              file=sys.stderr)
+                        ex.cleanup_and_exit(1)
+
             self.num_pages = len(self.document)
             self.page_display_list_cache = [None] * self.num_pages
             self.page_crop_display_list_cache = [None] * self.num_pages
