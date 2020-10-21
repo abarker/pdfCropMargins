@@ -158,18 +158,19 @@ if has_mupdf:
             image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
             return image_ppm
 
-        def get_display_page(self, page_num, window_size, zoom=False, fit_screen=True):
+        def get_display_page(self, page_num, max_image_size, *, zoom=False,
+                             fit_screen=True, reset_cached=False):
             """Return a `tkinter.PhotoImage` or a PNG image for a document page number.
                 - The `page_num` argument is a 0-based page number.
                 - The `zoom` argument is the top-left of old clip rect, and one of -1, 0,
                   +1 for dim. x or y to indicate the arrow key pressed.
-                - The `window_size` argument is the (width, height) of available image area.
+                - The `max_image_size` argument is the (width, height) of available image area.
             """
             zoom_x = 1
             zoom_y = 1
             scale = fitz.Matrix(zoom_x, zoom_y)
 
-            page_display_list = self.page_display_list_cache[page_num]
+            page_display_list = self.page_display_list_cache[page_num] if not reset_cached else None
             if not page_display_list:  # Create if not yet there.
                 self.page_display_list_cache[page_num] = self.document[page_num].getDisplayList()
                 page_display_list = self.page_display_list_cache[page_num]
@@ -179,10 +180,10 @@ if has_mupdf:
 
             # Make sure that the image will fit the screen.
             zoom_0 = 1
-            if window_size:
-                zoom_0 = min(1, window_size[0] / page_rect.width, window_size[1] / page_rect.height)
+            if max_image_size: # TODO: this is currently a required param...
+                zoom_0 = min(1, max_image_size[0] / page_rect.width, max_image_size[1] / page_rect.height)
                 if zoom_0 == 1:
-                    zoom_0 = min(window_size[0] / page_rect.width, window_size[1] / page_rect.height)
+                    zoom_0 = min(max_image_size[0] / page_rect.width, max_image_size[1] / page_rect.height)
             mat_0 = fitz.Matrix(zoom_0, zoom_0)
 
             if zoom:
@@ -207,7 +208,8 @@ if has_mupdf:
                 pixmap = page_display_list.getPixmap(matrix=mat_0, alpha=False)
 
             #image_png = pixmap.getPNGData()  # get the PNG image
+            image_height, image_width = pixmap.height, pixmap.width
             image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
-
-            return image_ppm, clip.tl  # Return image, clip position (top left).
+            image_tl = clip.tl # Clip position (top left).
+            return image_ppm, image_tl, image_height, image_width
 

@@ -116,10 +116,48 @@ def get_filename():
     return fname # Might be None.
 
 def get_window_size():
-    """Get physical screen dimension to determine the page image max size."""
+    """Get physical screen dimension to determine the page image max size.  Some
+    extra space is reserved for titlebars/borders or other unaccounted-for space
+    on the windows."""
     root = tk.Tk()
-    width = root.winfo_screenwidth() - 20
-    height = root.winfo_screenheight() - 135
+    try:
+        if ex.system_os == "Linux":
+            # Go to fullscreen mode to get screen size.  This seems to work with
+            # multiple monitors (which otherwise get counted at a combined size).
+            root.attributes("-alpha", 0) # Invisible on most systems.
+            #root.attributes("-fullscreen", True) # Set to actual full-screen size.
+            root.attributes("-zoomed", True)
+
+            # This seems to eliminate the flash that occurs on the update below.
+            root.attributes("-type", "splash") # https://www.tcl.tk/man/tcl8.6/TkCmd/wm.htm#M12
+
+            #root.update()
+            root.update_idletasks() # This works in place of .update, on Linux.
+
+            #root.overrideredirect(True) # No title bar.
+            #root.withdraw() # Hide, but size goes to 200 200.
+
+            width = root.winfo_width() - 20
+            height = root.winfo_height() - 20
+            #print("x, y", root.winfo_x(), root.winfo_y())
+            #print("geometry", root.geometry())
+        elif ex.system_os == "Windows":
+            root.state("zoomed") # Maximize the window on Windows.
+            root.attributes("-alpha", 0) # Invisible on most systems.
+            root.update_idletasks()
+            width = root.winfo_width() - 15
+            height = root.winfo_height() - 15
+            #width = root.winfo_screenwidth()
+            #height = root.winfo_screenheight()
+        else:
+            # Mac attributes here: https://wiki.tcl-lang.org/page/wm+attributes
+            # Cygwin probably works, but no longer tested.
+            width = root.winfo_screenwidth() - 400
+            height = root.winfo_screenheight() - 140
+    except tk.TclError as e:
+        #print("EXCEPT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", e)
+        width = root.winfo_screenwidth() - 400
+        height = root.winfo_screenheight() - 140
     root.destroy()
     return width, height
 
@@ -352,14 +390,15 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     num_pages = document_pages.open_document(fixed_input_doc_fname)
     curr_page = 0
 
-    window_title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
-    window_size = get_window_size()
-    size_for_full_app = (0.65*window_size[0], window_size[1]) # Reduce max width.
     sg.SetOptions(tooltip_time=500)
+    window_title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
 
-    data, clip_pos = document_pages.get_display_page(curr_page,  # Read first page.
-                                             window_size=size_for_full_app,  # image max dim
-                                             zoom=False,)  # Not zooming yet.
+    # Note this max size here must make the image height exceed the size of widgets next to
+    # it. This is needed to accurately calculate the maximum image height below.
+    max_image_size = (700, 700) # This is temporary; it will be calculated and reset below.
+    data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
+                                             max_image_size=max_image_size,
+                                             zoom=False,)
 
     image_element = sg.Image(data=data)  # make image element
     # TODO: This sort of works to keep constant size pages, but need to select sizes somehow.
@@ -368,10 +407,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     #image_column = sg.Column([[image_element]], size=(750,750))
 
     # Create the main window.
+    left_pixels = 20
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Your title is not a string.")
-        window = sg.Window(title=window_title, return_keyboard_events=True, location=(0, 0),
-                           use_default_focus=False)
+        window = sg.Window(title=window_title, return_keyboard_events=True,
+                           location=(left_pixels, 0), resizable=True,
+                           no_titlebar=False,
+                           use_default_focus=False, alpha_channel=0)
+
 
     update_funs = [] # A list of all the updating functions (defined below).
 
@@ -795,7 +838,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Setup and assign the window's layout.
     ##
 
-    layout = [ # The window layout.
+    layout = [ # The overall window layout.
         [
             sg.Button("Prev"),
             sg.Button("Next"),
@@ -836,6 +879,40 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     window.Layout(layout)
     window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
+
+    ##
+    ## Find the usable window size.
+    ##
+
+    #print("\ninit image wid and height", im_wid, im_ht)
+
+    current_width, current_height = window.Size
+    #print("\ncurrent_width, current_height", current_width, current_height)
+
+    non_image_width, non_image_height = current_width - im_wid, current_height - im_ht
+    #print("\nnon_image_width, non_image_height", non_image_width, non_image_height)
+
+    usable_width, usable_height = get_window_size()
+    # Note this change in 3.32.0 PySimpleGUI 24-May-2019:
+    #    Changed how window.Maximize is implemented previously used the
+    #    '-fullscreen' attribute. Now uses the 'zoomed' state
+    #window.Maximize() # Seems like it would work, but too large compared to zoom...
+    #usable_width, usable_height = window.Size
+    #window.Normal()
+    #print("\nusable_width, usable_height", usable_width, usable_height)
+
+    usable_image_width, usable_image_height = (usable_width - left_pixels - non_image_width,
+                                               usable_height - non_image_height)
+    #print("\nusable_image_width, usable_image_height", usable_image_width, usable_image_height)
+
+    max_image_size = usable_image_width, usable_image_height
+
+    # Update the page image (currently to a small size above) to fit window.
+    data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
+                                                     max_image_size=max_image_size,
+                                                     reset_cached=True)
+    image_element.Update(data=data)
+    window.alpha_channel = 1
 
     ##
     ## Run the main event loop.
@@ -962,8 +1039,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                       input_text_page_num)
 
         # Get the current page and display it.
-        data, clip_pos = document_pages.get_display_page(curr_page,
-                                                 window_size=window_size, zoom=zoom)
+        data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
+                                                 max_image_size=max_image_size, zoom=zoom)
         image_element.Update(data=data)
 
     window.Close()

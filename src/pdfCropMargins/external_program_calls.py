@@ -62,8 +62,6 @@ system_os = platform.system()
 if system_os[:6].lower() == "cygwin":
     system_os = "Cygwin"
 
-# TODO: Below line seems no longer necessary; the condition is not checked.
-# Either check again or update the man page.
 #system_os = "Windows" # Uncomment ONLY to test Windows on Linux with Wine.
 
 # Find the number of bits the OS supports.
