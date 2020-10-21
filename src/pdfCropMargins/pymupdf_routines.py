@@ -79,7 +79,7 @@ if has_mupdf:
             # Decrypt if necessary.
             if self.document.isEncrypted:
                 if self.args.password:
-                    # Returned code is positive for success, negative for failure.  If positive,
+                    # Return code is positive for success, negative for failure. If positive,
                     #   bit 0 set = no password required
                     #   bit 1 set = user password authenticated
                     #   bit 2 set = owner password authenticated
@@ -128,13 +128,14 @@ if has_mupdf:
             if cache:
                 page_crop_display_list = self.page_crop_display_list_cache[page_num]
                 if not page_crop_display_list:  # Create if not yet there.
-                    self.page_crop_display_list_cache[page_num] = self.document[page_num].getDisplayList()
+                    self.page_crop_display_list_cache[page_num] = self.document[
+                                                                  page_num].getDisplayList()
                     page_crop_display_list = self.page_crop_display_list_cache[page_num]
             else:
                 page_crop_display_list = self.document[page_num].getDisplayList()
 
             # https://github.com/pymupdf/PyMuPDF/issues/322 # Also info on opening in Pillow.
-            # TODO: Above page also lists faster way than getting ppm first.
+            # TODO: Above page also lists a faster way than getting ppm first.
 
             # Pillow Image: https://pillow.readthedocs.io/en/stable/reference/Image.html
             # Pillow modes: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes
@@ -162,11 +163,8 @@ if has_mupdf:
                 - The `page_num` argument is a 0-based page number.
                 - The `zoom` argument is the top-left of old clip rect, and one of -1, 0,
                   +1 for dim. x or y to indicate the arrow key pressed.
-                - The `max_size` argument is the (width, height) of available image area.
+                - The `window_size` argument is the (width, height) of available image area.
             """
-            # TODO: Newer demo version is cleaner, update to parts of it:
-            # https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Viewer.py
-
             zoom_x = 1
             zoom_y = 1
             scale = fitz.Matrix(zoom_x, zoom_y)
@@ -179,7 +177,7 @@ if has_mupdf:
             page_rect = page_display_list.rect  # The page rectangle.
             clip = page_rect
 
-            # Make sure that the image will fits the screen.
+            # Make sure that the image will fit the screen.
             zoom_0 = 1
             if window_size:
                 zoom_0 = min(1, window_size[0] / page_rect.width, window_size[1] / page_rect.height)
@@ -191,7 +189,7 @@ if has_mupdf:
                 width2 = page_rect.width / 2
                 height2 = page_rect.height / 2
 
-                clip = page_rect * 0.5     # clip rect size is a quarter page
+                clip = page_rect * 0.5     # Clip rect size is a quarter page.
                 top_left = zoom[0]
                 top_left.x += zoom[1] * (width2 / 2)     # adjust top-left ...
                 top_left.x = max(0, top_left.x)          # according to ...
@@ -208,7 +206,8 @@ if has_mupdf:
             else:  # Show the total page.
                 pixmap = page_display_list.getPixmap(matrix=mat_0, alpha=False)
 
+            #image_png = pixmap.getPNGData()  # get the PNG image
             image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
 
-            return image_ppm, clip.tl  # Return image, clip position.
+            return image_ppm, clip.tl  # Return image, clip position (top left).
 
