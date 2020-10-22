@@ -37,6 +37,8 @@ Bug fixes:
 
 * Fixed bug in ``--version`` argument.
 
+* Improved sizing of GUI windows.
+
 0.2.1[23456] (2020-09-22)
 -------------------------
 
