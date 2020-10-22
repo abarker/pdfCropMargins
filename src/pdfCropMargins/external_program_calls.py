@@ -36,10 +36,10 @@ import glob
 import shutil
 import time
 import contextlib
+import platform
 
-# TODO: Clean up finding executable on Windows.  Maybe automatically search for gs if
-# pdftoppm fails?  Current code doesn't seem to.  Note gs needs to be findable on PATH,
-# but it gets placed in C:\Program Files\gs\gs9.27\bin\gswin64c.exe (for example).
+WINDOWS_GS64_GLOB = r"C:\Program Files*\gs\gs*\bin\gswin64c.exe"
+WINDOWS_GS32_GLOB = r"C:\Program Files*\gs\gs*\bin\gswin32c.exe"
 
 temp_file_prefix = "pdfCropMarginsTmp_"     # prefixed to all temporary filenames
 temp_dir_prefix = "pdfCropMarginsTmpDir_"   # prefixed to all temporary dirnames
@@ -49,8 +49,6 @@ cygwin_full_path_prefix = "/cygdrive"
 ##
 ## Get info about the OS we're running on.
 ##
-
-import platform
 
 #  Get the version as a tuple of strings: (major, minor, patchlevel)
 python_version = platform.python_version_tuple() # sys.version_info works too
@@ -297,9 +295,8 @@ def get_external_subprocess_output(command_list, print_output=False, indent_stri
         sys.stdout.flush()
     return output
 
-def call_external_subprocess(command_list,
-                       stdin_filename=None, stdout_filename=None, stderr_filename=None,
-                       env=None):
+def call_external_subprocess(command_list, stdin_filename=None, stdout_filename=None,
+                             stderr_filename=None, env=None):
     """Run the command and arguments in the command_list.  Will search the system
     PATH for commands to execute, but no shell is started.  Redirects any selected
     outputs to the given filename.  Waits for command completion."""
@@ -352,15 +349,14 @@ def init_and_test_gs_executable(exit_on_fail=False):
     # First try basic names against the PATH.
     gs_executable = find_and_test_executable(gs_executables, ["-dSAFER", "-v"], "Ghostscript")
 
-    # If that fails, on Windows or Cygwin look in the Program Files gs directory for it.
+    # If that fails, on Windows or Cygwin look in the 'Program Files' gs directory for it.
     if not gs_executable and (system_os == "Windows" or system_os == "Cygwin"):
-        # TODO maybe move these strings to top as module settable strings
-        gs64 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin64c.exe")
+        gs64 = glob.glob(WINDOWS_GS64_GLOB)
         if gs64:
             gs64 = gs64[0] # just take the first one for now
         else:
             gs64 = ""
-        gs32 = glob.glob(r"C:\Program Files*\gs\gs*\bin\gswin32c.exe")
+        gs32 = glob.glob(WINDOWS_GS32_GLOB)
         if gs32:
             gs32 = gs32[0] # just take the first one for now
         else:
