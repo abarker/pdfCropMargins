@@ -96,89 +96,9 @@ from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
 
 if ex.system_os == "Windows":
     sg.ChangeLookAndFeel("TanBlue")
+    sg.theme_text_color("black")
 else:
     sg.ChangeLookAndFeel("SystemDefault")
-
-#
-# Helper functions.
-#
-
-def get_filename():
-    """Get the filename of the PDF file via GUI if one was not passed in."""
-    # TODO: This isn't used now, but the code works to pop up a file chooser.
-    # Incorporate it to interactively find the file to crop if none passed in.
-    fname = sg.PopupGetFile("Select file and filetype to open:",
-                            title="pdfCropMargins: Document Browser",
-                            file_types=[ # Only PDF files.
-                                          ("PDF Files", "*.pdf"),
-                                       ],
-                            )
-    return fname # Might be None.
-
-def get_window_size():
-    """Get physical screen dimension to determine the page image max size.  Some
-    extra space is reserved for titlebars/borders or other unaccounted-for space
-    on the windows."""
-    root = tk.Tk()
-    try:
-        if ex.system_os == "Linux":
-            # Go to fullscreen mode to get screen size.  This seems to work with
-            # multiple monitors (which otherwise get counted at a combined size).
-            root.attributes("-alpha", 0) # Invisible on most systems.
-            #root.attributes("-fullscreen", True) # Set to actual full-screen size.
-            root.attributes("-zoomed", True)
-
-            # This seems to eliminate the flash that occurs on the update below.
-            root.attributes("-type", "splash") # https://www.tcl.tk/man/tcl8.6/TkCmd/wm.htm#M12
-
-            #root.update()
-            root.update_idletasks() # This works in place of .update, on Linux.
-
-            #root.overrideredirect(True) # No title bar.
-            #root.withdraw() # Hide, but size goes to 200 200.
-
-            width = root.winfo_width() - 20
-            height = root.winfo_height() - 20
-            #print("x, y", root.winfo_x(), root.winfo_y())
-            #print("geometry", root.geometry())
-        elif ex.system_os == "Windows":
-            root.state("zoomed") # Maximize the window on Windows.
-            root.attributes("-alpha", 0) # Invisible on most systems.
-            root.update_idletasks()
-            width = root.winfo_width() - 15
-            height = root.winfo_height() - 15
-            #width = root.winfo_screenwidth()
-            #height = root.winfo_screenheight()
-        else:
-            # Mac attributes here: https://wiki.tcl-lang.org/page/wm+attributes
-            # Cygwin probably works, but no longer tested.
-            width = root.winfo_screenwidth() - 400
-            height = root.winfo_screenheight() - 140
-    except tk.TclError as e:
-        #print("EXCEPT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", e)
-        width = root.winfo_screenwidth() - 400
-        height = root.winfo_screenheight() - 140
-    root.destroy()
-    return width, height
-
-wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=45,
-                               break_on_hyphens=False)
-
-def get_help_text_string_for_tooltip(cmd_parser, option_string):
-    """Extract the help message for an option from an argparse command parser.
-    This gets the argparse help string to use as a tooltip."""
-    for a in cmd_parser._actions:
-        if "--" + option_string in a.option_strings:
-            help_text = a.help
-            option_list = a.option_strings
-            break
-    else:
-        return None
-    help_text = textwrap.dedent(help_text)
-    formatted_para = wrapper.fill(help_text)
-    combined_para = " ".join(option_list) + "\n\n" + formatted_para
-    combined_para = combined_para.replace("^^n", "\n")
-    return combined_para
 
 #
 # Helper functions for updating the values of elements.
@@ -381,6 +301,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     on the PDF file named `pdf_filename`"""
     args = parsed_args
     args_dict = {} # Dict for holding "real" values backing the GUI element values.
+    update_funs = [] # A list of all the updating functions (defined below).
 
     ##
     ## Set up the document and window.
@@ -392,6 +313,10 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     sg.SetOptions(tooltip_time=500)
     window_title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
+
+    ##
+    ## Code for the image element, holding the page preview.
+    ##
 
     # Note this max size here must make the image height exceed the size of widgets next to
     # it. This is needed to accurately calculate the maximum image height below.
@@ -405,18 +330,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     # Or at least turn on the scrolling option for overflowing images.  Image scaling algorithm
     # sometimes does strange things; refactor and reconsider.
     #image_column = sg.Column([[image_element]], size=(750,750))
-
-    # Create the main window.
-    left_pixels = 20
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="Your title is not a string.")
-        window = sg.Window(title=window_title, return_keyboard_events=True,
-                           location=(left_pixels, 0), resizable=True,
-                           no_titlebar=False,
-                           use_default_focus=False, alpha_channel=0)
-
-
-    update_funs = [] # A list of all the updating functions (defined below).
 
     ##
     ## Code for handling page numbers.
@@ -876,7 +789,19 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             ],
         ]
 
-    window.Layout(layout)
+    ##
+    ## Create the main window.
+    ##
+
+    left_pixels = 20
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Your title is not a string.")
+        window = sg.Window(title=window_title, layout=layout, return_keyboard_events=True,
+                           location=(left_pixels, 0), resizable=True,
+                           no_titlebar=False,
+                           use_default_focus=False, alpha_channel=0)
+
+    #window.Layout(layout)
     window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
 
@@ -884,35 +809,17 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Find the usable window size.
     ##
 
-    #print("\ninit image wid and height", im_wid, im_ht)
-
-    current_width, current_height = window.Size
-    #print("\ncurrent_width, current_height", current_width, current_height)
-
-    non_image_width, non_image_height = current_width - im_wid, current_height - im_ht
-    #print("\nnon_image_width, non_image_height", non_image_width, non_image_height)
-
-    usable_width, usable_height = get_window_size()
-    # Note this change in 3.32.0 PySimpleGUI 24-May-2019:
-    #    Changed how window.Maximize is implemented previously used the
-    #    '-fullscreen' attribute. Now uses the 'zoomed' state
-    #window.Maximize() # Seems like it would work, but too large compared to zoom...
-    #usable_width, usable_height = window.Size
-    #window.Normal()
-    #print("\nusable_width, usable_height", usable_width, usable_height)
-
-    usable_image_width, usable_image_height = (usable_width - left_pixels - non_image_width,
-                                               usable_height - non_image_height)
-    #print("\nusable_image_width, usable_image_height", usable_image_width, usable_image_height)
-
-    max_image_size = usable_image_width, usable_image_height
+    max_image_size = get_usable_image_size(window, im_wid, im_ht, left_pixels)
 
     # Update the page image (currently to a small size above) to fit window.
     data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
                                                      max_image_size=max_image_size,
                                                      reset_cached=True)
+
+
+    # Set the correct first page in the image element (after sizing data gathered above).
     image_element.Update(data=data)
-    window.alpha_channel = 1
+    window.alpha_channel = 1 # Make the window visible.
 
     ##
     ## Run the main event loop.
@@ -1046,4 +953,124 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     window.Close()
     return did_crop
 
+#
+# General helper functions.
+#
+
+wrapper = textwrap.TextWrapper(initial_indent="", subsequent_indent="", width=45,
+                               break_on_hyphens=False)
+
+def get_help_text_string_for_tooltip(cmd_parser, option_string):
+    """Extract the help message for an option from an argparse command parser.
+    This gets the argparse help string to use as a tooltip."""
+    for a in cmd_parser._actions:
+        if "--" + option_string in a.option_strings:
+            help_text = a.help
+            option_list = a.option_strings
+            break
+    else:
+        return None
+    help_text = textwrap.dedent(help_text)
+    formatted_para = wrapper.fill(help_text)
+    combined_para = " ".join(option_list) + "\n\n" + formatted_para
+    combined_para = combined_para.replace("^^n", "\n")
+    return combined_para
+
+def get_usable_image_size(window, test_im_wid, test_im_ht, left_pixels):
+    """Get an approximation to the largest possible preview image size for the
+    curr screen window.  Pass in an invisible pySimpleGui window as `window`.
+    The `im_wid` and `im_ht` parameters are the size of a known, test image
+    in the window.  The `left_pixels` parameter is the number of pixels added
+    to the left side of window position."""
+    usable_width, usable_height = get_window_size(window)
+    win_width, win_height = window.Size
+    non_im_width, non_im_height = win_width-test_im_wid, win_height-test_im_ht
+    usable_im_width, usable_im_height = (usable_width - non_im_width-left_pixels,
+                                         usable_height - non_im_height)
+    return usable_im_width, usable_im_height
+
+def get_window_size(window):
+    """Get physical screen dimension to determine the page image max size.  Some
+    extra space is reserved for titlebars/borders or other unaccounted-for space
+    in the windows."""
+    os = ex.system_os
+    if os == "Linux":
+        width, height = get_window_size_tk()
+        width *= .95
+        height *= .95
+    elif os == "Windows":
+        width, height = get_window_size_sg()
+        width *= .95
+        height *= .95
+    else:
+        # Note this method doesn't always work for multiple-monitor setups
+        # on non-Windows systems.  It reports the combined monitor window sizes.
+        width, height = window.get_screen_size()
+        width *= .90
+        height *= .90
+    return width, height
+
+def get_window_size_sg():
+    """Get size from a big pySimpleGui window.  Not recommended for non-Windows
+    because sg uses fullscreen mode there instead of zoomed mode for `maximize`
+    which doesn't account for taskbar size.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Your title is not a string.")
+        layout = [  [sg.Text('Sizer...')], ]
+        window = sg.Window('Sizer', alpha_channel=0,
+                    no_titlebar=False, # Cannot maximize/zoom without a titlebar.
+                    resizable=True, size=(200,200), layout=layout, finalize=True)
+    window.Maximize()
+    window.Read(timeout=20) # Needs this to maximize correctly.
+    zoomed_wid, zoomed_ht = window.Size
+    window.close()
+    return zoomed_wid, zoomed_ht
+
+def get_window_size_tk():
+    """Use tk to get an approximation to the usable screen area."""
+    # Tkinter universal calls: https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/universal.html
+    # Mac, Linux, Windows attributes here: https://wiki.tcl-lang.org/page/wm+attributes
+    root = tk.Tk()
+    try:
+        if ex.system_os == "Linux":
+            # Go to fullscreen mode to get screen size.  This seems to work with
+            # multiple monitors (which otherwise get counted at a combined size).
+            root.attributes("-alpha", 0) # Invisible on most systems.
+            #root.attributes("-fullscreen", True) # Set to actual full-screen size.
+            root.attributes("-zoomed", True)
+            # This seems to eliminate the flash that occurs on the update below.
+            root.attributes("-type", "splash") # https://www.tcl.tk/man/tcl8.6/TkCmd/wm.htm#M12
+
+            #root.update()
+            root.update_idletasks() # This works in place of .update, on Linux.
+
+            width = root.winfo_width()
+            height = root.winfo_height()
+        elif ex.system_os == "Windows":
+            root.state("zoomed") # Maximize the window on Windows.
+            root.attributes("-alpha", 0) # Invisible on most systems.
+            root.update_idletasks()
+            width = root.winfo_width()
+            height = root.winfo_height()
+        else:
+            width = root.winfo_screenwidth()
+            height = root.winfo_screenheight()
+    except tk.TclError as e:
+        width = root.winfo_screenwidth()
+        height = root.winfo_screenheight()
+    root.destroy()
+    return width, height
+
+def get_filename():
+    """Get the filename of the PDF file via GUI if one was not passed in."""
+    # TODO: This isn't used now, but the code works to pop up a file chooser.
+    # Incorporate it to interactively find the file to crop if none passed in.
+    fname = sg.PopupGetFile("Select file and filetype to open:",
+                            title="pdfCropMargins: Document Browser",
+                            file_types=[ # Only PDF files.
+                                          ("PDF Files", "*.pdf"),
+                                       ],
+                            )
+    return fname # Might be None.
 
