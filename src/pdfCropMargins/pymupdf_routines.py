@@ -158,7 +158,7 @@ if has_mupdf:
             image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
             return image_ppm
 
-        def get_display_page(self, page_num, max_image_size, *, zoom=False,
+        def get_display_page(self, page_num, max_image_size, zoom=False,
                              fit_screen=True, reset_cached=False):
             """Return a `tkinter.PhotoImage` or a PNG image for a document page number.
                 - The `page_num` argument is a 0-based page number.

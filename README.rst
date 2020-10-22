@@ -104,7 +104,8 @@ but the Pillow dependency will not be automatically installed because the most
 recent version available for Python 2 has several moderate-severity security
 vulnerabilities.  You can choose to install it yourself via ``pip install
 pillow --user``; otherwise, only the ``--bbcalc gb`` (or ``--gsBbox``) method
-of calculating crops will work (and Ghostscript is required).
+of calculating crops will work (and Ghostscript is required).  For the GUI,
+PySimpleGUI no longer supports 2.7 but the last version still seems to work.
 
 Linux/Ubuntu
 ------------

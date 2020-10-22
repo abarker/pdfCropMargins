@@ -840,7 +840,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         if event is None and (values_dict is None or values_dict["PageNumber"] is None):
             break
-        if event == sg.WIN_CLOSED or Events.is_exit(event):
+        if ex.python_version[0] == "2":
+            if event is None or Events.is_exit(event): break
+        elif event == sg.WIN_CLOSED or Events.is_exit(event):
             break
 
         if Events.is_enter(event):
