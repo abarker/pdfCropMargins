@@ -48,7 +48,7 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-**New in version 1.0.0 [not yet finalized and pushed to PyPI]**
+**New in version 1.0.0**
 
 * The new default method for rendering pages to calculate crops uses the Python
   ``PyMuPDF`` package, if it is detected.  That package is included in the GUI
@@ -84,8 +84,8 @@ recent changes and new features.
 * A new option flag ``--percentText`` which changes the interpretation of the
   percentage values passed to ``--percentRetain`` and ``--percentRetain4``.
   With this flag the left and right margins are set to a percentage of the text
-  (bounding box) width and the top and bottom margins are set to a percentage
-  of the text height.
+  width (bounding box width) and the top and bottom margins are set to a
+  percentage of the text height.
 
 Installing 
 ==========
@@ -131,7 +131,7 @@ be installed.  Not all options are available.
    pip3 install pdfCropMargins --user --upgrade
 
 To get the MuPDF rendering features without the GUI dependencies you can
-alternately use ``pdfCropMargins[mupdf]`` in the above command.
+alternately use ``pdfCropMargins[mupdf]`` in the above commands.
 
 **Troubleshooting:** If you have problems with the install of PyMuPDF, the
 first thing to try is to upgrade your version of the pip program and then
