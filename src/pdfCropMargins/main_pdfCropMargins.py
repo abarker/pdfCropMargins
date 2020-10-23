@@ -281,7 +281,7 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
         if args.verbose and not quiet:
             # want to display page num numbering from 1, so add one
             print("\t"+str(page_num+1), "  rot =",
-                  curr_page.rotationAngle, "\t", full_page_box)
+                  curr_page.rotationAngle, "\t", list(full_page_box))
 
         # Convert the `RectangleObject` to floats in an ordinary list and append.
         ordinary_box = [float(b) for b in full_page_box]
@@ -634,9 +634,9 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
         new_cropped_box = RectangleObject(crop_list[page_num])
 
         if args.verbose:
-            print("\t"+str(page_num+1)+"\t", new_cropped_box) # page numbering from 1
+            print("\t"+str(page_num+1)+"\t", list(new_cropped_box)) # page numbering from 1
         if args.writeCropDataToFile:
-            print("\t"+str(page_num+1)+"\t", new_cropped_box, file=f)
+            print("\t"+str(page_num+1)+"\t", list(new_cropped_box), file=f)
 
         if not args.boxesToSet:
             args.boxesToSet = ["m", "c"]
