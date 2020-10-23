@@ -296,7 +296,7 @@ To see the documentation, run::
 The output of that command follows::
    
    Usage: pdf-crop-margins [-h] [-o OUTFILE_NAME] [-v] [-gui] [-p PCT]
-                           [-p4 PCT PCT PCT PCT] [-a BP] [-a4 BP BP BP BP]
+                           [-p4 PCT PCT PCT PCT] [-pt] [-a BP] [-a4 BP BP BP BP]
                            [-ap BP] [-ap4 BP BP BP BP] [-u] [-m INT]
                            [-m4 INT INT INT INT] [-mp INT] [-s] [-ms INT] [-e]
                            [-g PAGESTR] [-c [d|m|p|gr|gb|o]] [-gs] [-gsr]
@@ -542,6 +542,15 @@ The output of that command follows::
                   Set the percent of margin space to retain in the image,
                   individually for the left, bottom, right, and top margins,
                   respectively. The four arguments should be percent values.
+   
+     -pt, --percentText
+                  Normally the percentage values passed to '--percentRetain' or '
+                  --percentRetain4' define the percentage of existing margins to
+                  retain. This flag alters the interpretation of those percent
+                  values. The margins are instead set to the given percentage of
+                  the text width or height. The left and right margins are set to
+                  a percentage of the bounding box width and the bottom and top
+                  margins are set to a percentage of the bounding box height.
    
      -a BP, --absoluteOffset BP
                   Decrease each margin size by an absolute floating point offset
@@ -990,10 +999,9 @@ The output of that command follows::
                   machines; it is ignored otherwise. By default the first
                   pdftoppm executable found in the directories in the PATH
                   environment variable is used. On Windows the program will
-                  revert to this option if PDF image-rendering is required and no
-                  system pdftoppm or Ghostscript executable can be found. The
-                  locally-packaged pdftoppm executable is a few years old, but
-                  for page-cropping it only needs to get the margins right.
+                  revert to this option if PDF image-rendering is required,
+                  PyMuPDF is not installed, and no system pdftoppm or Ghostscript
+                  executable can be found.
    
      -gsp PATH, --ghostscriptPath PATH
                   Pass in a pathname to the ghostscript executable that the

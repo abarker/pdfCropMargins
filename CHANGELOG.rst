@@ -3,7 +3,7 @@
 History
 =======
 
-1.0.0 (2020-XX-XX)
+1.0.0 (2020-10-22)
 ------------------
 
 New features:
@@ -19,7 +19,7 @@ New features:
   changed.  Use ``--calcbb`` or the shortcut ``-c`` with one of 'm' (MuPDF),
   'p' (pdftoppm), 'gr' (Ghostscript rendering), or 'gb' (direct Ghostscript
   bounding box calculation) as the argument.  The default selection sequence is
-  'd'.  Passing 'o' reverts to the older (before MuPDF) sequence.
+  'd'.  Passing 'o' reverts to the older (before MuPDF) default sequence.
 
 * The default rendering resolution is now 72 dpi instead of 150 dpi.
   Resolution can still be set with the ``-x`` and ``-y`` options.
