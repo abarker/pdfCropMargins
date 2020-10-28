@@ -979,13 +979,19 @@ def get_help_text_string_for_tooltip(cmd_parser, option_string):
     return combined_para
 
 def get_usable_image_size(window, test_im_wid, test_im_ht, left_pixels):
-    """Get an approximation to the largest possible preview image size for the
-    curr screen window.  Pass in an invisible pySimpleGui window as `window`.
-    The `im_wid` and `im_ht` parameters are the size of a known, test image
-    in the window.  The `left_pixels` parameter is the number of pixels added
-    to the left side of window position."""
+    """Get the approximate size of the largest possible PDF preview image that
+    can be drawn in `window` in the current screen.
+
+    Pass in an invisible pySimpleGui window with all the usual widgets and
+    controls as `window`.
+
+    The `im_wid` and `im_ht` parameters are the width and height of a known
+    test image that is "displayed" in the (invisible) window.  The
+    `left_pixels` parameter is the number of pixels added to the left side of
+    window position."""
     usable_width, usable_height = get_window_size(window)
     win_width, win_height = window.Size
+
     non_im_width, non_im_height = win_width-test_im_wid, win_height-test_im_ht
     usable_im_width, usable_im_height = (usable_width - non_im_width-left_pixels,
                                          usable_height - non_im_height)
@@ -1014,9 +1020,8 @@ def get_window_size(window):
 
 def get_window_size_sg():
     """Get size from a big pySimpleGui window.  Not recommended for non-Windows
-    because sg uses fullscreen mode there instead of zoomed mode for `maximize`
-    which doesn't account for taskbar size.
-    """
+    because sg uses fullscreen mode there instead of zoomed mode for `maximize`,
+    which doesn't account for taskbar size."""
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Your title is not a string.")
         layout = [  [sg.Text('Sizer...')], ]
