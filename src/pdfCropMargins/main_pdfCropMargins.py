@@ -792,7 +792,7 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
 def process_command_line_arguments(parsed_args):
     """Perform an initial processing on the some of the command-line arguments.  This
     is called first, before any PDF processing is done."""
-    global args # This is global only to avoid passing it to essentially every function.
+    global args # This is global o nly to avoid passing it to essentially every function.
     args = parsed_args
 
     if args.verbose:
@@ -811,7 +811,8 @@ def process_command_line_arguments(parsed_args):
     # Process input and output filenames.
     #
 
-    input_doc_fname = ex.glob_if_windows_os(args.pdf_input_doc[0], exact_num_args=1)[0]
+    input_doc_fname = ex.glob_if_windows_os(args.pdf_input_doc[0], exact_num_args=1)
+    input_doc_fname = input_doc_fname[0] # Exactly one match enforced above.
     input_doc_fname = os.path.expanduser(input_doc_fname)
     if not input_doc_fname.endswith((".pdf",".PDF")):
         print("\nWarning in pdfCropMargins: The file extension is neither '.pdf'"
