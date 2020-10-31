@@ -110,14 +110,19 @@ def get_directory_location():
     from . import directory_locator
     return get_canonical_absolue_expanded_dirname(directory_locator.__file__)
 
+def get_expanded_path(path):
+    """Get the canonical form of the absolute path from a possibly relative path
+    (which may have symlinks, etc.)"""
+    return os.path.expandvars(os.path.expanduser(path))
+
 def get_canonical_absolute_expanded_path(path):
     """Get the canonical form of the absolute path from a possibly relative path
     (which may have symlinks, etc.)"""
     return os.path.normcase(
                os.path.normpath(
-                   os.path.realpath( # remove any symbolic links
-                       os.path.abspath( # may not be needed with realpath, to be safe
-                           os.path.expanduser(path)))))
+                   os.path.realpath( # Remove any symbolic links.
+                       os.path.abspath( # May not be needed with realpath; to be safe.
+                           get_expanded_path(path)))))
 
 def get_canonical_absolue_expanded_dirname(path):
     """Get the absolute directory name from a possibly relative path."""
@@ -148,13 +153,11 @@ def glob_if_windows_os(path, exact_num_args=False):
     globbed = glob.glob(path)
     if not globbed:
         print("\nWarning in pdfCropMargins: The wildcards in the path\n   "
-              + path + "\nfailed to expand.  Treating as literal.",
-              file=sys.stderr)
+              + path + "\nfailed to expand.  Treating as literal.", file=sys.stderr)
         globbed = [path]
     if exact_num_args and len(globbed) != exact_num_args:
         print("\nError in pdfCropMargins: The wildcards in the path\n   "
-              + path + "\nexpand to the wrong number of files.",
-              file=sys.stderr)
+              + path + "\nexpand to the wrong number of files.", file=sys.stderr)
         cleanup_and_exit(1)
     return globbed
 
