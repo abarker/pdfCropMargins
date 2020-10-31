@@ -6,6 +6,17 @@ History
 1.0.0 (2020-10-23)
 ------------------
 
+Changes:
+
+* Globs are now applied in Python to file arguments on non-Windows systems (in
+  addition to Windows systems).  This way they work in the Python interface as
+  well as from a shell like Bash that expands them before passing them.  In the
+  unlikely case that a glob character is in an actual PDF file name it might
+  need to be quoted twice (once escaped).
+
+1.0.0 (2020-10-23)
+------------------
+
 New features:
 
 * The MuPDF program can now be used to calculate the crops.  This is done
