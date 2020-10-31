@@ -148,8 +148,8 @@ def glob_if_windows_os(path, exact_num_args=False):
     `path` should be a single pathname possibly containing glob symbols. The
     argument `exact_num_args` can be set to an integer to check for an exact
     number of matching files.  Returns a list of all the matching paths."""
-    if system_os != "Windows":
-        return [path]
+    #if system_os != "Windows": # TODO: Change name and docstring if "also Unix globbing" is kept.
+    #    return [path]
     globbed = glob.glob(path)
     if not globbed:
         print("\nWarning in pdfCropMargins: The wildcards in the path\n   "

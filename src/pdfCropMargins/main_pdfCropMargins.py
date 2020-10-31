@@ -811,9 +811,9 @@ def process_command_line_arguments(parsed_args):
     # Process input and output filenames.
     #
 
-    input_doc_fname = ex.glob_if_windows_os(args.pdf_input_doc[0], exact_num_args=1)
-    input_doc_fname = input_doc_fname[0] # Exactly one match enforced above.
-    input_doc_fname = os.path.expanduser(input_doc_fname)
+    input_doc_fname = args.pdf_input_doc[0]
+    input_doc_fname = ex.get_expanded_path(input_doc_fname) # Expand vars and user.
+    input_doc_fname = ex.glob_if_windows_os(input_doc_fname, exact_num_args=1)[0]
     if not input_doc_fname.endswith((".pdf",".PDF")):
         print("\nWarning in pdfCropMargins: The file extension is neither '.pdf'"
               "\nnor '.PDF'; continuing anyway.", file=sys.stderr)
