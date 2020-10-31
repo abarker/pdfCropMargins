@@ -592,7 +592,7 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
             print("\nNew full page sizes after cropping, in PDF format (lbrt):")
 
     if args.writeCropDataToFile:
-        args.writeCropDataToFile = os.path.expanduser(args.writeCropDataToFile)
+        args.writeCropDataToFile = ex.get_expanded_path(args.writeCropDataToFile)
         f = open(args.writeCropDataToFile, "w")
 
     # Copy over each page, after modifying the appropriate PDF boxes.
@@ -831,7 +831,8 @@ def process_command_line_arguments(parsed_args):
         output_doc_fname = generate_default_filename(input_doc_fname)
     else:
         output_doc_fname = ex.glob_if_windows_os(args.outfile[0], exact_num_args=1)[0]
-    output_doc_fname = os.path.expanduser(output_doc_fname)
+
+    output_doc_fname = ex.get_expanded_path(output_doc_fname)
     if args.verbose:
         print("\nThe output document's filename will be:\n   ", output_doc_fname)
 
