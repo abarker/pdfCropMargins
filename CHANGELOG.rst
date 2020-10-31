@@ -12,7 +12,8 @@ Changes:
   addition to Windows systems).  This way they work in the Python interface as
   well as from a shell like Bash that expands them before passing them.  In the
   unlikely case that a glob character is in an actual PDF file name it might
-  need to be quoted twice (once escaped).
+  need to be quoted twice (once escaped).  Shell variables are now also
+  expanded in Python if detected.
 
 1.0.0 (2020-10-23)
 ------------------
