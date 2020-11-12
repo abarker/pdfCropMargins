@@ -830,7 +830,7 @@ def process_command_line_arguments(parsed_args):
             print("\nUsing the default-generated output filename.")
         output_doc_fname = generate_default_filename(input_doc_fname)
     else:
-        output_doc_fname = ex.glob_pathname(args.outfile[0], exact_num_args=1)[0]
+        output_doc_fname = args.outfile[0]
 
     output_doc_fname = ex.get_expanded_path(output_doc_fname)
     if args.verbose:
