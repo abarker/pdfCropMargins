@@ -1078,8 +1078,8 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     try: # Note this is after decryption.
         input_doc_num_pages = input_doc.getNumPages() # Can raise PdfReadError.
     except PdfReadError as e:
-        print("\nError in pdfCropMargins: The PyPDF2 module failed in an"
-              "\nattempt to read this input file:\n   {}\n"
+        print("\nError in pdfCropMargins: The PyPDF2 module failed with a"
+              "\nPdfReadError in an attempt to read this input file:\n   {}\n"
               "\nIs the file a PDF file?  If so then it may be corrupted."
               "\nIf you have Ghostscript installed you can attempt to fix"
               "\nthe document by using the pdfCropMargins option '--gsFix'"
