@@ -687,7 +687,7 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
     output_doc = PdfFileWriter()
 
     def root_objects_not_indirect(input_doc, root_object):
-        """This can expand some of the `IndirectObject` objects in  a root object to
+        """This can expand some of the `IndirectObject` objects in a root object to
         see the actual values.  Currently only used for debugging.  May mess up the
         input doc and require a temporary one."""
         if isinstance(root_object, dict):
@@ -1079,7 +1079,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         input_doc_num_pages = input_doc.getNumPages() # Can raise PdfReadError.
     except PdfReadError as e:
         print("\nError in pdfCropMargins: The PyPDF2 module failed with a"
-              "\nPdfReadError in an attempt to read this input file:\n   {}\n"
+              "\nPdfReadError in an attempt get the number of pages in input file:\n   {}\n"
               "\nIs the file a PDF file?  If so then it may be corrupted."
               "\nIf you have Ghostscript installed you can attempt to fix"
               "\nthe document by using the pdfCropMargins option '--gsFix'"
@@ -1345,8 +1345,8 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
     # Handle the '--modifyOriginal' option.
     final_output_document_name = output_doc_fname
     if args.modifyOriginal:
-        generated_uncropped_filename = generate_default_filename(
-                                                input_doc_fname, is_cropped_file=False)
+        generated_uncropped_filename = generate_default_filename(input_doc_fname,
+                                                                 is_cropped_file=False)
 
         # Remove any existing file with the name generated_uncropped_filename unless a
         # relevant noclobber option is set or it isn't a file.
