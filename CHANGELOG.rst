@@ -3,7 +3,7 @@
 History
 =======
 
-1.0.0 (2020-10-23)
+1.0.1 (2020-XX-XX)
 ------------------
 
 Changes:
@@ -14,6 +14,11 @@ Changes:
   unlikely case that a glob character is in an actual PDF file name it might
   need to be quoted twice (once escaped).  Shell variables are now also
   expanded in Python if detected.
+
+Bug fixes:
+
+* The program no longer attempts to glob user-supplied output filenames, which
+  was issuing an unnecessary warning (due to a recent change).
 
 1.0.0 (2020-10-23)
 ------------------
