@@ -1040,14 +1040,15 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         tmp_input_doc = PdfFileReader(fixed_input_doc_file_object)
     except (KeyboardInterrupt, EOFError):
         raise
-    except: # Can raise various exceptions, just catch the rest here.
-
-        print("\nError in pdfCropMargins: The pyPdf module failed in an attempt"
-              "\nto read the input file.  Is the file a PDF file?  If so then it"
-              "\nmay be corrupted.  If you have Ghostscript installed you can"
-              "\nattempt to fix it by using the pdfCropMargins option '--gsFix'"
+    except Exception as e: # PyPDF2 can raise various, catch the rest here.
+        print("\nError in pdfCropMargins: The PyPDF2 module failed in an"
+              "\nattempt to read this input file:\n   {}\n"
+              "\nIs the file a PDF file?  If so then it may be corrupted."
+              "\nIf you have Ghostscript installed you can attempt to fix"
+              "\nthe document by using the pdfCropMargins option '--gsFix'"
               "\n(assuming you are not using that option already).  That option"
-              "\ncan also convert some PostScript files to a readable format.",
+              "\ncan also convert some PostScript files to a readable format."
+              "\n\nThe error message was:\n   {}".format(fixed_input_doc_fname, e),
               file=sys.stderr)
         ex.cleanup_and_exit(1)
 
@@ -1074,8 +1075,22 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Print out some data and metadata in verbose mode.
     ##
 
+    try: # Note this is after decryption.
+        input_doc_num_pages = input_doc.getNumPages() # Can raise PdfReadError.
+    except PdfReadError as e:
+        print("\nError in pdfCropMargins: The PyPDF2 module failed in an"
+              "\nattempt to read this input file:\n   {}\n"
+              "\nIs the file a PDF file?  If so then it may be corrupted."
+              "\nIf you have Ghostscript installed you can attempt to fix"
+              "\nthe document by using the pdfCropMargins option '--gsFix'"
+              "\n(assuming you are not using that option already).  That option"
+              "\ncan also convert some PostScript files to a readable format."
+              "\n\nThe error message was:\n   {}".format(fixed_input_doc_fname, e),
+              file=sys.stderr)
+        ex.cleanup_and_exit(1)
+
     if args.verbose:
-        print("\nThe input document has %s pages." % input_doc.getNumPages())
+        print("\nThe input document has {} pages.".format(input_doc_num_pages))
 
     try: # This is needed because the call sometimes just raises an error.
         metadata_info = input_doc.getDocumentInfo()
@@ -1115,7 +1130,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## for any pages which were not selected.
     ##
 
-    all_page_nums = set(range(0, input_doc.getNumPages()))
+    all_page_nums = set(range(0, input_doc_num_pages))
     if args.pages:
         try:
             page_nums_to_crop = parse_page_range_specifiers(args.pages, all_page_nums)
