@@ -1036,8 +1036,9 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         ex.cleanup_and_exit(1)
 
     try:
-        input_doc = PdfFileReader(fixed_input_doc_file_object)
-        tmp_input_doc = PdfFileReader(fixed_input_doc_file_object)
+        strict_mode = False
+        input_doc = PdfFileReader(fixed_input_doc_file_object, strict=strict_mode)
+        tmp_input_doc = PdfFileReader(fixed_input_doc_file_object, strict=strict_mode)
     except (KeyboardInterrupt, EOFError):
         raise
     except Exception as e: # PyPDF2 can raise various, catch the rest here.

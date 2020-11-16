@@ -797,11 +797,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Your title is not a string.")
         window = sg.Window(title=window_title, layout=layout, return_keyboard_events=True,
-                           location=(left_pixels, 0), resizable=True,
-                           no_titlebar=False,
+                           location=(left_pixels, 0), resizable=True, no_titlebar=False,
+                           #use_ttk_buttons=True, ttk_theme=sg.THEME_DEFAULT,
                            use_default_focus=False, alpha_channel=0)
 
-    #window.Layout(layout)
+    #window.Layout(layout) # Old way, now in Window call, delete after testing.
     window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
 

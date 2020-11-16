@@ -3,6 +3,15 @@
 History
 =======
 
+1.0.2 (2020-11-15)
+------------------
+
+Changes:
+
+* PDFs are now opened with ``strict=FALSE`` in PyPDF2 ``PdfFileReader``
+  objects.  This will attempt to repair some PDF errors in documents that
+  previously caused read errors.
+
 1.0.1 (2020-11-12)
 ------------------
 
