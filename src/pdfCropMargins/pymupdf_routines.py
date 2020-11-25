@@ -39,15 +39,15 @@ try: # Extra dependencies for the GUI version.  Make sure they are installed.
         import fitz
     if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 16, 17]:
         has_mupdf = False
-        DocumentPages = None
+        MuPdfDocument = None
 
 except ImportError:
     has_mupdf = False
-    DocumentPages = None
+    MuPdfDocument = None
 
 if has_mupdf:
 
-    class DocumentPages:
+    class MuPdfDocument:
         """Holds `pyMuPDF` document and PyMuPDF pages of the document for the GUI
         to display.  Has methods to get rendered images.  Note that the page numbering
         convention is from zero."""

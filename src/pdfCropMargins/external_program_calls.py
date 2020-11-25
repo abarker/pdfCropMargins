@@ -157,8 +157,9 @@ def glob_pathname(path, exact_num_args=False, windows_only=False):
         return [path]
     globbed = glob.glob(path)
     if not globbed: # Empty list of matching paths.
-        print("\nWarning in pdfCropMargins: The wildcards in the path\n   "
-              + path + "\nfailed to expand.  Treating as literal.", file=sys.stderr)
+        #print("\nWarning in pdfCropMargins: Any wildcards in the path\n   "
+        #      + path + "\nfailed to expand; no matching glob.  Treating as "
+        #      "literal.", file=sys.stderr)
         globbed = [path]
     if exact_num_args and len(globbed) != exact_num_args:
         print("\nError in pdfCropMargins: The wildcards in the path\n   "

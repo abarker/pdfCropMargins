@@ -59,7 +59,7 @@ import textwrap
 
 from . import __version__
 from . import external_program_calls as ex
-from . pymupdf_routines import has_mupdf, DocumentPages
+from . pymupdf_routines import has_mupdf, MuPdfDocument
 
 if not has_mupdf:
     print("\nError in pdfCropMargins: The GUI feature requires PyMuPDF"
@@ -307,7 +307,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Set up the document and window.
     ##
 
-    document_pages = DocumentPages(args)
+    document_pages = MuPdfDocument(args)
     num_pages = document_pages.open_document(fixed_input_doc_fname)
     curr_page = 0
 
