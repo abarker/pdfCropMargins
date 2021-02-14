@@ -76,22 +76,25 @@ if has_mupdf:
                       .format(doc_fname), file=sys.stderr)
                 ex.cleanup_and_exit(1)
 
+            if not hasattr(self.document, "is_encrypted"): # TODO: Temporary workaround, PyMuPDF renaming.
+                self.document.is_encrypted = self.document.isEncrypted # Version 1.17 vs. version 1.18.
+
             # Decrypt if necessary.
-            if self.document.isEncrypted:
+            if self.document.is_encrypted:
                 if self.args.password:
                     # Return code is positive for success, negative for failure. If positive,
                     #   bit 0 set = no password required
                     #   bit 1 set = user password authenticated
                     #   bit 2 set = owner password authenticated
                     authenticate_code = self.document.authenticate(self.args.password)
-                    if self.document.isEncrypted:
+                    if self.document.is_encrypted:
                         print("\nError in pdfCropMargins: The document was not correctly "
                               "decrypted by PyMuPDF using the password passed in.",
                               file=sys.stderr)
                         ex.cleanup_and_exit(1)
                 else: # Try an empty password.
                     authenticate_code = self.document.authenticate("")
-                    if self.document.isEncrypted:
+                    if self.document.is_encrypted:
                         print("\nError in pdfCropMargins: The document is encrypted "
                               "and the empty password does not work.  Try passing in a "
                               "password with the '--password' option.",
