@@ -658,7 +658,7 @@ cmd_parser.add_argument("-mo", "--modifyOriginal", action="store_true", help="""
    customize the generated backup filename.  This operation is performed last,
    so if a previous operation fails the original document will be unchanged.
    Be warned that running pdfCropMargins twice on the same source filename will
-   modify the original file; the '-noclobberOriginal' option can be used to
+   modify the original file; the '--noclobberOriginal' option can be used to
    avoid this.^^n""")
 
 cmd_parser.add_argument("-q", "--queryModifyOriginal", action="store_true",
