@@ -96,17 +96,22 @@ def generate_default_filename(infile_path, is_cropped_file=True):
     (or will be) cropped, to determine which filename-modification string to
     use.  Function assumes that args has been set globally by argparse."""
 
-    if is_cropped_file: suffix = prefix = args.stringCropped
-    else: suffix = prefix = args.stringUncropped
+    if is_cropped_file:
+        suffix = prefix = args.stringCropped
+    else:
+        suffix = prefix = args.stringUncropped
 
     # Use modified basename as output path; program writes default output to CWD.
     file_name = os.path.basename(infile_path)
-    nameBeforeExtension, extension = os.path.splitext(file_name)
-    if extension not in {".pdf", ".PDF"}: extension += ".pdf"
+    name_before_extension, extension = os.path.splitext(file_name)
+    if extension not in {".pdf", ".PDF"}:
+        extension += ".pdf"
 
     sep = args.stringSeparator
-    if args.usePrefix: name = prefix + sep + nameBeforeExtension + extension
-    else: name = nameBeforeExtension + sep + suffix + extension
+    if args.usePrefix:
+        name = prefix + sep + name_before_extension + extension
+    else:
+        name = name_before_extension + sep + suffix + extension
 
     return name
 
