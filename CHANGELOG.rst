@@ -3,6 +3,22 @@
 History
 =======
 
+1.0.4 (2021-02-XX)
+------------------
+
+New features:
+
+* The output file path specified by the ``--outfile`` (``-o``) option can now
+  be a directory.  In that case all output files will be written to that
+  directory using the default-generated names.  The ``--modifyOriginal``
+  (``--mo``) option will also use the directory part of any output path
+  provided for the backup of the original.
+
+Bug fixes:
+
+* The ``--modifyOriginal`` (``-mo``) option now modifies the original file
+  even if it is in a different directory than the output file.
+
 1.0.3 (2021-02-14)
 ------------------
 

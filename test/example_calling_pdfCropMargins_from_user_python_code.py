@@ -9,16 +9,20 @@ from __future__ import print_function, division, absolute_import
 import sys
 import os
 
-bin_dir = os.path.dirname(os.path.realpath(os.path.expanduser( __file__)))
-package_dir = os.path.abspath(os.path.join(bin_dir, "..", "src"))
-sys.path.insert(0, package_dir)
+#bin_dir = os.path.dirname(os.path.realpath(os.path.expanduser( __file__)))
+#package_dir = os.path.abspath(os.path.join(bin_dir, "..", "src"))
+#sys.path.insert(0, package_dir)
 from pdfCropMargins import crop
 
-try:
-    crop(["~/papersToRead/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-Zv"])
-except BaseException as e:
-    print("\nBad command args!  Exception is:\n", e, sep="")
+try: # Catch an exception, in this case a bad argument.
+    crop(["$tpdfc/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-Zv"])
+except BaseException as e: # Note BaseException is needed to catch a SystemExit.
+    print("\nException running pdfCropMargins:\n   ", e, sep="")
 
-crop(["~/papersToRead/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf", "-gui", "-pf", "-v"])
-crop(["~/papersToRead/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-pf", "-v"])
+crop(["$tpdfc/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf", "-gui", "-pf", "-v"])
+crop(["$tpdfc/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-pf", "-v"])
+
+crop(['-ap', '12', '-p', '15', '-u', '-mo', '-su', 'old', "-pf", "-v",
+      "-o", "/tmp/egg.pdf",
+      '$tpdfc/tmp/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf'])
 

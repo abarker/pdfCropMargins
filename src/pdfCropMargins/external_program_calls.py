@@ -111,8 +111,8 @@ def get_directory_location():
     return get_canonical_absolue_expanded_dirname(directory_locator.__file__)
 
 def get_expanded_path(path):
-    """Get the canonical form of the absolute path from a possibly relative path
-    (which may have symlinks, etc.)"""
+    """Expand the user ('~') or any shell variables in the path and return
+    it."""
     return os.path.expandvars(os.path.expanduser(path))
 
 def get_canonical_absolute_expanded_path(path):

@@ -90,11 +90,30 @@ args = None # Global set during cmd-line processing (since almost all funs use i
 ## Begin general function definitions.
 ##
 
-def generate_default_filename(infile_path, is_cropped_file=True):
-    """Generate the name of the default output file from the name of the input
-    file.  The is_cropped_file boolean is used to indicate that the file has been
+def generate_output_filepath(infile_path, is_cropped_file=True,
+                             ignore_output_filename=False):
+    """Generate the name of the output file from the name of the input file and
+    any relevant options selected.
+
+    The `is_cropped_file` boolean is used to indicate that the file has been
     (or will be) cropped, to determine which filename-modification string to
-    use.  Function assumes that args has been set globally by argparse."""
+    use.
+
+    If `ignore_output_filename` is true then only the directory path of any
+    passed-in output path is used in the generated paths.
+
+    The function assumes that `args` has been set globally by argparse."""
+    outfile_dir = os.getcwd() # The default output directory is the CWD.
+    if args.outfile:
+        globbed_outpath = ex.glob_pathname(args.outfile[0], exact_num_args=1)[0]
+        expanded_globbed_outpath = ex.get_expanded_path(globbed_outpath)
+        if os.path.isdir(expanded_globbed_outpath): # Output directory was passed in.
+            outfile_dir = expanded_globbed_outpath
+        else: # Full output path with filename was passed in.
+            if ignore_output_filename: # Just use the dir, not the filename.
+                outfile_dir = os.path.dirname(expanded_globbed_outpath)
+            else: # Return the provided path directly.
+                return expanded_globbed_outpath
 
     if is_cropped_file:
         suffix = prefix = args.stringCropped
@@ -113,6 +132,7 @@ def generate_default_filename(infile_path, is_cropped_file=True):
     else:
         name = name_before_extension + sep + suffix + extension
 
+    name = os.path.join(outfile_dir, name)
     return name
 
 def parse_page_range_specifiers(spec_string, all_page_nums):
@@ -816,38 +836,35 @@ def process_command_line_arguments(parsed_args):
     # Process input and output filenames.
     #
 
-    input_doc_fname = args.pdf_input_doc[0]
-    input_doc_fname = ex.get_expanded_path(input_doc_fname) # Expand vars and user.
-    input_doc_fname = ex.glob_pathname(input_doc_fname, exact_num_args=1)[0]
-    if not input_doc_fname.endswith((".pdf",".PDF")):
+    input_doc_path = args.pdf_input_doc[0]
+    input_doc_path = ex.get_expanded_path(input_doc_path) # Expand vars and user.
+    input_doc_path = ex.glob_pathname(input_doc_path, exact_num_args=1)[0]
+    if not input_doc_path.endswith((".pdf",".PDF")):
         print("\nWarning in pdfCropMargins: The file extension is neither '.pdf'"
               "\nnor '.PDF'; continuing anyway.", file=sys.stderr)
     if args.verbose:
-        print("\nThe input document's filename is:\n   ", input_doc_fname)
-    if not os.path.isfile(input_doc_fname):
+        print("\nThe input document's filename is:\n   ", input_doc_path)
+    if not os.path.isfile(input_doc_path):
         print("\nError in pdfCropMargins: The specified input file\n   "
-              + input_doc_fname + "\nis not a file or does not exist.",
+              + input_doc_path + "\nis not a file or does not exist.",
               file=sys.stderr)
         ex.cleanup_and_exit(1)
 
-    if not args.outfile:
-        if args.verbose:
-            print("\nUsing the default-generated output filename.")
-        output_doc_fname = generate_default_filename(input_doc_fname)
-    else:
-        output_doc_fname = args.outfile[0]
+    if not args.outfile and args.verbose:
+        print("\nUsing the default-generated output filename.")
 
-    output_doc_fname = ex.get_expanded_path(output_doc_fname)
+    output_doc_path = generate_output_filepath(input_doc_path)
     if args.verbose:
-        print("\nThe output document's filename will be:\n   ", output_doc_fname)
+        print("\nThe output document's filename will be:\n   ", output_doc_path)
 
-    if os.path.lexists(output_doc_fname) and args.noclobber:
+    if os.path.lexists(output_doc_path) and args.noclobber:
+        # Note lexists above, don't overwrite broken symbolic links, either.
         print("\nOption '--noclobber' is set, refusing to overwrite an existing"
-              "\nfile with filename:\n   ", output_doc_fname, file=sys.stderr)
+              "\nfile with filename:\n   ", output_doc_path, file=sys.stderr)
         ex.cleanup_and_exit(1)
 
-    if os.path.lexists(output_doc_fname) and ex.samefile(input_doc_fname,
-                                                                output_doc_fname):
+    if os.path.lexists(output_doc_path) and ex.samefile(input_doc_path,
+                                                                output_doc_path):
         print("\nError in pdfCropMargins: The input file is the same as"
               "\nthe output file.\n", file=sys.stderr)
         ex.cleanup_and_exit(1)
@@ -1006,11 +1023,11 @@ def process_command_line_arguments(parsed_args):
     if args.gsFix:
         if args.verbose:
             print("\nAttempting to fix the PDF input file before reading it...")
-        fixed_input_doc_fname = ex.fix_pdf_with_ghostscript_to_tmp_file(input_doc_fname)
+        fixed_input_doc_fname = ex.fix_pdf_with_ghostscript_to_tmp_file(input_doc_path)
     else:
-        fixed_input_doc_fname = input_doc_fname
+        fixed_input_doc_fname = input_doc_path
 
-    return input_doc_fname, fixed_input_doc_fname, output_doc_fname
+    return input_doc_path, fixed_input_doc_fname, output_doc_path
 
 def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                      bounding_box_list=None):
@@ -1351,36 +1368,38 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
     # Handle the '--modifyOriginal' option.
     final_output_document_name = output_doc_fname
     if args.modifyOriginal:
-        generated_uncropped_filename = generate_default_filename(input_doc_fname,
-                                                                 is_cropped_file=False)
+        # Generate the backup filename for the original, uncropped file.
+        generated_uncropped_filepath = generate_output_filepath(input_doc_fname,
+                                                                is_cropped_file=False,
+                                                                ignore_output_filename=True)
 
-        # Remove any existing file with the name generated_uncropped_filename unless a
-        # relevant noclobber option is set or it isn't a file.
-        if os.path.exists(generated_uncropped_filename):
-            if (os.path.isfile(generated_uncropped_filename)
+        # Remove any existing file with the name `generated_uncropped_filename` unless
+        # the relevant noclobber option is set, or it isn't a file.
+        if os.path.exists(generated_uncropped_filepath):
+            if (os.path.isfile(generated_uncropped_filepath)
                     and not args.noclobberOriginal and not args.noclobber):
                 if args.verbose:
-                    print("\nRemoving the file\n   ", generated_uncropped_filename)
+                    print("\nRemoving the file\n   ", generated_uncropped_filepath)
                 try:
-                    os.remove(generated_uncropped_filename)
+                    os.remove(generated_uncropped_filepath)
                 except OSError:
                     print("Removing the file {} failed.  Maybe a permission error?"
                           "\nFiles are as if option '--modifyOriginal' were not set."
-                          .format(generated_uncropped_filename))
+                          .format(generated_uncropped_filepath))
                     args.modifyOriginal = False # Failed.
             else:
                 print("\nA noclobber option is set or else not a file; refusing to"
-                    " overwrite:\n   ", generated_uncropped_filename,
+                    " overwrite:\n   ", generated_uncropped_filepath,
                     "\nFiles are as if option '--modifyOriginal' were not set.",
                     file=sys.stderr)
                 args.modifyOriginal = False # Failed.
 
         # Move the original file to the name for uncropped files.  Silently do nothing
         # if the file exists (should have been removed above).
-        if not os.path.exists(generated_uncropped_filename):
+        if not os.path.exists(generated_uncropped_filepath):
             if args.verbose: print("\nDoing a file move:\n   ", input_doc_fname,
-                                   "\nis moving to:\n   ", generated_uncropped_filename)
-            shutil.move(input_doc_fname, generated_uncropped_filename)
+                                   "\nis moving to:\n   ", generated_uncropped_filepath)
+            shutil.move(input_doc_fname, generated_uncropped_filepath)
 
         # Move the cropped file to the original file's name.  Silently do nothing if
         # the file exists (should have been moved above).

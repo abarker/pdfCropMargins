@@ -144,7 +144,7 @@ Description:
 
         pdf-crop-margins -ap 5 -p 50 doc.pdf
 
-     7) Crop doc.pdf, re-naming the cropped output file doc.pdf and backing
+     7) Crop doc.pdf, re-naming the cropped output file to doc.pdf and backing
      up the original file in a file named backup_doc.pdf.
 
         pdf-crop-margins -mo -pf -su "backup" doc.pdf
@@ -268,18 +268,22 @@ cmd_parser.add_argument("pdf_input_doc", nargs="+", metavar="PDF_FILE", help="""
    directory at the time when the program was run.  If the input file has no
    extension or has an extension other than '.pdf' or '.PDF' then the suffix
    '.pdf' will be appended to the existing (possibly-null) extension.  Globbing
-   of wildcards is performed on Windows systems.^^n""")
+   of wildcards and shell variable expansions are performed on the path.^^n""")
 
-cmd_parser.add_argument("-o", "--outfile", nargs=1, metavar="OUTFILE_NAME",
-                        default=[], help="""
+cmd_parser.add_argument("-o", "--outfile", nargs=1,
+                        metavar="OUTFILE_PATH_OR_DIR", default=[], help="""
 
-   An optional argument specifying the pathname of a file that the cropped
-   output document should be written to.  By default any existing file with the
-   same name will be silently overwritten.  If this option is not given the
-   program will generate an output filename from the input filename.  (By
-   default "_cropped" is appended to the input filename before the file
-   extension.  If the extension is not '.pdf' or '.PDF' then '.pdf' is appended
-   to the extension).  Globbing of wildcards is performed on Windows systems.^^n""")
+   An optional argument specifying the directory or file path that the cropped
+   output document should be written to.  If this option is not given the
+   program will generate an output filename from the input filename and write
+   to the current working directory.  By default the string "_cropped" is
+   appended to the input filename just before the file extension.  (If the
+   extension is not '.pdf' or '.PDF' then '.pdf' is also appended to the
+   extension.)  The options '--usePrefix', '--stringCropped' and
+   '--stringSeparator' can be used to customize the generated filenames.  By
+   default any existing file with the same name will be silently overwritten;
+   this can be avoided with the '--noclobber' option.  Globbing of wildcards
+   and shell variable expansions are performed on the path.^^n""")
 
 cmd_parser.add_argument("-v", "--verbose", action="store_true", help="""
 
@@ -627,7 +631,7 @@ cmd_parser.add_argument("-gsf", "--gsFix", action="store_true", help="""
 
 cmd_parser.add_argument("-nc", "--noclobber", action="store_true", help="""
 
-   Never overwrite an existing file as the output file.^^n""")
+   Never overwrite an existing file with the cropped output file.^^n""")
 
 cmd_parser.add_argument("-pv", "--preview", metavar="PROG", help="""
 
@@ -647,29 +651,32 @@ cmd_parser.add_argument("-pv", "--preview", metavar="PROG", help="""
 
 cmd_parser.add_argument("-mo", "--modifyOriginal", action="store_true", help="""
 
-   This option moves (renames) the original file to a backup filename and then
-   moves the cropped file to the original filename.  Thus it effectively
-   modifies the original file and makes a backup copy of the original,
-   unmodified file.  The backup filename for the original document is always
+   This option moves (renames) the original document file to a backup filename
+   and then moves the cropped file to the original document's filename (and
+   directory path).  Thus it effectively crops the original document file
+   in-place and makes a backup copy of the original file in the output
+   directory.  The backup filename for the original document is always
    generated from the original filename; any prefix or suffix which would be
    added by the program to generate a filename (by default a "_cropped" suffix)
    is modified accordingly (by default to "_uncropped").  The '--usePrefix',
    '--stringUncropped', and '--stringSeparator' options can all be used to
-   customize the generated backup filename.  This operation is performed last,
-   so if a previous operation fails the original document will be unchanged.
-   Be warned that running pdfCropMargins twice on the same source filename will
-   modify the original file; the '--noclobberOriginal' option can be used to
-   avoid this.^^n""")
+   customize the generated backup filename.  If an output path is specified via
+   the '--outfile' ('-o') option then the backup document is written to that
+   directory (the same directory the cropped file was first written to).  This
+   operation is performed last, so if a previous operation fails the original
+   document will be unchanged.  Be warned that running pdfCropMargins twice on
+   the same source path with this option will modify the backed-up original
+   file; the '--noclobberOriginal' option can be used to avoid this.^^n""")
 
 cmd_parser.add_argument("-q", "--queryModifyOriginal", action="store_true",
                         help="""
 
    This option selects the '--modifyOriginal' option, but queries the user
    about whether to actually do the final move operation.  This works well with
-   the '--preview' option: if the preview looks good you can opt to modify the
-   original file (keeping a copy of the original). If you decline then the
-   files are not swapped (and are just as if the '--modifyOriginal' option had
-   not been set).^^n""")
+   the '--preview' or '--gui' options: if the preview looks good you can opt to
+   modify the original file (keeping a copy of the original). If you decline
+   then the files are not swapped (and are just as if the '--modifyOriginal'
+   option had not been set).^^n""")
 
 cmd_parser.add_argument("-nco", "--noclobberOriginal", action="store_true",
                         help="""
@@ -710,7 +717,7 @@ cmd_parser.add_argument("-ss", "--stringSeparator", default="_", metavar="STR",
                         help="""
 
    This option can be used to set the separator string which will be used when
-   appending or prependeding string values to automatically generate filenames.
+   appending or prepending string values to automatically generate filenames.
    The default value is "_".^^n""")
 
 cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
