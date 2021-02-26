@@ -105,15 +105,17 @@ def generate_output_filepath(infile_path, is_cropped_file=True,
     The function assumes that `args` has been set globally by argparse."""
     outfile_dir = os.getcwd() # The default output directory is the CWD.
     if args.outfile:
-        globbed_outpath = ex.glob_pathname(args.outfile[0], exact_num_args=1)[0]
-        expanded_globbed_outpath = ex.get_expanded_path(globbed_outpath)
         if os.path.isdir(expanded_globbed_outpath): # Output directory was passed in.
+            globbed_outpath = ex.glob_pathname(args.outfile[0], exact_num_args=1)[0]
+            expanded_globbed_outpath = ex.get_expanded_path(globbed_outpath)
             outfile_dir = expanded_globbed_outpath
         else: # Full output path with filename was passed in.
-            if ignore_output_filename: # Just use the dir, not the filename.
-                outfile_dir = os.path.dirname(expanded_globbed_outpath)
-            else: # Return the provided path directly.
-                return expanded_globbed_outpath
+            # Note that globbing and expansion is only done on the directory part.
+            outfile_dir, outfile_name = os.path.split(args.outfile[0])
+            outfile_dir = ex.glob_pathname(outfile_dir, exact_num_args=1)[0]
+            outfile_dir = ex.get_expanded_path(outfile_dir)
+            if not ignore_output_filename: # Combine and return the dir and the filename.
+                return os.path.join(outfile_dir, outfile_name)
 
     if is_cropped_file:
         suffix = prefix = args.stringCropped

@@ -283,7 +283,8 @@ cmd_parser.add_argument("-o", "--outfile", nargs=1,
    '--stringSeparator' can be used to customize the generated filenames.  By
    default any existing file with the same name will be silently overwritten;
    this can be avoided with the '--noclobber' option.  Globbing of wildcards
-   and shell variable expansions are performed on the path.^^n""")
+   and shell variable expansions are performed on the directory path but not on
+   the filename part.^^n""")
 
 cmd_parser.add_argument("-v", "--verbose", action="store_true", help="""
 
