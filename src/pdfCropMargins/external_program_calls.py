@@ -162,8 +162,9 @@ def glob_pathname(path, exact_num_args=False, windows_only=False):
         #      "literal.", file=sys.stderr)
         globbed = [path]
     if exact_num_args and len(globbed) != exact_num_args:
-        print("\nError in pdfCropMargins: The wildcards in the path\n   "
-              + path + "\nexpand to the wrong number of files.", file=sys.stderr)
+        print("\nError in pdfCropMargins: The wildcards in the path\n   {}"
+              "\nexpand to the wrong number of files ({} instead of {})."
+              .format(path, len(globbed), exact_num_args), file=sys.stderr)
         cleanup_and_exit(1)
     return globbed
 
