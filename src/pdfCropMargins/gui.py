@@ -953,6 +953,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         image_element.Update(data=data)
 
     window.Close()
+    document_pages.close_document() # Be sure document is closed (bug with -mo without this).
     return did_crop
 
 #
