@@ -15,14 +15,23 @@ import os
 from pdfCropMargins import crop
 
 try: # Catch an exception, in this case a bad argument.
-    crop(["$tpdfc/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-Zv"])
+    crop(["$tpdfc/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-Zv"],
+            string_io=True)
 except BaseException as e: # Note BaseException is needed to catch a SystemExit.
     print("\nException running pdfCropMargins:\n   ", e, sep="")
 
-crop(["$tpdfc/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf", "-gui", "-pf", "-v"])
-crop(["$tpdfc/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-pf", "-v"])
+#crop(["$tpdfc/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf", "-gui", "-pf", "-v"])
+#crop(["$tpdfc/dimethylethanolamine-DMAE-andSelectedSaltsAndEsters_2002.pdf", "-gui", "-pf", "-v"])
 
-crop(['-ap', '12', '-p', '15', '-u', '-mo', '-su', 'old', "-pf", "-v",
-      "-o", "/tmp/egg.pdf",
-      '$tpdfc/tmp/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf'])
+# Run capturing any SystemExit exit code and the string output.
+exit_code, stdout, stderr = crop(
+        ['-ap', '12', '-p', '15', '-u', '-mo', '-su', 'old', "-pf", "-v",
+         "-o", "/tmp/egg.pdf",
+         '$tpdfc/tmp/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf'],
+         string_io=True
+      )
+
+print("exit_code:\n   ", exit_code)
+print("stdout:\n   ", stdout)
+print("stderr:\n   ", stderr)
 

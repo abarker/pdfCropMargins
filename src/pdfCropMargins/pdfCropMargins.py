@@ -32,6 +32,7 @@ another as a graphic.  Many options are available.
 from __future__ import print_function, division, absolute_import
 import sys
 import signal
+import io
 
 def main():
     """Crop with the arguments in `sys.argv`, catching any exceptions and cleaning
@@ -59,8 +60,9 @@ def main():
     except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
               file=sys.stderr)
-    except SystemExit:
-        exit_code = int(str(sys.exc_info()[1])) # The number sys.exit(n) called with.
+    except SystemExit as e:
+        #exit_code = int(str(sys.exc_info()[1])) # The number sys.exit(n) called with.
+        exit_code = e.code
         print()
     except:
         # Echo back the unexpected error so the user can see it.
@@ -83,15 +85,37 @@ def main():
             except (KeyboardInterrupt, EOFError):
                 continue
 
-def crop(argv_list=None):
+def crop(argv_list=None, string_io=False):
     """Crop the PDF file using the arguments specified in `sys.argv`.  If a list is
     passed as `argv_list` then it is used instead of `sys.argv`.  This function
-    can be called as a library routine of the `pdfCropMargins` package."""
-    # Imports are done here so that when called as a library routine
+    can be called as a library routine of the `pdfCropMargins` package.
+
+    If `string_stdout` is true then the function will temporarily capture the
+    output of stdout and stderr and return a pair of strings (resetting the
+    previous stdout and stderr)."""
+    # Imports are done here so that when `crop` is called as a library routine
     # the caller can handle any `KeyboardInterrupt`, `SystemExit`, or other
-    # exceptions.
+    # exceptions that might occur during to the imports.
     from .external_program_calls import create_temporary_directory
     from .main_pdfCropMargins import main_crop
-    with create_temporary_directory():
-        main_crop(argv_list)
+
+    exit_code = 0
+
+    if string_io:
+        try: # Redirect stdout and stderr temporarily.
+            old_sys_stdout, old_sys_stderr = sys.stdout, sys.stderr
+            sys.stdout, sys.stderr = io.StringIO(), io.StringIO()
+            with create_temporary_directory():
+                main_crop(argv_list)
+        except Exception as e:
+            raise # TODO: Maybe set stdout_str and stderr_str as attrs of e or print them.
+        except SystemExit as e:
+            exit_code = e.code
+        finally: # Restore stdout and stderr.
+            stdout_str, stderr_str = sys.stdout.getvalue(), sys.stderr.getvalue()
+            sys.stdout, sys.stderr = old_sys_stdout, old_sys_stderr
+        return exit_code, stdout_str, stderr_str
+    else:
+        with create_temporary_directory():
+            main_crop(argv_list)
 
