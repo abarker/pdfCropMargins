@@ -37,7 +37,11 @@ import io
 def main():
     """Crop with the arguments in `sys.argv`, catching any exceptions and cleaning
     up the temp directory.  Called as the entry point for `pdf-crop-margins` script.
-    Only use for running as a standalone script."""
+    Only use for running as a standalone script.
+
+    This function calls the `crop` routine that is the exposed API of pdfCropMargins
+    but adds checks for various exceptions and signals in order to work robustuly as
+    a command-line application."""
     cleanup_and_exit = sys.exit # Function to exit (in finally) before the import.
     exit_code = 0
 
@@ -49,9 +53,7 @@ def main():
         from .main_pdfCropMargins import main_crop
 
         # Call cleanup_and_exit at system exit, even with signal kills.
-        # Note SIGINT for Ctrl-C is already handled fine by the finally.
-        # (This signal-catching is probably no longer be needed for cleanup now that the
-        # temp dir is created with a context manager, but it gives nicer exit messages.)
+        # Note SIGINT for Ctrl-C is already handled by the except/finally.
         for s in ["SIGABRT", "SIGTERM", "SIGHUP"]:
             if hasattr(signal, s): # Not all systems define the same signals.
                 signal.signal(getattr(signal, s), cleanup_and_exit)
@@ -77,45 +79,102 @@ def main():
         traceback.print_tb(sys.exc_info()[2], limit=max_traceback_length)
         # raise
     finally:
-        # Clean up the temp file directory.  Note some people like to hit multiple
-        # ^C chars, which kills cleanup.  The loop calls cleanup again each time.
-        for i in range(30): # Give up after 30 tries.
+        for i in range(20): # Loop to be sure to catch multiple Ctrl-C exceptions.
             try:
                 cleanup_and_exit(exit_code)
-            except (KeyboardInterrupt, EOFError):
+                break
+            except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
                 continue
 
-def crop(argv_list=None, string_io=False):
+class CapturingTextStream:
+    """This class allows stdout and stderr to be temporarily redefined to capture
+    the output (and to optionally quiet it)."""
+    def __init__(self, outstream, quiet=True):
+        """Will usually be passed `sys.stdout` or `sys.stderr` and an `IOStream` as
+        arguments."""
+        self.quiet = quiet
+        self.outstream = outstream
+        self.stringio = io.StringIO()
+
+    def write(self, s):
+        stringio_retval = self.stringio.write(s)
+        if not self.quiet:
+            pass
+            return self.outstream.write(s)
+        return stringio_retval
+
+    def getvalue(self):
+        return self.stringio.getvalue()
+
+    def __getattr__(self, attr):
+        return getattr(self.outstream, attr)
+
+
+def crop(argv_list=None, quiet=False, string_io=False):
     """Crop the PDF file using the arguments specified in `sys.argv`.  If a list is
     passed as `argv_list` then it is used instead of `sys.argv`.  This function
-    can be called as a library routine of the `pdfCropMargins` package.
+    can be called as a library routine for running the `pdfCropMargins` program.
 
-    If `string_stdout` is true then the function will temporarily capture the
-    output of stdout and stderr and return a pair of strings (resetting the
-    previous stdout and stderr)."""
+    The function returns three values.  The first return value is either `None`
+    or, in the event of a `SystemExit` exception, the exit code.  (A
+    `SystemExit` is the usual way pdfCropMargins exits.)  The second two
+    arguments always have `None` values unless either the `string_io` or the
+    `quiet` keyword option is set true (see below).
+
+    The `string_io` and `quiet` keyword options, if either is selected,
+    temporarily redefine `sys.stdout` and `sys.stderr` to intercept the usual
+    print commands from pdfCropMargins and save the text as strings.  If
+    `string_io` is true then the second two return values are strings holding
+    the stdout and stderr output, respectively.  If `quiet` is true then no
+    echoing to stdout or stderr is performed while pdfCropMargins runs.  The
+    `quiet` option implies the `string_io` option, so the string values are
+    returned in both cases.
+
+    The pdfCropMargins program normally raises `SystemExit` on correct
+    operation or for error conditions which are detected and handled.  The
+    `crop` function catches `SystemExit` and returns the error code.  The
+    `stderr` string value may be needed to diagnose the cause of a nonzero exit
+    code if `quiet` is set true.
+
+    Unexpected exits, such as exceptions from dependencies or program bugs, can
+    still occur.  Such exceptions are passed up to the caller.  Similarly,
+    interrupts are not trapped or handled in the `crop` function."""
+
     # Imports are done here so that when `crop` is called as a library routine
     # the caller can handle any `KeyboardInterrupt`, `SystemExit`, or other
     # exceptions that might occur during to the imports.
-    from .external_program_calls import create_temporary_directory
+    from .external_program_calls import (create_temporary_directory,
+                                         uninterrupted_remove_program_temp_directory)
     from .main_pdfCropMargins import main_crop
 
-    exit_code = 0
+    exit_code = None
 
-    if string_io:
-        try: # Redirect stdout and stderr temporarily.
-            old_sys_stdout, old_sys_stderr = sys.stdout, sys.stderr
-            sys.stdout, sys.stderr = io.StringIO(), io.StringIO()
-            with create_temporary_directory():
-                main_crop(argv_list)
-        except Exception as e:
-            raise # TODO: Maybe set stdout_str and stderr_str as attrs of e or print them.
-        except SystemExit as e:
-            exit_code = e.code
-        finally: # Restore stdout and stderr.
-            stdout_str, stderr_str = sys.stdout.getvalue(), sys.stderr.getvalue()
-            sys.stdout, sys.stderr = old_sys_stdout, old_sys_stderr
-        return exit_code, stdout_str, stderr_str
-    else:
-        with create_temporary_directory():
-            main_crop(argv_list)
+    try:
+        if string_io or quiet:
+            try: # Redirect stdout and stderr temporarily.
+                old_sys_stdout, old_sys_stderr = sys.stdout, sys.stderr
+                #sys.stdout, sys.stderr = io.StringIO(), io.StringIO()
+                sys.stdout = CapturingTextStream(sys.stdout, quiet=quiet)
+                sys.stderr = CapturingTextStream(sys.stderr, quiet=quiet)
+                with create_temporary_directory():
+                    main_crop(argv_list)
+            except Exception as e:
+                raise # TODO: Maybe set stdout_str and stderr_str as attrs of e or print them.
+            except SystemExit as e:
+                exit_code = e.code
+            finally: # Restore stdout and stderr.
+                stdout_str, stderr_str = sys.stdout.getvalue(), sys.stderr.getvalue()
+                sys.stdout, sys.stderr = old_sys_stdout, old_sys_stderr
+            return exit_code, stdout_str, stderr_str
+        else:
+            try:
+                with create_temporary_directory():
+                    main_crop(argv_list)
+            except SystemExit as e:
+                exit_code = e.code
+            return exit_code, None, None
+
+    finally: # In case race conditions prevent execution of the context manager __exit__.
+        for i in range(10):
+            uninterrupted_remove_program_temp_directory()
 

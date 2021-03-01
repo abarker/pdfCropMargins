@@ -37,6 +37,7 @@ import shutil
 import time
 import contextlib
 import platform
+import threading
 
 WINDOWS_GS64_GLOB = r"C:\Program Files*\gs\gs*\bin\gswin64c.exe"
 WINDOWS_GS32_GLOB = r"C:\Program Files*\gs\gs*\bin\gswin32c.exe"
@@ -216,7 +217,7 @@ def create_temporary_directory():
     try:
         yield program_temp_directory
     finally:
-        remove_program_temp_directory()
+        uninterrupted_remove_program_temp_directory()
         program_temp_directory = None
         gs_environment["TMPDIR"] = None
 
@@ -239,14 +240,26 @@ def remove_program_temp_directory():
                 print("Cleaning up temp dir...", file=sys.stderr)
                 raise
 
+# This thread is setup outside the function below because an interrupt might
+# occur during the thread's setup time.  Probably overkill, but it doesn't hurt.
+t = threading.Thread(target=remove_program_temp_directory, args=())
+
+def uninterrupted_remove_program_temp_directory():
+    """Call the cleanup function `remove_program_temp_directory` as a thread
+    so it is not halted by interrupts."""
+    global t
+    t.start()
+    t.join()
+    t = threading.Thread(target=remove_program_temp_directory, args=())
+
 def cleanup_and_exit(exit_code, stack_frame=None):
     """Exit the program, after cleaning up the temporary directory.  The `stack_frame`
     argument is for when `signal.signal` calls the function.  The returned `exit_code`
     is the signal number."""
+    uninterrupted_remove_program_temp_directory()
     if stack_frame is not None:
         print("\nThe process of pdf-crop-margins was killed by signal {}..."
                 .format(exit_code), file=sys.stderr)
-    remove_program_temp_directory()
     sys.exit(exit_code)
 
 
