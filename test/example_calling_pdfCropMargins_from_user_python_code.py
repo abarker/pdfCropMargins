@@ -35,7 +35,7 @@ try:
     # Run capturing any SystemExit exit code and the string output.
     exit_code, stdout, stderr = crop(
             ['-ap', '12', '-p', '15', '-u', '-mo', '-su', 'old', "-pf", "-v",
-             "-o", "/tmp/egg.pdf", "-pg",
+             "-o", "/tmp/egg.pdf",
              '$tpdfc/tmp/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf'],
              string_io=True, quiet=True
           )
