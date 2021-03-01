@@ -175,6 +175,5 @@ def crop(argv_list=None, quiet=False, string_io=False):
             return exit_code, None, None
 
     finally: # In case race conditions prevent execution of the context manager __exit__.
-        for i in range(10):
-            uninterrupted_remove_program_temp_directory()
+        uninterrupted_remove_program_temp_directory()
 
