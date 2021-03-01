@@ -3,7 +3,7 @@
 History
 =======
 
-1.0.4 (2021-02-XX)
+1.0.4 (2021-03-01)
 ------------------
 
 New features:
@@ -18,6 +18,9 @@ Bug fixes:
 
 * The ``--modifyOriginal`` (``-mo``) option now modifies the original file
   even if it is in a different directory than the output file.
+
+* A file permission/access problem in Windows that occurred with some option
+  combinations was fixed.
 
 1.0.3 (2021-02-14)
 ------------------

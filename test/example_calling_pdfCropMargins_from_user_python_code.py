@@ -8,10 +8,15 @@ Simple test of calling pdfCropMargins from a user Python script.
 from __future__ import print_function, division, absolute_import
 import sys
 import os
+import platform
 
-#bin_dir = os.path.dirname(os.path.realpath(os.path.expanduser( __file__)))
-#package_dir = os.path.abspath(os.path.join(bin_dir, "..", "src"))
-#sys.path.insert(0, package_dir)
+test_installed_package = True
+
+if not test_installed_package:
+    bin_dir = os.path.dirname(os.path.realpath(os.path.expanduser( __file__)))
+    package_dir = os.path.abspath(os.path.join(bin_dir, "..", "src"))
+    sys.path.insert(0, package_dir)
+
 from pdfCropMargins import crop
 
 try: # Catch an exception, in this case a bad argument.
@@ -29,10 +34,10 @@ exit_code, stdout, stderr = None, None, None
 try:
     # Run capturing any SystemExit exit code and the string output.
     exit_code, stdout, stderr = crop(
-            ["-h", '-ap', '12', '-p', '15', '-u', '-mo', '-su', 'old', "-pf", "-v",
-             "-o", "/tmp/egg.pdf", "-pg", "9-0",
+            ['-ap', '12', '-p', '15', '-u', '-mo', '-su', 'old', "-pf", "-v",
+             "-o", "/tmp/egg.pdf", "-pg",
              '$tpdfc/tmp/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf'],
-             string_io=True, quiet=False
+             string_io=True, quiet=True
           )
 except BaseException as e:
     print("caught exception in test program")
