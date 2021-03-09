@@ -3,6 +3,13 @@
 History
 =======
 
+1.0.5 (2021-03-08)
+------------------
+
+Bug fixes:
+
+* Workaround for a bug related to PyMuPDF attribute naming.
+
 1.0.4 (2021-03-01)
 ------------------
 
