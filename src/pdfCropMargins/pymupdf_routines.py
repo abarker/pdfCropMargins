@@ -76,7 +76,8 @@ if has_mupdf:
                       .format(doc_fname), file=sys.stderr)
                 ex.cleanup_and_exit(1)
 
-            if not hasattr(self.document, "is_encrypted"): # TODO: Temporary workaround, PyMuPDF renaming.
+            # TODO: Temporary workaround, PyMuPDF renaming.
+            if not hasattr(self.document, "is_encrypted"):
                 self.document.is_encrypted = self.document.isEncrypted # Version 1.17 vs. version 1.18.
 
             # Decrypt if necessary.
@@ -137,21 +138,25 @@ if has_mupdf:
             else:
                 page_crop_display_list = self.document[page_num].getDisplayList()
 
+            # TODO: Temporary workaround, PyMuPDF renaming.
+            if not hasattr(page_crop_display_list, "get_pixmap"):
+                page_crop_display_list.get_pixmap = page_crop_display_list.getPixmap
+
             # https://github.com/pymupdf/PyMuPDF/issues/322 # Also info on opening in Pillow.
             # TODO: Above page also lists a faster way than getting ppm first.
 
             # Pillow Image: https://pillow.readthedocs.io/en/stable/reference/Image.html
             # Pillow modes: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes
             # PyMuPDF Pixmap: https://pymupdf.readthedocs.io/en/latest/pixmap.html#Pixmap.__init__
-            # PyMuPDF getPixmap: https://pymupdf.readthedocs.io/en/latest/page.html#Page.getPixmap
+            # PyMuPDF get_pixmap: https://pymupdf.readthedocs.io/en/latest/page.html#Page.getPixmap
 
             mat_0 = fitz.Matrix(1, 1)
             # New in PyMuPDF version 1.16.0, annots kwarg for whether to ignore them.
-            pixmap = page_crop_display_list.getPixmap(matrix=fitz.Identity,
+            pixmap = page_crop_display_list.get_pixmap(matrix=fitz.Identity,
                                                       colorspace=colorspace,
                                                       clip=None, alpha=False)
             if self.args:
-                # TODO: Is this working right?  Here, you change matrix in getPixmap:
+                # TODO: Is this working right?  Here, you change matrix in get_pixmap:
                 # https://stackoverflow.com/questions/63821179/extract-images-from-pdf-in-high-resolution-with-python
                 # Is setting actually changing the matrix?
                 resolution = self.args.resX, self.args.resY
@@ -177,6 +182,10 @@ if has_mupdf:
             if not page_display_list:  # Create if not yet there.
                 self.page_display_list_cache[page_num] = self.document[page_num].getDisplayList()
                 page_display_list = self.page_display_list_cache[page_num]
+
+            # TODO: Temporary workaround, PyMuPDF renaming.
+            if not hasattr(page_display_list, "get_pixmap"):
+                page_display_list.get_pixmap = page_display_list.getPixmap
 
             page_rect = page_display_list.rect  # The page rectangle.
             clip = page_rect
@@ -205,10 +214,10 @@ if has_mupdf:
 
                 # Clip rect is ready, now fill it.
                 mat = mat_0 * fitz.Matrix(2, 2)  # The zoom matrix.
-                pixmap = page_display_list.getPixmap(alpha=False, matrix=mat, clip=clip)
+                pixmap = page_display_list.get_pixmap(alpha=False, matrix=mat, clip=clip)
 
             else:  # Show the total page.
-                pixmap = page_display_list.getPixmap(matrix=mat_0, alpha=False)
+                pixmap = page_display_list.get_pixmap(matrix=mat_0, alpha=False)
 
             #image_png = pixmap.getPNGData()  # get the PNG image
             image_height, image_width = pixmap.height, pixmap.width
