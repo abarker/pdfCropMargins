@@ -75,10 +75,10 @@ except ImportError:
     ex.cleanup_and_exit(1)
 
 try:
-    from PyPDF2.errors import PdfReadError
+    from PyPDF2.errors import PdfReadError # Versions >= 2.0.
 except ImportError:
     try:
-        from PyPDF2.utils import PdfReadError
+        from PyPDF2.utils import PdfReadError # Versions < 2.0.
     except ImportError:
         print("\nError in pdfCropMargins: The PdfReadError exception could not"
               "\nbe found.  Try updating pdfCropMargins and/or PyPDF2 via pip.",
