@@ -48,9 +48,9 @@ with codecs.open(os.path.join(current_dir, "README.rst"), encoding="utf-8") as f
     long_description = f.read()
 
 install_requires = ["wheel",
-                    "pillow>=7.1.0; python_version>='3.0.0'", # Security issues on older.
+                    "pillow>=9.0.0; python_version>='3.0.0'", # Security issues on older.
                     #"pillow>=6.2.2,<7.0.0; python_version<'3.0.0'", # Last supporting 2.7.
-                    "PyPDF2"]
+                    "PyPDF2>=1.27.5"]
 
 # A default extras group would be nice, to have 'lite' be a light version and 'gui' be
 # the default, but not yet implemented: https://github.com/pypa/setuptools/issues/1139
