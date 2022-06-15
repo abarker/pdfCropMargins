@@ -68,12 +68,22 @@ try:
     from PyPDF2 import PdfFileWriter, PdfFileReader
     from PyPDF2.generic import (NameObject, createStringObject, RectangleObject,
                                 FloatObject, IndirectObject)
-    from PyPDF2.utils import PdfReadError
 except ImportError:
     print("\nError in pdfCropMargins: No system PyPDF2 Python package"
           "\nwas found.  Reinstall pdfCropMargins via pip or install that"
           "\ndependency ('pip install pypdf2').\n", file=sys.stderr)
     ex.cleanup_and_exit(1)
+
+try:
+    from PyPDF2.errors import PdfReadError
+except ImportError:
+    try:
+        from PyPDF2.utils import PdfReadError
+    except ImportError:
+        print("\nError in pdfCropMargins: The PdfReadError exception could not"
+              "\nbe found.  Try updating pdfCropMargins and/or PyPDF2 via pip.",
+              file=sys.stderr)
+        ex.cleanup_and_exit(1)
 
 from .calculate_bounding_boxes import get_bounding_box_list
 
