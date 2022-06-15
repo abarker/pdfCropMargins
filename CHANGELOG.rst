@@ -3,6 +3,16 @@
 History
 =======
 
+1.0.6 (2022-06-15)
+------------------
+
+Bug fixes:
+
+* Import of `PdfReadError` now tries the `errors` module and then the `utils` module.
+
+* Updated some dependency minimum versions for security reasons.
+
+
 1.0.5 (2021-03-08)
 ------------------
 

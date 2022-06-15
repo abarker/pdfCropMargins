@@ -5,7 +5,7 @@ pdfCropMargins
 
 from __future__ import print_function, division, absolute_import
 
-__version__ = "1.0.5" # major version, minor version, patch (see PEP440)
+__version__ = "1.0.6" # major version, minor version, patch (see PEP440)
 
 # The only function designed to be called from a user's Python code.
 from pdfCropMargins.pdfCropMargins import crop
