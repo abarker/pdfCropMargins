@@ -3,6 +3,15 @@
 History
 =======
 
+1.0.8 (2022-06-20)
+------------------
+
+New features:
+
+* Finalized and documented the return values and keyword arguments to the
+  ``crop`` function in the Python interface.  Now returns the output filename,
+  the exit code, and optionally the stdout and stdin text.
+
 1.0.7 (2022-06-20)
 ------------------
 

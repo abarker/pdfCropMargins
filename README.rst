@@ -251,7 +251,22 @@ command-line arguments as separate items.  For example:
    crop(["-p", "20", "-u", "-s", "paper1.pdf"])
    crop(["-p", "0", "-gui", "paper2.pdf"])
 
-Any necessary exception handling should be performed by the calling code.
+Any necessary exception handling should be performed by the calling code.  The
+code may call `sys.exit`, so checking for `SystemExit` or `BaseException` may
+be required.
+
+The `crop` function returns four values: the output file path, the exit code,
+and optionally the standard input text and the standard output text.  Any unset
+values are set to `None`.  If the keyword argument `string_io` is set true
+then standard output and standard input is temporarily redirected to capture
+any output text as strings, which are returned as the final two arguments.
+The keyword argument `quiet` implies the `string_io` argument, but does not
+echo anything to the terminal while the `crop` runs.
+
+.. code-block:: python
+
+   output_doc_pathname, exit_code, stdout_str, stderr_str = crop(
+                     ["-p4", "0", "10", "0", "10", "paper2.pdf"], string_io=True)
 
 Running from the source distribution
 ------------------------------------

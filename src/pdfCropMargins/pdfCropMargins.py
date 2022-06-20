@@ -110,17 +110,17 @@ class CapturingTextStream:
         return getattr(self.outstream, attr)
 
 
-def crop(argv_list=None, quiet=False, string_io=False):
+def crop(argv_list=None, *, quiet=False, string_io=False):
     """Crop the PDF file using the arguments specified in `sys.argv`.  If a list is
     passed as `argv_list` then it is used instead of `sys.argv`.  This function
     can be called as a library routine for running the `pdfCropMargins` program.
 
     The function returns four values.  The first is the pathname of the cropped
-    output document, or `None` if the cropping failed.  The second return value is either `None`
-    or, in the event of a `SystemExit` exception, the exit code.  (A
-    `SystemExit` is the usual way pdfCropMargins exits.)  The third and fourth
-    arguments always have `None` values unless either the `string_io` or the
-    `quiet` keyword option is set true (see below).
+    output document, or `None` if the cropping failed.  The second return value
+    is either `None` or, in the event of a `SystemExit` exception, the exit
+    code.  (A `SystemExit` is the usual way pdfCropMargins exits.)  The third
+    and fourth arguments always have `None` values unless either the
+    `string_io` or the `quiet` keyword option is set true (see below).
 
     The `string_io` and `quiet` keyword options, if either is selected,
     temporarily redefine `sys.stdout` and `sys.stderr` to intercept the usual

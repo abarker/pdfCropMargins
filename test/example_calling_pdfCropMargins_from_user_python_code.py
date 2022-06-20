@@ -33,17 +33,18 @@ except BaseException as e: # Note BaseException is needed to catch a SystemExit.
 exit_code, stdout, stderr = None, None, None
 try:
     # Run capturing any SystemExit exit code and the string output.
-    exit_code, stdout, stderr = crop(
+    output_doc_pathname, exit_code, stdout, stderr = crop(
             ['-ap', '12', '-p', '15', '-u', '-mo', '-su', 'old', "-pf", "-v",
              "-o", "/tmp/egg.pdf",
              '$tpdfc/tmp/canWeBelieveInA-PurelyUnitaryQuantumDynamics_Herbut2005.pdf'],
-             string_io=True, quiet=True
-          )
+             string_io=True, quiet=False)
 except BaseException as e:
     print("caught exception in test program")
     print(e)
 
 
+print("== exit_code", "="*60)
+print(output_doc_pathname)
 print("== exit_code", "="*60)
 print(exit_code)
 print("== stdout", "="*60)
