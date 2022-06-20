@@ -58,8 +58,8 @@ extras_require={
                 "gui": ["PySimpleGUI>=4.28.0;python_version>='3.0'",
                         "PySimpleGUI27>=2.4.1;python_version<'3.0'",
                         "typing;python_version<='3.4'", # PySimpleGUI27 on Python2 needs this.
-                        "PyMuPDF>=1.18.0",],
-                "mupdf": ["PyMuPDF>=1.18.0",],
+                        "PyMuPDF>=1.20.0",],
+                "mupdf": ["PyMuPDF>=1.20.0",],
                 }
 
 setup(

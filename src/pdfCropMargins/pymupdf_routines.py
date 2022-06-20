@@ -76,10 +76,6 @@ if has_mupdf:
                       .format(doc_fname), file=sys.stderr)
                 ex.cleanup_and_exit(1)
 
-            # TODO: Temporary workaround, PyMuPDF renaming.
-            if not hasattr(self.document, "is_encrypted"):
-                self.document.is_encrypted = self.document.isEncrypted # Version 1.17 vs. version 1.18.
-
             # Decrypt if necessary.
             if self.document.is_encrypted:
                 if self.args.password:
@@ -133,14 +129,10 @@ if has_mupdf:
                 page_crop_display_list = self.page_crop_display_list_cache[page_num]
                 if not page_crop_display_list:  # Create if not yet there.
                     self.page_crop_display_list_cache[page_num] = self.document[
-                                                                  page_num].getDisplayList()
+                                                                  page_num].get_displaylist()
                     page_crop_display_list = self.page_crop_display_list_cache[page_num]
             else:
-                page_crop_display_list = self.document[page_num].getDisplayList()
-
-            # TODO: Temporary workaround, PyMuPDF renaming.
-            if not hasattr(page_crop_display_list, "get_pixmap"):
-                page_crop_display_list.get_pixmap = page_crop_display_list.getPixmap
+                page_crop_display_list = self.document[page_num].get_displaylist()
 
             # https://github.com/pymupdf/PyMuPDF/issues/322 # Also info on opening in Pillow.
             # TODO: Above page also lists a faster way than getting ppm first.
@@ -160,10 +152,10 @@ if has_mupdf:
                 # https://stackoverflow.com/questions/63821179/extract-images-from-pdf-in-high-resolution-with-python
                 # Is setting actually changing the matrix?
                 resolution = self.args.resX, self.args.resY
-            pixmap.setResolution(*resolution) # New setResolution in PyMuPDF 1.16.17.
+            pixmap.set_dpi(*resolution)
 
             # Maybe pgm below??
-            image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
+            image_ppm = pixmap.tobytes("ppm")  # Make PPM image from pixmap for tkinter.
             return image_ppm
 
         def get_display_page(self, page_num, max_image_size, zoom=False,
@@ -180,12 +172,8 @@ if has_mupdf:
 
             page_display_list = self.page_display_list_cache[page_num] if not reset_cached else None
             if not page_display_list:  # Create if not yet there.
-                self.page_display_list_cache[page_num] = self.document[page_num].getDisplayList()
+                self.page_display_list_cache[page_num] = self.document[page_num].get_displaylist()
                 page_display_list = self.page_display_list_cache[page_num]
-
-            # TODO: Temporary workaround, PyMuPDF renaming.
-            if not hasattr(page_display_list, "get_pixmap"):
-                page_display_list.get_pixmap = page_display_list.getPixmap
 
             page_rect = page_display_list.rect  # The page rectangle.
             clip = page_rect
@@ -219,9 +207,9 @@ if has_mupdf:
             else:  # Show the total page.
                 pixmap = page_display_list.get_pixmap(matrix=mat_0, alpha=False)
 
-            #image_png = pixmap.getPNGData()  # get the PNG image
+            #image_png = pixmap.tobytes()  # get the PNG image
             image_height, image_width = pixmap.height, pixmap.width
-            image_ppm = pixmap.getImageData("ppm")  # Make PPM image from pixmap for tkinter.
+            image_ppm = pixmap.tobytes("ppm")  # Make PPM image from pixmap for tkinter.
             image_tl = clip.tl # Clip position (top left).
             return image_ppm, image_tl, image_height, image_width
 

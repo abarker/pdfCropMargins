@@ -3,6 +3,16 @@
 History
 =======
 
+1.0.7 (2022-06-20)
+------------------
+
+Bug fixes:
+
+* Changed PyMuPDF method names to match new convention (they removed deprecated
+  older camelcase names with 1.20.0).
+
+* Updated PyMuPDF requirement to 1.20.0.
+
 1.0.6 (2022-06-15)
 ------------------
 
