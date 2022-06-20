@@ -115,16 +115,17 @@ def crop(argv_list=None, quiet=False, string_io=False):
     passed as `argv_list` then it is used instead of `sys.argv`.  This function
     can be called as a library routine for running the `pdfCropMargins` program.
 
-    The function returns three values.  The first return value is either `None`
+    The function returns four values.  The first is the pathname of the cropped
+    output document, or `None` if the cropping failed.  The second return value is either `None`
     or, in the event of a `SystemExit` exception, the exit code.  (A
-    `SystemExit` is the usual way pdfCropMargins exits.)  The second two
+    `SystemExit` is the usual way pdfCropMargins exits.)  The third and fourth
     arguments always have `None` values unless either the `string_io` or the
     `quiet` keyword option is set true (see below).
 
     The `string_io` and `quiet` keyword options, if either is selected,
     temporarily redefine `sys.stdout` and `sys.stderr` to intercept the usual
     print commands from pdfCropMargins and save the text as strings.  If
-    `string_io` is true then the second two return values are strings holding
+    `string_io` is true then the final two return values are strings holding
     the stdout and stderr output, respectively.  If `quiet` is true then no
     echoing to stdout or stderr is performed while pdfCropMargins runs.  The
     `quiet` option implies the `string_io` option, so the string values are
@@ -148,6 +149,7 @@ def crop(argv_list=None, quiet=False, string_io=False):
     from .main_pdfCropMargins import main_crop
 
     exit_code = None
+    output_doc_pathname = None
 
     try:
         if string_io or quiet:
@@ -157,7 +159,7 @@ def crop(argv_list=None, quiet=False, string_io=False):
                 sys.stdout = CapturingTextStream(sys.stdout, quiet=quiet)
                 sys.stderr = CapturingTextStream(sys.stderr, quiet=quiet)
                 with create_temporary_directory():
-                    main_crop(argv_list)
+                    output_doc_pathname = main_crop(argv_list)
             except Exception as e:
                 raise # TODO: Maybe set stdout_str and stderr_str as attrs of e or print them.
             except SystemExit as e:
@@ -165,14 +167,14 @@ def crop(argv_list=None, quiet=False, string_io=False):
             finally: # Restore stdout and stderr.
                 stdout_str, stderr_str = sys.stdout.getvalue(), sys.stderr.getvalue()
                 sys.stdout, sys.stderr = old_sys_stdout, old_sys_stderr
-            return exit_code, stdout_str, stderr_str
+            return output_doc_pathname, exit_code, stdout_str, stderr_str
         else:
             try:
                 with create_temporary_directory():
-                    main_crop(argv_list)
+                    output_doc_pathname = main_crop(argv_list)
             except SystemExit as e:
                 exit_code = e.code
-            return exit_code, None, None
+            return output_doc_pathname, exit_code, None, None
 
     finally: # In case race conditions prevent execution of the context manager __exit__.
         uninterrupted_remove_program_temp_directory()

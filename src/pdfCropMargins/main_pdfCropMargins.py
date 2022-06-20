@@ -1033,13 +1033,13 @@ def process_command_line_arguments(parsed_args):
     if args.gsFix:
         if args.verbose:
             print("\nAttempting to fix the PDF input file before reading it...")
-        fixed_input_doc_fname = ex.fix_pdf_with_ghostscript_to_tmp_file(input_doc_path)
+        fixed_input_doc_pathname = ex.fix_pdf_with_ghostscript_to_tmp_file(input_doc_path)
     else:
-        fixed_input_doc_fname = input_doc_path
+        fixed_input_doc_pathname = input_doc_path
 
-    return input_doc_path, fixed_input_doc_fname, output_doc_path
+    return input_doc_path, fixed_input_doc_pathname, output_doc_path
 
-def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
+def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pathname,
                      bounding_box_list=None):
     """This function does the real work.  It is called by `main()` in
     `pdfCropMargins.py`, which just handles catching exceptions and cleaning
@@ -1061,10 +1061,10 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     # Open the input file object.
     try:
-        fixed_input_doc_file_object = open(fixed_input_doc_fname, "rb")
+        fixed_input_doc_file_object = open(fixed_input_doc_pathname, "rb")
     except IOError:
         print("Error in pdfCropMargins: Could not open output document with "
-              "filename '{}'".format(fixed_input_doc_fname))
+              "filename '{}'".format(fixed_input_doc_pathname))
         ex.cleanup_and_exit(1)
 
     try:
@@ -1081,7 +1081,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
               "\nthe document by using the pdfCropMargins option '--gsFix'"
               "\n(assuming you are not using that option already).  That option"
               "\ncan also convert some PostScript files to a readable format."
-              "\n\nThe error message was:\n   {}".format(fixed_input_doc_fname, e),
+              "\n\nThe error message was:\n   {}".format(fixed_input_doc_pathname, e),
               file=sys.stderr)
         ex.cleanup_and_exit(1)
 
@@ -1118,7 +1118,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
               "\nthe document by using the pdfCropMargins option '--gsFix'"
               "\n(assuming you are not using that option already).  That option"
               "\ncan also convert some PostScript files to a readable format."
-              "\n\nThe error message was:\n   {}".format(fixed_input_doc_fname, e),
+              "\n\nThe error message was:\n   {}".format(fixed_input_doc_pathname, e),
               file=sys.stderr)
         ex.cleanup_and_exit(1)
 
@@ -1291,10 +1291,10 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         print("\nWriting the cropped PDF file.")
 
     try:
-        output_doc_stream = open(output_doc_fname, "wb")
+        output_doc_stream = open(output_doc_pathname, "wb")
     except IOError:
         print("Error in pdfCropMargins: Could not open output document with "
-              "filename '{}'".format(output_doc_fname))
+              "filename '{}'".format(output_doc_pathname))
         ex.cleanup_and_exit(1)
 
     try:
@@ -1308,7 +1308,7 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             # a new output_doc without that data and try the write again.
             print("\nWrite failure, trying one more time...", file=sys.stderr)
             output_doc_stream.close()
-            output_doc_stream = open(output_doc_fname, "wb")
+            output_doc_stream = open(output_doc_pathname, "wb")
             output_doc, tmp_output_doc, already_cropped = setup_output_document(
                     input_doc, tmp_input_doc, metadata_info, copy_document_catalog=False)
             output_doc.write(output_doc_stream)
@@ -1333,15 +1333,15 @@ def process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     fixed_input_doc_file_object.close()
     return bounding_box_list
 
-def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
+def handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname):
     """Handle the options which apply after the file is written such as previewing
     and renaming."""
 
-    def do_preview(output_doc_fname):
+    def do_preview(output_doc_pathname):
         viewer = args.preview
         if args.verbose:
             print("\nPreviewing the output document with viewer:\n   ", viewer)
-        ex.show_preview(viewer, output_doc_fname)
+        ex.show_preview(viewer, output_doc_pathname)
         return
 
     # Handle the '--queryModifyOriginal' option.
@@ -1350,7 +1350,7 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
             print("\nRunning the preview viewer on the file, will query whether or not"
                   "\nto modify the original file after the viewer is launched in the"
                   "\nbackground...\n")
-            do_preview(output_doc_fname)
+            do_preview(output_doc_pathname)
             # Give preview time to start; it may write startup garbage to the terminal...
             query_wait_time = 2 # seconds
             time.sleep(query_wait_time)
@@ -1368,7 +1368,7 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
                 break
             elif query_result in ["n", "N"]:
                 print("\nNot modifying the original file.  The cropped file is saved"
-                      " as:\n   {0}".format(output_doc_fname))
+                      " as:\n   {0}".format(output_doc_pathname))
                 args.modifyOriginal = False
                 break
             else:
@@ -1376,10 +1376,10 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
                 continue
 
     # Handle the '--modifyOriginal' option.
-    final_output_document_name = output_doc_fname
+    final_output_document_name = output_doc_pathname
     if args.modifyOriginal:
         # Generate the backup filename for the original, uncropped file.
-        generated_uncropped_filepath = generate_output_filepath(input_doc_fname,
+        generated_uncropped_filepath = generate_output_filepath(input_doc_pathname,
                                                                 is_cropped_file=False,
                                                                 ignore_output_filename=True)
 
@@ -1407,17 +1407,17 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
         # Move the original file to the name for uncropped files.  Silently do nothing
         # if the file exists (should have been removed above).
         if not os.path.exists(generated_uncropped_filepath):
-            if args.verbose: print("\nDoing a file move:\n   ", input_doc_fname,
+            if args.verbose: print("\nDoing a file move:\n   ", input_doc_pathname,
                                    "\nis moving to:\n   ", generated_uncropped_filepath)
-            shutil.move(input_doc_fname, generated_uncropped_filepath)
+            shutil.move(input_doc_pathname, generated_uncropped_filepath)
 
         # Move the cropped file to the original file's name.  Silently do nothing if
         # the file exists (should have been moved above).
-        if not os.path.exists(input_doc_fname):
-            if args.verbose: print("\nDoing a file move:\n   ", output_doc_fname,
-                                   "\nis moving to:\n   ", input_doc_fname)
-            shutil.move(output_doc_fname, input_doc_fname)
-            final_output_document_name = input_doc_fname
+        if not os.path.exists(input_doc_pathname):
+            if args.verbose: print("\nDoing a file move:\n   ", output_doc_pathname,
+                                   "\nis moving to:\n   ", input_doc_pathname)
+            shutil.move(output_doc_pathname, input_doc_pathname)
+            final_output_document_name = input_doc_pathname
 
     # Handle any previewing which still needs to be done.
     if args.preview and not args.queryModifyOriginal: # queryModifyOriginal does its own.
@@ -1429,11 +1429,11 @@ def handle_options_on_cropped_file(input_doc_fname, output_doc_fname):
 def main_crop(argv_list=None):
     """Process command-line arguments, do the PDF processing, and then perform final
     processing on the filenames.  If `argv_list` is set then it is used instead of
-    `sys.argv`."""
+    `sys.argv`.  Returns the pathname of the output document."""
     parsed_args = parse_command_line_arguments(cmd_parser, argv_list=argv_list)
 
     # Process some of the command-line arguments (also sets `args` globally).
-    input_doc_fname, fixed_input_doc_fname, output_doc_fname = (
+    input_doc_pathname, fixed_input_doc_pathname, output_doc_pathname = (
                                            process_command_line_arguments(parsed_args))
 
     if args.gui:
@@ -1441,11 +1441,13 @@ def main_crop(argv_list=None):
         if args.verbose:
             print("\nWaiting for the GUI...")
 
-        did_crop = create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
+        did_crop = create_gui(input_doc_pathname, fixed_input_doc_pathname, output_doc_pathname,
                               cmd_parser, parsed_args)
         if did_crop:
-            handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
+            handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname)
     else:
-        process_pdf_file(input_doc_fname, fixed_input_doc_fname, output_doc_fname)
-        handle_options_on_cropped_file(input_doc_fname, output_doc_fname)
+        process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pathname)
+        handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname)
+
+    return output_doc_pathname
 
