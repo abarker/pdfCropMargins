@@ -258,11 +258,11 @@ be required.
 The ``crop`` function always returns four values, some of which may be set to
 ``None``: the output file path, the exit code, the text written to standard
 input, and the text written to standard output.  If the keyword argument
-``string_io`` is set true then standard output and standard input is temporarily
-redirected to capture any output text as strings, which are returned as the
-final two arguments.  Otherwise those values are set to ``None``.  The keyword
-argument ``quiet`` implies the ``string_io`` argument, but does not echo anything
-to the terminal while the ``crop`` function runs.
+``string_io`` is set true then standard output and standard error streams are
+temporarily redirected to capture any output text as strings, which are
+returned as the final two arguments.  Otherwise those values are set to
+``None``.  The keyword argument ``quiet`` implies the ``string_io`` argument,
+but does not echo anything to the terminal while the ``crop`` function runs.
 
 .. code-block:: python
 
