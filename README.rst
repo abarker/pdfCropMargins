@@ -252,17 +252,17 @@ command-line arguments as separate items.  For example:
    crop(["-p", "0", "-gui", "paper2.pdf"])
 
 Any necessary exception handling should be performed by the calling code.  The
-code may call `sys.exit`, so checking for `SystemExit` or `BaseException` may
+code may call ``sys.exit``, so checking for ``SystemExit`` or ``BaseException`` may
 be required.
 
-The `crop` function always returns four values, some of which may be set to
-`None`: the output file path, the exit code, and the text written to standard
-input and the text written to standard output.  If the keyword argument
-`string_io` is set true then standard output and standard input is temporarily
+The ``crop`` function always returns four values, some of which may be set to
+``None``: the output file path, the exit code, the text written to standard
+input, and the text written to standard output.  If the keyword argument
+``string_io`` is set true then standard output and standard input is temporarily
 redirected to capture any output text as strings, which are returned as the
-final two arguments.  Otherwise those values are set to `None`.  The keyword
-argument `quiet` implies the `string_io` argument, but does not echo anything
-to the terminal while the `crop` function runs.
+final two arguments.  Otherwise those values are set to ``None``.  The keyword
+argument ``quiet`` implies the ``string_io`` argument, but does not echo anything
+to the terminal while the ``crop`` function runs.
 
 .. code-block:: python
 
