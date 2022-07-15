@@ -1101,7 +1101,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
         try:
             input_doc.decrypt("")
             tmp_input_doc.decrypt("")
-        except KeyError:
+        except (KeyError, PdfReadError):
             pass # Document apparently wasn't encrypted with an empty password.
 
     ##
