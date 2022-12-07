@@ -59,6 +59,11 @@ from . import __version__ # Get the version number from the __init__.py file.
 
 DEFAULT_THRESHOLD_VALUE = 191
 
+# TODO: Consider this new option, below is for description and the argument
+# is commented-out farther below.
+#   The command '--keepOriginalRotations' ('-k') skips the first un-rotation and
+#   later re-rotation stages.
+
 description = """
 Description:
 
@@ -727,6 +732,12 @@ cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
    decrypting with an empty password is always tried, so this option is only
    needed for non-empty passwords.  The resulting cropped file will not be
    encrypted, so use caution if important data is involved.^^n""")
+
+#cmd_parser.add_argument("-k", "--keepOriginalRotations", action="store_true",
+#                        help="""
+#
+#   Skip the original un-rotation of the rotated pages before bounding boxes
+#   are calculated (and also the later re-rotation).^^n""")
 
 cmd_parser.add_argument("-spr", "--setPageRatios", type=str,
                         default=[], metavar="FLOAT:FLOAT", help="""
