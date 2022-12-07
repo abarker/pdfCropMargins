@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 
 pdfCropMargins -- a program to crop the margins of PDF files
@@ -29,7 +28,6 @@ another as a graphic.  Many options are available.
 
 """
 
-from __future__ import print_function, division, absolute_import
 import sys
 import signal
 import io

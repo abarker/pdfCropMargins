@@ -32,7 +32,6 @@ Features
 - Preserves document catalog information such as outlines if possible.
 - Crops rotated pages according to their appearance in the document viewer.
 - Can deal with at least simple cases of password-encrypted files.
-- Works with Python 3 and Python 2.
 
 This GIF shows the optional GUI, before and after cropping a document:
 
@@ -50,42 +49,11 @@ recent changes and new features.
 
 **New in version 1.0.0**
 
-* The new default method for rendering pages to calculate crops uses the Python
-  ``PyMuPDF`` package, if it is detected.  That package is included in the GUI
-  install but not in the base install.  This method works in-memory and tends
-  to be faster.  To get the old default behavior (i.e., searching first for
-  ``pdftoppm`` and then for ``Ghostscript``) use the option ``--calcbb o`` or
-  the shortcut ``-c o``.  
+* Python 3.6 is now the minimum supported version.
 
-* The new preferred way to select the method of calculating bounding boxes is
-  the option ``--calcbb``  or the shortcut ``-c``.  The options are:
-
-  * ``-c d``: The default, look for PyMuPDF, pdftoppm, and Ghostscript, in that
-    order.
-
-  * ``-c m``: Force the use of MuPDF (PyMuPDF) rendering.
-
-  * ``-c p``: Force the use of pdftoppm rendering.
-
-  * ``-c gr``: Force the use of Ghostscript rendering (equivalent to
-    ``--gsRender``).
-
-  * ``-c gb``: Use Ghostscript to directly calculate the bounding boxes
-    (equivalent to ``--gsBbox``).  This method does not work for scanned
-    documents.
-
-  * ``-c o``: Revert to the old default behavior (pdftoppm then Ghostscript).
-
-  The older method-selection options still work, only the default has changed.
-
-* The default rendering resolution is now 72 dpi instead of 150 dpi.  Resolution
-  can still be set with the ``-x`` and ``-y`` options.
-
-* A new option flag ``--percentText`` which changes the interpretation of the
-  percentage values passed to ``--percentRetain`` and ``--percentRetain4``.
-  With this flag the left and right margins are set to a percentage of the text
-  width (bounding box width) and the top and bottom margins are set to a
-  percentage of the text height.
+* The GUI dependencies are now part of the standard install.  The program will
+  still work without them, however, if the GUI is not required.  Note that without
+  PyMuPDF either pdftoppm or Ghostscript must be installed.
 
 Installing 
 ==========
@@ -99,14 +67,6 @@ and Windows, see: `Installing pdftoppm and/or Ghostscript
 <https://github.com/abarker/pdfCropMargins/tree/master/doc/installing_pdftoppm_and_ghostscript.rst>`_
 .
 
-**Note on Python 2 installs:** The program still runs and installs on Python 2,
-but the Pillow dependency will not be automatically installed because the most
-recent version available for Python 2 has several moderate-severity security
-vulnerabilities.  You can choose to install it yourself via ``pip install
-pillow --user``; otherwise, only the ``--bbcalc gb`` (or ``--gsBbox``) method
-of calculating crops will work (and Ghostscript is required).  For the GUI,
-PySimpleGUI no longer supports 2.7 but the last version still seems to work.
-
 Linux/Ubuntu
 ------------
 
@@ -115,24 +75,10 @@ If you are installing via pip with the ``--user`` option be sure
 without ``--user`` the ``pip3`` command below would also need to be run with
 ``sudo``.)
 
-This is the full install, with the GUI and external utility programs:
-
 .. code-block:: sh
 
    sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
-   pip3 install pdfCropMargins[gui] --user --upgrade
-
-Here is the plain install, without the GUI or MuPDF bounding-box calculations.
-It has fewer dependencies, but it requires that either pdftoppm or Ghostscript
-be installed.  Not all options are available.
-
-.. code-block:: sh
-
-   sudo apt install python3-pip ghostscript poppler-utils
    pip3 install pdfCropMargins --user --upgrade
-
-To get the MuPDF rendering features without the GUI dependencies you can
-alternately use ``pdfCropMargins[mupdf]`` in the above commands.
 
 **Troubleshooting:** If you have problems with the install of PyMuPDF, the
 first thing to try is to upgrade your version of the pip program and then
@@ -147,7 +93,7 @@ install you can try forcing a binary install of pyMuPDF:
 
 .. code-block:: sh
 
-   pip3 install pdfCropMargins[gui] --user --upgrade --only-binary pymupdf
+   pip3 install pdfCropMargins --user --upgrade --only-binary pymupdf
 
 Windows
 -------
@@ -162,16 +108,6 @@ you cannot find the pip executable you can usually run it like this:
 Note that on some Windows installs the executable for Python is ``py`` rather
 than ``python``.
 
-To install with the GUI use:
-
-.. code-block:: sh
-
-   pip install pdfCropMargins[gui] --upgrade
-
-The plain install, without the GUI, has fewer dependencies but requires either
-Ghostscript or pdftoppm to be installed.  A version of pdftoppm is supplied for
-Windows, which will be used as a fallback.  To install without the GUI use:
-
 .. code-block:: sh
 
    pip install pdfCropMargins --upgrade
@@ -183,9 +119,6 @@ on the path if you checked the box to modify ``Path`` when you installed
 Python; otherwise it should be added.  (If you install with the ``--user``
 option to pip then you need to be sure that the *local* Python ``bin``
 directory is in the Windows ``Path``.)
-
-To get the MuPDF rendering features without the GUI dependencies you can
-alternately use ``pdfCropMargins[mupdf]`` in the plain install above.
 
 Running
 =======
@@ -279,7 +212,7 @@ program ``pdfCropMargins.py`` located in the ``bin`` directory.
 
 To pip install the program and its dependencies from the cloned repo rather
 than from PyPI just go to the root of the source directory and run ``pip
-install .[gui]`` for the GUI version or ``pip install .`` for the non-GUI
+install .`` for the GUI version or ``pip install .`` for the non-GUI
 version.  (As usual, for code development use the ``-e`` option to make the
 code editable.)
 

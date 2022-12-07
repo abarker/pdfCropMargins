@@ -27,7 +27,6 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 """
 
-from __future__ import print_function, division, absolute_import
 import sys
 import os
 import glob
@@ -71,16 +70,16 @@ args = None # Command-line arguments; set in get_bounding_box_list.
 #
 
 def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
-                          set_of_page_nums_to_crop, argparse_args, chosen_PdfFileWriter):
+                          set_of_page_nums_to_crop, argparse_args, chosen_PdfWriter):
     """Calculate a bounding box for each page in the document.  The
     `input_doc_fname` argument is the filename of the document's original PDF
-    file, `input_doc` is the `PdfFileReader` for the document.  The argument
+    file, `input_doc` is the `PdfReader` for the document.  The argument
     `full_page_box_list` is a list of the full-page-size boxes (which is used
     to correct for any nonzero origins in the PDF coordinates).  The
     `set_of_page_nums_to_crop` argument is the set of page numbers to crop; it
     is passed so that unnecessary calculations can be skipped.  The
     `argparse_args` argument should be passed the args parsed from the command
-    line by argparse.  The `chosen_PdfFileWriter` is the PdfFileWriter class
+    line by argparse.  The `chosen_PdfWriter` is the PdfWriter class
     from whichever pyPdf package was chosen by the main program.  The function
     returns the list of bounding boxes."""
     global args
@@ -169,7 +168,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
     bounding_box_list = []
 
     for page_num, tmp_image_file_name in enumerate(outfiles):
-        curr_page = input_doc.getPage(page_num)
+        curr_page = input_doc.pages[page_num]
 
         # Open the image in Pillow.  Retry a few times on fail in case race conditions.
         if program_to_use == "mupdf":
@@ -192,7 +191,7 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
                     # im = Image.open(tmpImageFile)
                     pil_im = Image.open(tmp_image_file_name)
                     break
-                except (IOError, UnicodeDecodeError) as e:
+                except (OSError, UnicodeDecodeError) as e:
                     curr_num_tries += 1
                     if args.verbose:
                         print("Warning: Exception opening image", tmp_image_file_name,
@@ -298,13 +297,13 @@ def calculate_bounding_box_from_image(im, curr_page):
     bounding_box[1] = y_max - bounding_box[1]
     bounding_box[3] = y_max - bounding_box[3]
 
-    full_page_box = curr_page.mediaBox # Should have been set already to chosen box.
+    full_page_box = curr_page.mediabox # Should have been set already to chosen box.
 
     # Convert pixel units to PDF's bp units.
-    convert_x = float(full_page_box.getUpperRight_x()
-                    - full_page_box.getLowerLeft_x()) / x_max
-    convert_y = float(full_page_box.getUpperRight_y()
-                    - full_page_box.getLowerLeft_y()) / y_max
+    convert_x = float(full_page_box.right
+                    - full_page_box.left) / x_max
+    convert_y = float(full_page_box.top
+                    - full_page_box.bottom) / y_max
 
     # Get final box; note conversion to lower-left point, upper-right point format.
     final_box = [bounding_box[0] * convert_x,

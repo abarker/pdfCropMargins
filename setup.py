@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 """
 
 A setuptools-based setup module.
@@ -11,7 +10,6 @@ Docs on the setup function kwargs:
 
 """
 
-from __future__ import absolute_import, print_function
 import glob
 import os.path
 from setuptools import setup, find_packages, Distribution
@@ -48,19 +46,11 @@ with codecs.open(os.path.join(current_dir, "README.rst"), encoding="utf-8") as f
     long_description = f.read()
 
 install_requires = ["wheel",
-                    "pillow>=9.0.0; python_version>='3.0.0'", # Security issues on older.
-                    #"pillow>=6.2.2,<7.0.0; python_version<'3.0.0'", # Last supporting 2.7.
-                    "PyPDF2>=1.27.5"]
-
-# A default extras group would be nice, to have 'lite' be a light version and 'gui' be
-# the default, but not yet implemented: https://github.com/pypa/setuptools/issues/1139
-extras_require={
-                "gui": ["PySimpleGUI>=4.28.0;python_version>='3.0'",
-                        "PySimpleGUI27>=2.4.1;python_version<'3.0'",
-                        "typing;python_version<='3.4'", # PySimpleGUI27 on Python2 needs this.
-                        "PyMuPDF>=1.20.0",],
-                "mupdf": ["PyMuPDF>=1.20.0",],
-                }
+                    "pillow>=9.3.0", # Security issues on older.
+                    "PyPDF2>=2.11.0",
+                    "PySimpleGUI>=4.40.0",
+                    "PyMuPDF>=1.20.0",
+                    ]
 
 setup(
     name="pdfCropMargins",
@@ -68,7 +58,6 @@ setup(
     description="A command-line program to crop the margins of PDF files, with many options.",
     keywords=["pdf", "crop", "margins", "resize"],
     install_requires=install_requires,
-    extras_require=extras_require,
     url="https://github.com/abarker/pdfCropMargins",
     entry_points = {
         "console_scripts": ["pdf-crop-margins = pdfCropMargins.pdfCropMargins:main"]

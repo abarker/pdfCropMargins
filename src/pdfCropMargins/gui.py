@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 
 Code to create and execute the GUI when that option is selected.
@@ -50,7 +49,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # pysimplegui issues: 1) warning on Window title in Python2 on some machines, 2) tooltips
 # need pointer to move left to work, 3) non-string initial values not set for Combo.
 
-from __future__ import print_function, absolute_import
 
 import sys
 import os
@@ -312,7 +310,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     curr_page = 0
 
     sg.SetOptions(tooltip_time=500)
-    window_title = "pdfCropMargins: {}".format(os.path.basename(input_doc_fname))
+    window_title = f"pdfCropMargins: {os.path.basename(input_doc_fname)}"
 
     ##
     ## Code for the image element, holding the page preview.
@@ -365,7 +363,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_percentRetain4 = sg.Text("percentRetain4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "percentRetain4"))
     input_text_percentRetain4 = [sg.InputText(args_dict["percentRetain4"][i], size=(5, 1),
-                                 do_not_clear=True, key="percentRetain4_{}".format(i))
+                                 do_not_clear=True, key=f"percentRetain4_{i}")
                                  for i in [0,1,2,3]]
 
     def update_percentRetain_values(values_dict):
@@ -395,7 +393,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_absoluteOffset4 = sg.Text("absoluteOffset4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "absoluteOffset4"))
     input_text_absoluteOffset4 = [sg.InputText(args_dict["absoluteOffset4"][i], size=(5, 1),
-                                 do_not_clear=True, key="absoluteOffset4_{}".format(i))
+                                 do_not_clear=True, key=f"absoluteOffset4_{i}")
                                  for i in [0,1,2,3]]
 
     def update_absoluteOffset_values(values_dict):
@@ -438,7 +436,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_uniformOrderStat4 = sg.Text("uniformOrderStat4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat4"))
     input_text_uniformOrderStat4 = [sg.InputText(args_dict["uniformOrderStat4"][i], size=(5, 1),
-                                 do_not_clear=True, key="uniformOrderStat4_{}".format(i))
+                                 do_not_clear=True, key=f"uniformOrderStat4_{i}")
                                  for i in [0,1,2,3]]
 
     def update_uniformOrderStat_values(values_dict):
@@ -543,7 +541,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             if value: # Parse here only to test for errors.
                 parse_page_range_specifiers(value, set(range(num_pages)))
         except ValueError:
-            sg.PopupError("Bad page specifier '{}'.".format(value))
+            sg.PopupError(f"Bad page specifier '{value}'.")
             input_text_pages.Update("")
             args_dict["pages"] = ""
         else:
@@ -609,7 +607,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_pageRatioWeights = sg.Text("pageRatioWeights",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "pageRatioWeights"))
     input_text_pageRatioWeights = [sg.InputText(args_dict["pageRatioWeights"][i], size=(5, 1),
-                                 do_not_clear=True, key="pageRatioWeights_{}".format(i))
+                                 do_not_clear=True, key=f"pageRatioWeights_{i}")
                                  for i in [0,1,2,3]]
 
     def update_pageRatioWeights_values(values_dict):
@@ -638,7 +636,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_absolutePreCrop4 = sg.Text("absolutePreCrop4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "absolutePreCrop4"))
     input_text_absolutePreCrop4 = [sg.InputText(args_dict["absolutePreCrop4"][i], size=(5, 1),
-                                 do_not_clear=True, key="absolutePreCrop4_{}".format(i))
+                                 do_not_clear=True, key=f"absolutePreCrop4_{i}")
                                  for i in [0,1,2,3]]
 
     def update_absolutePreCrop_values(values_dict):
@@ -757,7 +755,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             sg.Button("Next"),
             text_page_num,
             input_text_page_num,
-            sg.Text("({})      ".format(num_pages)), # Show max page count.
+            sg.Text(f"({num_pages})      "), # Show max page count.
             sg.Button("Toggle Zoom"),
             sg.Text("(arrow keys navigate while zooming)"),
             ],

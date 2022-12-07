@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 
 Code that calls pyMuPDF.
@@ -26,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-from __future__ import print_function, absolute_import
 import sys
 import warnings
 from . import external_program_calls as ex

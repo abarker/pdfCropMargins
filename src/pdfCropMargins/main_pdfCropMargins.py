@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 
 This script is not the starting/entry point script.  If installed with pip you
@@ -46,7 +45,6 @@ Source code site: https://github.com/abarker/pdfCropMargins
 # routine of Pillow returns ltrb instead of lbrt.  Keep in mind that the program
 # needs to make these conversions when rendering explicitly to images.
 
-from __future__ import print_function, division, absolute_import
 import sys
 import os
 import shutil
@@ -65,8 +63,8 @@ from . import external_program_calls as ex
 project_src_directory = ex.project_src_directory
 
 try:
-    from PyPDF2 import PdfFileWriter, PdfFileReader
-    from PyPDF2.generic import (NameObject, createStringObject, RectangleObject,
+    from PyPDF2 import PdfWriter, PdfReader
+    from PyPDF2.generic import (NameObject, create_string_object, RectangleObject,
                                 FloatObject, IndirectObject)
 except ImportError:
     print("\nError in pdfCropMargins: No system PyPDF2 Python package"
@@ -194,16 +192,16 @@ def parse_page_ratio_argument(ratio_arg):
     return float_ratio
 
 def intersect_boxes(box1, box2):
-    """Takes two pyPdf boxes (such as page.mediaBox) and returns the pyPdf
+    """Takes two pyPdf boxes (such as page.mediabox) and returns the pyPdf
     box which is their intersection."""
     if not box1 and not box2: return None
     if not box1: return box2
     if not box2: return box1
     intersect = RectangleObject([0, 0, 0, 0]) # Note [llx,lly,urx,ury] == [l,b,r,t]
-    intersect.upperRight = (min(box1.upperRight[0], box2.upperRight[0]),
-                            min(box1.upperRight[1], box2.upperRight[1]))
-    intersect.lowerLeft = (max(box1.lowerLeft[0], box2.lowerLeft[0]),
-                           max(box1.lowerLeft[1], box2.lowerLeft[1]))
+    intersect.upper_right = (min(box1.upper_right[0], box2.upper_right[0]),
+                            min(box1.upper_right[1], box2.upper_right[1]))
+    intersect.lower_left = (max(box1.lower_left[0], box2.lower_left[0]),
+                           max(box1.lower_left[1], box2.lower_left[1]))
     return intersect
 
 def mod_box_for_rotation(box, angle, undo=False):
@@ -247,7 +245,7 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
     # Find the page rotation angle (degrees).
     # Note rotation is clockwise, and four values are allowed: 0 90 180 270
     try:
-        rotation = page["/Rotate"].getObject() # this works, needs try
+        rotation = page["/Rotate"].get_object() # this works, needs try
         #rotation = page.get("/Rotate", 0) # from the PyPDF2 source, default 0
     except KeyError:
         rotation = 0
@@ -258,19 +256,19 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
     page.rotationAngle = rotation
 
     # Un-rotate the page, leaving it with an rotation of 0.
-    page.rotateClockwise(-rotation)
+    page.rotate(-rotation)
 
     # Save copies of some values in the page's namespace, to possibly restore later.
-    page.originalMediaBox = page.mediaBox
-    page.originalCropBox = page.cropBox
+    page.originalMediaBox = page.mediabox
+    page.originalCropBox = page.cropbox
 
     first_loop = True
     for box_string in args.fullPageBox:
-        if box_string == "m": f_box = page.mediaBox
-        if box_string == "c": f_box = page.cropBox
-        if box_string == "t": f_box = page.trimBox
-        if box_string == "a": f_box = page.artBox
-        if box_string == "b": f_box = page.bleedBox
+        if box_string == "m": f_box = page.mediabox
+        if box_string == "c": f_box = page.cropbox
+        if box_string == "t": f_box = page.trimbox
+        if box_string == "a": f_box = page.artbox
+        if box_string == "b": f_box = page.bleedbox
 
         # Take intersection over all chosen boxes.
         if first_loop:
@@ -284,20 +282,20 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
         # Do any absolute pre-cropping specified for the page (after modifying any
         # absolutePreCrop4 arguments to take into account rotations to the page).
         precrop_box = mod_box_for_rotation(args.absolutePreCrop4, rotation)
-        full_box = RectangleObject([float(full_box.lowerLeft[0]) + precrop_box[0],
-                                    float(full_box.lowerLeft[1]) + precrop_box[1],
-                                    float(full_box.upperRight[0]) - precrop_box[2],
-                                    float(full_box.upperRight[1]) - precrop_box[3]])
+        full_box = RectangleObject([float(full_box.lower_left[0]) + precrop_box[0],
+                                    float(full_box.lower_left[1]) + precrop_box[1],
+                                    float(full_box.upper_right[0]) - precrop_box[2],
+                                    float(full_box.upper_right[1]) - precrop_box[3]])
 
-    page.mediaBox = full_box
-    page.cropBox = full_box
+    page.mediabox = full_box
+    page.cropbox = full_box
 
     return full_box
 
 def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
                                                     skip_pre_crop=False):
     """Get a list of all the full-page box values for each page.  The argument
-    input_doc should be a `PdfFileReader` object.  The boxes on the list are in the
+    input_doc should be a `PdfReader` object.  The boxes on the list are in the
     simple 4-float list format used by this program, not `RectangleObject` format."""
 
     full_page_box_list = []
@@ -306,10 +304,10 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
     if args.verbose and not quiet:
         print("\nOriginal full page sizes, in PDF format (lbrt):")
 
-    for page_num in range(input_doc.getNumPages()):
+    for page_num in range(len(input_doc.pages)):
 
         # Get the current page and find the full-page box.
-        curr_page = input_doc.getPage(page_num)
+        curr_page = input_doc.pages[page_num]
         full_page_box = get_full_page_box_assigning_media_and_crop(curr_page,
                                                                    skip_pre_crop)
 
@@ -569,7 +567,7 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info):
     if not metadata_info:
         # In case it's null, just set values to empty strings.  This class just holds
         # data temporary in the same format; this is not sent into PyPDF2.
-        class MetadataInfo(object):
+        class MetadataInfo:
             author = ""
             creator = ""
             producer = ""
@@ -577,7 +575,7 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info):
             title = ""
         metadata_info = MetadataInfo()
 
-    output_info_dict = output_doc._info.getObject()
+    output_info_dict = output_doc._info.get_object()
 
     # Check Producer metadata attribute to see if this program cropped document before.
     producer_mod = PRODUCER_MODIFIER
@@ -599,19 +597,19 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info):
         else: return item
 
     output_info_dict.update({
-          NameObject("/Author"): createStringObject(st(metadata_info.author)),
-          NameObject("/Creator"): createStringObject(st(metadata_info.creator)),
-          NameObject("/Producer"): createStringObject(st(metadata_info.producer)
+          NameObject("/Author"): create_string_object(st(metadata_info.author)),
+          NameObject("/Creator"): create_string_object(st(metadata_info.creator)),
+          NameObject("/Producer"): create_string_object(st(metadata_info.producer)
                                                                  + producer_mod),
-          NameObject("/Subject"): createStringObject(st(metadata_info.subject)),
-          NameObject("/Title"): createStringObject(st(metadata_info.title))
+          NameObject("/Subject"): create_string_object(st(metadata_info.subject)),
+          NameObject("/Title"): create_string_object(st(metadata_info.title))
           })
 
     return already_cropped_by_this_program
 
 def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
                                           already_cropped_by_this_program):
-    """Apply the crop list to the pages of the input `PdfFileReader` object."""
+    """Apply the crop list to the pages of the input `PdfReader` object."""
 
     if args.restore and not already_cropped_by_this_program:
         print("\nWarning from pdfCropMargins: The Producer string indicates that"
@@ -631,34 +629,34 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
         f = open(args.writeCropDataToFile, "w")
 
     # Copy over each page, after modifying the appropriate PDF boxes.
-    for page_num in range(input_doc.getNumPages()):
+    for page_num in range(len(input_doc.pages)):
 
-        curr_page = input_doc.getPage(page_num)
+        curr_page = input_doc.pages[page_num]
 
         # Restore any rotation which was originally on the page.
-        curr_page.rotateClockwise(curr_page.rotationAngle)
+        curr_page.rotate(curr_page.rotationAngle)
 
         # Only do the restore from ArtBox if '--restore' option was selected.
         if args.restore:
-            if not curr_page.artBox:
+            if not curr_page.artbox:
                 print("\nWarning from pdfCropMargins: Attempting to restore pages from"
                       "\nthe ArtBox in each page, but page", page_num, "has no readable"
                       "\nArtBox.  Leaving that page unchanged.", file=sys.stderr)
                 continue
-            curr_page.mediaBox = curr_page.artBox
-            curr_page.cropBox = curr_page.artBox
+            curr_page.mediabox = curr_page.artbox
+            curr_page.cropbox = curr_page.artbox
             continue
 
         # Do the save to ArtBox if that option is chosen and Producer is set.
         if not args.noundosave and not already_cropped_by_this_program:
-            curr_page.artBox = intersect_boxes(curr_page.originalMediaBox,
+            curr_page.artbox = intersect_boxes(curr_page.originalMediaBox,
                                                curr_page.originalCropBox)
 
         # Reset the CropBox and MediaBox to their saved original values
         # (they were saved by `get_full_page_box_assigning_media_and_crop`
         # in the `curr_page` object's namespace).
-        curr_page.mediaBox = curr_page.originalMediaBox
-        curr_page.cropBox = curr_page.originalCropBox
+        curr_page.mediabox = curr_page.originalMediaBox
+        curr_page.cropbox = curr_page.originalCropBox
 
         # Copy the original page without further mods if it wasn't in the range
         # selected for cropping.
@@ -677,11 +675,11 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
             args.boxesToSet = ["m", "c"]
 
         # Now set any boxes which were selected to be set via the '--boxesToSet' option.
-        if "m" in args.boxesToSet: curr_page.mediaBox = new_cropped_box
-        if "c" in args.boxesToSet: curr_page.cropBox = new_cropped_box
-        if "t" in args.boxesToSet: curr_page.trimBox = new_cropped_box
-        if "a" in args.boxesToSet: curr_page.artBox = new_cropped_box
-        if "b" in args.boxesToSet: curr_page.bleedBox = new_cropped_box
+        if "m" in args.boxesToSet: curr_page.mediabox = new_cropped_box
+        if "c" in args.boxesToSet: curr_page.cropbox = new_cropped_box
+        if "t" in args.boxesToSet: curr_page.trimbox = new_cropped_box
+        if "a" in args.boxesToSet: curr_page.artbox = new_cropped_box
+        if "b" in args.boxesToSet: curr_page.bleedbox = new_cropped_box
 
     if args.writeCropDataToFile:
         f.close()
@@ -689,11 +687,11 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
 
 def setup_output_document(input_doc, tmp_input_doc, metadata_info,
                                                     copy_document_catalog=True):
-    """Create the output `PdfFileWriter` objects and copy over the relevant info.
+    """Create the output `PdfWriter` objects and copy over the relevant info.
     Returns the writer objects `output_doc`, `tmp_output_doc`, and the boolean
     `already_cropped_by_this_program`.  This function also sets the metadata for
     the cropped output file."""
-    # NOTE: Inserting pages from a PdfFileReader into multiple PdfFileWriters
+    # NOTE: Inserting pages from a PdfReader into multiple PdfWriters
     # seems to cause problems (writer can hang on write), so only one is used.
     # This is why the tmp_input_doc file was created earlier, to get copies of
     # the page objects which are independent of those in input_doc.  An ugly
@@ -719,7 +717,7 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
     # an Adobe implementation problem, and happens even in the uncropped files:
     #    https://superuser.com/questions/278302/
 
-    output_doc = PdfFileWriter()
+    output_doc = PdfWriter()
 
     def root_objects_not_indirect(input_doc, root_object):
         """This can expand some of the `IndirectObject` objects in a root object to
@@ -732,7 +730,7 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
         elif isinstance(root_object, list):
             return [root_objects_not_indirect(input_doc, item) for item in root_object]
         elif isinstance(root_object, IndirectObject):
-            return input_doc.getObject(root_object)
+            return input_doc.get_object(root_object)
         else:
             return root_object
 
@@ -792,20 +790,20 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info,
         except (KeyboardInterrupt, EOFError):
             raise
         except: # Just catch any errors here; don't know which might be raised.
-            # On exception just warn and get a new PdfFileWriter object, to be safe.
+            # On exception just warn and get a new PdfWriter object, to be safe.
             print("\nWarning: The document catalog data could not be copied to the"
                   "\nnew, cropped document.  Try fixing the PDF document using"
                   "\n'--gsFix' if you have Ghostscript installed.", file=sys.stderr)
-            output_doc = PdfFileWriter()
+            output_doc = PdfWriter()
 
     #output_doc.appendPagesFromReader(input_doc) # Works, but wait and test more.
-    for page in [input_doc.getPage(i) for i in range(input_doc.getNumPages())]:
-        output_doc.addPage(page)
+    for page in [input_doc.pages[i] for i in range(len(input_doc.pages))]:
+        output_doc.add_page(page)
 
-    tmp_output_doc = PdfFileWriter()
+    tmp_output_doc = PdfWriter()
     #tmp_output_doc.appendPagesFromReader(tmp_input_doc)  # Works, but test more.
-    for page in [tmp_input_doc.getPage(i) for i in range(tmp_input_doc.getNumPages())]:
-        tmp_output_doc.addPage(page)
+    for page in [tmp_input_doc.pages[i] for i in range(len(tmp_input_doc.pages))]:
+        tmp_output_doc.add_page(page)
 
     ##
     ## Copy the metadata from input_doc to output_doc, modifying the Producer string
@@ -1050,27 +1048,27 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     Returns the bounding box list."""
     ##
-    ## Open the input document in a PdfFileReader object.  Due to an apparent bug
-    ## in pyPdf we open two PdfFileReader objects for the file.  The time required
+    ## Open the input document in a PdfReader object.  Due to an apparent bug
+    ## in pyPdf we open two PdfReader objects for the file.  The time required
     ## should still be small relative to finding the bounding boxes of pages.  The bug
-    ## is that writing a PdfFileWriter tends to hang on certain files if 1) pages from
-    ## the same PdfFileReader are shared between two PdfFileWriter objects, or 2)
-    ## the PdfFileWriter is written, the pages are modified, and there is an attempt
-    ## to write the same PdfFileWriter to a different file.
+    ## is that writing a PdfWriter tends to hang on certain files if 1) pages from
+    ## the same PdfReader are shared between two PdfWriter objects, or 2)
+    ## the PdfWriter is written, the pages are modified, and there is an attempt
+    ## to write the same PdfWriter to a different file.
     ##
 
     # Open the input file object.
     try:
         fixed_input_doc_file_object = open(fixed_input_doc_pathname, "rb")
-    except IOError:
+    except OSError:
         print("Error in pdfCropMargins: Could not open output document with "
               "filename '{}'".format(fixed_input_doc_pathname))
         ex.cleanup_and_exit(1)
 
     try:
         strict_mode = False
-        input_doc = PdfFileReader(fixed_input_doc_file_object, strict=strict_mode)
-        tmp_input_doc = PdfFileReader(fixed_input_doc_file_object, strict=strict_mode)
+        input_doc = PdfReader(fixed_input_doc_file_object, strict=strict_mode)
+        tmp_input_doc = PdfReader(fixed_input_doc_file_object, strict=strict_mode)
     except (KeyboardInterrupt, EOFError):
         raise
     except Exception as e: # PyPDF2 can raise various, catch the rest here.
@@ -1109,7 +1107,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     ##
 
     try: # Note this is after decryption.
-        input_doc_num_pages = input_doc.getNumPages() # Can raise PdfReadError.
+        input_doc_num_pages = len(input_doc.pages) # Can raise PdfReadError.
     except PdfReadError as e:
         print("\nError in pdfCropMargins: The PyPDF2 module failed with a"
               "\nPdfReadError in an attempt get the number of pages in input file:\n   {}\n"
@@ -1123,7 +1121,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
         ex.cleanup_and_exit(1)
 
     if args.verbose:
-        print("\nThe input document has {} pages.".format(input_doc_num_pages))
+        print(f"\nThe input document has {input_doc_num_pages} pages.")
 
     try: # This is needed because the call sometimes just raises an error.
         metadata_info = input_doc.getDocumentInfo()
@@ -1204,7 +1202,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
                                             tmp_input_doc, quiet=True, skip_pre_crop=False)
 
     ##
-    ## Define a `PdfFileWriter` object and copy `input_doc` info over to it.
+    ## Define a `PdfWriter` object and copy `input_doc` info over to it.
     ##
 
     output_doc, tmp_output_doc, already_cropped_by_this_program = setup_output_document(
@@ -1255,7 +1253,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     if not bounding_box_list and not args.restore:
         bounding_box_list = get_bounding_box_list(doc_with_crop_and_media_boxes_name,
-                input_doc, full_page_box_list, page_nums_to_crop, args, PdfFileWriter)
+                input_doc, full_page_box_list, page_nums_to_crop, args, PdfWriter)
         if args.verbose:
             print("\nThe bounding boxes are:")
             for pNum, b in enumerate(bounding_box_list):
@@ -1276,8 +1274,8 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
         crop_list = None # Restore, not needed in this case.
 
     ##
-    ## Apply the calculated crops to the pages of the PdfFileReader input_doc.
-    ## These pages are copied to the PdfFileWriter output_doc.
+    ## Apply the calculated crops to the pages of the PdfReader input_doc.
+    ## These pages are copied to the PdfWriter output_doc.
     ##
 
     apply_crop_list(crop_list, input_doc, page_nums_to_crop,
@@ -1292,7 +1290,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     try:
         output_doc_stream = open(output_doc_pathname, "wb")
-    except IOError:
+    except OSError:
         print("Error in pdfCropMargins: Could not open output document with "
               "filename '{}'".format(output_doc_pathname))
         ex.cleanup_and_exit(1)
@@ -1368,7 +1366,7 @@ def handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname):
                 break
             elif query_result in ["n", "N"]:
                 print("\nNot modifying the original file.  The cropped file is saved"
-                      " as:\n   {0}".format(output_doc_pathname))
+                      " as:\n   {}".format(output_doc_pathname))
                 args.modifyOriginal = False
                 break
             else:

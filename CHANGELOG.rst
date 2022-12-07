@@ -3,6 +3,16 @@
 History
 =======
 
+1.1.0 (2022-12-07)
+------------------
+
+* Upgraded to Python 3.6 minimum requirement with pyupgrade.
+
+* The GUI dependencies are now part of the standard install (although the program
+  will still run without them if the GUI is not required).
+
+* Dependency versions updated for security and functionality changes.
+
 1.0.9 (2022-07-14)
 ------------------
 

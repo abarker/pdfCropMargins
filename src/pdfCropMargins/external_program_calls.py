@@ -27,7 +27,6 @@ Note for cleanup: This module creates a temp dir at time of initialization.
 
 """
 
-from __future__ import print_function, division, absolute_import
 import sys
 import os
 import subprocess
@@ -231,7 +230,7 @@ def remove_program_temp_directory():
             try:
                 shutil.rmtree(program_temp_directory)
                 break
-            except IOError:
+            except OSError:
                 curr_retries += 1
                 if curr_retries > max_retries:
                     raise # re-raise the exception
@@ -324,7 +323,7 @@ def call_external_subprocess(command_list, stdin_filename=None, stdout_filename=
     """Run the command and arguments in the command_list.  Will search the system
     PATH for commands to execute, but no shell is started.  Redirects any selected
     outputs to the given filename.  Waits for command completion."""
-    stdin = open(stdin_filename, "r") if stdin_filename else None
+    stdin = open(stdin_filename) if stdin_filename else None
     stdout = open(stdout_filename, "w") if stdout_filename else None
     stderr = open(stderr_filename, "w") if stderr_filename else None
 
@@ -511,7 +510,7 @@ def find_and_test_executable(executables, argument_list, string_to_look_for,
                               ignore_called_process_errors=ignore_called_process_errors)
                 if string_to_look_for in run_output:
                     return executable_path
-            except (subprocess.CalledProcessError, OSError, IOError) as e:
+            except (subprocess.CalledProcessError, OSError) as e:
                 # OSError if it isn't found, CalledProcessError if it runs but returns
                 # fail.
                 pass
@@ -554,7 +553,7 @@ def get_bounding_box_list_ghostscript(input_doc_fname, res_x, res_y, full_page_b
     if not gs_executable:
         init_and_test_gs_executable(exit_on_fail=True)
 
-    res = "{}x{}".format(res_x, res_y)
+    res = f"{res_x}x{res_y}"
     box_arg = "-dUseMediaBox" # should be default, but set anyway
     if "c" in full_page_box: box_arg = "-dUseCropBox"
     if "t" in full_page_box: box_arg = "-dUseTrimBox"
@@ -670,7 +669,7 @@ def show_preview(viewer_path, pdf_file_name):
     try:
         cmd = [viewer_path, pdf_file_name]
         run_external_subprocess_in_background(cmd)
-    except (subprocess.CalledProcessError, OSError, IOError) as e:
+    except (subprocess.CalledProcessError, OSError) as e:
         print("\nWarning from pdfCropMargins: The argument to the '--viewer' option:"
               "\n   ", viewer_path, "\nwas not found or failed to execute correctly.\n",
               file=sys.stderr)

@@ -51,7 +51,6 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 """
 
-from __future__ import print_function, division, absolute_import
 
 import argparse
 import sys
@@ -824,7 +823,7 @@ cmd_parser.add_argument("-ppp", "--pdftoppmPath", type=str, metavar="PATH",
    location.^^n""")
 
 cmd_parser.add_argument("--version", action="version",
-                        version="pdfCropMargins {}".format(__version__), help="""
+                        version=f"pdfCropMargins {__version__}", help="""
 
    Return the pdfCropMargins version number and exit immediately.  All
    other options are ignored.^^n""")

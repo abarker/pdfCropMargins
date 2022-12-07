@@ -49,7 +49,6 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 """
 
-from __future__ import print_function, division, absolute_import
 import textwrap
 import re
 import sys
@@ -80,7 +79,7 @@ help_string_replacement_pairs = (
 )
 
 
-class RedirectHelp(object):
+class RedirectHelp:
     """This class allows for redirecting stdout in order to prettify the output
     of argparse's help and usage messages (via a postprocessor).  An outstream
     like stdout is simply set equal to an instance of this class, passed the
@@ -149,7 +148,7 @@ class RedirectHelp(object):
         return getattr(self.outstream, attr)
 
 
-class SelfFlushingOutstream(object):
+class SelfFlushingOutstream:
     """This class allows stdout and stderr to be redefined so that they are
     automatically flushed after each write.  (The same thing can be achieved via
     the '-u' flag on the Python command line.)  This helps when running in
