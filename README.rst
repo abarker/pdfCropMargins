@@ -36,7 +36,7 @@ Features
 This GIF shows the optional GUI, before and after cropping a document:
 
 .. image:: https://user-images.githubusercontent.com/1791335/63413846-9c9e3400-c3c8-11e9-90f5-6e429ae2d74b.gif
-    :width: 350px
+    :width: 450px
     :align: center
     :alt: [GIF of pdfCropMargins]
 
@@ -47,7 +47,7 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-**New in version 1.0.0**
+**New in version 1.1.0**
 
 * Python 3.6 is now the minimum supported version.
 
@@ -201,7 +201,7 @@ but does not echo anything to the terminal while the ``crop`` function runs.
 
    output_doc_pathname, exit_code, stdout_str, stderr_str = crop(
                             ["-p4", "0", "10", "0", "10", "paper2.pdf"],
-                            string_io=True)
+                            string_io=True, quiet=False)
 
 Running from the source distribution
 ------------------------------------
