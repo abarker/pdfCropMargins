@@ -82,10 +82,9 @@ Description:
 
    \a\a\apdf-crop-margins document.pdf -o croppedDocument.pdf
 
-   Note that the alias 'pdfcropmargins' can also be used to launch the program
-   in place of 'pdf-crop-margins'.  If no destination is provided a filename
-   will be automatically generated from the name of the source file (see
-   below).
+   The alias 'pdfcropmargins' can also be used to launch the program in place
+   of 'pdf-crop-margins'.  If no destination is provided a filename will be
+   automatically generated from the name of the source file (see below).
 
    The pdfCropMargins program works by changing the page sizes which are stored
    in the PDF file (and are interpreted by programs like Acrobat Reader).
