@@ -55,6 +55,11 @@ recent changes and new features.
   still work without them, however, if the GUI is not required.  Note that without
   PyMuPDF either pdftoppm or Ghostscript must be installed.
 
+**New in version 1.1.1**
+
+ * You can now use either `pdf-crop-margins` or `pdfcropmargins` to launch the
+   program from the command line.
+
 Installing 
 ==========
 
@@ -129,7 +134,8 @@ a GUI, 3) from a Python program, or 3) from the source repo.
 Running from the command line
 -----------------------------
 
-After installation via pip the program can be run with a command such as:
+After installation via pip the program can be run with either the command
+``pdf-crop-margins`` or the command ``pdfcropmargins``.  For example:
 
 .. code-block:: sh
 
@@ -244,8 +250,8 @@ To see the documentation, run::
    pdf-crop-margins -h | more
 
 The output of that command follows::
-   
-   Usage: pdf-crop-margins [-h] [-o OUTFILE_NAME] [-v] [-gui] [-p PCT]
+
+   Usage: pdf-crop-margins [-h] [-o OUTFILE_PATH_OR_DIR] [-v] [-gui] [-p PCT]
                            [-p4 PCT PCT PCT PCT] [-pt] [-a BP] [-a4 BP BP BP BP]
                            [-ap BP] [-ap4 BP BP BP BP] [-u] [-m INT]
                            [-m4 INT INT INT INT] [-mp INT] [-s] [-ms INT] [-e]
@@ -277,8 +283,10 @@ The output of that command follows::
    
            pdf-crop-margins document.pdf -o croppedDocument.pdf
    
-        If no destination is provided a filename will be automatically
-        generated from the name of the source file (see below).
+        Note that the alias 'pdfcropmargins' can also be used to launch the
+        program in place of 'pdf-crop-margins'. If no destination is provided a
+        filename will be automatically generated from the name of the source
+        file (see below).
    
         The pdfCropMargins program works by changing the page sizes which are
         stored in the PDF file (and are interpreted by programs like Acrobat
@@ -344,7 +352,7 @@ The output of that command follows::
    
            pdf-crop-margins -ap 5 -p 50 doc.pdf
    
-        7) Crop doc.pdf, re-naming the cropped output file doc.pdf and backing
+        7) Crop doc.pdf, re-naming the cropped output file to doc.pdf and backing
         up the original file in a file named backup_doc.pdf.
    
            pdf-crop-margins -mo -pf -su "backup" doc.pdf
@@ -443,24 +451,29 @@ The output of that command follows::
                   directory at the time when the program was run. If the input
                   file has no extension or has an extension other than '.pdf' or
                   '.PDF' then the suffix '.pdf' will be appended to the existing
-                  (possibly-null) extension. Globbing of wildcards is performed
-                  on Windows systems.
+                  (possibly-null) extension. Globbing of wildcards and shell
+                  variable expansions are performed on the path.
    
    
    Optional arguments:
    
      -h, --help   Show this help message and exit.
    
-     -o OUTFILE_NAME, --outfile OUTFILE_NAME
-                  An optional argument specifying the pathname of a file that the
-                  cropped output document should be written to. By default any
-                  existing file with the same name will be silently overwritten.
-                  If this option is not given the program will generate an output
-                  filename from the input filename. (By default "_cropped" is
-                  appended to the input filename before the file extension. If
-                  the extension is not '.pdf' or '.PDF' then '.pdf' is appended
-                  to the extension). Globbing of wildcards is performed on
-                  Windows systems.
+     -o OUTFILE_PATH_OR_DIR, --outfile OUTFILE_PATH_OR_DIR
+                  An optional argument specifying the directory or file path that
+                  the cropped output document should be written to. If this
+                  option is not given the program will generate an output
+                  filename from the input filename and write to the current
+                  working directory. By default the string "_cropped" is appended
+                  to the input filename just before the file extension. (If the
+                  extension is not '.pdf' or '.PDF' then '.pdf' is also appended
+                  to the extension.) The options '--usePrefix', '--stringCropped'
+                  and '--stringSeparator' can be used to customize the generated
+                  filenames. By default any existing file with the same name will
+                  be silently overwritten; this can be avoided with the '--
+                  noclobber' option. Globbing of wildcards and shell variable
+                  expansions are performed on the directory path but not on the
+                  filename part.
    
      -v, --verbose
                   Print more information about the program's actions and
@@ -794,7 +807,8 @@ The output of that command follows::
                   restore back to the original margins.
    
      -nc, --noclobber
-                  Never overwrite an existing file as the output file.
+                  Never overwrite an existing file with the cropped output
+                  file.
    
      -pv PROG, --preview PROG
                   Run a PDF viewer on the cropped PDF output. The viewer process
@@ -815,30 +829,34 @@ The output of that command follows::
                   for the viewer.
    
      -mo, --modifyOriginal
-                  This option moves (renames) the original file to a backup
-                  filename and then moves the cropped file to the original
-                  filename. Thus it effectively modifies the original file and
-                  makes a backup copy of the original, unmodified file. The
-                  backup filename for the original document is always generated
-                  from the original filename; any prefix or suffix which would be
-                  added by the program to generate a filename (by default a
-                  "_cropped" suffix) is modified accordingly (by default to
-                  "_uncropped"). The '--usePrefix', '--stringUncropped', and '--
-                  stringSeparator' options can all be used to customize the
-                  generated backup filename. This operation is performed last, so
-                  if a previous operation fails the original document will be
-                  unchanged. Be warned that running pdfCropMargins twice on the
-                  same source filename will modify the original file; the
-                  '-noclobberOriginal' option can be used to avoid this.
+                  This option moves (renames) the original document file to a
+                  backup filename and then moves the cropped file to the original
+                  document's filename (and directory path). Thus it effectively
+                  crops the original document file in-place and makes a backup
+                  copy of the original file in the output directory. The backup
+                  filename for the original document is always generated from the
+                  original filename; any prefix or suffix which would be added by
+                  the program to generate a filename (by default a "_cropped"
+                  suffix) is modified accordingly (by default to "_uncropped").
+                  The '--usePrefix', '--stringUncropped', and '--stringSeparator'
+                  options can all be used to customize the generated backup
+                  filename. If an output path is specified via the '--outfile'
+                  ('-o') option then the backup document is written to that
+                  directory (the same directory the cropped file was first
+                  written to). This operation is performed last, so if a previous
+                  operation fails the original document will be unchanged. Be
+                  warned that running pdfCropMargins twice on the same source
+                  path with this option will modify the backed-up original file;
+                  the '--noclobberOriginal' option can be used to avoid this.
    
      -q, --queryModifyOriginal
                   This option selects the '--modifyOriginal' option, but queries
                   the user about whether to actually do the final move operation.
-                  This works well with the '--preview' option: if the preview
-                  looks good you can opt to modify the original file (keeping a
-                  copy of the original). If you decline then the files are not
-                  swapped (and are just as if the '--modifyOriginal' option had
-                  not been set).
+                  This works well with the '--preview' or '--gui' options: if the
+                  preview looks good you can opt to modify the original file
+                  (keeping a copy of the original). If you decline then the files
+                  are not swapped (and are just as if the '--modifyOriginal'
+                  option had not been set).
    
      -nco, --noclobberOriginal
                   If the '--modifyOriginal' option is selected, do not ever
@@ -874,7 +892,7 @@ The output of that command follows::
    
      -ss STR, --stringSeparator STR
                   This option can be used to set the separator string which will
-                  be used when appending or prependeding string values to
+                  be used when appending or prepending string values to
                   automatically generate filenames. The default value is "_".
    
      -pw PASSWD, --password PASSWD
@@ -974,4 +992,3 @@ The output of that command follows::
    
    The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.
    Released under the GNU GPL license, version 3 or later.
-   

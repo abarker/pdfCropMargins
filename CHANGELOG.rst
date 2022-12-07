@@ -3,8 +3,8 @@
 History
 =======
 
-1.1.0 (2022-12-07)
-------------------
+1.1.[0-1] (2022-12-07)
+----------------------
 
 * Upgraded to Python 3.6 minimum requirement with pyupgrade.
 
@@ -12,6 +12,9 @@ History
   will still run without them if the GUI is not required).
 
 * Dependency versions updated for security and functionality changes.
+
+* The alias ``pdfcropmargins`` can now be used instead of ``pdf-crop-margins``
+  from the command line.
 
 1.0.9 (2022-07-14)
 ------------------
