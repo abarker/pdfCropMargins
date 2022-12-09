@@ -4,8 +4,8 @@ Code to create and execute the GUI when that option is selected.
 
 =========================================================================
 
-This code is heavily modified from example/demo code found here:
-https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Viewer.py
+This code evolved from the example/demo code found here:
+   https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Viewer.py
 Below is from original module docstring:
 
     @created: 2018-08-19 18:00:00
@@ -46,10 +46,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # smooths).  Currently writing "---" but would look better disabled altogether
 # in that case.
 
-# pysimplegui issues: 1) warning on Window title in Python2 on some machines, 2) tooltips
-# need pointer to move left to work, 3) non-string initial values not set for Combo.
-
-
 import sys
 import os
 import warnings
@@ -60,28 +56,17 @@ from . import external_program_calls as ex
 from . pymupdf_routines import has_mupdf, MuPdfDocument
 
 if not has_mupdf:
-    print("\nError in pdfCropMargins: The GUI feature requires PyMuPDF"
-          "\nat least v1.14.5. If installing via pip, use the"
-          "\noptional-feature install, e.g.:"
-          "\n   pip install pdfCropMargins[gui] --upgrade --user"
+    print("\nError in pdfCropMargins: The GUI feature requires a recent PyMuPDF version."
           "\n\nExiting pdf-crop-margins...")
     ex.cleanup_and_exit(1)
 
 try: # Extra dependencies for the GUI version.  Make sure they are installed.
-    if not ex.python_version[0] == "2":
-        requires = "PySimpleGUI"
-        import PySimpleGUI as sg
-        requires = "tkinter"
-        import tkinter as tk
-    else:
-        requires = "PySimpleGUI27"
-        import PySimpleGUI27 as sg
-        requires = "Tkinter"
-        import Tkinter as tk
+    requires = "PySimpleGUI"
+    import PySimpleGUI as sg
+    requires = "tkinter"
+    import tkinter as tk
 except ImportError:
     print("\nError in pdfCropMargins: The GUI feature requires {}."
-          "\nIf installing via pip, use the optional-feature install, e.g.:"
-          "\n   pip install pdfCropMargins[gui] --upgrade --user"
           "\n\nExiting pdf-crop-margins...".format(requires), file=sys.stderr)
     ex.cleanup_and_exit(1)
 
@@ -363,13 +348,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_percentRetain4 = sg.Text("percentRetain4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "percentRetain4"))
     input_text_percentRetain4 = [sg.InputText(args_dict["percentRetain4"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"percentRetain4_{i}")
+                                 do_not_clear=True, key=f"percentRetain4_{i}", pad=(5,0))
                                  for i in [0,1,2,3]]
 
     def update_percentRetain_values(values_dict):
         """Update both the percentRetain value and the percentRetain4 values."""
         update_paired_1_and_4_values(input_text_percentRetain,
-                    input_text_percentRetain4, "percentRetain", "percentRetain4", args_dict, values_dict)
+                    input_text_percentRetain4, "percentRetain", "percentRetain4",
+                    args_dict, values_dict)
         # Copy backing values to the actual args object.
         args.percentRetain = args_dict["percentRetain"]
         args.percentRetain4 = args_dict["percentRetain4"]
@@ -393,7 +379,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_absoluteOffset4 = sg.Text("absoluteOffset4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "absoluteOffset4"))
     input_text_absoluteOffset4 = [sg.InputText(args_dict["absoluteOffset4"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"absoluteOffset4_{i}")
+                                 do_not_clear=True, key=f"absoluteOffset4_{i}", pad=(5,0))
                                  for i in [0,1,2,3]]
 
     def update_absoluteOffset_values(values_dict):
@@ -436,7 +422,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_uniformOrderStat4 = sg.Text("uniformOrderStat4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat4"))
     input_text_uniformOrderStat4 = [sg.InputText(args_dict["uniformOrderStat4"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"uniformOrderStat4_{i}")
+                                 do_not_clear=True, key=f"uniformOrderStat4_{i}", pad=(5,0))
                                  for i in [0,1,2,3]]
 
     def update_uniformOrderStat_values(values_dict):
@@ -607,7 +593,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_pageRatioWeights = sg.Text("pageRatioWeights",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "pageRatioWeights"))
     input_text_pageRatioWeights = [sg.InputText(args_dict["pageRatioWeights"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"pageRatioWeights_{i}")
+                                 do_not_clear=True, key=f"pageRatioWeights_{i}", pad=(5,0))
                                  for i in [0,1,2,3]]
 
     def update_pageRatioWeights_values(values_dict):
@@ -636,7 +622,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_absolutePreCrop4 = sg.Text("absolutePreCrop4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "absolutePreCrop4"))
     input_text_absolutePreCrop4 = [sg.InputText(args_dict["absolutePreCrop4"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"absolutePreCrop4_{i}")
+                                 do_not_clear=True, key=f"absolutePreCrop4_{i}", pad=(5,0))
                                  for i in [0,1,2,3]]
 
     def update_absolutePreCrop_values(values_dict):
@@ -746,6 +732,38 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                   visible=True)
 
     ##
+    ## Code for smallest delta display.
+    ##
+
+    smallest_delta_label_text = sg.Text("")
+    smallest_delta_left = sg.Text("")
+    smallest_delta_top = sg.Text("")
+    smallest_delta_bottom = sg.Text("")
+    smallest_delta_right = sg.Text("")
+
+    smallest_delta_values_display = [
+                                     smallest_delta_label_text,
+                                     smallest_delta_left,
+                                     sg.Column([[smallest_delta_top],
+                                                [smallest_delta_bottom]], pad=(0,0)),
+                                     smallest_delta_right,
+                                    ]
+
+    def update_smallest_delta_values_display(delta_page_nums):
+        smallest_delta_label_text.Update("Smallest delta pages:")
+        smallest_delta_left.Update(str(delta_page_nums[0]))
+        smallest_delta_top.Update(str(delta_page_nums[3]))
+        smallest_delta_bottom.Update(str(delta_page_nums[1]))
+        smallest_delta_right.Update(str(delta_page_nums[2]))
+
+    def set_delta_values_null():
+        smallest_delta_label_text.Update("")
+        smallest_delta_left.Update("")
+        smallest_delta_top.Update("")
+        smallest_delta_bottom.Update("")
+        smallest_delta_right.Update("")
+
+    ##
     ## Setup and assign the window's layout.
     ##
 
@@ -769,44 +787,43 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     [checkbox_uniform, checkbox_samePageSize, checkbox_evenodd],
 
                     [sg.Text("", size=input_text_percentRetain.Size), # Empty text is space.
-                        sg.Column([[input_text_percentRetain]], pad=(0,0)),
-                        text_percentRetain, checkbox_percentText],
+                        input_text_percentRetain, text_percentRetain, checkbox_percentText],
 
                     [input_text_percentRetain4[0],
                         sg.Column([[input_text_percentRetain4[3]],
-                                   [input_text_percentRetain4[1]]], pad=(0,0)),
+                                   [input_text_percentRetain4[1]]], pad=(0,4)),
                         input_text_percentRetain4[2]] + [text_percentRetain4],
 
                     [sg.Text("", size=input_text_absoluteOffset.Size), # Empty text is space.
-                        sg.Column([[input_text_absoluteOffset]], pad=(0,0)), text_absoluteOffset],
+                        input_text_absoluteOffset, text_absoluteOffset],
 
                     [input_text_absoluteOffset4[0],
                         sg.Column([[input_text_absoluteOffset4[3]],
-                                   [input_text_absoluteOffset4[1]]], pad=(0,0)),
+                                   [input_text_absoluteOffset4[1]]], pad=(0,4)),
                         input_text_absoluteOffset4[2]] + [text_absoluteOffset4],
 
                     [sg.Text("", size=input_text_uniformOrderStat.Size), # Empty text is space.
-                        sg.Column([[input_text_uniformOrderStat]], pad=(0,0)), text_uniformOrderStat],
+                        input_text_uniformOrderStat, text_uniformOrderStat],
 
                     [input_text_uniformOrderStat4[0],
                         sg.Column([[input_text_uniformOrderStat4[3]],
-                                   [input_text_uniformOrderStat4[1]]], pad=(0,0)),
+                                   [input_text_uniformOrderStat4[1]]], pad=(0,4)),
                         input_text_uniformOrderStat4[2]] + [text_uniformOrderStat4],
 
                     [sg.Text("", size=input_text_uniformOrderStat.Size), # Empty text is space.
-                        sg.Column([[input_text_setPageRatios]], pad=(0,0)), text_setPageRatios],
+                        input_text_setPageRatios, text_setPageRatios],
 
                     [input_text_pageRatioWeights[0],
                         sg.Column([[input_text_pageRatioWeights[3]],
-                                   [input_text_pageRatioWeights[1]]], pad=(0,0)),
+                                   [input_text_pageRatioWeights[1]]], pad=(0,4)),
                         input_text_pageRatioWeights[2]] + [text_pageRatioWeights],
 
                     [sg.Text("", size=input_text_absolutePreCrop.Size), # Empty text is space.
-                        sg.Column([[input_text_absolutePreCrop]], pad=(0,0)), text_absolutePreCrop],
+                        input_text_absolutePreCrop, text_absolutePreCrop],
 
                     [input_text_absolutePreCrop4[0],
                         sg.Column([[input_text_absolutePreCrop4[3]],
-                                   [input_text_absolutePreCrop4[1]]], pad=(0,0)),
+                                   [input_text_absolutePreCrop4[1]]], pad=(0,4)),
                         input_text_absolutePreCrop4[2]] + [text_absolutePreCrop4],
 
                     [input_num_threshold, text_threshold, input_num_numBlurs,
@@ -815,6 +832,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     [input_text_pages, text_pages, combo_box_restore, text_restore],
 
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
+                    [sg.Text("", size=(1,1))], # This is for vertical space.
+                    smallest_delta_values_display,
                     [sg.Text("")], # This is for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
                 ]),
@@ -836,6 +855,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     #window.Layout(layout) # Old way, now in Window call, delete after testing.
     window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
+    set_delta_values_null()
 
     ##
     ## Find the usable window size.
@@ -956,8 +976,12 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                 last_numSmooths = args.numSmooths
 
             # Do the crop, saving the bounding box list.
-            bounding_box_list = process_pdf_file(input_doc_fname, fixed_input_doc_fname,
-                                                 output_doc_fname, bounding_box_list)
+            bounding_box_list, delta_page_nums = process_pdf_file(input_doc_fname,
+                                                                  fixed_input_doc_fname,
+                                                                  output_doc_fname,
+                                                                  bounding_box_list)
+            update_smallest_delta_values_display(delta_page_nums)
+
             if args.restore:
                 combo_box_restore.Update("False")
 
@@ -974,6 +998,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             document_pages.close_document()
             num_pages = document_pages.open_document(fixed_input_doc_fname)
             did_crop = False
+            set_delta_values_null()
 
         # Update page number.
         curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,

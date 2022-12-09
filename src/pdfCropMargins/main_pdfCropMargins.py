@@ -73,10 +73,10 @@ except ImportError:
     ex.cleanup_and_exit(1)
 
 try:
-    from PyPDF2.errors import PdfReadError # Versions >= 2.0.
+    from PyPDF2.errors import PdfReadError, ParseError, PyPdfError # Versions >= 2.0.
 except ImportError:
     try:
-        from PyPDF2.utils import PdfReadError # Versions < 2.0.
+        from PyPDF2.utils import PdfReadError, ParseError, PyPdfError # Versions < 2.0.
     except ImportError:
         print("\nError in pdfCropMargins: The PdfReadError exception could not"
               "\nbe found.  Try updating pdfCropMargins and/or PyPDF2 via pip.",
@@ -398,10 +398,10 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
             print("\nRecursively calculating crops for even and odd pages.")
         args.evenodd = False # Avoid infinite recursion.
         args.uniform = True  # --evenodd implies uniform, just on each separate group
-        even_crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
-                                             angle_list, even_page_nums_to_crop)
-        odd_crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
-                                            angle_list, odd_page_nums_to_crop)
+        even_crop_list, delta_page_nums_even = calculate_crop_list(full_page_box_list, bounding_box_list,
+                                                                   angle_list, even_page_nums_to_crop)
+        odd_crop_list, delta_page_nums_odd = calculate_crop_list(full_page_box_list, bounding_box_list,
+                                                                 angle_list, odd_page_nums_to_crop)
 
         # Recombine the even and odd pages.
         combine_even_odd = []
@@ -411,6 +411,9 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
             else:
                 combine_even_odd.append(odd_crop_list[p_num])
 
+        combine_delta_crop_list = [(delta_page_nums_even[i], delta_page_nums_odd[i])
+                                   for i in range(4)]
+
         # Handle the case where --uniform was set with --evenodd.
         if uniform_set_with_even_odd:
             min_bottom_margin = min(box[1] for p_num, box in enumerate(combine_even_odd)
@@ -419,7 +422,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                                                        if p_num in page_nums_to_crop)
             combine_even_odd = [[box[0], min_bottom_margin, box[2], max_top_margin]
                               for box in combine_even_odd]
-        return combine_even_odd
+        return combine_even_odd, combine_delta_crop_list
 
     # Before calculating the crops we modify the percentRetain and
     # absoluteOffset values for all the pages according to any specified.
@@ -554,7 +557,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                                            right, top + difference * top_weight))
         final_crop_list = ratio_set_crop_list
 
-    return final_crop_list
+    return final_crop_list, delta_page_nums
 
 def set_cropped_metadata(input_doc, output_doc, metadata_info):
     """Set the metadata for the output document.  Mostly just copied over, but
@@ -1124,8 +1127,8 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
         print(f"\nThe input document has {input_doc_num_pages} pages.")
 
     try: # This is needed because the call sometimes just raises an error.
-        metadata_info = input_doc.getDocumentInfo()
-    except:
+        metadata_info = input_doc.metadata
+    except (PdfReadError, ParseError):
         print("\nWarning: Document metadata could not be read.", file=sys.stderr)
         metadata_info = None
 
@@ -1240,7 +1243,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
                 tmp_output_doc.write(doc_with_crop_and_media_boxes_object)
             except (KeyboardInterrupt, EOFError):
                 raise
-            except: # PyPDF2 can raise various exceptions.
+            except PyPdfError: # PyPDF2 can raise various exceptions.
                 print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
                       "\nwrite out a PDF file of the document.  The document may be"
                       "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
@@ -1268,10 +1271,11 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     ##
 
     if not args.restore:
-        crop_list = calculate_crop_list(full_page_box_list, bounding_box_list,
+        crop_list, delta_page_nums = calculate_crop_list(full_page_box_list, bounding_box_list,
                                         rotation_list, page_nums_to_crop)
     else:
         crop_list = None # Restore, not needed in this case.
+        delta_page_nums = ("N/A","N/A","N/A","N/A")
 
     ##
     ## Apply the calculated crops to the pages of the PdfReader input_doc.
@@ -1329,7 +1333,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     # We're finished with this open file; close it and let temp dir removal delete it.
     fixed_input_doc_file_object.close()
-    return bounding_box_list
+    return bounding_box_list, delta_page_nums
 
 def handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname):
     """Handle the options which apply after the file is written such as previewing
@@ -1444,7 +1448,9 @@ def main_crop(argv_list=None):
         if did_crop:
             handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname)
     else:
-        process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pathname)
+        bounding_box_list, delta_page_nums = process_pdf_file(input_doc_pathname,
+                                                              fixed_input_doc_pathname,
+                                                              output_doc_pathname)
         handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname)
 
     return output_doc_pathname
