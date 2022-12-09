@@ -751,10 +751,13 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def update_smallest_delta_values_display(delta_page_nums):
         smallest_delta_label_text.Update("Minimum delta pages:")
-        smallest_delta_left.Update(str(delta_page_nums[0]))
-        smallest_delta_top.Update(str(delta_page_nums[3]))
-        smallest_delta_bottom.Update(str(delta_page_nums[1]))
-        smallest_delta_right.Update(str(delta_page_nums[2]))
+        num_strings = [f"{i}" for i in delta_page_nums]
+        max_len = max(len(i) for i in num_strings)
+        num_strings = [" "*(max_len-len(i)) + i for i in num_strings] # Right-align.
+        smallest_delta_left.Update(num_strings[0])
+        smallest_delta_top.Update(num_strings[3])
+        smallest_delta_bottom.Update(num_strings[1])
+        smallest_delta_right.Update(num_strings[2])
 
     def set_delta_values_null():
         smallest_delta_label_text.Update("")
