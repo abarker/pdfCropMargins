@@ -274,6 +274,22 @@ class Events:
     def is_zoom(btn):
         return btn.startswith("Toggle Zoom")
 
+    @staticmethod
+    def is_left_smallest_delta(btn):
+        return btn.startswith("left") # Note that key is always used if set, not label.
+
+    @staticmethod
+    def is_top_smallest_delta(btn):
+        return btn.startswith("top")
+
+    @staticmethod
+    def is_bottom_smallest_delta(btn):
+        return btn.startswith("bottom")
+
+    @staticmethod
+    def is_right_smallest_delta(btn):
+        return btn.startswith("right")
+
 #
 # The main function with the event loop.
 #
@@ -736,35 +752,47 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     smallest_delta_label_text = sg.Text("")
-    smallest_delta_left = sg.Text("")
-    smallest_delta_top = sg.Text("")
-    smallest_delta_bottom = sg.Text("")
-    smallest_delta_right = sg.Text("")
+    # Note that the key is always returned/searched in the event loop if set, not the label.
+    smallest_delta_left = sg.Button("", key="left_smallest_delta", pad=(2,2))
+    smallest_delta_top = sg.Button("", key="top_smallest_delta", pad=(2,2))
+    smallest_delta_bottom = sg.Button("", key="bottom_smallest_delta", pad=(2,2))
+    smallest_delta_right = sg.Button("", key="right_smallest_delta", pad=(2,2))
 
     smallest_delta_values_display = [
-                                     smallest_delta_label_text,
-                                     smallest_delta_left,
+                                     # Extraneous colums added because of this bug in tkinter:
+                                     # https://github.com/PySimpleGUI/PySimpleGUI/issues/1154
+                                     sg.Text("", size=(2,1)), # Spacing.
+                                     sg.Column([[smallest_delta_left]], pad=(0,0)), # Extraneous col.
                                      sg.Column([[smallest_delta_top],
                                                 [smallest_delta_bottom]], pad=(0,0)),
-                                     smallest_delta_right,
+                                     sg.Column([[smallest_delta_right]], pad=(0,0)), # Extraneous col.
                                     ]
 
     def update_smallest_delta_values_display(delta_page_nums):
-        smallest_delta_label_text.Update("Minimum delta pages:")
+        smallest_delta_label_text.Update("Minimum cropping delta pages:")
         num_strings = [f"{i}" for i in delta_page_nums]
         max_len = max(len(i) for i in num_strings)
         num_strings = [" "*(max_len-len(i)) + i for i in num_strings] # Right-align.
-        smallest_delta_left.Update(num_strings[0])
-        smallest_delta_top.Update(num_strings[3])
-        smallest_delta_bottom.Update(num_strings[1])
-        smallest_delta_right.Update(num_strings[2])
+        smallest_delta_left.Update(num_strings[0], visible=True, disabled=False)
+        smallest_delta_top.Update(num_strings[3], visible=True, disabled=False)
+        smallest_delta_bottom.Update(num_strings[1], visible=True, disabled=False)
+        smallest_delta_right.Update(num_strings[2], visible=True, disabled=False)
 
     def set_delta_values_null():
         smallest_delta_label_text.Update("")
-        smallest_delta_left.Update("")
-        smallest_delta_top.Update("")
-        smallest_delta_bottom.Update("")
-        smallest_delta_right.Update("")
+        smallest_delta_left.Update("", visible=False, disabled=True)
+        smallest_delta_top.Update("", visible=False, disabled=True)
+        smallest_delta_bottom.Update("", visible=False, disabled=True)
+        smallest_delta_right.Update("", visible=False, disabled=True)
+
+    def get_page_from_delta_page_nums(delta_page_nums, toggle, delta_index):
+        if isinstance(delta_page_nums[delta_index], tuple):
+            index = 0 if not toggle else 1
+            page_num = delta_page_nums[delta_index][index]
+            toggle = not toggle
+        else:
+            page_num = delta_page_nums[delta_index]
+        return page_num, toggle
 
     ##
     ## Setup and assign the window's layout.
@@ -840,7 +868,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     [input_text_pages, text_pages, combo_box_restore, text_restore],
 
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
-                    [sg.Text("", size=(1,1))], # This is for vertical space.
+                    #[sg.Text("", size=(1,1))], # This is for vertical space.
+                    [smallest_delta_label_text],
                     smallest_delta_values_display,
                     [sg.Text("")], # This is for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
@@ -858,10 +887,10 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         window = sg.Window(title=window_title, layout=layout, return_keyboard_events=True,
                            location=(left_pixels, 0), resizable=True, no_titlebar=False,
                            #use_ttk_buttons=True, ttk_theme=sg.THEME_DEFAULT,
-                           use_default_focus=False, alpha_channel=0)
+                           use_default_focus=False, alpha_channel=0, finalize=True)
 
     #window.Layout(layout) # Old way, now in Window call, delete after testing.
-    window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
+    #window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
     set_delta_values_null()
 
@@ -989,6 +1018,10 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                                                   output_doc_fname,
                                                                   bounding_box_list)
             update_smallest_delta_values_display(delta_page_nums)
+            left_smallest_toggle = False
+            top_smallest_toggle = False
+            bottom_smallest_toggle = False
+            right_smallest_toggle = False
 
             if args.restore:
                 combo_box_restore.Update("False")
@@ -1007,6 +1040,26 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             num_pages = document_pages.open_document(fixed_input_doc_fname)
             did_crop = False
             set_delta_values_null()
+
+        elif Events.is_left_smallest_delta(event):
+            curr_page, left_smallest_toggle = get_page_from_delta_page_nums(
+                                                              delta_page_nums,
+                                                              left_smallest_toggle, 0)
+
+        elif Events.is_top_smallest_delta(event):
+            curr_page, top_smallest_toggle = get_page_from_delta_page_nums(
+                                                              delta_page_nums,
+                                                              top_smallest_toggle, 3)
+
+        elif Events.is_bottom_smallest_delta(event):
+            curr_page, bottom_smallest_toggle = get_page_from_delta_page_nums(
+                                                              delta_page_nums,
+                                                              bottom_smallest_toggle, 1)
+
+        elif Events.is_right_smallest_delta(event):
+            curr_page, right_smallest_toggle = get_page_from_delta_page_nums(
+                                                              delta_page_nums,
+                                                              right_smallest_toggle, 2)
 
         # Update page number.
         curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
