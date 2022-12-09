@@ -340,7 +340,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         args_dict["percentRetain"] = ["N/A"]
     text_percentRetain = sg.Text("percentRetain",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "percentRetain"))
-    input_text_percentRetain = sg.InputText(args_dict["percentRetain"][0],
+    input_text_percentRetain = sg.InputText(args_dict["percentRetain"][0], pad=(0,0),
                                  size=(5, 1), do_not_clear=True, key="percentRetain")
 
     # Code for percentRetain4.
@@ -348,7 +348,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_percentRetain4 = sg.Text("percentRetain4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "percentRetain4"))
     input_text_percentRetain4 = [sg.InputText(args_dict["percentRetain4"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"percentRetain4_{i}", pad=(5,0))
+                                 do_not_clear=True, key=f"percentRetain4_{i}", pad=(1,0))
                                  for i in [0,1,2,3]]
 
     def update_percentRetain_values(values_dict):
@@ -371,7 +371,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         args_dict["absoluteOffset"] = ["N/A"]
     text_absoluteOffset = sg.Text("absoluteOffset",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "absoluteOffset"))
-    input_text_absoluteOffset = sg.InputText(args_dict["absoluteOffset"][0],
+    input_text_absoluteOffset = sg.InputText(args_dict["absoluteOffset"][0], pad=(0,0),
                                  size=(5, 1), do_not_clear=True, key="absoluteOffset")
 
     # Code for absoluteOffset4.
@@ -379,7 +379,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_absoluteOffset4 = sg.Text("absoluteOffset4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "absoluteOffset4"))
     input_text_absoluteOffset4 = [sg.InputText(args_dict["absoluteOffset4"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"absoluteOffset4_{i}", pad=(5,0))
+                                 do_not_clear=True, key=f"absoluteOffset4_{i}", pad=(1,0))
                                  for i in [0,1,2,3]]
 
     def update_absoluteOffset_values(values_dict):
@@ -415,14 +415,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     text_uniformOrderStat = sg.Text("uniformOrderStat",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat"))
-    input_text_uniformOrderStat = sg.InputText(args_dict["uniformOrderStat"][0],
+    input_text_uniformOrderStat = sg.InputText(args_dict["uniformOrderStat"][0], pad=(0,0),
                                  size=(5, 1), do_not_clear=True, key="uniformOrderStat")
 
     # Code for uniformOrderStat4.
     text_uniformOrderStat4 = sg.Text("uniformOrderStat4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat4"))
     input_text_uniformOrderStat4 = [sg.InputText(args_dict["uniformOrderStat4"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"uniformOrderStat4_{i}", pad=(5,0))
+                                 do_not_clear=True, key=f"uniformOrderStat4_{i}", pad=(1,0))
                                  for i in [0,1,2,3]]
 
     def update_uniformOrderStat_values(values_dict):
@@ -562,7 +562,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     args_dict["setPageRatios"] = args.setPageRatios if args.setPageRatios else ""
     text_setPageRatios = sg.Text("setPageRatios", pad=((0,25), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "setPageRatios"))
-    input_text_setPageRatios = sg.InputText(args_dict["setPageRatios"],
+    input_text_setPageRatios = sg.InputText(args_dict["setPageRatios"], pad=(0,0),
                                  size=(7, 1), do_not_clear=True, key="setPageRatios")
 
     def update_setPageRatios_values(values_dict):
@@ -593,7 +593,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_pageRatioWeights = sg.Text("pageRatioWeights",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "pageRatioWeights"))
     input_text_pageRatioWeights = [sg.InputText(args_dict["pageRatioWeights"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"pageRatioWeights_{i}", pad=(5,0))
+                                 do_not_clear=True, key=f"pageRatioWeights_{i}", pad=(1,0))
                                  for i in [0,1,2,3]]
 
     def update_pageRatioWeights_values(values_dict):
@@ -614,7 +614,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         args_dict["absolutePreCrop"] = ["N/A"]
     text_absolutePreCrop = sg.Text("absolutePreCrop",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "absolutePreCrop"))
-    input_text_absolutePreCrop = sg.InputText(args_dict["absolutePreCrop"][0],
+    input_text_absolutePreCrop = sg.InputText(args_dict["absolutePreCrop"][0], pad=(0,0),
                                  size=(5, 1), do_not_clear=True, key="absolutePreCrop")
 
     # Code for absolutePreCrop4.
@@ -622,7 +622,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     text_absolutePreCrop4 = sg.Text("absolutePreCrop4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "absolutePreCrop4"))
     input_text_absolutePreCrop4 = [sg.InputText(args_dict["absolutePreCrop4"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"absolutePreCrop4_{i}", pad=(5,0))
+                                 do_not_clear=True, key=f"absolutePreCrop4_{i}", pad=(1,0))
                                  for i in [0,1,2,3]]
 
     def update_absolutePreCrop_values(values_dict):
@@ -750,7 +750,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                     ]
 
     def update_smallest_delta_values_display(delta_page_nums):
-        smallest_delta_label_text.Update("Smallest delta pages:")
+        smallest_delta_label_text.Update("Minimum delta pages:")
         smallest_delta_left.Update(str(delta_page_nums[0]))
         smallest_delta_top.Update(str(delta_page_nums[3]))
         smallest_delta_bottom.Update(str(delta_page_nums[1]))
@@ -786,44 +786,49 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
                     [checkbox_uniform, checkbox_samePageSize, checkbox_evenodd],
 
-                    [sg.Text("", size=input_text_percentRetain.Size), # Empty text is space.
+                    [sg.Text("", size=input_text_percentRetain.Size,
+                             pad=input_text_percentRetain4[0].Pad), # Empty text is space.
                         input_text_percentRetain, text_percentRetain, checkbox_percentText],
 
                     [input_text_percentRetain4[0],
                         sg.Column([[input_text_percentRetain4[3]],
-                                   [input_text_percentRetain4[1]]], pad=(0,4)),
+                                   [input_text_percentRetain4[1]]], pad=(0,5)),
                         input_text_percentRetain4[2]] + [text_percentRetain4],
 
-                    [sg.Text("", size=input_text_absoluteOffset.Size), # Empty text is space.
+                    [sg.Text("", size=input_text_absoluteOffset.Size,
+                             pad=input_text_absoluteOffset4[0].Pad), # Empty text is space.
                         input_text_absoluteOffset, text_absoluteOffset],
 
                     [input_text_absoluteOffset4[0],
                         sg.Column([[input_text_absoluteOffset4[3]],
-                                   [input_text_absoluteOffset4[1]]], pad=(0,4)),
+                                   [input_text_absoluteOffset4[1]]], pad=(0,5)),
                         input_text_absoluteOffset4[2]] + [text_absoluteOffset4],
 
-                    [sg.Text("", size=input_text_uniformOrderStat.Size), # Empty text is space.
+                    [sg.Text("", size=input_text_uniformOrderStat.Size,
+                             pad=input_text_uniformOrderStat4[0].Pad), # Empty text is space.
                         input_text_uniformOrderStat, text_uniformOrderStat],
 
                     [input_text_uniformOrderStat4[0],
                         sg.Column([[input_text_uniformOrderStat4[3]],
-                                   [input_text_uniformOrderStat4[1]]], pad=(0,4)),
+                                   [input_text_uniformOrderStat4[1]]], pad=(0,5)),
                         input_text_uniformOrderStat4[2]] + [text_uniformOrderStat4],
 
-                    [sg.Text("", size=input_text_uniformOrderStat.Size), # Empty text is space.
+                    [sg.Text("", size=input_text_uniformOrderStat.Size,
+                             pad=input_text_uniformOrderStat4[0].Pad), # Empty text is space.
                         input_text_setPageRatios, text_setPageRatios],
 
                     [input_text_pageRatioWeights[0],
                         sg.Column([[input_text_pageRatioWeights[3]],
-                                   [input_text_pageRatioWeights[1]]], pad=(0,4)),
+                                   [input_text_pageRatioWeights[1]]], pad=(0,5)),
                         input_text_pageRatioWeights[2]] + [text_pageRatioWeights],
 
-                    [sg.Text("", size=input_text_absolutePreCrop.Size), # Empty text is space.
+                    [sg.Text("", size=input_text_absolutePreCrop.Size,
+                             pad=input_text_absolutePreCrop4[0].Pad), # Empty text is space.
                         input_text_absolutePreCrop, text_absolutePreCrop],
 
                     [input_text_absolutePreCrop4[0],
                         sg.Column([[input_text_absolutePreCrop4[3]],
-                                   [input_text_absolutePreCrop4[1]]], pad=(0,4)),
+                                   [input_text_absolutePreCrop4[1]]], pad=(0,5)),
                         input_text_absolutePreCrop4[2]] + [text_absolutePreCrop4],
 
                     [input_num_threshold, text_threshold, input_num_numBlurs,
