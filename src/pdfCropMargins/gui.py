@@ -788,10 +788,10 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     def get_page_from_delta_page_nums(delta_page_nums, toggle, delta_index):
         if isinstance(delta_page_nums[delta_index], tuple):
             index = 0 if not toggle else 1
-            page_num = delta_page_nums[delta_index][index]
+            page_num = delta_page_nums[delta_index][index] - 1
             toggle = not toggle
         else:
-            page_num = delta_page_nums[delta_index]
+            page_num = delta_page_nums[delta_index] - 1
         return page_num, toggle
 
     ##
