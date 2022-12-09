@@ -60,6 +60,14 @@ recent changes and new features.
 * You can now use either ``pdf-crop-margins`` or ``pdfcropmargins`` to launch the
   program from the command line.
 
+**New in version 1.1.2**
+
+* The GUI layout has been updated for more intuitive use of the options that take
+  four values, for the left, bottom, right, and top margins.
+
+* The GUI now displays the smallest delta values on each crop as buttons that take
+  you to the page.  This is useful for fine-tuning crops to not chop off useful information.
+
 Installing 
 ==========
 

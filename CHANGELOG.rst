@@ -3,6 +3,18 @@
 History
 =======
 
+1.1.2 (2022-12-09)
+------------------
+
+* The GUI layout has been rearranged for more intuitive use of the options that take
+  four values, one for the left, bottom, right, and top margins.
+
+* The GUI now displays the minimum cropping delta values as buttons which take you
+  to that page.  This is helpful for fine-tuning cropping without cropping-out useful
+  information.
+
+* Internally, functions were renamed to match the recent PyPDF2 deprecations.
+
 1.1.[0-1] (2022-12-07)
 ----------------------
 

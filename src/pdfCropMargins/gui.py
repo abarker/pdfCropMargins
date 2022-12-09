@@ -50,6 +50,7 @@ import sys
 import os
 import warnings
 import textwrap
+from types import SimpleNamespace
 
 from . import __version__
 from . import external_program_calls as ex
@@ -218,75 +219,58 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
 ## Define the buttons/events we want to handle in the event loop.
 ##
 
-class Events:
+class Events(SimpleNamespace):
     """The events to handle in the event loop.  The class is just used as a
     namespace for holding the event tests."""
     # When no longer supporting Python2 consider making this a SimpleNamespace instance.
-    @staticmethod # Python 2 needs these to be staticmethods.
     def is_enter(btn):
         return btn.startswith("Return:") or btn == chr(13)
 
-    @staticmethod
     def is_exit(btn):
         return btn == chr(27) or btn.startswith("Escape:") or btn.startswith("Exit")
 
-    @staticmethod
     def is_crop(btn):
         return btn.startswith("Crop")
 
-    @staticmethod
     def is_original(btn):
         return btn.startswith("Original")
 
-    @staticmethod
     def is_next(btn):
         return btn.startswith("Next") or btn == "MouseWheel:Down" # Note mouse not giving any event.
 
-    @staticmethod
     def is_prev(btn):
         return btn.startswith("Prior:") or btn.startswith("Prev") or btn == "MouseWheel:Up"
 
-    @staticmethod
     def is_up(btn):
         return btn.startswith("Up:")
 
-    @staticmethod
     def is_down(btn):
         return btn.startswith("Down:")
 
-    @staticmethod
     def is_home(btn):
         return btn.startswith("Home:")
 
-    @staticmethod
     def is_end(btn):
         return btn.startswith("End:")
 
-    @staticmethod
     def is_left(btn):
         return btn.startswith("Left:")
 
-    @staticmethod
     def is_right(btn):
         return btn.startswith("Right:")
 
-    @staticmethod
     def is_zoom(btn):
         return btn.startswith("Toggle Zoom")
 
-    @staticmethod
     def is_left_smallest_delta(btn):
         return btn.startswith("left") # Note that key is always used if set, not label.
 
-    @staticmethod
     def is_top_smallest_delta(btn):
         return btn.startswith("top")
 
-    @staticmethod
     def is_bottom_smallest_delta(btn):
         return btn.startswith("bottom")
 
-    @staticmethod
     def is_right_smallest_delta(btn):
         return btn.startswith("right")
 
@@ -768,15 +752,15 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                      sg.Column([[smallest_delta_right]], pad=(0,0)), # Extraneous col.
                                     ]
 
-    def update_smallest_delta_values_display(delta_page_nums):
+    def update_smallest_delta_values_display(delta_page_nums, disabled=False):
         smallest_delta_label_text.Update("Minimum cropping delta pages:")
         num_strings = [f"{i}" for i in delta_page_nums]
         max_len = max(len(i) for i in num_strings)
         num_strings = [" "*(max_len-len(i)) + i for i in num_strings] # Right-align.
-        smallest_delta_left.Update(num_strings[0], visible=True, disabled=False)
-        smallest_delta_top.Update(num_strings[3], visible=True, disabled=False)
-        smallest_delta_bottom.Update(num_strings[1], visible=True, disabled=False)
-        smallest_delta_right.Update(num_strings[2], visible=True, disabled=False)
+        smallest_delta_left.Update(num_strings[0], visible=True, disabled=disabled)
+        smallest_delta_top.Update(num_strings[3], visible=True, disabled=disabled)
+        smallest_delta_bottom.Update(num_strings[1], visible=True, disabled=disabled)
+        smallest_delta_right.Update(num_strings[2], visible=True, disabled=disabled)
 
     def set_delta_values_null():
         smallest_delta_label_text.Update("")
@@ -871,7 +855,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     #[sg.Text("", size=(1,1))], # This is for vertical space.
                     [smallest_delta_label_text],
                     smallest_delta_values_display,
-                    [sg.Text("")], # This is for vertical space.
+                    #[sg.Text("")], # This is for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
                 ]),
             ],
@@ -1017,7 +1001,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                                                   fixed_input_doc_fname,
                                                                   output_doc_fname,
                                                                   bounding_box_list)
-            update_smallest_delta_values_display(delta_page_nums)
+
+            update_smallest_delta_values_display(delta_page_nums, disabled=args.restore)
             left_smallest_toggle = False
             top_smallest_toggle = False
             bottom_smallest_toggle = False
