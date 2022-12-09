@@ -763,57 +763,50 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             image_element,
             sg.Column([
                     [sg.Text("Quadruples are left, top, bottom, and right margins.\n"
-                             "Move mouse left over option names to show descriptions.",
+                             "Mouse left over option names to show descriptions.",
                              relief=sg.RELIEF_GROOVE, pad=(None, (0,15)))],
 
                     [checkbox_uniform, checkbox_samePageSize, checkbox_evenodd],
 
                     [sg.Text("", size=input_text_percentRetain.Size), # Empty text is space.
-                        sg.Column([[input_text_percentRetain]]), text_percentRetain, checkbox_percentText],
+                        sg.Column([[input_text_percentRetain]], pad=(0,0)),
+                        text_percentRetain, checkbox_percentText],
 
-                    #[i for i in input_text_percentRetain4] + [text_percentRetain4],
                     [input_text_percentRetain4[0],
                         sg.Column([[input_text_percentRetain4[3]],
-                                   [input_text_percentRetain4[1]]]),
+                                   [input_text_percentRetain4[1]]], pad=(0,0)),
                         input_text_percentRetain4[2]] + [text_percentRetain4],
 
                     [sg.Text("", size=input_text_absoluteOffset.Size), # Empty text is space.
-                        sg.Column([[input_text_absoluteOffset]]), text_absoluteOffset],
+                        sg.Column([[input_text_absoluteOffset]], pad=(0,0)), text_absoluteOffset],
 
-                    #[i for i in input_text_absoluteOffset4] + [text_absoluteOffset4],
                     [input_text_absoluteOffset4[0],
                         sg.Column([[input_text_absoluteOffset4[3]],
-                                   [input_text_absoluteOffset4[1]]]),
+                                   [input_text_absoluteOffset4[1]]], pad=(0,0)),
                         input_text_absoluteOffset4[2]] + [text_absoluteOffset4],
 
-                    #[input_text_uniformOrderStat, text_uniformOrderStat],
                     [sg.Text("", size=input_text_uniformOrderStat.Size), # Empty text is space.
-                        sg.Column([[input_text_uniformOrderStat]]), text_uniformOrderStat],
+                        sg.Column([[input_text_uniformOrderStat]], pad=(0,0)), text_uniformOrderStat],
 
-                    #[i for i in input_text_uniformOrderStat4] + [text_uniformOrderStat4],
                     [input_text_uniformOrderStat4[0],
                         sg.Column([[input_text_uniformOrderStat4[3]],
-                                   [input_text_uniformOrderStat4[1]]]),
+                                   [input_text_uniformOrderStat4[1]]], pad=(0,0)),
                         input_text_uniformOrderStat4[2]] + [text_uniformOrderStat4],
 
-                    #[input_text_setPageRatios, text_setPageRatios],
                     [sg.Text("", size=input_text_uniformOrderStat.Size), # Empty text is space.
-                        sg.Column([[input_text_setPageRatios]]), text_setPageRatios],
+                        sg.Column([[input_text_setPageRatios]], pad=(0,0)), text_setPageRatios],
 
-                    #[i for i in input_text_pageRatioWeights] + [text_pageRatioWeights],
                     [input_text_pageRatioWeights[0],
                         sg.Column([[input_text_pageRatioWeights[3]],
-                                   [input_text_pageRatioWeights[1]]]),
+                                   [input_text_pageRatioWeights[1]]], pad=(0,0)),
                         input_text_pageRatioWeights[2]] + [text_pageRatioWeights],
 
-                    #[input_text_absolutePreCrop, text_absolutePreCrop],
                     [sg.Text("", size=input_text_absolutePreCrop.Size), # Empty text is space.
-                        sg.Column([[input_text_absolutePreCrop]]), text_absolutePreCrop],
+                        sg.Column([[input_text_absolutePreCrop]], pad=(0,0)), text_absolutePreCrop],
 
-                    #[i for i in input_text_absolutePreCrop4] + [text_absolutePreCrop4],
                     [input_text_absolutePreCrop4[0],
                         sg.Column([[input_text_absolutePreCrop4[3]],
-                                   [input_text_absolutePreCrop4[1]]]),
+                                   [input_text_absolutePreCrop4[1]]], pad=(0,0)),
                         input_text_absolutePreCrop4[2]] + [text_absolutePreCrop4],
 
                     [input_num_threshold, text_threshold, input_num_numBlurs,
@@ -822,7 +815,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     [input_text_pages, text_pages, combo_box_restore, text_restore],
 
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
-                    [sg.Text("")], # This is just for vertical space.
+                    [sg.Text("")], # This is for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
                 ]),
             ],
