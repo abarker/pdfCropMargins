@@ -507,9 +507,9 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         delta_list = [[left_vals[m_vals[0]][0], lower_vals[m_vals[1]][0],
                       right_vals[m_vals[2]][0], upper_vals[m_vals[3]][0]]] * num_pages
 
+        delta_page_nums = [left_vals[m_vals[0]][1], lower_vals[m_vals[1]][1],
+                           right_vals[m_vals[2]][1], upper_vals[m_vals[3]][1]]
         if args.verbose:
-            delta_page_nums = [left_vals[m_vals[0]][1], lower_vals[m_vals[1]][1],
-                               right_vals[m_vals[2]][1], upper_vals[m_vals[3]][1]]
             print("\nThe smallest delta values actually used to set the uniform"
                   " cropping\namounts (ignoring any '-m' skips and pages in ranges"
                   " not cropped) were\nfound on these pages, numbered from 1:\n   ",
@@ -1443,7 +1443,8 @@ def main_crop(argv_list=None):
         if args.verbose:
             print("\nWaiting for the GUI...")
 
-        did_crop = create_gui(input_doc_pathname, fixed_input_doc_pathname, output_doc_pathname,
+        did_crop, bounding_box_list, delta_page_nums = create_gui(input_doc_pathname,
+                              fixed_input_doc_pathname, output_doc_pathname,
                               cmd_parser, parsed_args)
         if did_crop:
             handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname)

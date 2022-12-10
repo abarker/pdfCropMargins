@@ -285,6 +285,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     args = parsed_args
     args_dict = {} # Dict for holding "real" values backing the GUI element values.
     update_funs = [] # A list of all the updating functions (defined below).
+    bounding_box_list = None # Default to return if no crop command is called.
+    delta_page_nums = None # Default to return if no crop command is called.
 
     ##
     ## Set up the document and window.
@@ -797,67 +799,80 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             sg.Column([
                     [sg.Text("Quadruples are left, top, bottom, and right margins.\n"
                              "Mouse left over option names to show descriptions.",
-                             relief=sg.RELIEF_GROOVE, pad=(None, (0,15)))],
+                             relief=sg.RELIEF_GROOVE, pad=(None, (0,5)))],
 
                     [checkbox_uniform, checkbox_samePageSize, checkbox_evenodd],
 
+                    # percentRetain
                     [sg.Text("", size=input_text_percentRetain.Size,
                              pad=input_text_percentRetain4[0].Pad), # Empty text is space.
                         input_text_percentRetain, text_percentRetain, checkbox_percentText],
 
+                    # percentRetain4
                     [input_text_percentRetain4[0],
                         sg.Column([[input_text_percentRetain4[3]],
                                    [input_text_percentRetain4[1]]], pad=(0,5)),
                         input_text_percentRetain4[2]] + [text_percentRetain4],
 
+                    # absoluteOffset
                     [sg.Text("", size=input_text_absoluteOffset.Size,
                              pad=input_text_absoluteOffset4[0].Pad), # Empty text is space.
                         input_text_absoluteOffset, text_absoluteOffset],
 
+                    # absoluteOffset4
                     [input_text_absoluteOffset4[0],
                         sg.Column([[input_text_absoluteOffset4[3]],
                                    [input_text_absoluteOffset4[1]]], pad=(0,5)),
                         input_text_absoluteOffset4[2]] + [text_absoluteOffset4],
 
+                    # uniformOrderStat
                     [sg.Text("", size=input_text_uniformOrderStat.Size,
                              pad=input_text_uniformOrderStat4[0].Pad), # Empty text is space.
                         input_text_uniformOrderStat, text_uniformOrderStat],
 
+                    # uniformOrderStat4
                     [input_text_uniformOrderStat4[0],
                         sg.Column([[input_text_uniformOrderStat4[3]],
                                    [input_text_uniformOrderStat4[1]]], pad=(0,5)),
                         input_text_uniformOrderStat4[2]] + [text_uniformOrderStat4],
 
+                    # setPageRatios
                     [sg.Text("", size=input_text_uniformOrderStat.Size,
                              pad=input_text_uniformOrderStat4[0].Pad), # Empty text is space.
                         input_text_setPageRatios, text_setPageRatios],
 
+                    # pageRatioWeights
                     [input_text_pageRatioWeights[0],
                         sg.Column([[input_text_pageRatioWeights[3]],
                                    [input_text_pageRatioWeights[1]]], pad=(0,5)),
                         input_text_pageRatioWeights[2]] + [text_pageRatioWeights],
 
+                    # absolutePreCrop
                     [sg.Text("", size=input_text_absolutePreCrop.Size,
                              pad=input_text_absolutePreCrop4[0].Pad), # Empty text is space.
                         input_text_absolutePreCrop, text_absolutePreCrop],
 
+                    # absolutePreCrop4
                     [input_text_absolutePreCrop4[0],
                         sg.Column([[input_text_absolutePreCrop4[3]],
                                    [input_text_absolutePreCrop4[1]]], pad=(0,5)),
                         input_text_absolutePreCrop4[2]] + [text_absolutePreCrop4],
 
+                    # threshold, numBlurs, numSmooths
                     [input_num_threshold, text_threshold, input_num_numBlurs,
                         text_numBlurs, input_num_numSmooths, text_numSmooths],
 
+                    # pages
                     [input_text_pages, text_pages, combo_box_restore, text_restore],
 
+                    # Buttons.
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
                     #[sg.Text("", size=(1,1))], # This is for vertical space.
                     [smallest_delta_label_text],
                     smallest_delta_values_display,
                     #[sg.Text("")], # This is for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
-                ]),
+                ], pad=(None,0)),
             ],
         ]
 
@@ -871,10 +886,10 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         window = sg.Window(title=window_title, layout=layout, return_keyboard_events=True,
                            location=(left_pixels, 0), resizable=True, no_titlebar=False,
                            #use_ttk_buttons=True, ttk_theme=sg.THEME_DEFAULT,
-                           use_default_focus=False, alpha_channel=0, finalize=True)
+                           use_default_focus=False, alpha_channel=0,)# finalize=True)
 
     #window.Layout(layout) # Old way, now in Window call, delete after testing.
-    #window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
+    window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
     set_delta_values_null()
 
@@ -1057,7 +1072,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     window.Close()
     document_pages.close_document() # Be sure document is closed (bug with -mo without this).
-    return did_crop
+    return did_crop, bounding_box_list, delta_page_nums
 
 #
 # General helper functions.
