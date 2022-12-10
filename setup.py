@@ -60,8 +60,8 @@ setup(
     install_requires=install_requires,
     url="https://github.com/abarker/pdfCropMargins",
     entry_points = {
-        "console_scripts": ["pdf-crop-margins = pdfCropMargins.pdfCropMargins:main"],
-        "console_scripts": ["pdfcropmargins = pdfCropMargins.pdfCropMargins:main"]
+        "console_scripts": ["pdf-crop-margins = pdfCropMargins.pdfCropMargins:main",
+                            "pdfcropmargins = pdfCropMargins.pdfCropMargins:main"],
         },
     license="GPL",
     classifiers=[
