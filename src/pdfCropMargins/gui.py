@@ -241,6 +241,9 @@ class Events(SimpleNamespace):
     def is_prev(btn):
         return btn.startswith("Prior:") or btn.startswith("Prev") or btn == "MouseWheel:Up"
 
+    def is_page_num_change(btn):
+        return btn.startswith("PageNumber")
+
     def is_up(btn):
         return btn.startswith("Up:")
 
@@ -282,6 +285,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                cmd_parser, parsed_args):
     """Create a GUI for running pdfCropMargins with parsed arguments `parsed_args`
     on the PDF file named `pdf_filename`"""
+    spinner_values = tuple(range(10000))
+
     args = parsed_args
     args_dict = {} # Dict for holding "real" values backing the GUI element values.
     update_funs = [] # A list of all the updating functions (defined below).
@@ -320,17 +325,16 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for handling page numbers.
     ##
 
-    input_text_page_num = sg.InputText(str(curr_page + 1), size=(5, 1),
-                                       do_not_clear=True, key="PageNumber")
+    input_text_page_num = sg.Spin(values=spinner_values, initial_value=str(curr_page + 1),
+                                  size=(5, 1), enable_events=True, key="PageNumber")
     text_page_num = sg.Text("Page:")
 
-    def update_page_number(curr_page, prev_curr_page, num_pages, btn,
+    def update_page_number(curr_page, prev_curr_page, num_pages, btn, value,
                            input_text_element):
         curr_page = max(curr_page, 0)
         curr_page = min(curr_page, num_pages-1)
         # Update page number field.
-        if curr_page != prev_curr_page:
-            input_text_element.Update(str(curr_page + 1))
+        input_text_element.Update(str(curr_page + 1))
         return curr_page
 
     ##
@@ -398,8 +402,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
     ## Code for uniformOrderStat options.
     ##
-
-    spinner_values = tuple(range(2000))
 
     if args.uniformOrderStat:
         args_dict["uniformOrderStat"] = args.uniformOrderStat
@@ -927,14 +929,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     last_numBlurs = None
 
     while True:
+        page_change_event = False
         prev_curr_page = curr_page
         event, values_dict = window.Read()
 
         if event is None and (values_dict is None or values_dict["PageNumber"] is None):
             break
-        if ex.python_version[0] == "2":
-            if event is None or Events.is_exit(event): break
-        elif event == sg.WIN_CLOSED or Events.is_exit(event):
+
+        if event == sg.WIN_CLOSED or Events.is_exit(event):
             break
 
         if Events.is_enter(event):
@@ -942,13 +944,24 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             try:
                 curr_page = int(values_dict["PageNumber"]) - 1  # check if valid
             except:
-                curr_page = 0
+                curr_page = prev_curr_page
+            page_change_event = True
+
+        if Events.is_page_num_change(event):
+            call_all_update_funs(update_funs, values_dict)
+            try:
+                curr_page = int(values_dict["PageNumber"]) - 1  # check if valid
+            except:
+                curr_page = prev_curr_page
+            page_change_event = True
 
         elif Events.is_next(event):
             curr_page += 1
+            page_change_event = True
 
         elif Events.is_prev(event):
             curr_page -= 1
+            page_change_event = True
 
         elif Events.is_up(event) and zoom:
             zoom = (clip_pos, 0, -1)
@@ -958,9 +971,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         elif Events.is_home(event):
             curr_page = 0
+            page_change_event = True
 
         elif Events.is_end(event):
             curr_page = num_pages - 1
+            page_change_event = True
 
         elif Events.is_left(event) and zoom:
             zoom = (clip_pos, -1, 0)
@@ -1049,25 +1064,29 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             curr_page, left_smallest_toggle = get_page_from_delta_page_nums(
                                                               delta_page_nums,
                                                               left_smallest_toggle, 0)
+            page_change_event = True
 
         elif Events.is_top_smallest_delta(event):
             curr_page, top_smallest_toggle = get_page_from_delta_page_nums(
                                                               delta_page_nums,
                                                               top_smallest_toggle, 3)
+            page_change_event = True
 
         elif Events.is_bottom_smallest_delta(event):
             curr_page, bottom_smallest_toggle = get_page_from_delta_page_nums(
                                                               delta_page_nums,
                                                               bottom_smallest_toggle, 1)
+            page_change_event = True
 
         elif Events.is_right_smallest_delta(event):
             curr_page, right_smallest_toggle = get_page_from_delta_page_nums(
                                                               delta_page_nums,
                                                               right_smallest_toggle, 2)
+            page_change_event = True
 
-        # Update page number.
-        curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
-                                      input_text_page_num)
+        if page_change_event:
+            curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
+                                      values_dict["PageNumber"], input_text_page_num)
 
         # Get the current page and display it.
         data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
