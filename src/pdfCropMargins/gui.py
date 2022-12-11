@@ -651,10 +651,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     args_dict["threshold"] = int(args.threshold[0]) if args.calcbb != "gb" else "----"
-    text_threshold = sg.Text("threshold", pad=((0,5), None),
+    text_threshold = sg.Text("threshold", pad=((0,0), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "threshold"))
-    input_num_threshold = sg.InputText(args_dict["threshold"],
-                                 size=(3, 1), do_not_clear=True, key="threshold")
+    input_num_threshold = sg.Spin(values=tuple(range(256)),
+                                  initial_value=args_dict["threshold"],
+                                  size=(3, 1), key="threshold")
 
     def update_threshold_values(values_dict):
         """Update the threshold value."""
@@ -677,10 +678,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     args_dict["numBlurs"] = int(args.numBlurs) if args.calcbb != "gb" else "--"
-    text_numBlurs = sg.Text("numBlurs", pad=((0,5), None),
+    text_numBlurs = sg.Text("numBlurs", pad=((0,0), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "numBlurs"))
-    input_num_numBlurs = sg.InputText(args_dict["numBlurs"],
-                                 size=(2, 1), do_not_clear=True, key="numBlurs")
+    input_num_numBlurs = sg.Spin(values=spinner_values,
+                                 initial_value=args_dict["numBlurs"],
+                                 size=(2, 1), key="numBlurs")
 
     def update_numBlurs_values(values_dict):
         """Update the numBlurs value."""
@@ -703,10 +705,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     args_dict["numSmooths"] = int(args.numSmooths) if args.calcbb != "gb" else "--"
-    text_numSmooths = sg.Text("numSmooths", pad=((0,5), None),
+    text_numSmooths = sg.Text("numSmooths", pad=((0,0), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "numSmooths"))
-    input_num_numSmooths = sg.InputText(args_dict["numSmooths"],
-                                 size=(2, 1), do_not_clear=True, key="numSmooths")
+    input_num_numSmooths = sg.Spin(values=spinner_values,
+                                   initial_value=args_dict["numSmooths"],
+                                   size=(2, 1), key="numSmooths")
 
     def update_numSmooths_values(values_dict):
         """Update the numSmooths value."""
