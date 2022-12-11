@@ -277,6 +277,8 @@ class Events(SimpleNamespace):
     def is_right_smallest_delta(btn):
         return btn.startswith("right")
 
+    def is_paired_single_and_quadruple_change(btn):
+        return btn.startswith("uniformOrderStat")
 #
 # The main function with the event loop.
 #
@@ -423,14 +425,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat"))
     input_text_uniformOrderStat = sg.Spin(values=spinner_values,
                                  initial_value=args_dict["uniformOrderStat"][0], pad=(0,0),
-                                 size=(5, 1), key="uniformOrderStat")
+                                 size=(5, 1), enable_events=True, key="uniformOrderStat")
 
     # Code for uniformOrderStat4.
     text_uniformOrderStat4 = sg.Text("uniformOrderStat4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat4"))
     input_text_uniformOrderStat4 = [sg.Spin(values=spinner_values,
                                     initial_value=args_dict["uniformOrderStat4"][i], size=(5, 1),
-                                    key=f"uniformOrderStat4_{i}", pad=(1,0))
+                                    enable_events=True, key=f"uniformOrderStat4_{i}", pad=(1,0))
                                     for i in [0,1,2,3]]
 
     def update_uniformOrderStat_values(values_dict):
@@ -1083,6 +1085,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                                               delta_page_nums,
                                                               right_smallest_toggle, 2)
             page_change_event = True
+
+        elif Events.is_paired_single_and_quadruple_change(event):
+            call_all_update_funs(update_funs, values_dict)
 
         if page_change_event:
             curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
