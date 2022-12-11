@@ -399,6 +399,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for uniformOrderStat options.
     ##
 
+    spinner_values = tuple(range(2000))
+
     if args.uniformOrderStat:
         args_dict["uniformOrderStat"] = args.uniformOrderStat
     else:
@@ -417,15 +419,17 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     text_uniformOrderStat = sg.Text("uniformOrderStat",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat"))
-    input_text_uniformOrderStat = sg.InputText(args_dict["uniformOrderStat"][0], pad=(0,0),
-                                 size=(5, 1), do_not_clear=True, key="uniformOrderStat")
+    input_text_uniformOrderStat = sg.Spin(values=spinner_values,
+                                 initial_value=args_dict["uniformOrderStat"][0], pad=(0,0),
+                                 size=(5, 1), key="uniformOrderStat")
 
     # Code for uniformOrderStat4.
     text_uniformOrderStat4 = sg.Text("uniformOrderStat4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat4"))
-    input_text_uniformOrderStat4 = [sg.InputText(args_dict["uniformOrderStat4"][i], size=(5, 1),
-                                 do_not_clear=True, key=f"uniformOrderStat4_{i}", pad=(1,0))
-                                 for i in [0,1,2,3]]
+    input_text_uniformOrderStat4 = [sg.Spin(values=spinner_values,
+                                    initial_value=args_dict["uniformOrderStat4"][i], size=(5, 1),
+                                    key=f"uniformOrderStat4_{i}", pad=(1,0))
+                                    for i in [0,1,2,3]]
 
     def update_uniformOrderStat_values(values_dict):
         """Update both the uniformOrderStat value and the uniformOrderStat4 values."""
