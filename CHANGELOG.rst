@@ -3,8 +3,8 @@
 History
 =======
 
-1.1.[2-3] (2022-12-09)
-------------------
+1.1.[2-4] (2022-12-09)
+----------------------
 
 * The GUI layout has been rearranged for more intuitive use of the options that take
   four values, one for the left, bottom, right, and top margins.
@@ -16,6 +16,8 @@ History
 * Internally, functions were renamed to match the recent PyPDF2 deprecations.
 
 * Fixed bug caused by adding pdfcropmargins as an alias.
+
+* Page numbers and uniformOrderstat widgets in the GUI were changed to spinners.
 
 1.1.[0-1] (2022-12-07)
 ----------------------

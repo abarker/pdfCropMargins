@@ -111,8 +111,14 @@ install you can try forcing a binary install of pyMuPDF:
 Windows
 -------
 
+The install command is:
+
+.. code-block:: sh
+
+   pip install pdfCropMargins --upgrade
+
 The ``pip`` program should be automatically installed along with Python.  If
-you cannot find the pip executable you can usually run it like this:
+you cannot find the pip executable you can usually run pip like this:
 
 .. code-block:: sh
 
@@ -121,17 +127,12 @@ you cannot find the pip executable you can usually run it like this:
 Note that on some Windows installs the executable for Python is ``py`` rather
 than ``python``.
 
-.. code-block:: sh
-
-   pip install pdfCropMargins --upgrade
-
 In order for the command ``pdf-crop-margins`` to work from the command line the
-``bin`` directory that it is created in (by the ``pip`` command) must be on the
-Windows ``Path``.  The system-wide Python ``bin`` directory should already be
-on the path if you checked the box to modify ``Path`` when you installed
-Python; otherwise it should be added.  (If you install with the ``--user``
-option to pip then you need to be sure that the *local* Python ``bin``
-directory is in the Windows ``Path``.)
+Python ``bin`` directory must be on the Windows ``Path``.  The system-wide
+Python ``bin`` directory should already be on the path if you checked the box
+to modify ``Path`` when you installed Python; otherwise it should be added.
+(Note that if you install with the ``--user`` option to pip then you need to be
+sure that the *local* Python ``bin`` directory is in the Windows ``Path``.)
 
 Running
 =======
@@ -233,9 +234,9 @@ code editable.)
 Getting good crops
 ------------------
 
-* To diagnose unexpected crops, try running with the ``-v`` verbose argument.
-  It will tell you the page with the smallest crop amount for a margin, among
-  other data.
+* To diagnose unexpected crops, look at the pages with the smallest delta values,
+  as indicated in the verbose (``-v``) output or at the bottom of the GUI.
+  This tells you the page with the smallest crop amount for a margin.
 
 * Running without the ``-u`` or ``-s`` options will crop each page separately,
   so you can see which pages might be causing problems (such as pages with
