@@ -16,12 +16,9 @@ Features
   in two-up).
 - Works on Linux, Windows, Cygwin, and OS X/Darwin.
 - Has an optional graphical user interface (GUI) for interactive cropping.
-- Works with either MuPDF, the pdftoppm program, or the Ghostscript program.
 - A version of pdftoppm for Windows is included.
 - Renders and analyzes page images to find the bounding boxes, which allows it
   to deal with noisy scanned PDFs.
-- Can automatically apply a Ghostscript repair operation to attempt to fix
-  corrupt PDF files.
 - A rudimentary 'undo' capability is implemented by default. 
 - Can crop pages uniformly based on the nth smallest crop values, which helps
   with noisy images or documents where a few pages have unwanted markings in
@@ -32,6 +29,10 @@ Features
 - Preserves document catalog information such as outlines if possible.
 - Crops rotated pages according to their appearance in the document viewer.
 - Can deal with at least simple cases of password-encrypted files.
+- Works with either MuPDF, the pdftoppm program, or the Ghostscript program to
+  find the bounding boxes.
+- Can automatically apply a Ghostscript repair operation to attempt to fix
+  corrupt PDF files.
 
 This GIF shows the optional GUI, before and after cropping a document:
 
@@ -47,7 +48,7 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-**New in version 1.1.0**
+**New in recent versions (Dec 2022):**
 
 * Python 3.6 is now the minimum supported version.
 
@@ -55,12 +56,8 @@ recent changes and new features.
   still work without them, however, if the GUI is not required.  Note that without
   PyMuPDF either pdftoppm or Ghostscript must be installed.
 
-**New in version 1.1.1**
-
 * You can now use either ``pdf-crop-margins`` or ``pdfcropmargins`` to launch the
   program from the command line.
-
-**New in version 1.1.2**
 
 * The GUI layout has been updated for more intuitive use of the options that take
   four values, for the left, bottom, right, and top margins.
