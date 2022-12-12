@@ -279,6 +279,7 @@ class Events(SimpleNamespace):
 
     def is_paired_single_and_quadruple_change(btn):
         return btn.startswith("uniformOrderStat")
+
 #
 # The main function with the event loop.
 #
@@ -420,6 +421,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         args_dict["uniformOrderStat4"] = [args.uniformOrderStat[0]] * 4
     else:
         args_dict["uniformOrderStat4"] = [0] * 4
+
+    dummy_spacing_spinner = sg.Text("", size=(7,1), pad=(0,0))
 
     text_uniformOrderStat = sg.Text("uniformOrderStat",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat"))
@@ -837,9 +840,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                         input_text_absoluteOffset4[2]] + [text_absoluteOffset4],
 
                     # uniformOrderStat
-                    [sg.Text("", size=input_text_uniformOrderStat.Size,
-                             pad=input_text_uniformOrderStat4[0].Pad), # Empty text is space.
-                        input_text_uniformOrderStat, text_uniformOrderStat],
+                    [dummy_spacing_spinner, input_text_uniformOrderStat, text_uniformOrderStat],
 
                     # uniformOrderStat4
                     [input_text_uniformOrderStat4[0],
