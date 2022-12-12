@@ -37,14 +37,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # Todo: Consider setting up so if no input file argument and the gui is used then
 # the file chooser will pop up.
 
-# Todo: Maybe use a spinner for the orderStat entries.
+# Todo: It would be nice to have a resolution option for spinners, so you
+# could have floats (like sliders).  Also, an increment option setting the
+# increment value would be nice.
 
 # Todo: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
 # window can (or should) be fixed to the initial size or something similar.
-
-# Note: When using gs for bboxes the threshold is not allowed (or blurs or
-# smooths).  Currently writing "---" but would look better disabled altogether
-# in that case.
+# See the existing attempt commented out below.
 
 import sys
 import os
@@ -528,7 +527,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     args_dict["pages"] = args.pages if args.pages else ""
-    text_pages = sg.Text("pages", pad=((0,25), None),
+    text_pages = sg.Text("pages", pad=((0,22), None),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "pages"))
     input_text_pages = sg.InputText(args_dict["pages"],
                                  size=(7, 1), do_not_clear=True, key="pages")
@@ -554,7 +553,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for restore.
     ##
 
-    text_restore = sg.Text("restore",
+    text_restore = sg.Text("restore", pad=(0,0),
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "restore"))
 
     combo_box_restore = sg.Combo(["True", "False"], readonly=True,
