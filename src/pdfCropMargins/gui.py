@@ -1041,10 +1041,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                                                   output_doc_fname,
                                                                   bounding_box_list)
 
-            if args.uniform or args.uniformOrderStat4:
-                update_smallest_delta_values_display(delta_page_nums, disabled=args.restore)
-            else:
-                set_delta_values_null()
+            update_smallest_delta_values_display(delta_page_nums, disabled=args.restore)
 
             left_smallest_toggle = False
             top_smallest_toggle = False
