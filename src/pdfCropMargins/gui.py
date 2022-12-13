@@ -451,9 +451,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             args.uniformOrderStat4 = args_dict["uniformOrderStat4"]
         # Disable the uniform checkbox (this option implies uniform cropping).
         if args.uniformOrderStat4:
-            checkbox_uniform.Update(disabled=True)
+            checkbox_uniform.Update(True, disabled=True)
         else:
-            checkbox_uniform.Update(disabled=False)
+            checkbox_uniform.Update(args.uniform, disabled=False)
 
 
     update_funs.append(update_uniformOrderStat_values)
@@ -1041,7 +1041,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                                                   output_doc_fname,
                                                                   bounding_box_list)
 
-            update_smallest_delta_values_display(delta_page_nums, disabled=args.restore)
+            if args.uniform or args.uniformOrderStat4:
+                update_smallest_delta_values_display(delta_page_nums, disabled=args.restore)
+            else:
+                set_delta_values_null()
+
             left_smallest_toggle = False
             top_smallest_toggle = False
             bottom_smallest_toggle = False

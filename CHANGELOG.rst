@@ -3,7 +3,7 @@
 History
 =======
 
-1.1.[2-4] (2022-12-09)
+1.1.[2-5] (2022-12-09)
 ----------------------
 
 * The GUI layout has been rearranged for more intuitive use of the options that take
@@ -18,6 +18,8 @@ History
 * Fixed bug caused by adding pdfcropmargins as an alias.
 
 * Page numbers and uniformOrderstat widgets in the GUI were changed to spinners.
+
+* Fixed bug when uniform mode not selected.
 
 1.1.[0-1] (2022-12-07)
 ----------------------

@@ -468,6 +468,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
             percent_val = 100.0
         args.uniformOrderStat4 = [int(round(num_pages_to_crop * percent_val / 100.0))] * 4
 
+    delta_page_nums = None
     if args.uniform or args.uniformOrderStat4:
         if args.verbose:
             print("\nAll the selected pages will be uniformly cropped.")
