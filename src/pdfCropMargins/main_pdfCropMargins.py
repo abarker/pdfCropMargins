@@ -36,7 +36,7 @@ Source code site: https://github.com/abarker/pdfCropMargins
 # in PDF files are usually defined by the lower-left point's x and y values
 # followed by the upper-right point's x and y values.  This is equivalent
 # information (since x and y is implicit in the margin names) but the viewpoint
-# is slightly different.
+# is slightly different.  The origin is at the lower left.
 #
 # This program (like the Ghostscript program) uses the PDF ordering convention
 # (lbrt) for listing margins and defining boxes.  Note that Pillow uses some
