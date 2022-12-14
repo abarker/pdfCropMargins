@@ -439,7 +439,8 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     # any absolute offset then added (lb) or subtracted (tr) as appropriate.
     #
     # The deltas are all positive unless absoluteOffset changes that or
-    # percent>100.  They are added (lb) or subtracted (tr) as appropriate.
+    # percent>100 or percent<0.  They are added (lb) or subtracted (tr) as
+    # appropriate.
 
     delta_list = []
     for p_num, (b_box, f_box) in enumerate(zip(bounding_box_list, full_page_box_list)):
@@ -456,7 +457,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
         # Calculate absolute offsets.
         adj_deltas = [adj_deltas[m_val] + rotated_absolute_offset[p_num][m_val]
-                                                                    for m_val in range(4)]
+                                                           for m_val in range(4)]
         delta_list.append(adj_deltas)
 
     # Handle the '--uniform' options if one was selected.
@@ -482,6 +483,16 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     right_vals = sorted([(box[0][2], box[1]) for box in crop_delta_list_paged])
     upper_vals = sorted([(box[0][3], box[1]) for box in crop_delta_list_paged])
 
+    # TODO TODO TODO TODO TODO and clean up code below when it works...
+    # Search on safeCrop.  Note for docs that pre-crop still isn't safe, and that
+    # uniformOrderStat pages are ignored as far as safety.
+    args.safeCrop = False # TODO: finish implementing, make an option, add a checkbox.
+    if args.safeCrop:
+        ignored_pages_left = {}
+        ignored_pages_lower = {}
+        ignored_pages_right = {}
+        ignored_pages_upper = {}
+
     if args.uniform or args.uniformOrderStat4:
         if args.verbose:
             print("\nAll the selected pages will be uniformly cropped.")
@@ -501,6 +512,22 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                     m_val = 0
             fixed_m_vals.append(m_val)
         m_vals = fixed_m_vals
+
+        if args.safeCrop:
+            ignored_pages_left = set(left_vals[:m_vals[0]])
+            ignored_pages_lower = set(lower_vals[:m_vals[1]])
+            ignored_pages_right = set(right_vals[:m_vals[2]])
+            ignored_pages_upper = set(upper_vals[:m_vals[3]])
+            if ignored_pages_left: ignored_pages_left = {d[1] - 1 for d in ignored_pages_left}
+            if ignored_pages_lower: ignored_pages_lower = {d[1] - 1 for d in ignored_pages_lower}
+            if ignored_pages_right: ignored_pages_right = {d[1] - 1 for d in ignored_pages_right}
+            if ignored_pages_upper: ignored_pages_upper = {d[1] - 1 for d in ignored_pages_upper}
+            print(f"\n{m_vals=}")
+            print(f"\n{ignored_pages_left=}")
+            print(f"\n{ignored_pages_lower=}")
+            print(f"\n{ignored_pages_right=}")
+            print(f"\n{ignored_pages_upper=}")
+
         if args.verbose and (args.uniformOrderPercent or args.uniformOrderStat4):
             print("\nPer-margin, the", m_vals,
                   "smallest delta values over the selected pages\nwill be ignored"
@@ -526,6 +553,17 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     for f_box, deltas in zip(full_page_box_list, delta_list):
         final_crop_list.append((f_box[0] + deltas[0], f_box[1] + deltas[1],
                                 f_box[2] - deltas[2], f_box[3] - deltas[3]))
+
+    if args.safeCrop:
+        for page, (page_crops, bounding_box) in enumerate(zip(final_crop_list, bounding_box_list)):
+            if page not in ignored_pages_left:
+                if page_crops[0] > bounding_box[0]: page_crops[0] = bounding_box_list[0]
+            if page not in ignored_pages_lower:
+                if page_crops[1] > bounding_box[1]: page_crops[1] = bounding_box_list[1]
+            if page not in ignored_pages_right:
+                if page_crops[2] < bounding_box[2]: page_crops[2] = bounding_box_list[2]
+            if page not in ignored_pages_upper:
+                if page_crops[3] < bounding_box[3]: page_crops[3] = bounding_box_list[3]
 
     # Set the page ratios if user chose that option.
     if args.setPageRatios:
