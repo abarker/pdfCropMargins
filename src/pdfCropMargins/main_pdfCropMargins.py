@@ -555,15 +555,21 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                                 f_box[2] - deltas[2], f_box[3] - deltas[3]))
 
     if args.safeCrop:
+        # TODO: This works, but it DOESNT'T respect the uniform option; different pages
+        # can now be different sizes.  Need to redo that part or fix somehow.
+        safe_final_crop_list = []
         for page, (page_crops, bounding_box) in enumerate(zip(final_crop_list, bounding_box_list)):
+            page_crops = list(page_crops)
             if page not in ignored_pages_left:
-                if page_crops[0] > bounding_box[0]: page_crops[0] = bounding_box_list[0]
+                if page_crops[0] > bounding_box[0]: page_crops[0] = bounding_box[0]
             if page not in ignored_pages_lower:
-                if page_crops[1] > bounding_box[1]: page_crops[1] = bounding_box_list[1]
+                if page_crops[1] > bounding_box[1]: page_crops[1] = bounding_box[1]
             if page not in ignored_pages_right:
-                if page_crops[2] < bounding_box[2]: page_crops[2] = bounding_box_list[2]
+                if page_crops[2] < bounding_box[2]: page_crops[2] = bounding_box[2]
             if page not in ignored_pages_upper:
-                if page_crops[3] < bounding_box[3]: page_crops[3] = bounding_box_list[3]
+                if page_crops[3] < bounding_box[3]: page_crops[3] = bounding_box[3]
+            safe_final_crop_list.append(page_crops)
+        final_crop_list = safe_final_crop_list
 
     # Set the page ratios if user chose that option.
     if args.setPageRatios:
