@@ -484,10 +484,12 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     upper_vals = sorted([(box[0][3], box[1]) for box in crop_delta_list_paged])
 
     # TODO TODO TODO TODO TODO and clean up code below when it works...
-    # Search on safeCrop.  Note for docs that pre-crop still isn't safe, and that
-    # uniformOrderStat pages are ignored as far as safety.
-    args.safeCrop = False # TODO: finish implementing, make an option, add a checkbox.
-    if args.safeCrop:
+    # Search on cropSafe.  Note for docs how it can be used with uniform and
+    # uniformOrderStat.  Be sure to redo manpage to README.  Consider an
+    # option to set a minimum margin value, not just the bounding box (easy to
+    # implement below).  What if cropSafe doesn't imply cropSafeMin, a separate
+    # float option (which needn't appear in the GUI)?  Worth it?
+    if args.cropSafe:
         ignored_pages_left = {}
         ignored_pages_lower = {}
         ignored_pages_right = {}
@@ -513,7 +515,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
             fixed_m_vals.append(m_val)
         m_vals = fixed_m_vals
 
-        if args.safeCrop:
+        if args.cropSafe:
             ignored_pages_left = set(left_vals[:m_vals[0]])
             ignored_pages_lower = set(lower_vals[:m_vals[1]])
             ignored_pages_right = set(right_vals[:m_vals[2]])
@@ -554,21 +556,29 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         final_crop_list.append((f_box[0] + deltas[0], f_box[1] + deltas[1],
                                 f_box[2] - deltas[2], f_box[3] - deltas[3]))
 
-    if args.safeCrop:
-        # TODO: This works, but it DOESNT'T respect the uniform option; different pages
-        # can now be different sizes.  Need to redo that part or fix somehow.
+    if args.cropSafe:
         safe_final_crop_list = []
+        # csm is cropSafeMin
+        csm = 0#args.cropSafeMin  TODO TODO, top margins severly OVERCROPPED!  Safe doesn't work??
+        uniform_size = [-1E22, -1E22, 1E22, 1E22] # Will be set to max/min after comparisons.
         for page, (page_crops, bounding_box) in enumerate(zip(final_crop_list, bounding_box_list)):
             page_crops = list(page_crops)
             if page not in ignored_pages_left:
-                if page_crops[0] > bounding_box[0]: page_crops[0] = bounding_box[0]
+                if page_crops[0] > bounding_box[0]-csm: page_crops[0] = bounding_box[0]-csm
+                if page_crops[0] > uniform_size[0]: uniform_size[0] = page_crops[0]
             if page not in ignored_pages_lower:
-                if page_crops[1] > bounding_box[1]: page_crops[1] = bounding_box[1]
+                if page_crops[1] > bounding_box[1]-csm: page_crops[1] = bounding_box[1]-csm
+                if page_crops[1] > uniform_size[1]: uniform_size[1] = page_crops[1]
             if page not in ignored_pages_right:
-                if page_crops[2] < bounding_box[2]: page_crops[2] = bounding_box[2]
+                if page_crops[2] < bounding_box[2]+csm: page_crops[2] = bounding_box[2]+csm
+                if page_crops[2] < uniform_size[2]: uniform_size[2] = page_crops[2]
             if page not in ignored_pages_upper:
-                if page_crops[3] < bounding_box[3]: page_crops[3] = bounding_box[3]
-            safe_final_crop_list.append(page_crops)
+                if page_crops[3] < bounding_box[3]+csm: page_crops[3] = bounding_box[3]+csm
+                if page_crops[3] < uniform_size[3]: uniform_size[3] = page_crops[3]
+            if args.uniform or args.uniformOrderStat4:
+                safe_final_crop_list = [tuple(page_crops)] * num_pages
+            else:
+                safe_final_crop_list.append(tuple(page_crops))
         final_crop_list = safe_final_crop_list
 
     # Set the page ratios if user chose that option.

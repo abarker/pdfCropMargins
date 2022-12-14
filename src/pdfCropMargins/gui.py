@@ -521,6 +521,21 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     update_funs.append(update_percentText)
 
+    ##
+    ## Code for cropSafe.
+    ##
+
+    checkbox_cropSafe = sg.Checkbox("cropSafe", pad=((0,10), None), key="cropSafe",
+                                    tooltip=get_help_text_string_for_tooltip(cmd_parser,
+                                        "cropSafe"),
+                                    enable_events=True, default=args.cropSafe)
+
+    def update_cropSafe(values_dict):
+        """Update the cropSafe values."""
+        update_checkbox(values_dict, checkbox_cropSafe, "cropSafe", args, "cropSafe")
+
+    update_funs.append(update_cropSafe)
+
 
     ##
     ## Code for pages option.
@@ -830,7 +845,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     # absoluteOffset
                     [sg.Text("", size=input_text_absoluteOffset.Size,
                              pad=input_text_absoluteOffset4[0].Pad), # Empty text is space.
-                        input_text_absoluteOffset, text_absoluteOffset],
+                        input_text_absoluteOffset, text_absoluteOffset, checkbox_cropSafe],
 
                     # absoluteOffset4
                     [input_text_absoluteOffset4[0],
