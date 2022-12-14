@@ -325,7 +325,8 @@ cmd_parser.add_argument("-p4", "-pppp", "--percentRetain4", nargs=4,
 
    Set the percent of margin space to retain in the image, individually for the
    left, bottom, right, and top margins, respectively.  The four arguments
-   should be percent values.^^n""")
+   should be percent values.  Values greater than 100 increase the size of
+   the corresponding margins.^^n""")
 
 cmd_parser.add_argument("-pt", "--percentText", action="store_true", help="""
 
