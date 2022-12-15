@@ -478,16 +478,17 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     # Get a sorted list of (delta, page_num) tuples for each margin.  This is used
     # for orderstat calculations as well as for verbose information in the general case.
-    sorted_left_vals = sorted([(box[0][0], box[1]) for box in crop_delta_list_paged])
-    sorted_lower_vals = sorted([(box[0][1], box[1]) for box in crop_delta_list_paged])
-    sorted_right_vals = sorted([(box[0][2], box[1]) for box in crop_delta_list_paged])
-    sorted_upper_vals = sorted([(box[0][3], box[1]) for box in crop_delta_list_paged])
+    # Note that we only sort over the page_nums_to_crop instead of all pages.
+    sorted_left_vals = sorted([(pl[0][0], pl[1]) for pl in crop_delta_list_paged])
+    sorted_lower_vals = sorted([(pl[0][1], pl[1]) for pl in crop_delta_list_paged])
+    sorted_right_vals = sorted([(pl[0][2], pl[1]) for pl in crop_delta_list_paged])
+    sorted_upper_vals = sorted([(pl[0][3], pl[1]) for pl in crop_delta_list_paged])
 
     if args.cropSafe:
-        ignored_pages_left = {}
-        ignored_pages_lower = {}
-        ignored_pages_right = {}
-        ignored_pages_upper = {}
+        ignored_pages_left = {p for p in range(num_pages) if p not in page_nums_to_crop}
+        ignored_pages_lower = {p for p in range(num_pages) if p not in page_nums_to_crop}
+        ignored_pages_right = {p for p in range(num_pages) if p not in page_nums_to_crop}
+        ignored_pages_upper = {p for p in range(num_pages) if p not in page_nums_to_crop}
 
     if args.uniform or args.uniformOrderStat4:
         if args.verbose:
@@ -510,19 +511,23 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         m_values = bounded_m_values
 
         if args.cropSafe:
-            ignored_pages_left = set(sorted_left_vals[:m_values[0]])
-            ignored_pages_lower = set(sorted_lower_vals[:m_values[1]])
-            ignored_pages_right = set(sorted_right_vals[:m_values[2]])
-            ignored_pages_upper = set(sorted_upper_vals[:m_values[3]])
+            skip_pages_left = set(sorted_left_vals[:m_values[0]])
+            skip_pages_lower = set(sorted_lower_vals[:m_values[1]])
+            skip_pages_right = set(sorted_right_vals[:m_values[2]])
+            skip_pages_upper = set(sorted_upper_vals[:m_values[3]])
             # Here we convert the +1 pages meant for display into internal 0-based page numbers.
-            if ignored_pages_left:
-                ignored_pages_left = {d[1] - 1 for d in ignored_pages_left}
-            if ignored_pages_lower:
-                ignored_pages_lower = {d[1] - 1 for d in ignored_pages_lower}
-            if ignored_pages_right:
-                ignored_pages_right = {d[1] - 1 for d in ignored_pages_right}
-            if ignored_pages_upper:
-                ignored_pages_upper = {d[1] - 1 for d in ignored_pages_upper}
+            if skip_pages_left:
+                skip_pages_left = {d[1] - 1 for d in skip_pages_left}
+            if skip_pages_lower:
+                skip_pages_lower = {d[1] - 1 for d in skip_pages_lower}
+            if skip_pages_right:
+                skip_pages_right = {d[1] - 1 for d in skip_pages_right}
+            if skip_pages_upper:
+                skip_pages_upper = {d[1] - 1 for d in skip_pages_upper}
+            ignored_pages_left |= skip_pages_left
+            ignored_pages_lower |= skip_pages_lower
+            ignored_pages_right |= skip_pages_right
+            ignored_pages_upper |= skip_pages_upper
 
         if args.verbose and (args.uniformOrderPercent or args.uniformOrderStat4):
             print("\nPer-margin, the", m_values,
@@ -556,24 +561,21 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         csm = 0  #args.cropSafeMin  TODO
         for page, (final_crops, bounding_box) in enumerate(zip(final_crop_list, bounding_box_list)):
             final_crops = list(final_crops)
-            if page not in ignored_pages_left:
-                if final_crops[0] > bounding_box[0]-csm:
-                    final_crops[0] = bounding_box[0]-csm
-            if page not in ignored_pages_lower:
-                if final_crops[1] > bounding_box[1]-csm:
-                    final_crops[1] = bounding_box[1]-csm
-            if page not in ignored_pages_right:
-                if final_crops[2] < bounding_box[2]+csm:
-                    final_crops[2] = bounding_box[2]+csm
-            if page not in ignored_pages_upper:
-                if final_crops[3] < bounding_box[3]+csm:
-                    final_crops[3] = bounding_box[3]+csm
+            if page not in ignored_pages_left and final_crops[0] > bounding_box[0]-csm:
+                final_crops[0] = bounding_box[0]-csm
+            if page not in ignored_pages_lower and final_crops[1] > bounding_box[1]-csm:
+                final_crops[1] = bounding_box[1]-csm
+            if page not in ignored_pages_right and final_crops[2] < bounding_box[2]+csm:
+                final_crops[2] = bounding_box[2]+csm
+            if page not in ignored_pages_upper and final_crops[3] < bounding_box[3]+csm:
+                final_crops[3] = bounding_box[3]+csm
             safe_final_crop_list.append(tuple(final_crops))
         if args.uniform or args.uniformOrderStat4:
-            final_crop_list = [(min(fcl[0] for fcl in safe_final_crop_list),
-                                min(fcl[1] for fcl in safe_final_crop_list),
-                                max(fcl[2] for fcl in safe_final_crop_list),
-                                max(fcl[3] for fcl in safe_final_crop_list))] * num_pages
+            sfcl = safe_final_crop_list # Shorter alias for below.
+            final_crop_list = [(min(sfcl[p][0] for p in page_nums_to_crop if p not in ignored_pages_left),
+                                min(sfcl[p][1] for p in page_nums_to_crop if p not in ignored_pages_lower),
+                                max(sfcl[p][2] for p in page_nums_to_crop if p not in ignored_pages_right),
+                                max(sfcl[p][3] for p in page_nums_to_crop if p not in ignored_pages_upper))] * num_pages
         else:
             final_crop_list = safe_final_crop_list
 
