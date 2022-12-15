@@ -278,6 +278,9 @@ class Events(SimpleNamespace):
     def is_paired_single_and_quadruple_change(btn):
         return btn.startswith("uniformOrderStat")
 
+    def is_evenodd(btn):
+        return btn.startswith("evenodd")
+
 #
 # The main function with the event loop.
 #
@@ -805,6 +808,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for disabling options that are implied by others.
     ##
 
+    backing_uniform_checkbox_value = [args.uniform]
+
     def update_disabled_states(values_dict):
         """Disable widgets that are implied by other selected options."""
         # Disable the uniform checkbox (this option implies uniform cropping).
@@ -812,10 +817,12 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         # is currently not working so it just disables/enables in whatever state.
         # Also, evenodd should really disable it, too, but needs to do it as an event
         # in case you uncheck without re-cropping.
-        if args.uniformOrderStat4:# or args.evenodd:
-            checkbox_uniform.Update(disabled=True)
+        if args.uniformOrderStat4 or values_dict["evenodd"]:
+            backing_uniform_checkbox_value[0] = values_dict["uniform"]
+            checkbox_uniform.Update(True, disabled=True) # Show that these options imply uniform.
         else:
-            checkbox_uniform.Update(disabled=False)
+            if checkbox_uniform.Disabled:
+                checkbox_uniform.Update(backing_uniform_checkbox_value[0], disabled=False)
 
     update_funs.append(update_disabled_states)
 
@@ -907,7 +914,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     #[sg.Text("", size=(1,1))], # This is for vertical space.
                     [smallest_delta_label_text],
                     smallest_delta_values_display,
-                    #[sg.Text("")], # This is for vertical space.
+                    [sg.Text("")], # This is for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
                 ], pad=(None,0)),
             ],
@@ -1117,6 +1124,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             page_change_event = True
 
         elif Events.is_paired_single_and_quadruple_change(event):
+            call_all_update_funs(update_funs, values_dict)
+
+        elif Events.is_evenodd(event):
             call_all_update_funs(update_funs, values_dict)
 
         if page_change_event:
