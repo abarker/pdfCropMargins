@@ -149,7 +149,6 @@ def update_checkbox(values_dict, element, element_key, args, attr, fun_to_apply=
     element_value = values_dict[element_key]
     if fun_to_apply:
         element_value = fun_to_apply(element_value)
-    #element.Update(element_value) # Redundant.
     setattr(args, attr, element_value)
 
 def update_4_values(element_list, attr, args_dict, values_dict, value_type=float):
@@ -449,12 +448,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             args.uniformOrderStat4 = [] # Need to empty it, since it implies uniform option.
         else:
             args.uniformOrderStat4 = args_dict["uniformOrderStat4"]
-        # Disable the uniform checkbox (this option implies uniform cropping).
-        if args.uniformOrderStat4:
-            checkbox_uniform.Update(True, disabled=True)
-        else:
-            checkbox_uniform.Update(args.uniform, disabled=False)
-
 
     update_funs.append(update_uniformOrderStat_values)
 
@@ -807,6 +800,24 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         else:
             page_num = delta_page_nums[delta_index] - 1
         return page_num, toggle
+
+    ##
+    ## Code for disabling options that are implied by others.
+    ##
+
+    def update_disabled_states(values_dict):
+        """Disable widgets that are implied by other selected options."""
+        # Disable the uniform checkbox (this option implies uniform cropping).
+        # TODO: This should check when disabled then return to previous value, but that
+        # is currently not working so it just disables/enables in whatever state.
+        # Also, evenodd should really disable it, too, but needs to do it as an event
+        # in case you uncheck without re-cropping.
+        if args.uniformOrderStat4:# or args.evenodd:
+            checkbox_uniform.Update(disabled=True)
+        else:
+            checkbox_uniform.Update(disabled=False)
+
+    update_funs.append(update_disabled_states)
 
     ##
     ## Setup and assign the window's layout.
