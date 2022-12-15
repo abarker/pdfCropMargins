@@ -3,6 +3,13 @@
 History
 =======
 
+1.1.7 (2022-12-09)
+------------------
+
+* Implement the new ``--cropSafe`` option which ensures safe crops if enabled.
+
+* Workaround for a bug in the GUI uniform button.
+
 1.1.[2-6] (2022-12-09)
 ----------------------
 
