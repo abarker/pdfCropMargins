@@ -64,6 +64,8 @@ if has_mupdf:
 
         def open_document(self, doc_fname):
             """Open the document with fitz (PyMuPDF) and return the number of pages."""
+            # TODO: How to open a file and repair it:
+            # https://pymupdf.readthedocs.io/en/latest/recipes-general.html#how-to-dynamically-clean-up-corrupt-pdfs
             try:
                 self.document = fitz.open(doc_fname)
             except RuntimeError:
@@ -101,6 +103,12 @@ if has_mupdf:
             self.page_crop_display_list_cache = [None] * self.num_pages
             return self.num_pages
 
+        def save_document(self):
+            """Save a document, possibly repairing/cleaning it."""
+            # See here:
+            #    https://pymupdf.readthedocs.io/en/latest/document.html#Document.save
+            raise NotImplementedError
+
         def close_document(self):
             """Close the document and clear its pages."""
             self.document.close()
@@ -109,7 +117,6 @@ if has_mupdf:
         def get_page_ppm_for_crop(self, page_num, cache=False):
             """Return an unscaled and unclipped `.ppm` file suitable for cropping the page.
             Not indended for displaying in the GUI."""
-
             # NOTE: The calculated bounding boxes are already saved in GUI, so
             # there is no need to cache these.  After crops the PDF is written
             # out and re-read, which would clear the cache, anyway.
