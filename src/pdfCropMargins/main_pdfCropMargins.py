@@ -549,6 +549,14 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         delta_page_nums = [sorted_left_vals[0][1], sorted_lower_vals[0][1],
                            sorted_right_vals[0][1], sorted_upper_vals[0][1]]
 
+    if args.keepHorizCenter:
+        delta_list = [(min(d[0],d[2]), d[1], min(d[0],d[2]), d[3])
+                      for p, d in enumerate(delta_list) if p in page_nums_to_crop]
+
+    if args.keepVertCenter:
+        delta_list = [(d[0], min(d[1],d[3]), d[2], min(d[1],d[3]))
+                      for p, d in enumerate(delta_list) if p in page_nums_to_crop]
+
     # Apply the delta modifications to the full boxes to get the final sizes.
     final_crop_list = []
     for f_box, deltas in zip(full_page_box_list, delta_list):
@@ -557,7 +565,6 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     if args.cropSafe:
         safe_final_crop_list = []
-        print(f"{args.cropSafeMin4=}")
         csm0, csm1, csm2, csm3 = args.cropSafeMin4
         for page, (final_crops, bounding_box) in enumerate(zip(final_crop_list, bounding_box_list)):
             final_crops = list(final_crops)

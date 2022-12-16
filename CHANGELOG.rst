@@ -6,22 +6,37 @@ History
 1.1.8 (2022-12-09)
 ------------------
 
-* Get cropSafe working more correctly with page ranges.
+New features:
 
 * Added the new ``--cropSafeMin4`` (``-csm4``) option to specify a safe minimum
   margin other than the bounding box.
 
+* The two new options ``--keepHorizCenter`` and ``--keepVertCenter`` have been
+  added.  These options ensure that the respective relative horizontal and
+  vertical centers of pages remain the same (by cropping the minimum of the two
+  delta values on each page).
+
+Bug fixes:
+
 * Save previous state for uniform checkbox to restore after being implied/disabled.
+
+* Get cropSafe working more correctly with page ranges.
 
 1.1.7 (2022-12-09)
 ------------------
 
+New features:
+
 * Implement the new ``--cropSafe`` option which ensures safe crops if enabled.
+
+Bug fixes:
 
 * Workaround for a bug in the GUI uniform button.
 
 1.1.[2-6] (2022-12-09)
 ----------------------
+
+New features:
 
 * The GUI layout has been rearranged for more intuitive use of the options that take
   four values, one for the left, bottom, right, and top margins.
@@ -30,11 +45,13 @@ History
   to that page.  This is helpful for fine-tuning cropping without cropping-out useful
   information.
 
+* Page numbers and uniformOrderstat widgets in the GUI were changed to spinners.
+
+Bug fixes and maintenance:
+
 * Internally, functions were renamed to match the recent PyPDF2 deprecations.
 
 * Fixed bug caused by adding pdfcropmargins as an alias.
-
-* Page numbers and uniformOrderstat widgets in the GUI were changed to spinners.
 
 * Fixed bug when uniform mode not selected, and extend min delta display to both
   cases.
@@ -42,15 +59,19 @@ History
 1.1.[0-1] (2022-12-07)
 ----------------------
 
+New features:
+
+* The alias ``pdfcropmargins`` can now be used instead of ``pdf-crop-margins``
+  from the command line.
+
+Bug fixes and maintenance:
+
 * Upgraded to Python 3.6 minimum requirement with pyupgrade.
 
 * The GUI dependencies are now part of the standard install (although the program
   will still run without them if the GUI is not required).
 
 * Dependency versions updated for security and functionality changes.
-
-* The alias ``pdfcropmargins`` can now be used instead of ``pdf-crop-margins``
-  from the command line.
 
 1.0.9 (2022-07-14)
 ------------------
@@ -83,7 +104,7 @@ Bug fixes:
 
 Bug fixes:
 
-* Import of `PdfReadError` now tries the `errors` module and then the `utils` module.
+* Import of ``PdfReadError`` now tries the ``errors`` module and then the ``utils`` module.
 
 * Updated some dependency minimum versions for security reasons.
 

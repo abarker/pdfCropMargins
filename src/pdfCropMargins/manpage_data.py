@@ -765,6 +765,23 @@ cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
 #   Skip the original un-rotation of the rotated pages before bounding boxes
 #   are calculated (and also the later re-rotation).^^n""")
 
+cmd_parser.add_argument("-khc", "--keepHorizCenter", action="store_true",
+                        help="""
+
+   This option keeps the horizontal center point of a PDF fixed.  The usual
+   crops are calculated, but for each page the left and right delta values are
+   both set to the smallest of the two values (so the cropping amount is the
+   same on each side).  This option does not apply to pre-crops.^^n""")
+
+cmd_parser.add_argument("-kvc", "--keepVertCenter", action="store_true",
+                        help="""
+
+   This option keeps the vertical center point of a PDF fixed.  The usual crops
+   are calculated, but for each page the upper and lower delta values are both
+   set to the smallest of the two values (so the cropping amount is the same on
+   the top and bottom).  This option does not apply to pre-crops.^^n""")
+
+
 cmd_parser.add_argument("-spr", "--setPageRatios", type=str,
                         default=[], metavar="FLOAT:FLOAT", help="""
 
