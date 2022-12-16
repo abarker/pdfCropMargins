@@ -66,10 +66,15 @@ recent changes and new features.
   as buttons that take you to the page.  This is useful for fine-tuning crops
   to not chop off useful information.
 
-* There is now a new ``--cropSafe`` option which ensures that crops do not
-  exceed the bounding box size when enabled.  The ``--cropSafeMin4`` option, if
-  set, allows a user-specified extra amount of safe margin beyond the bounding
-  box.
+* There is now a new ``--cropSafe`` (``-cs``) option which ensures that crops
+  do not exceed the bounding box size when enabled.  The ``--cropSafeMin4``
+  (``-csm4``) option, if set, allows a user-specified extra amount of safe
+  margin beyond the bounding box.
+
+* The new options ``--keepHorizCenter`` (``-khz``) and ``--keepVertCenter``
+  (``-kvc``) have been added.  They force equal cropping on the left and right
+  or top and bottom pages, respectively.  The minimum of the delta values is
+  used on each page.
 
 Installing 
 ==========
@@ -271,10 +276,11 @@ The output of that command follows::
                            [-gsr] [-t BYTEVAL] [-nb INT] [-ns INT] [-x DPI]
                            [-y DPI] [-b [m|c|t|a|b]] [-f [m|c|t|a|b]] [-r] [-A]
                            [-gsf] [-nc] [-pv PROG] [-mo] [-q] [-nco] [-pf]
-                           [-sc STR] [-su STR] [-ss STR] [-pw PASSWD]
-                           [-spr FLOAT:FLOAT] [-prw FLOAT FLOAT FLOAT FLOAT]
-                           [-dcb STR] [-dcw STR] [-i] [-pdl] [-gsp PATH]
-                           [-ppp PATH] [--version] [-wcdf FILEPATH]
+                           [-sc STR] [-su STR] [-ss STR] [-pw PASSWD] [-khc]
+                           [-kvc] [-spr FLOAT:FLOAT]
+                           [-prw FLOAT FLOAT FLOAT FLOAT] [-dcb STR] [-dcw STR]
+                           [-i] [-pdl] [-gsp PATH] [-ppp PATH] [--version]
+                           [-wcdf FILEPATH]
                            PDF_FILE [PDF_FILE ...]
 
    Description:
@@ -940,6 +946,20 @@ The output of that command follows::
                   this option is only needed for non-empty passwords. The
                   resulting cropped file will not be encrypted, so use caution if
                   important data is involved.
+
+     -khc, --keepHorizCenter
+                  This option keeps the horizontal center point of a PDF fixed.
+                  The usual crops are calculated, but for each page the left and
+                  right delta values are both set to the smallest of the two
+                  values (so the cropping amount is the same on each side). This
+                  option does not apply to pre-crops.
+
+     -kvc, --keepVertCenter
+                  This option keeps the vertical center point of a PDF fixed. The
+                  usual crops are calculated, but for each page the upper and
+                  lower delta values are both set to the smallest of the two
+                  values (so the cropping amount is the same on the top and
+                  bottom). This option does not apply to pre-crops.
 
      -spr FLOAT:FLOAT, --setPageRatios FLOAT:FLOAT
                   Force all the cropped page ratios to equal the given ratio. All

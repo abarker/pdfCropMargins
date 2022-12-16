@@ -11,10 +11,10 @@ New features:
 * Added the new ``--cropSafeMin4`` (``-csm4``) option to specify a safe minimum
   margin other than the bounding box.
 
-* The two new options ``--keepHorizCenter`` and ``--keepVertCenter`` have been
-  added.  These options ensure that the respective relative horizontal and
-  vertical centers of pages remain the same (by cropping the minimum of the two
-  delta values on each page).
+* The two new options ``--keepHorizCenter`` (``-khc``) and ``--keepVertCenter``
+  (``-kvc``) have been added.  These options ensure that the respective
+  relative horizontal and vertical centers of pages remain the same (by
+  cropping the minimum of the two delta values on each page).
 
 Bug fixes:
 
@@ -27,7 +27,8 @@ Bug fixes:
 
 New features:
 
-* Implement the new ``--cropSafe`` option which ensures safe crops if enabled.
+* Implement the new ``--cropSafe`` (``-cs``) option which ensures safe crops if
+  enabled.
 
 Bug fixes:
 
@@ -62,7 +63,7 @@ Bug fixes and maintenance:
 New features:
 
 * The alias ``pdfcropmargins`` can now be used instead of ``pdf-crop-margins``
-  from the command line.
+  to run the program from the command line.
 
 Bug fixes and maintenance:
 
