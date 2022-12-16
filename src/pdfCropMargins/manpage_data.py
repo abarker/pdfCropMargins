@@ -368,7 +368,20 @@ cmd_parser.add_argument("-cs", "--cropSafe", action="store_true", help="""
    '--uniformOrderStat4' option.  The latter effect works well with uniform
    cropping in the GUI: the value of 'uniformOrderStat' can be incremented for
    the margin with the minimum delta value (as seen by clicking that button) if
-   no useful text would be cropped out.^^n""")
+   no useful text would be cropped out.  The '--cropSafeMin' option allows for
+   modifying the minimum margin value, adding to the bounding box.^^n""")
+
+cmd_parser.add_argument("-csm4", "--cropSafeMin4", nargs=4, type=float,
+                        metavar="BP", default=[0.0, 0.0, 0.0, 0.0], help="""
+
+   The '--cropSafe' option will not perform any crops that cut into the
+   bounding box.  This option modifies the behavior of that option (assuming
+   that `--cropSafe` is also selected).  Instead of stopping at the bounding
+   box, it will not crop past the bounding box plus the corresponding margin
+   values passed in.  This applies to all margins.  The option takes four
+   floats, in units of big points, for the left, bottom, right, and top
+   margins, respectively.  Negative values are allowed and allow some of the
+   bounding box to be cropped.^^n""")
 
 # Note the percent sign in text below needs to be a double percent or argument
 # parsing breaks.

@@ -66,8 +66,10 @@ recent changes and new features.
   as buttons that take you to the page.  This is useful for fine-tuning crops
   to not chop off useful information.
 
-* There is now a new ``--cropSafe`` option which ensures that crops do not exceed
-  the bounding box size when enabled.
+* There is now a new ``--cropSafe`` option which ensures that crops do not
+  exceed the bounding box size when enabled.  The ``--cropSafeMin4`` option, if
+  set, allows a user-specified extra amount of safe margin beyond the bounding
+  box.
 
 Installing 
 ==========
@@ -261,19 +263,18 @@ To see the documentation, run::
 
 The output of that command follows::
 
-
    Usage: pdf-crop-margins [-h] [-o OUTFILE_PATH_OR_DIR] [-v] [-gui] [-p PCT]
                            [-p4 PCT PCT PCT PCT] [-pt] [-a BP] [-a4 BP BP BP BP]
-                           [-cs] [-ap BP] [-ap4 BP BP BP BP] [-u] [-m INT]
-                           [-m4 INT INT INT INT] [-mp INT] [-s] [-ms INT] [-e]
-                           [-g PAGESTR] [-c [d|m|p|gr|gb|o]] [-gs] [-gsr]
-                           [-t BYTEVAL] [-nb INT] [-ns INT] [-x DPI] [-y DPI]
-                           [-b [m|c|t|a|b]] [-f [m|c|t|a|b]] [-r] [-A] [-gsf]
-                           [-nc] [-pv PROG] [-mo] [-q] [-nco] [-pf] [-sc STR]
-                           [-su STR] [-ss STR] [-pw PASSWD] [-spr FLOAT:FLOAT]
-                           [-prw FLOAT FLOAT FLOAT FLOAT] [-dcb STR] [-dcw STR]
-                           [-i] [-pdl] [-gsp PATH] [-ppp PATH] [--version]
-                           [-wcdf FILEPATH]
+                           [-cs] [-csm4 BP BP BP BP] [-ap BP] [-ap4 BP BP BP BP]
+                           [-u] [-m INT] [-m4 INT INT INT INT] [-mp INT] [-s]
+                           [-ms INT] [-e] [-g PAGESTR] [-c [d|m|p|gr|gb|o]] [-gs]
+                           [-gsr] [-t BYTEVAL] [-nb INT] [-ns INT] [-x DPI]
+                           [-y DPI] [-b [m|c|t|a|b]] [-f [m|c|t|a|b]] [-r] [-A]
+                           [-gsf] [-nc] [-pv PROG] [-mo] [-q] [-nco] [-pf]
+                           [-sc STR] [-su STR] [-ss STR] [-pw PASSWD]
+                           [-spr FLOAT:FLOAT] [-prw FLOAT FLOAT FLOAT FLOAT]
+                           [-dcb STR] [-dcw STR] [-i] [-pdl] [-gsp PATH]
+                           [-ppp PATH] [--version] [-wcdf FILEPATH]
                            PDF_FILE [PDF_FILE ...]
 
    Description:
@@ -556,7 +557,19 @@ The output of that command follows::
                   uniform cropping in the GUI: the value of 'uniformOrderStat'
                   can be incremented for the margin with the minimum delta value
                   (as seen by clicking that button) if no useful text would be
-                  cropped out.
+                  cropped out. The '--cropSafeMin' option allows for modifying
+                  the minimum margin value, adding to the bounding box.
+
+     -csm4 BP BP BP BP, --cropSafeMin4 BP BP BP BP
+                  The '--cropSafe' option will not perform any crops that cut
+                  into the bounding box. This option modifies the behavior of
+                  that option (assuming that `--cropSafe` is also selected).
+                  Instead of stopping at the bounding box, it will not crop past
+                  the bounding box plus the corresponding margin values passed
+                  in. This applies to all margins. The option takes four floats,
+                  in units of big points, for the left, bottom, right, and top
+                  margins, respectively. Negative values are allowed and allow
+                  some of the bounding box to be cropped.
 
      -ap BP, --absolutePreCrop BP
                   This option is like '--absoluteOffset' except that it is

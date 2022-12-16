@@ -557,25 +557,26 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     if args.cropSafe:
         safe_final_crop_list = []
-        # A potential new option, csm or cropSafeMin TODO, maybe csm4
-        csm = 0  #args.cropSafeMin  TODO
+        print(f"{args.cropSafeMin4=}")
+        csm0, csm1, csm2, csm3 = args.cropSafeMin4
         for page, (final_crops, bounding_box) in enumerate(zip(final_crop_list, bounding_box_list)):
             final_crops = list(final_crops)
-            if page not in ignored_pages_left and final_crops[0] > bounding_box[0]-csm:
-                final_crops[0] = bounding_box[0]-csm
-            if page not in ignored_pages_lower and final_crops[1] > bounding_box[1]-csm:
-                final_crops[1] = bounding_box[1]-csm
-            if page not in ignored_pages_right and final_crops[2] < bounding_box[2]+csm:
-                final_crops[2] = bounding_box[2]+csm
-            if page not in ignored_pages_upper and final_crops[3] < bounding_box[3]+csm:
-                final_crops[3] = bounding_box[3]+csm
+            if page not in ignored_pages_left and final_crops[0] > bounding_box[0]-csm0:
+                final_crops[0] = bounding_box[0]-csm0
+            if page not in ignored_pages_lower and final_crops[1] > bounding_box[1]-csm1:
+                final_crops[1] = bounding_box[1]-csm1
+            if page not in ignored_pages_right and final_crops[2] < bounding_box[2]+csm2:
+                final_crops[2] = bounding_box[2]+csm2
+            if page not in ignored_pages_upper and final_crops[3] < bounding_box[3]+csm3:
+                final_crops[3] = bounding_box[3]+csm3
             safe_final_crop_list.append(tuple(final_crops))
         if args.uniform or args.uniformOrderStat4:
             sfcl = safe_final_crop_list # Shorter alias for below.
             final_crop_list = [(min(sfcl[p][0] for p in page_nums_to_crop if p not in ignored_pages_left),
                                 min(sfcl[p][1] for p in page_nums_to_crop if p not in ignored_pages_lower),
                                 max(sfcl[p][2] for p in page_nums_to_crop if p not in ignored_pages_right),
-                                max(sfcl[p][3] for p in page_nums_to_crop if p not in ignored_pages_upper))] * num_pages
+                                max(sfcl[p][3] for p in page_nums_to_crop if p not in ignored_pages_upper)
+                               )] * num_pages
         else:
             final_crop_list = safe_final_crop_list
 

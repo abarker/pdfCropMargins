@@ -3,6 +3,16 @@
 History
 =======
 
+1.1.8 (2022-12-09)
+------------------
+
+* Get cropSafe working more correctly with page ranges.
+
+* Added the new ``--cropSafeMin4`` (``-csm4``) option to specify a safe minimum
+  margin other than the bounding box.
+
+* Save previous state for uniform checkbox to restore after being implied/disabled.
+
 1.1.7 (2022-12-09)
 ------------------
 
