@@ -3,6 +3,13 @@
 History
 =======
 
+1.1.9 (2022-12-09)
+------------------
+
+Bug fixes:
+
+* Pinned PyPDF2 version to < 3.0.0 because of breaking changes.
+
 1.1.8 (2022-12-09)
 ------------------
 

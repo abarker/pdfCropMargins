@@ -47,7 +47,7 @@ with codecs.open(os.path.join(current_dir, "README.rst"), encoding="utf-8") as f
 
 install_requires = ["wheel",
                     "pillow>=9.3.0", # Security issues on older.
-                    "PyPDF2>=2.11.0",
+                    "PyPDF2>=2.11.0,<3.0.0",
                     "PySimpleGUI>=4.40.0",
                     "PyMuPDF>=1.20.0",
                     ]
