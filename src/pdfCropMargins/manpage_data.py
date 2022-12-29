@@ -364,7 +364,7 @@ cmd_parser.add_argument("-cs", "--cropSafe", action="store_true", help="""
    Guarantee that all crops are safe in the sense that no crop ever goes beyond
    the tight bounding box on any margin.  This does not apply to pre-crops
    using the '--absolutePreCrop' option.  It also does not apply to any margins
-   on a pages where that margin is ignored due to the '--uniformOrderStat' or
+   on pages where that margin is ignored due to the '--uniformOrderStat' or
    '--uniformOrderStat4' option.  The latter effect works well with uniform
    cropping in the GUI: the value of 'uniformOrderStat' can be incremented for
    the margin with the minimum delta value (as seen by clicking that button) if
