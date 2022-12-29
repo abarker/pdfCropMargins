@@ -259,8 +259,8 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
     page.rotate(-rotation)
 
     # Save copies of some values in the page's namespace, to possibly restore later.
-    page.originalMediaBox = page.mediabox
-    page.originalCropBox = page.cropbox
+    page.original_media_box = page.mediabox
+    page.original_crop_box = page.cropbox
 
     first_loop = True
     for box_string in args.fullPageBox:
@@ -717,14 +717,14 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
 
         # Do the save to ArtBox if that option is chosen and Producer is set.
         if not args.noundosave and not already_cropped_by_this_program:
-            curr_page.artbox = intersect_boxes(curr_page.originalMediaBox,
-                                               curr_page.originalCropBox)
+            curr_page.artbox = intersect_boxes(curr_page.original_media_box,
+                                               curr_page.original_crop_box)
 
         # Reset the CropBox and MediaBox to their saved original values
         # (they were saved by `get_full_page_box_assigning_media_and_crop`
         # in the `curr_page` object's namespace).
-        curr_page.mediabox = curr_page.originalMediaBox
-        curr_page.cropbox = curr_page.originalCropBox
+        curr_page.mediabox = curr_page.original_media_box
+        curr_page.cropbox = curr_page.original_crop_box
 
         # Copy the original page without further mods if it wasn't in the range
         # selected for cropping.
@@ -743,11 +743,16 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
             args.boxesToSet = ["m", "c"]
 
         # Now set any boxes which were selected to be set via the '--boxesToSet' option.
-        if "m" in args.boxesToSet: curr_page.mediabox = new_cropped_box
-        if "c" in args.boxesToSet: curr_page.cropbox = new_cropped_box
-        if "t" in args.boxesToSet: curr_page.trimbox = new_cropped_box
-        if "a" in args.boxesToSet: curr_page.artbox = new_cropped_box
-        if "b" in args.boxesToSet: curr_page.bleedbox = new_cropped_box
+        if "m" in args.boxesToSet:
+            curr_page.mediabox = new_cropped_box
+        if "c" in args.boxesToSet:
+            curr_page.cropbox = new_cropped_box
+        if "t" in args.boxesToSet:
+            curr_page.trimbox = new_cropped_box
+        if "a" in args.boxesToSet:
+            curr_page.artbox = new_cropped_box
+        if "b" in args.boxesToSet:
+            curr_page.bleedbox = new_cropped_box
 
     if args.writeCropDataToFile:
         f.close()
