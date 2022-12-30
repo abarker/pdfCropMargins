@@ -678,7 +678,6 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info):
 def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
                                           already_cropped_by_this_program):
     """Apply the crop list to the pages of the input `PdfReader` object."""
-
     if args.restore and not already_cropped_by_this_program:
         print("\nWarning from pdfCropMargins: The Producer string indicates that"
               "\neither this document was not previously cropped by pdfCropMargins"
@@ -1284,6 +1283,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     if False: #args.prevCropped:
         # TODO: Consider as new options.  But a lot of work done above to get this info...
         # How do the other options interact with these if they are set?  Don't want GUI.
+        # Easier to just call `setup_output_document` early on to get the value?
         if already_cropped_by_this_program and args.skipPrevCropped:
             ex.cleanup_and_exit(0)
         fixed_input_doc_file_object.close()
