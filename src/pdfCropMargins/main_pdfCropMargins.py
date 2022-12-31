@@ -891,11 +891,14 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info, producer_mod,
 #
 ##############################################################################
 
-def process_command_line_arguments(parsed_args):
+def process_command_line_arguments(parsed_args, cmd_parser):
     """Perform an initial processing on the some of the command-line arguments.  This
     is called first, before any PDF processing is done."""
     global args # This is global to avoid passing it to essentially every function.
     args = parsed_args
+
+    if args.prevCropped:
+        args.gui = False # Ignore the GUI when --prevCropped option is selected.
 
     if args.verbose:
         print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
@@ -907,7 +910,18 @@ def process_command_line_arguments(parsed_args):
               "\nFound more than one on the command line:", file=sys.stderr)
         for f in args.pdf_input_doc:
             print("   ", f, file=sys.stderr)
+        print()
+        cmd_parser.print_usage()
+        #cmd_parser.exit() # Exits whole program.
         ex.cleanup_and_exit(1)
+    # Note: Below code is currently handled by argparse + option (not *) on pdf_input_doc.
+    #elif len(args.pdf_input_doc) < 1:
+    #    print("\nError in pdfCropMargins: No PDF document argument passed in.",
+    #          file=sys.stderr)
+    #    print()
+    #    cmd_parser.print_usage()
+    #    #cmd_parser.exit() # Exits whole program.
+    #    ex.cleanup_and_exit(1)
 
     #
     # Process input and output filenames.
@@ -1312,19 +1326,22 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     producer_mod, already_cropped_by_this_program = check_producer_modifier(
                                                           metadata_info.producer)
 
-    if False: #args.prevCropped:
-        # TODO: Make two new options.
-        # How do the other options interact with these if they are set?  Don't want GUI.
-        if already_cropped_by_this_program and args.skipPrevCropped:
-            ex.cleanup_and_exit(0)
+    if args.prevCropped:
         fixed_input_doc_file_object.close()
         if already_cropped_by_this_program:
-            print("y")
+            #print("code 0")
             exit_code = 0
         else:
-            print("n")
+            #print("code 1")
             exit_code = 1
         ex.cleanup_and_exit(exit_code)
+
+    # TODO: Doesn't work yet with GUI because GUI calls this fun only when cropping...
+    #if args.exitPrevCropped and already_cropped_by_this_program:
+    #    fixed_input_doc_file_object.close()
+    #    if args.verbose:
+    #        print("The file was previously cropped by pdfCropMargins, exiting.")
+    #    ex.cleanup_and_exit(0)
 
     ##
     ## Now compute the set containing the pyPdf page number of all the pages
@@ -1458,10 +1475,7 @@ def handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname):
         while True:
             query_string = "\nModify the original file to the cropped file " \
                 "(saving the original)? [yn] "
-            if ex.python_version[0] == "2":
-                query_result = raw_input(query_string).decode("utf-8").strip()
-            else:
-                query_result = input(query_string).strip()
+            query_result = input(query_string).strip()
             if query_result in ["y", "Y"]:
                 args.modifyOriginal = True
                 print("\nModifying the original file.")
@@ -1534,7 +1548,8 @@ def main_crop(argv_list=None):
 
     # Process some of the command-line arguments (also sets `args` globally).
     input_doc_pathname, fixed_input_doc_pathname, output_doc_pathname = (
-                                           process_command_line_arguments(parsed_args))
+                                           process_command_line_arguments(parsed_args,
+                                                                          cmd_parser))
 
     if args.gui:
         from .gui import create_gui # Import here; tkinter might not be installed.

@@ -56,7 +56,8 @@ def main():
             if hasattr(signal, s): # Not all systems define the same signals.
                 signal.signal(getattr(signal, s), cleanup_and_exit)
 
-        crop()
+        output_doc_pathname, exit_code, stdout_str, stderr_str = crop()
+
     except (KeyboardInterrupt, EOFError): # Windows raises EOFError on ^C.
         print("\nGot a KeyboardInterrupt, cleaning up and exiting...\n",
               file=sys.stderr)

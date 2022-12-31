@@ -76,6 +76,10 @@ recent changes and new features.
   or top and bottom pages, respectively.  The minimum of the delta values is
   used on each page.
 
+* Added an option ``--prevCropped`` (``-pc``) which just tests whether or not
+  the document was previously cropped with pdfCropMargins.  This is meant for
+  scripting use.
+
 Installing 
 ==========
 
@@ -276,8 +280,8 @@ The output of that command follows::
                            [-gsr] [-t BYTEVAL] [-nb INT] [-ns INT] [-x DPI]
                            [-y DPI] [-b [m|c|t|a|b]] [-f [m|c|t|a|b]] [-r] [-A]
                            [-gsf] [-nc] [-pv PROG] [-mo] [-q] [-nco] [-pf]
-                           [-sc STR] [-su STR] [-ss STR] [-pw PASSWD] [-khc]
-                           [-kvc] [-spr FLOAT:FLOAT]
+                           [-sc STR] [-su STR] [-ss STR] [-pw PASSWD] [-pc]
+                           [-khc] [-kvc] [-spr FLOAT:FLOAT]
                            [-prw FLOAT FLOAT FLOAT FLOAT] [-dcb STR] [-dcw STR]
                            [-i] [-pdl] [-gsp PATH] [-ppp PATH] [--version]
                            [-wcdf FILEPATH]
@@ -557,7 +561,7 @@ The output of that command follows::
                   Guarantee that all crops are safe in the sense that no crop
                   ever goes beyond the tight bounding box on any margin. This
                   does not apply to pre-crops using the '--absolutePreCrop'
-                  option. It also does not apply to any margins on a pages where
+                  option. It also does not apply to any margins on pages where
                   that margin is ignored due to the '--uniformOrderStat' or '--
                   uniformOrderStat4' option. The latter effect works well with
                   uniform cropping in the GUI: the value of 'uniformOrderStat'
@@ -946,6 +950,15 @@ The output of that command follows::
                   this option is only needed for non-empty passwords. The
                   resulting cropped file will not be encrypted, so use caution if
                   important data is involved.
+
+     -pc, --prevCropped
+                  Test whether or not the document was previously cropped with
+                  the pdfCropMargins program. If so, exit with exit code 0. If
+                  not, exit with exit code 1. This option is intended mainly for
+                  scripting, for example to only crop documents that have not
+                  been previously cropped. Requires a document filename option.
+                  No other options are honored when this option is selected
+                  except '--verbose'.
 
      -khc, --keepHorizCenter
                   This option keeps the horizontal center point of a PDF fixed.

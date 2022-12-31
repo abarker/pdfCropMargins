@@ -3,7 +3,15 @@
 History
 =======
 
-1.1.9 (2022-12-09)
+1.1.10 (2022-12-??)
+------------------
+
+New features:
+
+* Added an option ``--prevCropped`` (``-pc``) which just tests whether or not the document was
+  previously cropped with pdfCropMargins.  This is meant for scripting use.
+
+1.1.9 (2022-12-29)
 ------------------
 
 Bug fixes:

@@ -759,6 +759,22 @@ cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
    needed for non-empty passwords.  The resulting cropped file will not be
    encrypted, so use caution if important data is involved.^^n""")
 
+cmd_parser.add_argument("-pc", "--prevCropped", action="store_true", help="""
+
+   Test whether or not the document was previously cropped with the
+   pdfCropMargins program.  If so, exit with exit code 0.  If not, exit with
+   exit code 1.  This option is intended mainly for scripting, for example to
+   only crop documents that have not been previously cropped.  Requires a
+   document filename option.  No other options are honored when this option is
+   selected except '--verbose'.^^n""")
+
+# NOTE: This doesn't work with GUI because GUI calls process_pdf_file only on crop button.
+#cmd_parser.add_argument("-epc", "--exitPrevCropped", action="store_true", help="""
+#
+#   Test whether or not the document was previously cropped with the pdfCropMargins
+#   program.  It so, print 'y' to stdout and exit with exit code 0.  It not, print
+#   'n' and exit with exit code 1.^^n""")
+
 #cmd_parser.add_argument("-k", "--keepOriginalRotations", action="store_true",
 #                        help="""
 #
