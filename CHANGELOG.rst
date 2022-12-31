@@ -11,6 +11,10 @@ New features:
 * Added an option ``--prevCropped`` (``-pc``) which just tests whether or not the document was
   previously cropped with pdfCropMargins.  This is meant for scripting use.
 
+Bug fixes:
+
+* Fixed a bug in returning error codes when running from the command line.
+
 1.1.9 (2022-12-29)
 ------------------
 
