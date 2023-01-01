@@ -910,11 +910,12 @@ def process_command_line_arguments(parsed_args, cmd_parser):
               "\nFound more than one on the command line:", file=sys.stderr)
         for f in args.pdf_input_doc:
             print("   ", f, file=sys.stderr)
-        print()
-        cmd_parser.print_usage()
+        print(file=sys.stderr)
+        if not args.prevCropped: # Because Bash script conditionals try to evaluate `usage` on fail.
+            cmd_parser.print_usage()
         #cmd_parser.exit() # Exits whole program.
         ex.cleanup_and_exit(1)
-    # Note: Below code is currently handled by argparse + option (not *) on pdf_input_doc.
+    # Note: Below code currently handled by the argparse + option, not *, on pdf_input_doc.
     #elif len(args.pdf_input_doc) < 1:
     #    print("\nError in pdfCropMargins: No PDF document argument passed in.",
     #          file=sys.stderr)
