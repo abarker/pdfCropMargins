@@ -766,7 +766,7 @@ cmd_parser.add_argument("-pc", "--prevCropped", action="store_true", help="""
    exit code 1.  This option is intended mainly for scripting, for example to
    only crop documents that have not been previously cropped.  Requires a
    document filename option.  No other options are honored when this option is
-   selected except '--verbose'.^^n""")
+   selected except '--gsFix', '--version', and '--help'.^^n""")
 
 # NOTE: This doesn't work with GUI because GUI calls process_pdf_file only on crop button.
 #cmd_parser.add_argument("-epc", "--exitPrevCropped", action="store_true", help="""

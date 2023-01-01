@@ -899,6 +899,7 @@ def process_command_line_arguments(parsed_args, cmd_parser):
 
     if args.prevCropped:
         args.gui = False # Ignore the GUI when --prevCropped option is selected.
+        args.verbose = False # Wants to eval the text in Bash script.
 
     if args.verbose:
         print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
