@@ -629,9 +629,15 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     return final_crop_list, delta_page_nums
 
-def check_producer_modifier(old_producer_string):
-    """Check Producer metadata attribute to see if this program cropped document before."""
-    producer_mod = PRODUCER_MODIFIER
+def check_producer_modifier(metadata_info):
+    """Check Producer metadata attribute to see if this program cropped document before.
+    Returns the new producer modifier string to add to the producer metadata along with
+    a boolean `already_cropped_by_this_program`."""
+    producer_mod = PRODUCER_MODIFIER # String added to the producer metadata, marks when cropped.
+    if metadata_info:
+        old_producer_string = metadata_info.producer
+    else:
+        return PRODUCER_MODIFIER, False # Can't read metadata, but maybe can set it.
     if old_producer_string and old_producer_string.endswith(producer_mod):
         producer_mod = "" # No need to pile up suffixes each time on Producer.
         if args.verbose:
@@ -1285,7 +1291,7 @@ def write_pdf_file(output_doc_pathname, output_doc, tmp_output_doc, input_doc, t
         output_doc.write(output_doc_stream)
     except (KeyboardInterrupt, EOFError):
         raise
-    except: # PyPDF2 can raise various exceptions.
+    except PyPdfError: # PyPDF2 can raise various exceptions.
         try:
             # We know the write succeeded on tmp_output_doc or we wouldn't be here.
             # Malformed document catalog info can cause write failures, so get
@@ -1333,7 +1339,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
      input_doc_num_pages) = open_file_in_pdfreader(fixed_input_doc_pathname)
 
     producer_mod, already_cropped_by_this_program = check_producer_modifier(
-                                                          metadata_info.producer)
+                                                              metadata_info)
 
     if args.prevCropped:
         fixed_input_doc_file_object.close()
