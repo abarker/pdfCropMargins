@@ -49,6 +49,8 @@ import sys
 import os
 import shutil
 import time
+from decimal import Decimal
+
 try:
     import readline # Makes prompts go to stdout rather than stderr.
 except ImportError: # Not available on Windows.
@@ -91,6 +93,9 @@ from .calculate_bounding_boxes import get_bounding_box_list
 
 # The string which is appended to Producer metadata in cropped PDFs.
 PRODUCER_MODIFIER = " (Cropped by pdfCropMargins.)"
+
+# Limit precision to some reasonable amount to prevent problems in some PDF viewers.
+DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES = 8
 
 args = None # Global set during cmd-line processing (since almost all funs use it).
 
@@ -730,7 +735,9 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
             continue
 
         # Convert the computed "box to crop to" into a `RectangleObject` (for pyPdf).
-        new_cropped_box = RectangleObject(crop_list[page_num])
+        rounded_values = [round(Decimal(f), DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES)
+                          for f in crop_list[page_num]] # RectangleObject converts to Decimal.
+        new_cropped_box = RectangleObject(rounded_values)
 
         if args.verbose:
             print("\t"+str(page_num+1)+"\t", list(new_cropped_box)) # page numbering from 1
