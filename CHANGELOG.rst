@@ -3,6 +3,14 @@
 History
 =======
 
+1.1.12 (2023-01-XX)
+-------------------
+
+Bug fixes:
+
+* The precision of the cropped point values for the new margins is now limited (to 8 after
+  the decimal) to avoid possible problems with some PDF viewers.
+
 1.1.1[0-1] (2023-01-01)
 -----------------------
 
