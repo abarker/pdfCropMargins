@@ -3,6 +3,13 @@
 History
 =======
 
+1.1.13 (2023-01-25)
+-------------------
+
+Bug fixes:
+
+* Fixed a bug where a file with unreadable metadata can have a bad attribute access.
+
 1.1.12 (2023-01-24)
 -------------------
 
