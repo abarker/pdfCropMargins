@@ -307,7 +307,8 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
     rotation_list = []
 
     if args.verbose and not quiet:
-        print("\nOriginal full page sizes, in PDF format (lbrt):")
+        print(f"\nOriginal full page sizes (rounded to "
+              f"{DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES} digits) in PDF format (lbrt):")
 
     for page_num in range(len(input_doc.pages)):
 
@@ -318,8 +319,10 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
 
         if args.verbose and not quiet:
             # want to display page num numbering from 1, so add one
-            print("\t"+str(page_num+1), "  rot =",
-                  curr_page.rotationAngle, "\t", list(full_page_box))
+            rounded_box_string = ", ".join([str(round(f,
+                        DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES)) for f in full_page_box])
+            print(f"\t{str(page_num+1)}   rot = "
+                  f"{curr_page.rotationAngle}  \t [{rounded_box_string}]")
 
         # Convert the `RectangleObject` to floats in an ordinary list and append.
         ordinary_box = [float(b) for b in full_page_box]
