@@ -49,6 +49,7 @@ import sys
 import os
 import warnings
 import textwrap
+import time
 from types import SimpleNamespace
 
 from . import __version__
@@ -951,7 +952,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Find the usable window size.
     ##
 
-    max_image_size = get_usable_image_size(args, window, full_window_width, full_window_height,
+    max_image_size, non_image_size = get_usable_image_size(args, window, full_window_width,
+                                           full_window_height,
                                            im_wid, im_ht, left_pixels)
 
     # Update the page image (currently to a small size above) to fit window.
@@ -1143,15 +1145,33 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             call_all_update_funs(update_funs, values_dict)
 
         elif Events.is_configure: # Capture tkinter window resizes.
-            # Maybe wait until window size change detected and then is stable for
-            # two seconds or so to start redraw/resize?
-            #print(f"RESIZE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {window.size}")
             if window.size != old_window_size:
                 window_resize_requested = True # TODO, not yet implemented.
 
         if page_change_event:
             curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
                                       values_dict["PageNumber"], input_text_page_num)
+
+        if False: #window_resize_requested: # TODO, this works but doesn't get final event...
+            # Instead, start a thread that will keep checking the window size and when it
+            # stabilizes will redraw it.  If the thread is currently running, don't start
+            # a new one.  Just do it for the is_configure event.
+            print("DEBUG requested resize..... checking")
+            delay_secs = 1
+            current_time = time.time()
+            if window.size != old_window_size:
+                print("DEBUG still changing....")
+                resize_time = current_time
+            elif current_time - resize_time > delay_secs:
+                # Update the page image (currently to a small size above) to fit window.
+                max_image_size = (window.size[0] - non_image_size[0],
+                                  window.size[1] - non_image_size[1])
+                data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
+                                                                 max_image_size=max_image_size,
+                                                                 reset_cached=True)
+                window_resize_requested = False
+
+            old_window_size = window.size
 
         # Get the current page and display it.
         data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
@@ -1213,7 +1233,7 @@ def get_usable_image_size(args, window, full_window_width, full_window_height,
     non_im_width, non_im_height = win_width-test_im_wid, win_height-test_im_ht
     usable_im_width, usable_im_height = (usable_width - non_im_width-left_pixels,
                                          usable_height - non_im_height)
-    return usable_im_width, usable_im_height
+    return (usable_im_width, usable_im_height), (non_im_width, non_im_height)
 
 def get_window_size():
     """Get physical screen dimension to determine the page image max size.  Some
