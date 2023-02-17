@@ -281,6 +281,9 @@ class Events(SimpleNamespace):
     def is_evenodd(btn):
         return btn.startswith("evenodd")
 
+    def is_configure(btn):
+        return btn == "Configure"
+
 #
 # The main function with the event loop.
 #
@@ -921,6 +924,12 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         ]
 
     ##
+    ## Get the full window size.
+    ##
+
+    full_window_width, full_window_height = get_window_size()
+
+    ##
     ## Create the main window.
     ##
 
@@ -930,24 +939,25 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         window = sg.Window(title=window_title, layout=layout, return_keyboard_events=True,
                            location=(left_pixels, 0), resizable=True, no_titlebar=False,
                            #use_ttk_buttons=True, ttk_theme=sg.THEME_DEFAULT,
-                           use_default_focus=False, alpha_channel=0,)# finalize=True)
+                           use_default_focus=False, alpha_channel=0, finalize=True)
 
     #window.Layout(layout) # Old way, now in Window call, delete after testing.
-    window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
+    #window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
     set_delta_values_null()
+    window.bind('<Configure>', "Configure") # Detect tkinter window-resize events.
 
     ##
     ## Find the usable window size.
     ##
 
-    max_image_size = get_usable_image_size(window, im_wid, im_ht, left_pixels)
+    max_image_size = get_usable_image_size(args, window, full_window_width, full_window_height,
+                                           im_wid, im_ht, left_pixels)
 
     # Update the page image (currently to a small size above) to fit window.
     data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
                                                      max_image_size=max_image_size,
                                                      reset_cached=True)
-
 
     # Set the correct first page in the image element (after sizing data gathered above).
     image_element.Update(data=data)
@@ -965,6 +975,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     last_threshold = None
     last_numSmooths = None
     last_numBlurs = None
+
+    old_window_size = window.size
+    window_resize_requested = False
 
     while True:
         page_change_event = False
@@ -1129,6 +1142,13 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         elif Events.is_evenodd(event):
             call_all_update_funs(update_funs, values_dict)
 
+        elif Events.is_configure: # Capture tkinter window resizes.
+            # Maybe wait until window size change detected and then is stable for
+            # two seconds or so to start redraw/resize?
+            #print(f"RESIZE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! {window.size}")
+            if window.size != old_window_size:
+                window_resize_requested = True # TODO, not yet implemented.
+
         if page_change_event:
             curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
                                       values_dict["PageNumber"], input_text_page_num)
@@ -1165,7 +1185,8 @@ def get_help_text_string_for_tooltip(cmd_parser, option_string):
     combined_para = combined_para.replace("^^n", "\n")
     return combined_para
 
-def get_usable_image_size(window, test_im_wid, test_im_ht, left_pixels):
+def get_usable_image_size(args, window, full_window_width, full_window_height,
+                          test_im_wid, test_im_ht, left_pixels):
     """Get the approximate size of the largest possible PDF preview image that
     can be drawn in `window` in the current screen.
 
@@ -1176,15 +1197,25 @@ def get_usable_image_size(window, test_im_wid, test_im_ht, left_pixels):
     test image that is "displayed" in the (invisible) window.  The
     `left_pixels` parameter is the number of pixels added to the left side of
     window position."""
-    usable_width, usable_height = get_window_size(window)
+    usable_width, usable_height = full_window_width, full_window_height
     win_width, win_height = window.Size
+    if usable_width < win_width: # Must be an error in full_window_width, fallback.
+        if args.verbose:
+            print("\nWarning in pdfCropMargins: Error in full window width calculation,"
+                    " falling back to default window width.", file=sys.stderr)
+        usable_width = win_width
+    if usable_height < win_height: # Must be an error in full_window_height, fallback.
+        if args.verbose:
+            print("\nWarning in pdfCropMargins: Error in full window height calculation,"
+                    " falling back to default window height.", file=sys.stderr)
+        usable_height = win_height
 
     non_im_width, non_im_height = win_width-test_im_wid, win_height-test_im_ht
     usable_im_width, usable_im_height = (usable_width - non_im_width-left_pixels,
                                          usable_height - non_im_height)
     return usable_im_width, usable_im_height
 
-def get_window_size(window):
+def get_window_size():
     """Get physical screen dimension to determine the page image max size.  Some
     extra space is reserved for titlebars/borders or other unaccounted-for space
     in the windows."""
@@ -1200,7 +1231,11 @@ def get_window_size(window):
     else:
         # Note this method doesn't always work for multiple-monitor setups
         # on non-Windows systems.  It reports the combined monitor window sizes.
-        width, height = window.get_screen_size()
+        root = tk.Tk()
+        width = root.winfo_screenwidth()
+        height = root.winfo_screenheight()
+
+        #width, height = window.get_screen_size()
         width *= .90
         height *= .90
     return width, height
@@ -1226,19 +1261,30 @@ def get_window_size_tk():
     # Tkinter universal calls: https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/universal.html
     # Mac, Linux, Windows attributes here: https://wiki.tcl-lang.org/page/wm+attributes
     root = tk.Tk()
+
     try:
         if ex.system_os == "Linux":
             # Go to fullscreen mode to get screen size.  This seems to work with
             # multiple monitors (which otherwise get counted at a combined size).
             root.attributes("-alpha", 0) # Invisible on most systems.
             #root.attributes("-fullscreen", True) # Set to actual full-screen size.
-            root.attributes("-zoomed", True)
+            root.attributes("-zoomed", True) # Zoomed mode also includes the title bar.
             # This seems to eliminate the flash that occurs on the update below.
             root.attributes("-type", "splash") # https://www.tcl.tk/man/tcl8.6/TkCmd/wm.htm#M12
 
             #root.update()
             root.update_idletasks() # This works in place of .update, on Linux.
+            width = root.winfo_width()
+            height = root.winfo_height()
+        elif ex.system_os == "Darwin":
+            root.attributes("-alpha", 0) # Invisible on most systems.
+            root.attributes("-fullscreen", True) # Set to actual full-screen size.
+            #root.attributes("-zoomed", True) # Darwin doesn't support zoomed attribute.
+            # This seems to eliminate the flash that occurs on the update below.
+            root.attributes("-type", "splash") # https://www.tcl.tk/man/tcl8.6/TkCmd/wm.htm#M12
 
+            #root.update()
+            root.update_idletasks() # This works in place of .update, on Linux.
             width = root.winfo_width()
             height = root.winfo_height()
         elif ex.system_os == "Windows":
