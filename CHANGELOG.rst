@@ -3,6 +3,18 @@
 History
 =======
 
+1.1.14 (2023-02-17)
+-------------------
+
+New features:
+
+* Windows can now be resized and the preview will be redrawn to match.
+
+Bug fixes:
+
+* Added a fallback for some systems (KDE) which were failing to detect the
+  correct screen size for the GUI.
+
 1.1.13 (2023-01-25)
 -------------------
 

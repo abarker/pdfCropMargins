@@ -43,13 +43,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Todo: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
 # window can (or should) be fixed to the initial size or something similar.
-# See the existing attempt commented out below.
+# See the existing attempt commented out below, search "fixed-size"
 
 import sys
 import os
 import warnings
 import textwrap
 import time
+import threading
 from types import SimpleNamespace
 
 from . import __version__
@@ -282,8 +283,13 @@ class Events(SimpleNamespace):
     def is_evenodd(btn):
         return btn.startswith("evenodd")
 
+    def is_general_checkbox_click(btn):
+        # Note is_evenodd is a separate event.
+        return (btn.startswith("uniform") or btn.startswith("samePageSize")
+                or btn.startswith("percentText") or btn.startswith("cropSafe"))
+
     def is_configure(btn):
-        return btn == "Configure"
+        return btn.startswith("Configure")
 
 #
 # The main function with the event loop.
@@ -323,8 +329,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                              max_image_size=max_image_size,
                                              zoom=False,)
 
-    image_element = sg.Image(data=data)  # make image element
-    # TODO: This sort of works to keep constant size pages, but need to select sizes somehow.
+    image_element = sg.Image(data=data, key="image_element")  # make image element
+    # TODO: This sort of works to keep fixed-size pages, but need to select sizes somehow.
     # Or at least turn on the scrolling option for overflowing images.  Image scaling algorithm
     # sometimes does strange things; refactor and reconsider.
     #image_column = sg.Column([[image_element]], size=(750,750))
@@ -572,8 +578,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "restore"))
 
     combo_box_restore = sg.Combo(["True", "False"], readonly=True,
-                                         default_value=str(args.restore), size=(5, 1),
-                                         key="restore", enable_events=True)
+                                 default_value=str(args.restore), size=(5, 1),
+                                 key="restore", enable_events=True)
 
     def update_restore(values_dict):
         """Update the restore values."""
@@ -809,6 +815,35 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         return page_num, toggle
 
     ##
+    ## Thread to redraw images on a configure/resize event.
+    ##
+
+    resize_thread_running = False
+
+    def resize_page_on_configure_event():
+        """This function is run as a thread to redraw preview pages on configure
+        events once the size stabilizes."""
+        DELAY_SECS = 0.2
+        nonlocal old_window_size, max_image_size, data, clip_pos, im_ht, im_wid, resize_thread_running
+        resize_thread_running = True
+        current_time = time.time()
+        time.sleep(DELAY_SECS)
+        while window.size != old_window_size:
+            old_window_size = window.size
+            time.sleep(DELAY_SECS)
+
+        # Update the page image (currently to a small size above) to fit window.
+        max_image_size = (window.size[0] - non_image_size[0],
+                          window.size[1] - non_image_size[1])
+        data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
+                                                         max_image_size=max_image_size,
+                                                         reset_cached=True)
+        image_element.Update(data=data)
+        window.size = (non_image_size[0]+im_wid, non_image_size[1]+im_ht)
+        old_window_size = window.size
+        resize_thread_running = False
+
+    ##
     ## Code for disabling options that are implied by others.
     ##
 
@@ -946,7 +981,16 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     #window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
     set_delta_values_null()
-    window.bind('<Configure>', "Configure") # Detect tkinter window-resize events.
+    # TODO TODO, below mostly works, but on restore, for example, causes problems maybe.
+    # Also, docs with different-sized pages, configure events are generated for ANY page
+    # change, so maybe responsiveness problems re-doing the displays?  Sizes wrong.
+    # What if you just look at the window size when doing the final page-show operation
+    # and call the size adjustments there?  Might that work instead of thread?  Becomes
+    # fairly unresponsive; need to decide how to handle diff-size pages which themselves
+    # trigger automatic configure events on page changes.
+    #
+    # Maybe switch to changing (or keeping fixed) image_element.size rather than full window?
+    #window.bind('<Configure>', "Configure") # Detect tkinter window-resize events.
 
     ##
     ## Find the usable window size.
@@ -979,7 +1023,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     last_numBlurs = None
 
     old_window_size = window.size
-    window_resize_requested = False
 
     while True:
         page_change_event = False
@@ -1144,38 +1187,29 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         elif Events.is_evenodd(event):
             call_all_update_funs(update_funs, values_dict)
 
+        elif Events.is_general_checkbox_click(event):
+            # This was added to try to make things more responsive on Windows, where multiple
+            # checkbox clicks become unresponsive until something else is clicked or return
+            # is entered in a box.  Doesn't help much.
+            call_all_update_funs(update_funs, values_dict)
+
         elif Events.is_configure: # Capture tkinter window resizes.
-            if window.size != old_window_size:
-                window_resize_requested = True # TODO, not yet implemented.
+            if window.size != old_window_size and not resize_thread_running:
+                proc = threading.Thread(target=resize_page_on_configure_event)
+                proc.daemon = True
+                proc.start()
 
         if page_change_event:
             curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
                                       values_dict["PageNumber"], input_text_page_num)
 
-        if False: #window_resize_requested: # TODO, this works but doesn't get final event...
-            # Instead, start a thread that will keep checking the window size and when it
-            # stabilizes will redraw it.  If the thread is currently running, don't start
-            # a new one.  Just do it for the is_configure event.
-            print("DEBUG requested resize..... checking")
-            delay_secs = 1
-            current_time = time.time()
-            if window.size != old_window_size:
-                print("DEBUG still changing....")
-                resize_time = current_time
-            elif current_time - resize_time > delay_secs:
-                # Update the page image (currently to a small size above) to fit window.
-                max_image_size = (window.size[0] - non_image_size[0],
-                                  window.size[1] - non_image_size[1])
-                data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
-                                                                 max_image_size=max_image_size,
-                                                                 reset_cached=True)
-                window_resize_requested = False
-
-            old_window_size = window.size
-
-        # Get the current page and display it.
+        # Get the current page and display it.  This would be more efficient if
+        # only done for events that really need it.
         data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
                                                  max_image_size=max_image_size, zoom=zoom)
+        # TODO, commented out line works, how could it be used better???  For fixed-size
+        # image display...  Need to preview document to find max/min page ratios.
+        #image_element.Update(data=data, size=max_image_size)
         image_element.Update(data=data)
 
     window.Close()
@@ -1219,11 +1253,13 @@ def get_usable_image_size(args, window, full_window_width, full_window_height,
     window position."""
     usable_width, usable_height = full_window_width, full_window_height
     win_width, win_height = window.Size
+
     if usable_width < win_width: # Must be an error in full_window_width, fallback.
         if args.verbose:
             print("\nWarning in pdfCropMargins: Error in full window width calculation,"
                     " falling back to default window width.", file=sys.stderr)
         usable_width = win_width
+
     if usable_height < win_height: # Must be an error in full_window_height, fallback.
         if args.verbose:
             print("\nWarning in pdfCropMargins: Error in full window height calculation,"
@@ -1231,7 +1267,7 @@ def get_usable_image_size(args, window, full_window_width, full_window_height,
         usable_height = win_height
 
     non_im_width, non_im_height = win_width-test_im_wid, win_height-test_im_ht
-    usable_im_width, usable_im_height = (usable_width - non_im_width-left_pixels,
+    usable_im_width, usable_im_height = (usable_width - non_im_width - left_pixels,
                                          usable_height - non_im_height)
     return (usable_im_width, usable_im_height), (non_im_width, non_im_height)
 
