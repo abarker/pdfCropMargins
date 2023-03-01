@@ -57,6 +57,10 @@ from . import __version__
 from . import external_program_calls as ex
 from . pymupdf_routines import has_mupdf, MuPdfDocument
 
+# This is the initial size for PDF image, before it is recalculated.  It is also
+# the min on configuration resize.  Screen is assumed to be large enough for this.
+INITIAL_IMAGE_SIZE = (700, 700)
+
 if not has_mupdf:
     print("\nError in pdfCropMargins: The GUI feature requires a recent PyMuPDF version."
           "\n\nExiting pdf-crop-margins...")
@@ -324,7 +328,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     # Note this max size here must make the image height exceed the size of widgets next to
     # it. This is needed to accurately calculate the maximum image height below.
-    max_image_size = (700, 700) # This is temporary; it will be calculated and reset below.
+    max_image_size = INITIAL_IMAGE_SIZE # This is temporary; it will be calculated and reset below.
     data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
                                              max_image_size=max_image_size,
                                              zoom=False,)
@@ -815,7 +819,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         return page_num, toggle
 
     ##
-    ## Thread to redraw images on a configure/resize event.
+    ## Page image update and thread to redraw images on a configure/resize event.
     ##
 
     def update_page_image(reset_cached=False, zoom=False, max_image_size=None):
@@ -823,8 +827,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         has changed."""
         # Update the page image to fit window.
         if max_image_size is None:
-            max_image_size = (window.size[0] - non_image_size[0],
-                              window.size[1] - non_image_size[1])
+            max_image_size = (max(window.size[0] - non_image_size[0], INITIAL_IMAGE_SIZE[0]),
+                              max(window.size[1] - non_image_size[1], INITIAL_IMAGE_SIZE[1]))
         data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
                                                       max_image_size=max_image_size,
                                                       zoom=zoom, reset_cached=reset_cached)
@@ -852,6 +856,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             old_window_size = window.size
             time.sleep(DELAY_SECS)
 
+        # Circular: this calls window.size, but then is used in resize_window...
         data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True, zoom=zoom)
 
         resize_window(window, non_image_size, im_wid, im_ht)
