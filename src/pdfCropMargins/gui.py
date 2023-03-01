@@ -840,8 +840,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def resize_window(window, non_image_size, im_wid, im_ht):
         """Calculate and set window size."""
-        new_window_size = (non_image_size[0]+max(im_wid, INITIAL_IMAGE_SIZE[0]),
-                           non_image_size[1]+max(im_ht, INITIAL_IMAGE_SIZE[1]))
+        new_window_size = (non_image_size[0]+im_wid,
+                           non_image_size[1]+im_ht)
         window.size = new_window_size
 
     resize_thread_running = False
