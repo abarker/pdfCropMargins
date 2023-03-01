@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Todo: It would be nice to have a resolution option for spinners, so you
 # could have floats (like sliders).  Also, an increment option setting the
-# increment value would be nice.
+# increment value per click would be nice.
 
 # Todo: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
 # window can (or should) be fixed to the initial size or something similar.
@@ -818,28 +818,43 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Thread to redraw images on a configure/resize event.
     ##
 
+    def update_page_image(reset_cached=False, zoom=False, max_image_size=None):
+        """Update the image for the PDF preview and resize the window if its size
+        has changed."""
+        # Update the page image to fit window.
+        if max_image_size is None:
+            max_image_size = (window.size[0] - non_image_size[0],
+                              window.size[1] - non_image_size[1])
+        data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
+                                                      max_image_size=max_image_size,
+                                                      zoom=zoom, reset_cached=reset_cached)
+        image_element.Update(data=data)
+        return data, clip_pos, im_ht, im_wid
+
+    def resize_window(window, non_image_size, im_wid, im_ht):
+        """Calculate and set window size."""
+        new_window_size = (non_image_size[0]+im_wid, non_image_size[1]+im_ht)
+        window.size = new_window_size
+
     resize_thread_running = False
 
     def resize_page_on_configure_event():
         """This function is run as a thread to redraw preview pages on configure
-        events once the size stabilizes."""
-        DELAY_SECS = 0.2
-        nonlocal old_window_size, max_image_size, data, clip_pos, im_ht, im_wid, resize_thread_running
+        events once the size stabilizes.  Note it sets nonlocal variables."""
+        nonlocal resize_thread_running, old_window_size, max_image_size
         resize_thread_running = True
+        DELAY_SECS = 1.2
+
+        # Wait for user to finish resizing.
         current_time = time.time()
         time.sleep(DELAY_SECS)
         while window.size != old_window_size:
             old_window_size = window.size
             time.sleep(DELAY_SECS)
 
-        # Update the page image (currently to a small size above) to fit window.
-        max_image_size = (window.size[0] - non_image_size[0],
-                          window.size[1] - non_image_size[1])
-        data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
-                                                         max_image_size=max_image_size,
-                                                         reset_cached=True)
-        image_element.Update(data=data)
-        window.size = (non_image_size[0]+im_wid, non_image_size[1]+im_ht)
+        data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True, zoom=zoom)
+
+        resize_window(window, non_image_size, im_wid, im_ht)
         old_window_size = window.size
         resize_thread_running = False
 
@@ -854,8 +869,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         # Disable the uniform checkbox (this option implies uniform cropping).
         # TODO: This should check when disabled then return to previous value, but that
         # is currently not working so it just disables/enables in whatever state.
-        # Also, evenodd should really disable it, too, but needs to do it as an event
-        # in case you uncheck without re-cropping.
         if args.uniformOrderStat4 or values_dict["evenodd"]:
             backing_uniform_checkbox_value[0] = values_dict["uniform"]
             checkbox_uniform.Update(True, disabled=True) # Show that these options imply uniform.
@@ -882,6 +895,21 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         [
             image_element,
             sg.Column([
+                    # TODO: Consider this new layout, commented out, image to right
+                    # and top controls moved to be with other controls.  Could move
+                    # page controls and keep image to left, alternatively.
+                    #[
+                    # text_page_num,
+                    # input_text_page_num,
+                    # sg.Text(f"({num_pages}) "),
+                    # sg.Button("Prev"),
+                    # sg.Button("Next"),
+                    # ],
+                    #
+                    #[sg.Text("Arrow keys move while zooming.", pad=(None, 0)),
+                    # sg.Button("Toggle Zoom"),],
+                    #[sg.Text("", size=(1,1))], # This is for vertical space.
+
                     [sg.Text("Quadruples are left, top, bottom, and right margins.\n"
                              "Mouse left over option names to show descriptions.",
                              relief=sg.RELIEF_GROOVE, pad=(None, (0,5)))],
@@ -955,7 +983,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     smallest_delta_values_display,
                     [sg.Text("")], # This is for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
-                ], pad=(None,0)),
+                ], pad=(None,0)), # End of column.
+            #image_element,
             ],
         ]
 
@@ -977,20 +1006,10 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                            #use_ttk_buttons=True, ttk_theme=sg.THEME_DEFAULT,
                            use_default_focus=False, alpha_channel=0, finalize=True)
 
-    #window.Layout(layout) # Old way, now in Window call, delete after testing.
-    #window.Finalize() # Newer pySimpleGui versions have finalize kwarg in window def.
     wait_indicator_text.Update(visible=False)
     set_delta_values_null()
-    # TODO TODO, below mostly works, but on restore, for example, causes problems maybe.
-    # Also, docs with different-sized pages, configure events are generated for ANY page
-    # change, so maybe responsiveness problems re-doing the displays?  Sizes wrong.
-    # What if you just look at the window size when doing the final page-show operation
-    # and call the size adjustments there?  Might that work instead of thread?  Becomes
-    # fairly unresponsive; need to decide how to handle diff-size pages which themselves
-    # trigger automatic configure events on page changes.
-    #
-    # Maybe switch to changing (or keeping fixed) image_element.size rather than full window?
-    #window.bind('<Configure>', "Configure") # Detect tkinter window-resize events.
+
+    window.bind('<Configure>', "Configure") # Detect tkinter window-resize events.
 
     ##
     ## Find the usable window size.
@@ -1001,12 +1020,17 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                            im_wid, im_ht, left_pixels)
 
     # Update the page image (currently to a small size above) to fit window.
-    data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
-                                                     max_image_size=max_image_size,
-                                                     reset_cached=True)
+    data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True, zoom=False,
+                                                      max_image_size=max_image_size)
+    resize_window(window, non_image_size, im_wid, im_ht)
+    old_window_size = window.size
+
+    #data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
+    #                                                 max_image_size=max_image_size,
+    #                                                 reset_cached=True)
 
     # Set the correct first page in the image element (after sizing data gathered above).
-    image_element.Update(data=data)
+    #image_element.Update(data=data)
     window.alpha_channel = 1 # Make the window visible.
 
     ##
@@ -1195,6 +1219,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         elif Events.is_configure: # Capture tkinter window resizes.
             if window.size != old_window_size and not resize_thread_running:
+                # Note possible threading bug, calling pysimplegui from a thread:
+                # https://github.com/PySimpleGUI/PySimpleGUI/issues/4051
                 proc = threading.Thread(target=resize_page_on_configure_event)
                 proc.daemon = True
                 proc.start()
@@ -1204,13 +1230,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                       values_dict["PageNumber"], input_text_page_num)
 
         # Get the current page and display it.  This would be more efficient if
-        # only done for events that really need it.
-        data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
-                                                 max_image_size=max_image_size, zoom=zoom)
-        # TODO, commented out line works, how could it be used better???  For fixed-size
-        # image display...  Need to preview document to find max/min page ratios.
-        #image_element.Update(data=data, size=max_image_size)
-        image_element.Update(data=data)
+        # only done for events that really need it, but pages are cached.
+        data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=False, zoom=zoom)
 
     window.Close()
     document_pages.close_document() # Be sure document is closed (bug with -mo without this).
@@ -1322,7 +1343,7 @@ def get_window_size_tk():
         if ex.system_os == "Linux":
             # Go to fullscreen mode to get screen size.  This seems to work with
             # multiple monitors (which otherwise get counted at a combined size).
-            root.attributes("-alpha", 0) # Invisible on most systems.
+            root.attributes("-alpha", 0) # Invisible on systems with compositing window manager.
             #root.attributes("-fullscreen", True) # Set to actual full-screen size.
             root.attributes("-zoomed", True) # Zoomed mode also includes the title bar.
             # This seems to eliminate the flash that occurs on the update below.
