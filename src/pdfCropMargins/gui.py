@@ -44,6 +44,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # Todo: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
 # window can (or should) be fixed to the initial size or something similar.
 # See the existing attempt commented out below, search "fixed-size"
+# TODO: Maybe use the pymupdf routine to go through and get max/min page sizes
+# to fit all for a given crop to a window size??
 
 import sys
 import os
@@ -327,8 +329,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     # Note this max size here must make the image height exceed the size of widgets next to
-    # it. This is needed to accurately calculate the maximum image height below.
-    max_image_size = INITIAL_IMAGE_SIZE # This is temporary; it will be calculated and reset below.
+    # it. This is needed to accurately calculate the maximum image height below.  Also
+    # the fallback on resize failure.
+    max_image_size = INITIAL_IMAGE_SIZE # This is temporary; size calculated and reset below.
     data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
                                              max_image_size=max_image_size,
                                              zoom=False,)
@@ -837,28 +840,35 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def resize_window(window, non_image_size, im_wid, im_ht):
         """Calculate and set window size."""
-        new_window_size = (non_image_size[0]+im_wid, non_image_size[1]+im_ht)
+        new_window_size = (non_image_size[0]+max(im_wid, INITIAL_IMAGE_SIZE[0]),
+                           non_image_size[1]+max(im_ht, INITIAL_IMAGE_SIZE[1]))
         window.size = new_window_size
 
     resize_thread_running = False
+    request_thread_exit = False
+    DELAY_SECS = 1.2
 
-    def resize_page_on_configure_event():
+    def resize_page_on_configure_event(delay_secs=DELAY_SECS):
         """This function is run as a thread to redraw preview pages on configure
         events once the size stabilizes.  Note it sets nonlocal variables."""
         nonlocal resize_thread_running, old_window_size, max_image_size
         resize_thread_running = True
-        DELAY_SECS = 1.2
 
         # Wait for user to finish resizing.
         current_time = time.time()
-        time.sleep(DELAY_SECS)
+        time.sleep(delay_secs)
         while window.size != old_window_size:
+            if request_thread_exit:
+                return
             old_window_size = window.size
-            time.sleep(DELAY_SECS)
+            time.sleep(delay_secs)
 
-        # Circular: this calls window.size, but then is used in resize_window...
+        if request_thread_exit:
+            return
         data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True, zoom=zoom)
 
+        if request_thread_exit:
+            return
         resize_window(window, non_image_size, im_wid, im_ht)
         old_window_size = window.size
         resize_thread_running = False
@@ -896,6 +906,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             sg.Text(f"({num_pages})      "), # Show max page count.
             sg.Button("Toggle Zoom"),
             sg.Text("(arrow keys navigate while zooming)"),
+            #sg.Push(),
+            #sg.Text("Quadruples are left, top, bottom, and right margins.\n"
+            #                 "Mouse left over option names to show descriptions.",
+            #                 expand_x=True,
+            #                 relief=sg.RELIEF_GROOVE, justification="right", pad=((0,0), (0,0)))
             ],
         [
             image_element,
@@ -917,7 +932,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
                     [sg.Text("Quadruples are left, top, bottom, and right margins.\n"
                              "Mouse left over option names to show descriptions.",
-                             relief=sg.RELIEF_GROOVE, pad=(None, (0,5)))],
+                             relief=sg.RELIEF_GROOVE, pad=(None, (0,5)))], # Extra pad on bottom.
 
                     [checkbox_uniform, checkbox_samePageSize, checkbox_evenodd],
 
@@ -988,7 +1003,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     smallest_delta_values_display,
                     [sg.Text("")], # This is for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
-                ], pad=(None,0)), # End of column.
+                ], pad=(None,0), vertical_alignment="top"), # End of column.
             #image_element,
             ],
         ]
@@ -1062,6 +1077,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             break
 
         if event == sg.WIN_CLOSED or Events.is_exit(event):
+            if resize_thread_running:
+                request_thread_exit = True
             break
 
         if Events.is_enter(event):
@@ -1226,6 +1243,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             if window.size != old_window_size and not resize_thread_running:
                 # Note possible threading bug, calling pysimplegui from a thread:
                 # https://github.com/PySimpleGUI/PySimpleGUI/issues/4051
+                request_thread_exit = False
                 proc = threading.Thread(target=resize_page_on_configure_event)
                 proc.daemon = True
                 proc.start()
@@ -1236,7 +1254,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         # Get the current page and display it.  This would be more efficient if
         # only done for events that really need it, but pages are cached.
-        data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=False, zoom=zoom)
+        reset_cached = Events.is_crop
+        data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=reset_cached,
+                                                          zoom=zoom)
+        # TODO: Consider resizing on crop, like when cropping 300pt from bottom, window
+        # stays at full size.
 
     window.Close()
     document_pages.close_document() # Be sure document is closed (bug with -mo without this).
