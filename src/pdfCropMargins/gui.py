@@ -44,8 +44,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # Todo: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
 # window can (or should) be fixed to the initial size or something similar.
 # See the existing attempt commented out below, search "fixed-size"
-# TODO: Maybe use the pymupdf routine to go through and get max/min page sizes
-# to fit all for a given crop to a window size??
+# TODO: use max and min page sizes in sizing algorithms, consider how to update
+# whether scaled each page to fill fixed space or each page scaled the same...
 
 import sys
 import os
@@ -1044,6 +1044,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                            im_wid, im_ht, left_pixels)
 
     # Update the page image (currently to a small size above) to fit window.
+    # TODO: This now works, returns max and min sizes!!
+    #max_page_sizes, min_page_sizes = document_pages.get_max_and_min_page_sizes()
+    #print("\nDEBUG", max_page_sizes, min_page_sizes)
     data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
                                                       zoom=False,
                                                       max_image_size=max_image_size)

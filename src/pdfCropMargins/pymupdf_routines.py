@@ -103,6 +103,20 @@ if has_mupdf:
             self.page_crop_display_list_cache = [None] * self.num_pages
             return self.num_pages
 
+        def get_page_sizes(self):
+            """Return a list of the page sizes."""
+            size_list = []
+            for page in self.document:
+                size_list.append((page.rect.width, page.rect.height))
+            return size_list
+
+        def get_max_and_min_page_sizes(self):
+            """Return tuples (max_wid, max_ht) and (min_wid, min_ht)."""
+            page_sizes = self.get_page_sizes()
+            max_page_sizes = (max(p[0] for p in page_sizes), max(p[1] for p in page_sizes))
+            min_page_sizes = (min(p[0] for p in page_sizes), min(p[1] for p in page_sizes))
+            return max_page_sizes, min_page_sizes
+
         def save_document(self):
             """Save a document, possibly repairing/cleaning it."""
             # See here:
