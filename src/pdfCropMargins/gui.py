@@ -851,7 +851,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     def resize_page_on_configure_event(delay_secs=DELAY_SECS):
         """This function is run as a thread to redraw preview pages on configure
         events once the size stabilizes.  Note it sets nonlocal variables."""
-        nonlocal resize_thread_running, old_window_size, max_image_size
+        nonlocal resize_thread_running, old_window_size
         resize_thread_running = True
 
         # Wait for user to finish resizing.
@@ -865,7 +865,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         if request_thread_exit:
             return
-        data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True, zoom=zoom)
+        data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
+                                                          zoom=zoom)
 
         if request_thread_exit:
             return
@@ -1040,17 +1041,12 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                                            im_wid, im_ht, left_pixels)
 
     # Update the page image (currently to a small size above) to fit window.
-    data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True, zoom=False,
+    data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
+                                                      zoom=False,
                                                       max_image_size=max_image_size)
     resize_window(window, non_image_size, im_wid, im_ht)
     old_window_size = window.size
 
-    #data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
-    #                                                 max_image_size=max_image_size,
-    #                                                 reset_cached=True)
-
-    # Set the correct first page in the image element (after sizing data gathered above).
-    #image_element.Update(data=data)
     window.alpha_channel = 1 # Make the window visible.
 
     ##
@@ -1258,7 +1254,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=reset_cached,
                                                           zoom=zoom)
         # TODO: Consider resizing on crop, like when cropping 300pt from bottom, window
-        # stays at full size.
+        # stays at full size.  Then resize isn't right for non-image parts.
 
     window.Close()
     document_pages.close_document() # Be sure document is closed (bug with -mo without this).
