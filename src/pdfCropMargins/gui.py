@@ -851,7 +851,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     def resize_page_on_configure_event(delay_secs=DELAY_SECS):
         """This function is run as a thread to redraw preview pages on configure
         events once the size stabilizes.  Note it sets nonlocal variables."""
-        nonlocal resize_thread_running, old_window_size
+        nonlocal resize_thread_running, old_window_size, max_image_size
+
         resize_thread_running = True
 
         # Wait for user to finish resizing.
@@ -865,6 +866,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         if request_thread_exit:
             return
+        max_image_size = (max(window.size[0] - non_image_size[0], INITIAL_IMAGE_SIZE[0]),
+                          max(window.size[1] - non_image_size[1], INITIAL_IMAGE_SIZE[1]))
         data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
                                                           zoom=zoom)
 
