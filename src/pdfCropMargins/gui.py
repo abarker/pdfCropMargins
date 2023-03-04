@@ -881,6 +881,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         if max_image_size is None:
             max_image_size = get_max_image_size()
+        # Note that if user_selected_max_image_size is passed in it gets reset to itself.
         user_selected_max_image_size = max_image_size # Saved as a user preference.
 
         if request_thread_exit:
