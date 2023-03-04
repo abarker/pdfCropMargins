@@ -860,13 +860,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     resize_thread_running = False # Flag to only run one update thread.
     request_thread_exit = False # Flag used to kill thread on exit.
 
-    def resize_page_on_configure_event(delay_secs=RESIZE_DELAY_SECS):
+    def resize_page_on_configure_event(delay_secs=RESIZE_DELAY_SECS,
+                                       max_image_size=None):
         """This function is run as a thread to redraw preview pages on configure
         events once the size stabilizes.  Note that this routine sets the nonlocal
-        variables `max_image_size`, `old_window_size` (and the flag
+        variables `user_selected_max_image_size`, `old_window_size` (and the flag
         `resize_thread_running`).  Resize scaling is to make the image fit in
         the max window size, according to it's largest dimension (width or height)"""
-        nonlocal resize_thread_running, old_window_size #, max_image_size
+        nonlocal resize_thread_running, old_window_size, user_selected_max_image_size
         resize_thread_running = True
 
         # Wait for user to finish resizing.
@@ -878,7 +879,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             old_window_size = window.size
             time.sleep(delay_secs)
 
-        max_image_size = get_max_image_size()
+        if max_image_size is None:
+            max_image_size = get_max_image_size()
+        user_selected_max_image_size = max_image_size # Saved as a user preference.
 
         if request_thread_exit:
             return
@@ -1059,12 +1062,13 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     max_image_size, non_image_size = get_usable_image_size(args, window, full_window_width,
                                                            full_window_height,
                                                            im_wid, im_ht, left_pixels)
+    user_selected_max_image_size = max_image_size # Saved as a user preference.
 
     # Update the page image (currently to a small size above) to fit window.
     image_data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
                                                             zoom=False,
                                                             max_image_size=max_image_size)
-    resize_window(window, document_pages, max_image_size, non_image_size, im_wid, im_ht)
+    resize_window(window, document_pages, max_image_size, non_image_size)
     old_window_size = window.size
 
     window.alpha_channel = 1 # Make the window visible.
@@ -1287,7 +1291,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             image_data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=reset_cached,
                                                                     zoom=zoom)
         if resize_window_event:
-            resize_page_on_configure_event(delay_secs=0)
+            resize_page_on_configure_event(delay_secs=0,
+                                           max_image_size=user_selected_max_image_size)
 
     window.Close()
     document_pages.close_document() # Be sure document is closed (bug with -mo without this).

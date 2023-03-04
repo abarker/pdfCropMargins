@@ -48,13 +48,7 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-**New in recent versions (Dec 2022):**
-
-* Python 3.6 is now the minimum supported version.
-
-* The GUI dependencies are now part of the standard install.  The program will
-  still work without them, however, if the GUI is not required.  Note that without
-  PyMuPDF either pdftoppm or Ghostscript must be installed.
+**New in recent versions (Mar 2023):**
 
 * You can now use either ``pdf-crop-margins`` or ``pdfcropmargins`` to launch the
   program from the command line.
@@ -79,6 +73,8 @@ recent changes and new features.
 * Added an option ``--prevCropped`` (``-pc``) which just tests whether or not
   the document was previously cropped with pdfCropMargins.  This is meant for
   scripting use.
+
+* The PDF preview in the GUI now resizes properly when the window is reconfigured.
 
 Installing 
 ==========

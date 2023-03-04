@@ -9,6 +9,7 @@ History
 New features:
 
 * Windows can now be resized and the preview will be redrawn to match.
+  Page rendering to the GUI has also been improved.
 
 Bug fixes:
 
