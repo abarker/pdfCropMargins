@@ -41,18 +41,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # could have floats (like sliders).  Also, an increment option setting the
 # increment value per click would be nice.
 
-# Todo: Look into the new Sizer in pySimpleGUI to see if the size of the PDF
-# window can (or should) be fixed to the initial size or something similar.
-# See the existing attempt commented out below, search "fixed-size"
-# TODO: use max and min page sizes in sizing algorithms, consider how to update
-# whether scaled each page to fill fixed space or each page scaled the same...
-
 import sys
 import os
 import warnings
 import textwrap
 import time
 import threading
+import math
 from types import SimpleNamespace
 
 from . import __version__
@@ -332,15 +327,12 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     # it. This is needed to accurately calculate the maximum image height below.  Also
     # the fallback on resize failure.
     max_image_size = INITIAL_IMAGE_SIZE # This is temporary; size calculated and reset below.
-    data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
-                                             max_image_size=max_image_size,
-                                             zoom=False,)
+    image_data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
+                                                 max_image_size=max_image_size,
+                                                 zoom=False,)
 
-    image_element = sg.Image(data=data, key="image_element")  # make image element
-    # TODO: This sort of works to keep fixed-size pages, but need to select sizes somehow.
-    # Or at least turn on the scrolling option for overflowing images.  Image scaling algorithm
-    # sometimes does strange things; refactor and reconsider.
-    #image_column = sg.Column([[image_element]], size=(750,750))
+    image_element = sg.Image(data=image_data, key="image_element",
+                             pad=((0,5), (0,0)), expand_y=True) # make image element
 
     ##
     ## Code for handling page numbers.
@@ -825,34 +817,56 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Page image update and thread to redraw images on a configure/resize event.
     ##
 
-    def update_page_image(reset_cached=False, zoom=False, max_image_size=None):
-        """Update the image for the PDF preview and resize the window if its size
-        has changed."""
-        # Update the page image to fit window.
-        if max_image_size is None:
-            max_image_size = (max(window.size[0] - non_image_size[0], INITIAL_IMAGE_SIZE[0]),
-                              max(window.size[1] - non_image_size[1], INITIAL_IMAGE_SIZE[1]))
-        data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
-                                                      max_image_size=max_image_size,
-                                                      zoom=zoom, reset_cached=reset_cached)
-        image_element.Update(data=data)
-        return data, clip_pos, im_ht, im_wid
+    def get_max_image_size():
+        """Return the largest size rectangle for the PDF image to fit into (after
+        subtracting off the size of the non-image parts of the GUI)."""
+        max_image_size = (max(window.size[0]-non_image_size[0], INITIAL_IMAGE_SIZE[0]),
+                          max(window.size[1]-non_image_size[1], INITIAL_IMAGE_SIZE[1]))
+        return max_image_size
 
-    def resize_window(window, non_image_size, im_wid, im_ht):
-        """Calculate and set window size."""
-        new_window_size = (non_image_size[0]+im_wid,
-                           non_image_size[1]+im_ht)
+    def update_page_image(reset_cached=False, zoom=False, max_image_size=None,
+                          update_image_element=True):
+        """Calculate and return data for the image in the PDF preview.  If
+        `max_image_size` is not passed in (the default) it will be calculated.
+        If `update_image_element` is true (the default) then the GUI image is
+        updated with the newly calculated image data."""
+        if max_image_size is None:
+            max_image_size = get_max_image_size()
+        image_data, clip_pos, im_ht, im_wid = document_pages.get_display_page(curr_page,
+                                                    max_image_size=max_image_size,
+                                                    zoom=zoom, reset_cached=reset_cached)
+        if update_image_element:
+            image_element.Update(data=image_data)
+        return image_data, clip_pos, im_ht, im_wid
+
+    def resize_window(window, document_pages, max_image_size, non_image_size,
+                      im_wid=None, im_ht=None):
+        """Calculate and set the window size based on the `non_image_size`
+        of the GUI controls and borders and the image's width and height."""
+        if im_wid and im_ht:
+            wid = im_wid
+            ht = im_ht
+        else:
+            max_wid, max_ht = document_pages.get_max_width_and_height()
+            scale_to_pixels = min(max_image_size[0]/max_wid, max_image_size[1]/max_ht)
+            wid = math.ceil(scale_to_pixels * max_wid) # Note: these NEED to be made int, unlike
+            ht = math.ceil(scale_to_pixels * max_ht)   # Postscript points that can be fractional.
+
+        new_window_size = (non_image_size[0] + wid,
+                           non_image_size[1] + ht)
         window.size = new_window_size
 
-    resize_thread_running = False
-    request_thread_exit = False
-    DELAY_SECS = 1.2
+    RESIZE_DELAY_SECS = 0.5 # Time to delay while user resizes window.
+    resize_thread_running = False # Flag to only run one update thread.
+    request_thread_exit = False # Flag used to kill thread on exit.
 
-    def resize_page_on_configure_event(delay_secs=DELAY_SECS):
+    def resize_page_on_configure_event(delay_secs=RESIZE_DELAY_SECS):
         """This function is run as a thread to redraw preview pages on configure
-        events once the size stabilizes.  Note it sets nonlocal variables."""
-        nonlocal resize_thread_running, old_window_size, max_image_size
-
+        events once the size stabilizes.  Note that this routine sets the nonlocal
+        variables `max_image_size`, `old_window_size` (and the flag
+        `resize_thread_running`).  Resize scaling is to make the image fit in
+        the max window size, according to it's largest dimension (width or height)"""
+        nonlocal resize_thread_running, old_window_size #, max_image_size
         resize_thread_running = True
 
         # Wait for user to finish resizing.
@@ -864,16 +878,18 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             old_window_size = window.size
             time.sleep(delay_secs)
 
-        if request_thread_exit:
-            return
-        max_image_size = (max(window.size[0] - non_image_size[0], INITIAL_IMAGE_SIZE[0]),
-                          max(window.size[1] - non_image_size[1], INITIAL_IMAGE_SIZE[1]))
-        data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
-                                                          zoom=zoom)
+        max_image_size = get_max_image_size()
 
         if request_thread_exit:
             return
-        resize_window(window, non_image_size, im_wid, im_ht)
+        image_data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
+                                                                zoom=zoom)
+
+        if request_thread_exit:
+            return
+        resize_window(window, document_pages, max_image_size, non_image_size)
+
+        # Set the old window size and exit thread.
         old_window_size = window.size
         resize_thread_running = False
 
@@ -918,6 +934,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             ],
         [
             image_element,
+            sg.Push(),
             sg.Column([
                     # TODO: Consider this new layout, commented out, image to right
                     # and top controls moved to be with other controls.  Could move
@@ -1000,14 +1017,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
                     # pages
                     [input_text_pages, text_pages, combo_box_restore, text_restore],
 
-                    # Buttons.
+                    # buttons
                     [sg.Button("Crop"), sg.Button("Original"), sg.Button("Exit"),],
                     #[sg.Text("", size=(1,1))], # This is for vertical space.
                     [smallest_delta_label_text],
                     smallest_delta_values_display,
                     [sg.Text("")], # This is for vertical space.
                     [sg.Text("", size=(5, 2)), wait_indicator_text],
-                ], pad=(None,0), vertical_alignment="top"), # End of column.
+                ], pad=(None,0), vertical_alignment="top", size=(None, None)), # End of column.
             #image_element,
             ],
         ]
@@ -1040,17 +1057,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     max_image_size, non_image_size = get_usable_image_size(args, window, full_window_width,
-                                           full_window_height,
-                                           im_wid, im_ht, left_pixels)
+                                                           full_window_height,
+                                                           im_wid, im_ht, left_pixels)
 
     # Update the page image (currently to a small size above) to fit window.
-    # TODO: This now works, returns max and min sizes!!
-    #max_page_sizes, min_page_sizes = document_pages.get_max_and_min_page_sizes()
-    #print("\nDEBUG", max_page_sizes, min_page_sizes)
-    data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
-                                                      zoom=False,
-                                                      max_image_size=max_image_size)
-    resize_window(window, non_image_size, im_wid, im_ht)
+    image_data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
+                                                            zoom=False,
+                                                            max_image_size=max_image_size)
+    resize_window(window, document_pages, max_image_size, non_image_size, im_wid, im_ht)
     old_window_size = window.size
 
     window.alpha_channel = 1 # Make the window visible.
@@ -1072,6 +1086,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     while True:
         page_change_event = False
+        update_page_image_event = False
+        resize_window_event = False
+
         prev_curr_page = curr_page
         event, values_dict = window.Read()
 
@@ -1109,9 +1126,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         elif Events.is_up(event) and zoom:
             zoom = (clip_pos, 0, -1)
+            update_page_image_event = True
 
         elif Events.is_down(event) and zoom:
             zoom = (clip_pos, 0, 1)
+            update_page_image_event = True
 
         elif Events.is_home(event):
             curr_page = 0
@@ -1123,15 +1142,18 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         elif Events.is_left(event) and zoom:
             zoom = (clip_pos, -1, 0)
+            update_page_image_event = True
 
         elif Events.is_right(event) and zoom:
             zoom = (clip_pos, 1, 0)
+            update_page_image_event = True
 
         elif Events.is_zoom(event): # Toggle.
             if not zoom:
                 zoom = (clip_pos, 0, 0)
             else:
                 zoom = False
+            update_page_image_event = True
 
         elif Events.is_crop(event):
             call_all_update_funs(update_funs, values_dict)
@@ -1195,6 +1217,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             did_crop = True
             wait_indicator_text.Update(visible=False)
 
+            update_page_image_event = True
+            resize_window_event = True
+
             if parsed_args.verbose:
                 print("\nWaiting for the GUI...")
 
@@ -1204,6 +1229,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             num_pages = document_pages.open_document(fixed_input_doc_fname)
             did_crop = False
             set_delta_values_null()
+            update_page_image_event = True
+            resize_window_event = True
 
         elif Events.is_left_smallest_delta(event):
             curr_page, left_smallest_toggle = get_page_from_delta_page_nums(
@@ -1241,7 +1268,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             # is entered in a box.  Doesn't help much.
             call_all_update_funs(update_funs, values_dict)
 
-        elif Events.is_configure: # Capture tkinter window resizes.
+        elif Events.is_configure(event): # Capture tkinter window resizes.
             if window.size != old_window_size and not resize_thread_running:
                 # Note possible threading bug, calling pysimplegui from a thread:
                 # https://github.com/PySimpleGUI/PySimpleGUI/issues/4051
@@ -1254,13 +1281,13 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
                                       values_dict["PageNumber"], input_text_page_num)
 
-        # Get the current page and display it.  This would be more efficient if
-        # only done for events that really need it, but pages are cached.
-        reset_cached = Events.is_crop
-        data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=reset_cached,
-                                                          zoom=zoom)
-        # TODO: Consider resizing on crop, like when cropping 300pt from bottom, window
-        # stays at full size.  Then resize isn't right for non-image parts.
+        # Get the current page and display it.
+        if update_page_image_event or page_change_event:
+            reset_cached = Events.is_crop(event)
+            image_data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=reset_cached,
+                                                                    zoom=zoom)
+        if resize_window_event:
+            resize_page_on_configure_event(delay_secs=0)
 
     window.Close()
     document_pages.close_document() # Be sure document is closed (bug with -mo without this).

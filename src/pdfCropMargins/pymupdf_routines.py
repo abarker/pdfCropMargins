@@ -117,6 +117,25 @@ if has_mupdf:
             min_page_sizes = (min(p[0] for p in page_sizes), min(p[1] for p in page_sizes))
             return max_page_sizes, min_page_sizes
 
+        def get_max_and_min_aspect_ratios(self):
+            """Return the maximum and minimum aspect ratios over all the pages."""
+            page_sizes = self.get_page_sizes()
+            max_ratio = max(p[0]/p[1] for p in page_sizes)
+            min_ratio = min(p[0]/p[1] for p in page_sizes)
+            return max_ratio, min_ratio
+
+        def get_max_width_and_height(self):
+            """Return the maximum width and height (in points) of PDF pages in the
+            document."""
+            max_wid = -1
+            max_ht = -1
+            for page in self.document:
+                if page.rect.width > max_wid:
+                    max_wid = page.rect.width
+                if page.rect.height > max_ht:
+                    max_ht = page.rect.height
+            return max_wid, max_ht
+
         def save_document(self):
             """Save a document, possibly repairing/cleaning it."""
             # See here:
@@ -179,17 +198,17 @@ if has_mupdf:
 
         def get_display_page(self, page_num, max_image_size, zoom=False,
                              fit_screen=True, reset_cached=False):
-            """Return a `tkinter.PhotoImage` or a PNG image for a document page number.
-                - The `page_num` argument is a 0-based page number.
-                - The `zoom` argument is the top-left of old clip rect, and one of -1, 0,
-                  +1 for dim. x or y to indicate the arrow key pressed.
-                - The `max_image_size` argument is the (width, height) of available image area.
-            """
-            zoom_x = 1
-            zoom_y = 1
-            scale = fitz.Matrix(zoom_x, zoom_y)
+            """Return a `tkinter.PhotoImage` or a PNG image for a document page
+            number.  The `page_num` argument is a 0-based page number.  The
+            `zoom` argument is the top-left of old clip rect, and one of -1, 0,
+            +1 for dim. x or y to indicate the arrow key pressed.  The
+            `max_image_size` argument is the (width, height) of available image
+            area."""
+            if not reset_cached:
+                page_display_list = self.page_display_list_cache[page_num]
+            else:
+                page_display_list = None
 
-            page_display_list = self.page_display_list_cache[page_num] if not reset_cached else None
             if not page_display_list:  # Create if not yet there.
                 self.page_display_list_cache[page_num] = self.document[page_num].get_displaylist()
                 page_display_list = self.page_display_list_cache[page_num]
@@ -197,13 +216,12 @@ if has_mupdf:
             page_rect = page_display_list.rect  # The page rectangle.
             clip = page_rect
 
-            # Make sure that the image will fit the screen.
-            zoom_0 = 1
-            if max_image_size: # TODO: this is currently a required param...
-                zoom_0 = min(1, max_image_size[0] / page_rect.width, max_image_size[1] / page_rect.height)
-                if zoom_0 == 1:
-                    zoom_0 = min(max_image_size[0] / page_rect.width, max_image_size[1] / page_rect.height)
-            mat_0 = fitz.Matrix(zoom_0, zoom_0)
+            # Make sure that all the images across the document will fit the screen.
+            max_wid, max_ht = self.get_max_width_and_height()
+
+            nozoom_scale = min(max_image_size[0]/max_wid,
+                               max_image_size[1]/max_ht)
+            nozoom_mat = fitz.Matrix(nozoom_scale, nozoom_scale)
 
             if zoom:
                 width2 = page_rect.width / 2
@@ -220,15 +238,15 @@ if has_mupdf:
                 clip = fitz.Rect(top_left, top_left.x + width2, top_left.y + height2)
 
                 # Clip rect is ready, now fill it.
-                mat = mat_0 * fitz.Matrix(2, 2)  # The zoom matrix.
-                pixmap = page_display_list.get_pixmap(alpha=False, matrix=mat, clip=clip)
+                zoom_mat = nozoom_mat * fitz.Matrix(2, 2)  # The zoom matrix.
+                pixmap = page_display_list.get_pixmap(alpha=False, matrix=zoom_mat, clip=clip)
 
             else:  # Show the total page.
-                pixmap = page_display_list.get_pixmap(matrix=mat_0, alpha=False)
+                pixmap = page_display_list.get_pixmap(matrix=nozoom_mat, alpha=False)
 
             #image_png = pixmap.tobytes()  # get the PNG image
             image_height, image_width = pixmap.height, pixmap.width
-            image_ppm = pixmap.tobytes("ppm")  # Make PPM image from pixmap for tkinter.
+            image_ppm = pixmap.tobytes("png")  # Make PPM image from pixmap for tkinter.
             image_tl = clip.tl # Clip position (top left).
             return image_ppm, image_tl, image_height, image_width
 
