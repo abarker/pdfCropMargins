@@ -30,6 +30,9 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 """
 
+# TODO: Make --evenodd option equalize the pages after separately calculating
+# the crops, just do the max over them.
+
 # Some general notes, useful for reading the code.
 #
 # Margins are conveniently described as left, bottom, right, and top, but boxes

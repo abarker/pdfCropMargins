@@ -488,7 +488,8 @@ cmd_parser.add_argument("-e", "--evenodd", action="store_true", help="""
    largest amount of cropping that works for all the pages in each group is
    chosen.  If the '--uniform' ('-u') option is simultaneously set then the
    vertical cropping will be uniform over all the pages and only the
-   horizontal cropping will differ between even and odd pages.^^n""")
+   horizontal cropping will differ between even and odd pages.  See also
+   the '--percentText' option which can be used for a similar effect.^^n""")
 
 cmd_parser.add_argument("-g", "-pg", "--pages", metavar="PAGESTR", help="""
 
