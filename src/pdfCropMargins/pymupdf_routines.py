@@ -197,7 +197,7 @@ if has_mupdf:
             return image_ppm
 
         def get_display_page(self, page_num, max_image_size, zoom=False,
-                             fit_screen=True, reset_cached=False):
+                             reset_cached=False):
             """Return a `tkinter.PhotoImage` or a PNG image for a document page
             number.  The `page_num` argument is a 0-based page number.  The
             `zoom` argument is the top-left of old clip rect, and one of -1, 0,

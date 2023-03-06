@@ -660,6 +660,9 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info, producer_mod):
 
     # Setting metadata with pyPdf requires low-level pyPdf operations, see
     # http://stackoverflow.com/questions/2574676/change-metadata-of-pdf-file-with-pypdf
+    #
+    # TODO: Later versions support metadata directly:
+    #    https://pypdf2.readthedocs.io/en/latest/user/metadata.html
     if not metadata_info:
         # In case it's null, just set values to empty strings.  This class just holds
         # data temporary in the same format; this is not sent into PyPDF2.
@@ -783,6 +786,9 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info, producer_mod,
     # This is why the tmp_input_doc file was created earlier, to get copies of
     # the page objects which are independent of those in input_doc.  An ugly
     # hack for a nasty bug to track down.
+    #
+    # Possible thing to try, copying pages:
+    #    https://stackoverflow.com/questions/52315259
 
     # NOTE: You can get the `_root_object` attribute (dict for the document
     # catalog) from the output document after calling `cloneReaderDocumentRoot`
@@ -837,6 +843,8 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info, producer_mod,
         if args.verbose:
             print("\nNot copying any document catalog items to the cropped document.")
     else:
+        # TODO: Try using the clone_reader_document_root function instead.
+        # https://pypdf2.readthedocs.io/en/latest/modules/PdfWriter.html#PyPDF2.PdfWriter.clone_reader_document_root
         try:
             root_object = input_doc.trailer["/Root"]
 
@@ -1354,7 +1362,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
             exit_code = 1
         ex.cleanup_and_exit(exit_code)
 
-    # TODO: Doesn't work yet with GUI because GUI calls this fun only when cropping...
+    # TODO: This doesn't work yet with GUI because GUI calls this fun only when cropping...
     #if args.exitPrevCropped and already_cropped_by_this_program:
     #    fixed_input_doc_file_object.close()
     #    if args.verbose:

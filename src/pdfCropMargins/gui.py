@@ -886,6 +886,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         if request_thread_exit:
             return
+        # TODO: Is this update_page_image really necessary?  Should it come before
+        # or after resize of window?
         image_data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=True,
                                                                 zoom=zoom)
 
@@ -1286,14 +1288,16 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             curr_page = update_page_number(curr_page, prev_curr_page, num_pages, event,
                                       values_dict["PageNumber"], input_text_page_num)
 
+        # Resize the main GUI window if such an event was triggered.
+        if resize_window_event:
+            resize_page_on_configure_event(delay_secs=0,
+                                           max_image_size=user_selected_max_image_size)
+
         # Get the current page and display it.
         if update_page_image_event or page_change_event:
             reset_cached = Events.is_crop(event)
             image_data, clip_pos, im_ht, im_wid = update_page_image(reset_cached=reset_cached,
                                                                     zoom=zoom)
-        if resize_window_event:
-            resize_page_on_configure_event(delay_secs=0,
-                                           max_image_size=user_selected_max_image_size)
 
     window.Close()
     document_pages.close_document() # Be sure document is closed (bug with -mo without this).
