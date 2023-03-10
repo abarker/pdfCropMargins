@@ -50,6 +50,9 @@ recent changes and new features.
 
 **New in recent versions (Mar 2023):**
 
+* The minimimum Python version is now Python 3.7 due to several dependencies
+  requiring it.
+
 * You can now use either ``pdf-crop-margins`` or ``pdfcropmargins`` to launch the
   program from the command line.
 

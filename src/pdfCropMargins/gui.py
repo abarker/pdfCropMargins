@@ -54,6 +54,13 @@ from . import __version__
 from . import external_program_calls as ex
 from . pymupdf_routines import has_mupdf, MuPdfDocument
 
+# TODO: If you hold the window at larger sizes until it resizes the GUI it doesn't
+# resize the window when you let go.  Might be OK behavior, though...
+
+# TODO: The default size on small monitors is too large.  Window size is calculated
+# wrong, even without spash screen and changing to regular update.  Controls seem
+# too big for small laptop with 800 pixel height, making test window overestimate.
+
 # This is the initial size for PDF image, before it is recalculated.  It is also
 # the min on configuration resize.  Screen is assumed to be large enough for this.
 INITIAL_IMAGE_SIZE = (700, 700)
