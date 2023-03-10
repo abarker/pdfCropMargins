@@ -1061,7 +1061,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     gui_font_name = "Helvetica"
     gui_font_size = 11
     font = (gui_font_name, gui_font_size)
-    # TODO: What exactly is scaling doing, and Windows vs. Linux?  What is default?
+    # TODO: What exactly is scaling doing, Windows vs. Linux?  What is default?
     scaling = None # 1.0 # Note setting to None vs. 1.0 causes sizing issue on smaller-screen laptop.
 
     left_pixels = 20
