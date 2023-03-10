@@ -147,6 +147,10 @@ if has_mupdf:
             self.document.close()
             self.clear_cache()
 
+        def return_pypdf_pdfreader(self):
+            """Return a PyPDF `PdfReader` class instance for the current document."""
+            # TODO, just write out (maybe to memory) and open one on it...
+
         def get_page_ppm_for_crop(self, page_num, cache=False):
             """Return an unscaled and unclipped `.ppm` file suitable for cropping the page.
             Not indended for displaying in the GUI."""
