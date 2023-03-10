@@ -3,7 +3,18 @@
 History
 =======
 
-1.1.1[4-5] (2023-02-17)
+1.1.17 (2023-02-17)
+-------------------
+
+Changes:
+
+* Python 3.7 now required due to requirements of Pillow and PyMuPDF.
+
+Bug fixes:
+
+* Sizing of the GUI for smaller screen resolutions has been improved.
+
+1.1.1[4-6] (2023-02-17)
 -----------------------
 
 New features:

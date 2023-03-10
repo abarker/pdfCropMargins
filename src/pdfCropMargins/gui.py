@@ -59,14 +59,16 @@ from . pymupdf_routines import has_mupdf, MuPdfDocument
 # TODO: If you hold the window at larger sizes until it resizes the GUI it doesn't
 # resize the window when you let go.  Might be OK behavior, though...
 
-# This is the initial size for PDF image, before it is recalculated.  Screen is
-# assumed to be large enough for this.  Note this initial size must be large
-# enough to make the image height exceed the size of widgets next to it.  This
-# is needed to accurately calculate the maximum image height.  This size is
-# also the fallback on resize failure.
+# TODO: Maybe increase size of font for tooltips?
+
+# This is the initial size for a PDF image, before it is recalculated.  The
+# screen is assumed to be large enough for this.  Note this initial size must
+# be large enough to make the image height exceed the size of widgets next to
+# it in order to accurately calculate the maximum non-image height above and
+# below the image.
 INITIAL_IMAGE_SIZE = (400, 700)
 
-FALLBACK_MAX_IMAGE_SIZE = (1000, 650) # Fallback when sizing fails.
+FALLBACK_MAX_IMAGE_SIZE = (800, 690) # Fallback when sizing fails.
 
 if not has_mupdf:
     print("\nError in pdfCropMargins: The GUI feature requires a recent PyMuPDF version."
@@ -828,8 +830,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     def get_max_image_size(window):
         """Return the largest size rectangle for the PDF image to fit into (after
-        subtracting off the size of the non-image parts of the GUI).  Called on a
-        zoomed window."""
+        subtracting off the size of the non-image parts of the GUI).  This function
+        should be called on a zoomed/fullscreen window."""
         max_image_size = (max(window.size[0]-non_image_size[0], FALLBACK_MAX_IMAGE_SIZE[0]),
                           max(window.size[1]-non_image_size[1], FALLBACK_MAX_IMAGE_SIZE[1]))
         return max_image_size
@@ -896,15 +898,15 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
         if request_thread_exit:
             return
+        resize_window(window, document_pages, max_image_size, non_image_size)
+
+        if request_thread_exit:
+            return
         # TODO: Is this update_page_image really necessary?  Should it come before
         # or after resize of window?
         image_data, clip_pos, im_ht, im_wid = update_page_image(window,
                                                                 reset_cached=True,
                                                                 zoom=zoom)
-
-        if request_thread_exit:
-            return
-        resize_window(window, document_pages, max_image_size, non_image_size)
 
         # Set the old window size and exit thread.
         old_window_size = window.size
@@ -1056,9 +1058,11 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Create the main window.
     ##
 
+    gui_font_name = "Helvetica"
     gui_font_size = 11
-    font = ("Helvetica", gui_font_size)
-    scaling = 1.0 # Note setting to None causes sizing issue on smaller-screen laptop.
+    font = (gui_font_name, gui_font_size)
+    # TODO: What exactly is scaling doing, and Windows vs. Linux?  What is default?
+    scaling = None # 1.0 # Note setting to None vs. 1.0 causes sizing issue on smaller-screen laptop.
 
     left_pixels = 20
     with warnings.catch_warnings():
@@ -1359,6 +1363,8 @@ def get_usable_image_size(args, window, full_window_width, full_window_height,
     window position."""
     usable_width, usable_height = full_window_width, full_window_height
     win_width, win_height = window.Size
+    #print(f"DEBUG {win_width=}  {win_height=}")
+    #print(f"DEBUG {usable_width=}  {usable_height=}")
 
     if usable_width < win_width: # Must be an error in full_window_width, fallback.
         if args.verbose:
