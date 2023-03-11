@@ -74,18 +74,20 @@ from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
 # could have floats (like sliders).  Also, an increment option setting the
 # increment value per click would be nice.
 
-# TODO: If you hold the window at larger sizes until it resizes the GUI it doesn't
+# Todo: If you hold the window at larger sizes until it resizes the GUI it doesn't
 # resize the window when you let go.  Might be OK behavior, though...
+
 # TODO: Maybe increase size of font for tooltips?
 
-# This is the initial size for a PDF image, before it is recalculated.  The
+# This is the initial test size for a PDF image, before it is recalculated.  The
 # screen is assumed to be large enough for this.  Note this initial size must
 # be large enough to make the image height exceed the size of widgets next to
-# it in order to accurately calculate the maximum non-image height above and
-# below the image.
+# it in order to accurately calculate the maximum non-image height needed above
+# and below the image.
 INITIAL_IMAGE_SIZE = (400, 700)
 
 FALLBACK_MAX_IMAGE_SIZE = (600, 690) # Fallback PDF size when sizing fails.
+FALLBACK_FULL_SCREEN_SIZE = (1024, 600)
 
 # Uncomment for look and feel preview.
 #print(sg.ListOfLookAndFeelValues())
@@ -174,7 +176,7 @@ def update_4_values(element_list, attr, args_dict, values_dict, value_type=float
             update_value_and_return_it(element_list[i], value=args_attr[i])
 
     try:
-        #TODO: Is element_text4 used at all?
+        # This comprehension is just to test that the format is correct and casts work.
         element_text4 = [str(value_type(element_list[i].Get())) for i in [0,1,2,3]]
     except ValueError:
         update_all_from_args_dict() # Replace bad text with saved version.
@@ -335,6 +337,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for the image element, holding the page preview.
     ##
 
+    # Note for future: if you pass a small test window you get the GUI controls AND
+    # the non-image height.  Gives an upper bound, anyway, so you could size
+    # the next test image better.  Detects GUI too big to fit in window.
     INITIAL_IMAGE = Image.new("L", INITIAL_IMAGE_SIZE, color=(222,)) # L = grey
     with io.BytesIO() as output:
         INITIAL_IMAGE.save(output, format="png")
@@ -1053,7 +1058,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     scaling = 1.0 # Note setting to None vs. 1.0 causes sizing issue on smaller-screen laptop.
     full_window_width, full_window_height, zoom_failure = get_window_size(scaling)
-    # TODO make use of zoom_failure variable.  This means the full-size window data is bad.
+    if zoom_failure: # When zoom_failure is true the full-size window data is bad.
+        full_window_width, full_window_height = FALLBACK_FULL_SCREEN_SIZE
+
     # Revert to the tkinter screensize thing or use the fallback.  Maybe allow --geometry args,
     # easy to do.
 
@@ -1081,13 +1088,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Find the usable window size.
     ##
 
-    # TODO: Note if you pass a small test window you get the GUI controls AND
-    # the non-image height.  Gives an upper bound, anyway, so you could size
-    # the next test image better.  Detects GUI too big to fit in window.
     max_image_size, non_image_size = get_usable_image_size(args, window, full_window_width,
                                                            full_window_height,
-                                                           im_wid, im_ht, left_pixels,
-                                                           zoom_failure)
+                                                           im_wid, im_ht, left_pixels)
 
     user_selected_max_image_size = max_image_size # Saved as a user preference.
 

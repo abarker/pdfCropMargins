@@ -10,13 +10,14 @@ to open a test window, zoom it, get window the sizing info, and destroy it.
 
 """
 
-import os
-import PySimpleGUI as sg
+import sys
 import tkinter as tk
+import warnings
+import PySimpleGUI as sg
 from . import external_program_calls as ex
 
 def get_usable_image_size(args, window, full_window_width, full_window_height,
-                          test_im_wid, test_im_ht, left_pixels, zoom_failure):
+                          test_im_wid, test_im_ht, left_pixels):
     """Get the approximate size of the largest possible PDF preview image that
     can be drawn in `window` in the current screen.
 
@@ -86,7 +87,7 @@ def get_window_size_sg(scaling):
     which doesn't account for taskbar size."""
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Your title is not a string.")
-        layout = [  [sg.Text('Sizer...')], ]
+        layout = [[sg.Text('Sizer...')],]
         window = sg.Window('Sizer', alpha_channel=0,
                     no_titlebar=False, # Cannot maximize/zoom without a titlebar.
                     resizable=True, size=(200,200), scaling=scaling, layout=layout,
@@ -96,12 +97,13 @@ def get_window_size_sg(scaling):
     window.Read(timeout=20) # Needs this to maximize correctly.
     zoomed_wid, zoomed_ht = window.Size
     window.close()
-    if zoomed_width == default_width or zoomed_height == default_height:
+    if zoomed_wid == default_width or zoomed_ht == default_height:
         zoom_failure = True
     return zoomed_wid, zoomed_ht, zoom_failure
 
 def get_window_size_tk(scaling):
     """Use tk to get an approximation to the usable screen area."""
+
     # Tkinter universal calls: https://anzeljg.github.io/rin2/book2/2405/docs/tkinter/universal.html
     # Mac, Linux, Windows attributes here: https://wiki.tcl-lang.org/page/wm+attributes
 
@@ -146,7 +148,7 @@ def get_window_size_tk(scaling):
         else:
             width = root.winfo_screenwidth()
             height = root.winfo_screenheight()
-    except tk.TclError as e:
+    except tk.TclError:
         width = root.winfo_screenwidth()
         height = root.winfo_screenheight()
     root.destroy()
