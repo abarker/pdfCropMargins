@@ -1053,6 +1053,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     scaling = 1.0 # Note setting to None vs. 1.0 causes sizing issue on smaller-screen laptop.
     full_window_width, full_window_height, zoom_failure = get_window_size(scaling)
+    # TODO make use of zoom_failure variable.  This means the full-size window data is bad.
+    # Revert to the tkinter screensize thing or use the fallback.  Maybe allow --geometry args,
+    # easy to do.
 
     ##
     ## Create the main window.
@@ -1063,8 +1066,6 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     left_pixels = 20
 
     font = (gui_font_name, gui_font_size)
-    # TODO: move all the window sizing stuff to a separate module.
-    # TODO make use of zoom_failure variable.
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Your title is not a string.")
@@ -1080,7 +1081,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Find the usable window size.
     ##
 
-    # TODO: Note if you pass a small test window you get the GUI controls AND the non-image height.
+    # TODO: Note if you pass a small test window you get the GUI controls AND
+    # the non-image height.  Gives an upper bound, anyway, so you could size
+    # the next test image better.  Detects GUI too big to fit in window.
     max_image_size, non_image_size = get_usable_image_size(args, window, full_window_width,
                                                            full_window_height,
                                                            im_wid, im_ht, left_pixels,
@@ -1134,8 +1137,9 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             break
 
         if Events.is_enter(event):
+            # This is for when a page number is manually entered in the window.
             call_all_update_funs(update_funs, values_dict)
-            try: # TODO: Why is page updated here and below too?
+            try:
                 curr_page = int(values_dict["PageNumber"]) - 1  # check if valid
             except: # TODO: Use explicit exceptions,
                 curr_page = prev_curr_page
