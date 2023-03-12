@@ -27,7 +27,7 @@ FALLBACK_MAX_IMAGE_SIZE = (600, 690) # Fallback PDF size when sizing fails.
 FALLBACK_FULL_SCREEN_SIZE = (900, 600)
 
 def get_usable_image_size(args, window, full_window_width, full_window_height,
-                          test_im_wid, test_im_ht, left_pixels):
+                          test_im_wid, test_im_ht, left_pixels, top_pixels):
     """Get the approximate size of the largest possible PDF preview image that
     can be drawn in `window` in the current screen.
 
@@ -38,10 +38,8 @@ def get_usable_image_size(args, window, full_window_width, full_window_height,
     The `im_wid` and `im_ht` parameters are the width and height of a known
     test image that is "displayed" in the (invisible) window.  The
     `left_pixels` parameter is the number of pixels added to the left side of
-    window position."""
+    window position and `top_pixels` is the number added to the top."""
     open_win_width, open_win_height = window.Size
-    #print(f"DEBUG {open_win_width=}  {open_win_height=}")
-    #print(f"DEBUG {full_window_width=}  {full_window_height=}")
 
     if full_window_width < open_win_width: # Must be an error in full_window_width, fallback.
         if args.verbose:
@@ -62,7 +60,7 @@ def get_usable_image_size(args, window, full_window_width, full_window_height,
     non_im_width, non_im_height = (open_win_width - test_im_wid,
                                    open_win_height - test_im_ht)
     usable_im_width, usable_im_height = (usable_width - non_im_width - left_pixels,
-                                         usable_height - non_im_height)
+                                         usable_height - non_im_height - top_pixels)
     return (usable_im_width, usable_im_height), (non_im_width, non_im_height)
 
 def get_window_size(scaling):

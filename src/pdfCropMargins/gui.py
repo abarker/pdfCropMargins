@@ -1052,31 +1052,51 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     x_res, y_res, x_pos, y_pos = parse_geometry_string(args)
 
     left_pixels = 20
+    top_pixels = 0
     if x_pos is None or y_pos is None:
         x_pos = left_pixels
         y_pos = 0
     else:
         left_pixels = x_pos
+        top_pixels = y_pos
 
     if x_res and y_res:
         full_window_width, full_window_height = x_res, y_res
     else:
         full_window_width, full_window_height = get_window_size(scaling)
 
-    # Revert to the tkinter screensize thing or use the fallback.  Maybe allow --geometry args,
-    # easy to do.
+    ##
+    ## Setup the fonts.
+    ##
+
+    if args.guiFontSize:
+        gui_font_size = args.guiFontSize
+    elif ex.system_os == "Windows":
+        gui_font_size = 12
+    else:
+        gui_font_size = 11
+
+    try:
+        gui_font_size = int(gui_font_size)
+    except TypeError:
+        print("Error in pdfCropMargins: Font size specification could not be made"
+              " an integer.", file=sys.stdout)
+        ex.cleanup_and_exit(1)
+
+    gui_font_name = "Helvetica"
+    font = (gui_font_name, gui_font_size)
+
+    if ex.system_os == "Windows":
+        tooltip_font_size = gui_font_size + 1
+    else:
+        tooltip_font_size = gui_font_size - 1
+
+    tooltip_font_name = "Ariel"
+    sg.set_options(tooltip_font=(f"{tooltip_font_name} {tooltip_font_size}"))
 
     ##
     ## Create the main window.
     ##
-
-    gui_font_name = "Helvetica"
-    if args.guiFontSize:
-        gui_font_size = args.guiFontSize
-    else:
-        gui_font_size = 11
-
-    font = (gui_font_name, gui_font_size)
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Your title is not a string.")
@@ -1094,7 +1114,8 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     max_image_size, non_image_size = get_usable_image_size(args, window, full_window_width,
                                                            full_window_height,
-                                                           im_wid, im_ht, left_pixels)
+                                                           im_wid, im_ht, left_pixels,
+                                                           top_pixels)
 
     user_selected_max_image_size = max_image_size # Saved as a user preference.
 
