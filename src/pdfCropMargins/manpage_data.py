@@ -582,6 +582,22 @@ cmd_parser.add_argument("-y", "--resY", type=int, default=72,
    the bounding boxes.  The default is 150.  Higher values produce more precise
    bounding boxes but require more time and memory.^^n""")
 
+cmd_parser.add_argument("-sr", "--screenRes", default=None, metavar="STR", help="""
+
+   Pass in an X-windows style geometry string for the GUI to use as the
+   fullscreen resolution and for the upper-left placement of the window.  This
+   is mainly for when the screen-size detection algorithm fails for a
+   particular system.  For example, with a screen of size "1024x720" that
+   string should be used with the option.  To also place the window at (0,0)
+   the string would be "1024x728+0+0".  See also the '--guiFontSize' option
+   which can be used to decrease the overall size of the GUI window.^^n""")
+
+cmd_parser.add_argument("-gf", "--guiFontSize", default=None, metavar="INT", help="""
+
+   Choose the GUI font size.  Making this smaller than the default of 11 can
+   also make the GUI smaller if it does not fit on a smaller monitor.
+   +0+0".^^n""")
+
 cmd_parser.add_argument("-b", "--boxesToSet", choices=["m", "c", "t", "a", "b"],
                         metavar="[m|c|t|a|b]", action="append", default=[], help="""
 

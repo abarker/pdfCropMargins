@@ -63,8 +63,9 @@ except ImportError:
           "\n\nExiting pdf-crop-margins...".format(requires), file=sys.stderr)
     ex.cleanup_and_exit(1)
 
-from .get_window_sizing_info import (get_usable_image_size, get_window_size, INITIAL_IMAGE_SIZE,
-                                     FALLBACK_MAX_IMAGE_SIZE, FALLBACK_FULL_SCREEN_SIZE)
+from .get_window_sizing_info import (get_usable_image_size, get_window_size,
+                                     INITIAL_IMAGE_SIZE, FALLBACK_MAX_IMAGE_SIZE,
+                                     FALLBACK_FULL_SCREEN_SIZE, parse_geometry_string)
 from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
                                   parse_page_ratio_argument)
 
@@ -1048,7 +1049,19 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     scaling = 1.0 # Note setting to None vs. 1.0 causes sizing issue on smaller-screen laptop.
-    full_window_width, full_window_height = get_window_size(scaling)
+    x_res, y_res, x_pos, y_pos = parse_geometry_string(args)
+
+    left_pixels = 20
+    if x_pos is None or y_pos is None:
+        x_pos = left_pixels
+        y_pos = 0
+    else:
+        left_pixels = x_pos
+
+    if x_res and y_res:
+        full_window_width, full_window_height = x_res, y_res
+    else:
+        full_window_width, full_window_height = get_window_size(scaling)
 
     # Revert to the tkinter screensize thing or use the fallback.  Maybe allow --geometry args,
     # easy to do.
@@ -1058,15 +1071,17 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     gui_font_name = "Helvetica"
-    gui_font_size = 11
-    left_pixels = 20
+    if args.guiFontSize:
+        gui_font_size = args.guiFontSize
+    else:
+        gui_font_size = 11
 
     font = (gui_font_name, gui_font_size)
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="Your title is not a string.")
         window = sg.Window(title=window_title, layout=layout, return_keyboard_events=True,
-                           location=(left_pixels, 0), resizable=True, no_titlebar=False,
+                           location=(x_pos, y_pos), resizable=True, no_titlebar=False,
                            scaling=scaling,
                            #use_ttk_buttons=True, ttk_theme=sg.THEME_DEFAULT,
                            use_default_focus=False, font=font, alpha_channel=0, finalize=True)

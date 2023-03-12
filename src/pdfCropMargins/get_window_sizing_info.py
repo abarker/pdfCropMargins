@@ -111,6 +111,40 @@ def get_window_size_sg(scaling):
         return FALLBACK_FULL_SCREEN_SIZE[0]*.90, FALLBACK_FULL_SCREEN_SIZE[1]*.90
     return zoomed_wid, zoomed_ht
 
+def parse_geometry_string(args):
+    """Parse the argparse object `args` value of `--screenres` and
+    return the values."""
+    if not args.screenRes:
+        return None, None, None, None
+
+    string = args.screenRes
+    split_str = string.split("+")
+
+    if len(split_str) == 3:
+        x_pos = split_str[1]
+        y_pos = split_str[2]
+    else:
+        x_pos = y_pos = None
+
+    resolution = split_str[0].split("x")
+    if len(resolution) == 2:
+        x_res = resolution[0]
+        y_res = resolution[1]
+    else:
+        x_res = y_res = None
+
+    try:
+        x_pos = int(x_pos) if x_pos is not None else None
+        y_pos = int(y_pos) if x_pos is not None else None
+        x_res = int(x_res) if x_res is not None else None
+        y_res = int(y_res) if y_res is not None else None
+    except ValueError:
+        print(f"\nError in pdfCropMargins: The '--screenRes' option {string} could"
+              " not be parsed.", file=sys.stderr)
+        ex.cleanup_and_exit(1)
+
+    return x_res, y_res, x_pos, y_pos
+
 def get_window_size_tk(scaling):
     """Use tk to get an approximation to the usable screen area."""
 

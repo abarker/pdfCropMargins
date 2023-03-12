@@ -3,8 +3,14 @@
 History
 =======
 
-1.1.17 (2023-03-11)
--------------------
+1.1.1[7-8] (2023-03-12)
+-----------------------
+
+New features:
+
+* Added the option ``--screenRes`` to pass in the full screen resolution (if
+  the size-detection algorithm fails) and ``-guiFontSize`` to set the font size
+  in the GUI.
 
 Changes:
 

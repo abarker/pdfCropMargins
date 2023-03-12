@@ -78,6 +78,7 @@ recent changes and new features.
   scripting use.
 
 * The PDF preview in the GUI now resizes properly when the window is reconfigured.
+  The new ``--guiFontSize`` argument can be used to size the font.
 
 Installing 
 ==========
@@ -277,10 +278,10 @@ The output of that command follows::
                            [-u] [-m INT] [-m4 INT INT INT INT] [-mp INT] [-s]
                            [-ms INT] [-e] [-g PAGESTR] [-c [d|m|p|gr|gb|o]] [-gs]
                            [-gsr] [-t BYTEVAL] [-nb INT] [-ns INT] [-x DPI]
-                           [-y DPI] [-b [m|c|t|a|b]] [-f [m|c|t|a|b]] [-r] [-A]
-                           [-gsf] [-nc] [-pv PROG] [-mo] [-q] [-nco] [-pf]
-                           [-sc STR] [-su STR] [-ss STR] [-pw PASSWD] [-pc]
-                           [-khc] [-kvc] [-spr FLOAT:FLOAT]
+                           [-y DPI] [-sr STR] [-gf INT] [-b [m|c|t|a|b]]
+                           [-f [m|c|t|a|b]] [-r] [-A] [-gsf] [-nc] [-pv PROG]
+                           [-mo] [-q] [-nco] [-pf] [-sc STR] [-su STR] [-ss STR]
+                           [-pw PASSWD] [-pc] [-khc] [-kvc] [-spr FLOAT:FLOAT]
                            [-prw FLOAT FLOAT FLOAT FLOAT] [-dcb STR] [-dcw STR]
                            [-i] [-pdl] [-gsp PATH] [-ppp PATH] [--version]
                            [-wcdf FILEPATH]
@@ -682,7 +683,8 @@ The output of that command follows::
                   the pages in each group is chosen. If the '--uniform' ('-u')
                   option is simultaneously set then the vertical cropping will be
                   uniform over all the pages and only the horizontal cropping
-                  will differ between even and odd pages.
+                  will differ between even and odd pages. See also the '--
+                  percentText' option which can be used for a similar effect.
 
      -g PAGESTR, -pg PAGESTR, --pages PAGESTR
                   Apply the cropping operation only to the selected pages. The
@@ -770,6 +772,22 @@ The output of that command follows::
                   rendered to find the bounding boxes. The default is 150. Higher
                   values produce more precise bounding boxes but require more
                   time and memory.
+
+     -sr STR, --screenRes STR
+                  Pass in an X-windows style geometry string for the GUI to use
+                  as the fullscreen resolution and for the upper-left placement
+                  of the window. This is mainly for when the screen-size
+                  detection algorithm fails for a particular system. For example,
+                  with a screen of size "1024x720" that string should be used
+                  with the option. To also place the window at (0,0) the string
+                  would be "1024x728+0+0". See also the '--guiFontSize' option
+                  which can be used to decrease the overall size of the GUI
+                  window.
+
+     -gf INT, --guiFontSize INT
+                  Choose the GUI font size. Making this smaller than the default
+                  of 11 can also make the GUI smaller if it does not fit on a
+                  smaller monitor. +0+0".
 
      -b [m|c|t|a|b], --boxesToSet [m|c|t|a|b]
                   By default the pdfCropMargins program sets both the MediaBox
@@ -957,7 +975,7 @@ The output of that command follows::
                   scripting, for example to only crop documents that have not
                   been previously cropped. Requires a document filename option.
                   No other options are honored when this option is selected
-                  except '--verbose'.
+                  except '--gsFix', '--version', and '--help'.
 
      -khc, --keepHorizCenter
                   This option keeps the horizontal center point of a PDF fixed.
