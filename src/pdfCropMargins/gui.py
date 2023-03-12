@@ -63,7 +63,8 @@ except ImportError:
           "\n\nExiting pdf-crop-margins...".format(requires), file=sys.stderr)
     ex.cleanup_and_exit(1)
 
-from .get_window_sizing_info import get_usable_image_size, get_window_size
+from .get_window_sizing_info import (get_usable_image_size, get_window_size, INITIAL_IMAGE_SIZE,
+                                     FALLBACK_MAX_IMAGE_SIZE, FALLBACK_FULL_SCREEN_SIZE)
 from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
                                   parse_page_ratio_argument)
 
@@ -78,16 +79,6 @@ from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
 # resize the window when you let go.  Might be OK behavior, though...
 
 # TODO: Maybe increase size of font for tooltips?
-
-# This is the initial test size for a PDF image, before it is recalculated.  The
-# screen is assumed to be large enough for this.  Note this initial size must
-# be large enough to make the image height exceed the size of widgets next to
-# it in order to accurately calculate the maximum non-image height needed above
-# and below the image.
-INITIAL_IMAGE_SIZE = (400, 700)
-
-FALLBACK_MAX_IMAGE_SIZE = (600, 690) # Fallback PDF size when sizing fails.
-FALLBACK_FULL_SCREEN_SIZE = (1024, 600)
 
 # Uncomment for look and feel preview.
 #print(sg.ListOfLookAndFeelValues())
@@ -1057,9 +1048,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ##
 
     scaling = 1.0 # Note setting to None vs. 1.0 causes sizing issue on smaller-screen laptop.
-    full_window_width, full_window_height, zoom_failure = get_window_size(scaling)
-    if zoom_failure: # When zoom_failure is true the full-size window data is bad.
-        full_window_width, full_window_height = FALLBACK_FULL_SCREEN_SIZE
+    full_window_width, full_window_height = get_window_size(scaling)
 
     # Revert to the tkinter screensize thing or use the fallback.  Maybe allow --geometry args,
     # easy to do.

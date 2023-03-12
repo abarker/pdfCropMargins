@@ -16,6 +16,16 @@ import warnings
 import PySimpleGUI as sg
 from . import external_program_calls as ex
 
+# This is the initial test size for a PDF image, before it is recalculated.  The
+# screen is assumed to be large enough for this.  Note this initial size must
+# be large enough to make the image height exceed the size of widgets next to
+# it in order to accurately calculate the maximum non-image height needed above
+# and below the image.
+INITIAL_IMAGE_SIZE = (400, 700)
+
+FALLBACK_MAX_IMAGE_SIZE = (600, 690) # Fallback PDF size when sizing fails.
+FALLBACK_FULL_SCREEN_SIZE = (900, 600)
+
 def get_usable_image_size(args, window, full_window_width, full_window_height,
                           test_im_wid, test_im_ht, left_pixels):
     """Get the approximate size of the largest possible PDF preview image that
@@ -37,7 +47,7 @@ def get_usable_image_size(args, window, full_window_width, full_window_height,
         if args.verbose:
             print("\nWarning in pdfCropMargins: Error in full window width calculation,"
                     " falling back to default window width.", file=sys.stderr)
-        usable_width = open_win_width
+        usable_width = FALLBACK_MAX_IMAGE_SIZE[0]
     else:
         usable_width = full_window_width
 
@@ -45,7 +55,7 @@ def get_usable_image_size(args, window, full_window_width, full_window_height,
         if args.verbose:
             print("\nWarning in pdfCropMargins: Error in full window height calculation,"
                     " falling back to default window height.", file=sys.stderr)
-        usable_height = open_win_height
+        usable_height = FALLBACK_MAX_IMAGE_SIZE[1]
     else:
         usable_height = full_window_height
 
@@ -59,16 +69,15 @@ def get_window_size(scaling):
     """Get physical screen dimension to determine the page image max size.  Some
     extra space is reserved for titlebars/borders or other unaccounted-for space
     in the windows."""
-    zoom_failure = False
     os = ex.system_os
     if os == "Linuxx" or "Darwin": # Darwin not tested...
-        width, height, zoom_failure = get_window_size_tk(scaling)
-        width *= .95
-        height *= .95
+        width, height = get_window_size_tk(scaling)
+        width *= .90
+        height *= .90
     elif os == "Windows":
-        width, height, zoom_failure = get_window_size_sg(scaling)
-        width *= .95
-        height *= .95
+        width, height = get_window_size_sg(scaling)
+        width *= .90
+        height *= .90
     else:
         # Note this method doesn't always work for multiple-monitor setups
         # on non-Windows systems.  It reports the combined monitor window sizes.
@@ -79,7 +88,8 @@ def get_window_size(scaling):
 
         width *= .90
         height *= .90
-    return width, height, zoom_failure
+
+    return width, height
 
 def get_window_size_sg(scaling):
     """Get size from a big pySimpleGui window.  Not recommended for non-Windows
@@ -98,8 +108,8 @@ def get_window_size_sg(scaling):
     zoomed_wid, zoomed_ht = window.Size
     window.close()
     if zoomed_wid == default_width or zoomed_ht == default_height:
-        zoom_failure = True
-    return zoomed_wid, zoomed_ht, zoom_failure
+        return FALLBACK_FULL_SCREEN_SIZE[0]*.90, FALLBACK_FULL_SCREEN_SIZE[1]*.90
+    return zoomed_wid, zoomed_ht
 
 def get_window_size_tk(scaling):
     """Use tk to get an approximation to the usable screen area."""
@@ -151,9 +161,9 @@ def get_window_size_tk(scaling):
     except tk.TclError:
         width = root.winfo_screenwidth()
         height = root.winfo_screenheight()
+
     root.destroy()
-    zoom_failure = False
     if width == default_width or height == default_height:
-        zoom_failure = True
-    return width, height, zoom_failure
+        return FALLBACK_FULL_SCREEN_SIZE[0]*.90, FALLBACK_FULL_SCREEN_SIZE[1]*.90
+    return width, height
 
