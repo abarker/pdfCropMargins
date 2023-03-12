@@ -79,8 +79,6 @@ from .main_pdfCropMargins import (process_pdf_file, parse_page_range_specifiers,
 # Todo: If you hold the window at larger sizes until it resizes the GUI it doesn't
 # resize the window when you let go.  Might be OK behavior, though...
 
-# TODO: Maybe increase size of font for tooltips?
-
 # Uncomment for look and feel preview.
 #print(sg.ListOfLookAndFeelValues())
 #print(sg.LOOK_AND_FEEL_TABLE)
