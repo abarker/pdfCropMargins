@@ -62,7 +62,7 @@ except ImportError: # Not available on Windows.
 from . import __version__ # Get the version number from the __init__.py file.
 from .manpage_data import cmd_parser, DEFAULT_THRESHOLD_VALUE
 from .prettified_argparse import parse_command_line_arguments
-from .pymupdf_routines import has_mupdf
+from .pymupdf_routines import has_mupdf, MuPdfDocument
 
 from . import external_program_calls as ex
 project_src_directory = ex.project_src_directory
@@ -641,7 +641,7 @@ def check_producer_modifier(metadata_info):
     a boolean `already_cropped_by_this_program`."""
     producer_mod = PRODUCER_MODIFIER # String added to the producer metadata, marks when cropped.
     if metadata_info:
-        old_producer_string = metadata_info.producer
+        old_producer_string = metadata_info["producer"]
     else:
         return PRODUCER_MODIFIER, False # Can't read metadata, but maybe can set it.
     if old_producer_string and old_producer_string.endswith(producer_mod):
@@ -654,6 +654,13 @@ def check_producer_modifier(metadata_info):
             print("\nThe document was not previously cropped by pdfCropMargins.")
         already_cropped_by_this_program = False
     return producer_mod, already_cropped_by_this_program
+
+def set_cropped_metadata_pymupdf(metadata_info, producer_mod):
+    """Set the metadata for the output document.  Mostly unchanged, but
+    "Producer" has a string appended to indicate that this program modified the
+    file.  That allows for the undo operation to make sure that this
+    program cropped the file in the first place."""
+    metadata_info["producer"] = metadata_info["producer"] + producer_mod
 
 def set_cropped_metadata(input_doc, output_doc, metadata_info, producer_mod):
     """Set the metadata for the output document.  Mostly just copied over, but
@@ -909,7 +916,8 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info, producer_mod,
     ## cropped the document already.
     ##
 
-    set_cropped_metadata(input_doc, output_doc, metadata_info, producer_mod)
+    output_doc.metadata = input_doc.metadata # assumes pymupdf set producer
+    #set_cropped_metadata(input_doc, output_doc, metadata_info, producer_mod)
     return output_doc, tmp_output_doc
 
 ##############################################################################
@@ -1149,6 +1157,37 @@ def process_command_line_arguments(parsed_args, cmd_parser):
 
     return input_doc_path, fixed_input_doc_pathname, output_doc_path
 
+def open_file_in_pymupdf(fixed_input_doc_pathname):
+    """Open the file in a `MuPdfDocument`."""
+    fixed_input_doc_mupdf = MuPdfDocument(args)
+    input_doc_num_pages = fixed_input_doc_mupdf.open_document(fixed_input_doc_pathname)
+
+    if args.verbose:
+        print(f"\nThe input document has {input_doc_num_pages} pages.")
+
+    metadata_info = fixed_input_doc_mupdf.get_metadata()
+
+    if args.verbose and not metadata_info:
+        print("\nNo readable metadata in the document.")
+    elif args.verbose:
+        try:
+            print("\nThe document's metadata, if set:\n")
+            print("   The Author attribute set in the input document is:\n      %s"
+                  % (metadata_info["author"]))
+            print("   The Creator attribute set in the input document is:\n      %s"
+                  % (metadata_info["creator"]))
+            print("   The Producer attribute set in the input document is:\n      %s"
+                  % (metadata_info["producer"]))
+            print("   The Subject attribute set in the input document is:\n      %s"
+                  % (metadata_info["subject"]))
+            print("   The Title attribute set in the input document is:\n      %s"
+                  % (metadata_info["title"]))
+        except (KeyError, UnicodeDecodeError, UnicodeEncodeError):
+            print("\nWarning: Could not write all the document's metadata to the screen."
+                  "\nGot a KeyError or a UnicodeEncodeError.", file=sys.stderr)
+
+    return fixed_input_doc_mupdf, metadata_info, input_doc_num_pages
+
 def open_file_in_pdfreader(fixed_input_doc_pathname):
     """Open the file in a `PdfFileReader` object and return readers for the input
     document, and the temp input document (bug workaround) as well as metadata
@@ -1189,6 +1228,10 @@ def open_file_in_pdfreader(fixed_input_doc_pathname):
               "\n\nThe error message was:\n   {}".format(fixed_input_doc_pathname, e),
               file=sys.stderr)
         ex.cleanup_and_exit(1)
+
+    # We're finished with this open file; close it and let temp dir removal delete it.
+    # Note that the PdfReader object has opened it, so be careful where it is closed.
+    fixed_input_doc_file_object.close()
 
     ##
     ## See if the document needs to be decrypted.
@@ -1345,15 +1388,22 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     Returns the bounding box list."""
 
+    fixed_input_doc_mupdf, metadata_info, input_doc_num_pages = open_file_in_pymupdf(
+                                                                   fixed_input_doc_pathname)
+
+
+    """
     # Open the input file object.
     (input_doc,
      tmp_input_doc, # Bug workaround, see the function for comment.
      metadata_info,
      fixed_input_doc_file_object, # Note this file object is opened and needs to be closed.
      input_doc_num_pages) = open_file_in_pdfreader(fixed_input_doc_pathname)
+     """
 
     producer_mod, already_cropped_by_this_program = check_producer_modifier(
                                                               metadata_info)
+    set_cropped_metadata_pymupdf(metadata_info, producer_mod)
 
     if args.prevCropped:
         fixed_input_doc_file_object.close()
@@ -1384,6 +1434,12 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     ##
 
     page_nums_to_crop = get_set_of_page_numbers_to_crop(input_doc_num_pages)
+
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # TODO from here down, start using the above pymupdf thing...
+    # NOTE TODO BUG: currently NOT setting/detecting the producer modifier change.
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    input_doc, tmp_input_doc, fixed_input_doc_file_object = fixed_input_doc_mupdf.return_pypdf_pdfreader()
 
     ##
     ## Get a list with the full-page boxes for each page: (left,bottom,right,top)
@@ -1474,8 +1530,6 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     write_pdf_file(output_doc_pathname, output_doc, tmp_output_doc, input_doc, tmp_input_doc,
                                                                metadata_info, producer_mod)
 
-    # We're finished with this open file; close it and let temp dir removal delete it.
-    # Note that the PdfReader object has opened it, so be careful where it is closed.
     fixed_input_doc_file_object.close()
     return bounding_box_list, delta_page_nums
 
