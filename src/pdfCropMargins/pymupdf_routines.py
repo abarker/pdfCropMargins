@@ -62,6 +62,7 @@ better to choose one library and stick with it throughout your project.
 """
 import sys
 import warnings
+import copy
 from . import external_program_calls as ex
 
 has_mupdf = True
@@ -70,6 +71,7 @@ try: # Extra dependencies for the GUI version.  Make sure they are installed.
     with warnings.catch_warnings():
         #warnings.filterwarnings("ignore",category=DeprecationWarning)
         import fitz
+        from fitz import Rect
         import os
         import tempfile # Maybe later write to the regular tmp dir...
         from PyPDF2 import PdfFileReader
@@ -80,6 +82,98 @@ try: # Extra dependencies for the GUI version.  Make sure they are installed.
 except ImportError:
     has_mupdf = False
     MuPdfDocument = None
+
+def intersect_pdf_boxes(box1, box2, page):
+    """Return the intersection of PDF-style boxes by converting to
+    pymupdf and using its intersection function, then converting
+    back."""
+    box1_pymupdf = convert_box_pdf_to_pymupdf(box1, page)
+    box2_pymupdf = convert_box_pdf_to_pymupdf(box2, page)
+    intersection = box1_pymupdf.intersect(box2_pymupdf)
+    return convert_box_pymupdf_to_pdf(intersection, page)
+
+def convert_box_pymupdf_to_pdf(box_pymupdf, page):
+    """Convert a box from PyMuPDF format to PDF format."""
+    # See: https://github.com/pymupdf/PyMuPDF/issues/317
+    transformation_matrix = page.transformation_matrix
+    #print("transformation_matrix", transformation_matrix)
+    inverse_transformation_matrix = ~transformation_matrix
+    #print("inverse_transformation_matrix", inverse_transformation_matrix)
+    return fitz.Rect(box_pymupdf) * ~page.transformation_matrix
+
+def convert_box_pdf_to_pymupdf(box_pdf, page):
+    """Convert a MediaBox from PDF format to PyMuPDF format."""
+    # See: https://github.com/pymupdf/PyMuPDF/issues/317
+    transformation_matrix = page.transformation_matrix
+    #print("transformation_matrix", transformation_matrix)
+    return fitz.Rect(box_pdf) * page.transformation_matrix
+
+def test_conversions():
+    """Test the conversion from pymupdf format to pypdf2 format and back."""
+    class page:
+        transformation_matrix = fitz.Matrix(1.0, 0.0, 0.0, -1.0, -9.0, 761.0)
+
+    test_box = fitz.Rect(0.0, 0.0, 1006.0, 750.0)
+
+    test_box_pdf = convert_box_pymupdf_to_pdf(test_box, page)
+
+    print("test_box:", test_box)
+    print("test_box_pdf:", test_box_pdf)
+    assert test_box_pdf == Rect(9.0, 11.0, 1015.0, 761.0)
+
+    test_box_pdf_from_matrix = test_box * ~page.transformation_matrix
+    print("test_box_pdf_from_matrix:", test_box_pdf_from_matrix)
+    assert test_box_pdf == test_box_pdf_from_matrix
+
+    test_box_recovered = convert_box_pdf_to_pymupdf(test_box_pdf, page)
+    print("test_box_recovered:", test_box_recovered)
+
+    assert test_box_recovered == test_box
+
+#test_conversions()
+
+def get_box(page, boxstring):
+    """Return the box for the specified box string, converted to PyPDF2 coordinates which
+    assume that bottom-left is the origin.  Pymupdf uses the top-left (as does PDF itself).
+    It also shifts all but the mediabox to have zero be the reference for the top y value
+    (shifting it by the value of the mediabox top y value)."""
+    mediabox = page.mediabox
+    box = getattr(page, boxstring)
+
+    # Correct for swapped y values before setting with pymuypdf.
+    #box = copy.copy(box) # Don't permanently change the box.
+    #box[1], box[3] = box[3], box[1]
+
+    if boxstring == "mediabox":
+        return convert_box_pymupdf_to_pdf(box, page)
+
+    # Shift all boxes except mediabox that always start at zero in pymupdf.
+    #box[1] += mediabox[1]
+    #box[3] += mediabox[1]
+
+    return convert_box_pymupdf_to_pdf(box, page)
+
+def set_box(page, boxstring, box):
+    """Set the box for the specified box string, converted to PyPDF2 coordinates which
+    assume that bottom-left is the origin.  See `get_box`."""
+    mediabox = page.mediabox
+    set_box_method = getattr(page, "set_" + boxstring)
+
+    # Correct for swapped y values before setting with pymuypdf.
+    #box = copy.copy(box) # Don't permanently change the box.
+    #box[1], box[3] = box[3], box[1]
+
+    if boxstring == "mediabox":
+        box = convert_box_pdf_to_pymupdf(box, page)
+        set_box_method(box)
+        return
+
+    # Shift all boxes except mediabox that always start at zero in pymupdf.
+    #box[1] -= mediabox[1]
+    #box[3] -= mediabox[1]
+
+    box = convert_box_pdf_to_pymupdf(box, page)
+    set_box_method(box)
 
 class MuPdfDocument:
     """Holds `pyMuPDF` document and PyMuPDF pages of the document for the GUI
@@ -136,7 +230,11 @@ class MuPdfDocument:
                           file=sys.stderr)
                     ex.cleanup_and_exit(1)
 
+        # The pages are all kept on a list here to retain their attributes, which are lost
+        # when the page.load_page method is called again in pymupdf.
+        self.page_list = [page for page in self.document]
         self.num_pages = len(self.document)
+
         self.page_display_list_cache = [None] * self.num_pages
         self.page_crop_display_list_cache = [None] * self.num_pages
         return self.num_pages
@@ -147,6 +245,10 @@ class MuPdfDocument:
         for page in self.document:
             size_list.append((page.rect.width, page.rect.height))
         return size_list
+
+    def page_count(self):
+        """Return the number of pages."""
+        return self.document.page_count
 
     def get_max_and_min_page_sizes(self):
         """Return tuples (max_wid, max_ht) and (min_wid, min_ht)."""
@@ -179,19 +281,27 @@ class MuPdfDocument:
         metadata_info = self.document.metadata
         return metadata_info
 
-    def save_document(self):
+    def set_metadata(self, metadata_dict):
+        """Set the metadata for the document."""
+        self.document.set_metadata(metadata_dict)
+
+    def save_document(self, file_path):
         """Save a document, possibly repairing/cleaning it."""
         # See here:
         #    https://pymupdf.readthedocs.io/en/latest/document.html#Document.save
-        raise NotImplementedError
+
+        # TODO: pymupdf upgrade, add a try/except around this.
+        self.document.save(file_path)
 
     def close_document(self):
         """Close the document and clear its pages."""
+        self.page_list = []
         self.document.close()
         self.clear_cache()
 
     def return_pypdf_pdfreader(self):
-        """Return a PyPDF `PdfReader` class instance for the current document."""
+        """Return a PyPDF `PdfReader` class instance for the current document.  Does not
+        close the document."""
         from PyPDF2 import PdfReader
 
         doc = self.document

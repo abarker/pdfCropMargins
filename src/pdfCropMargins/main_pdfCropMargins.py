@@ -1,7 +1,7 @@
 """
 
 This script is not the starting/entry point script.  If installed with pip you
-can just run `pdf-crop-margins` to run the program.  When pip is not used the
+can just run `pdfcropmargins` to run the program.  When pip is not used the
 starting point for the pdfCropMargins program is to import function `main` from
 the `pdfCropMargins.py` script and run it.  The source directory has a
 `__main__.py` file which does this automatically when Python is invoked on the
@@ -35,18 +35,30 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 # Some general notes, useful for reading the code.
 #
-# Margins are conveniently described as left, bottom, right, and top, but boxes
-# in PDF files are usually defined by the lower-left point's x and y values
+# Margins are conveniently described as left, bottom, right, and top (lbrt). Boxes
+# in pypdf2 and PDF are defined by the lower-left point's x and y values
 # followed by the upper-right point's x and y values.  This is equivalent
 # information (since x and y is implicit in the margin names) but the viewpoint
-# is slightly different.  The origin is at the lower left.
+# is slightly different.  The origin is at the lower left. (Note that using
+# the top left as origin results in ltrb ordering.)
 #
-# This program (like the Ghostscript program) uses the PDF ordering convention
-# (lbrt) for listing margins and defining boxes.  Note that Pillow uses some
-# different conventions.  The origin in PDFs is the lower left going up but the
-# origin in Pillow images is the upper left going down.  Also, the bounding box
-# routine of Pillow returns ltrb instead of lbrt.  Keep in mind that the program
-# needs to make these conversions when rendering explicitly to images.
+# From: https://github.com/pymupdf/PyMuPDF/issues/317
+#    (Py-)MuPDF always uses a page's top-left point as the origin (0,0) of its
+#    coordinate system - for whatever reason, prresumably because it does not
+#    only deal with PDF, but also other document types.  PDF uses a page's
+#    bottom-left point as (0,0).
+#
+# This program (like the Ghostscript program and pypdf2) uses the PDF ordering
+# convention (lbrt) for listing margins and defining boxes.  Note that Pillow
+# uses some different conventions.  The origin in PDFs is the lower left going
+# up but the origin in Pillow images is the upper left going down.  So the
+# bounding box routine of Pillow returns ltrb instead of lbrt.  Keep in mind
+# that the program needs to make these conversions when rendering explicitly to
+# images.
+#
+# This program uses pymupdf, but uses the PDF and pypdf2 convention (mainly
+# because it originally used pypdf2).  All values are converted by a wrapper
+# around the pymupdf routines that are called (in pymupdf_routines).
 
 import sys
 import os
@@ -62,7 +74,7 @@ except ImportError: # Not available on Windows.
 from . import __version__ # Get the version number from the __init__.py file.
 from .manpage_data import cmd_parser, DEFAULT_THRESHOLD_VALUE
 from .prettified_argparse import parse_command_line_arguments
-from .pymupdf_routines import has_mupdf, MuPdfDocument
+from .pymupdf_routines import has_mupdf, MuPdfDocument, get_box, set_box, Rect, intersect_pdf_boxes
 
 from . import external_program_calls as ex
 project_src_directory = ex.project_src_directory
@@ -199,18 +211,23 @@ def parse_page_ratio_argument(ratio_arg):
         raise ValueError
     return float_ratio
 
+# TODO pymuypdf upgrade, delete this function, not needed.
 def intersect_boxes(box1, box2):
     """Takes two pyPdf boxes (such as page.mediabox) and returns the pyPdf
     box which is their intersection."""
-    if not box1 and not box2: return None
-    if not box1: return box2
-    if not box2: return box1
-    intersect = RectangleObject([0, 0, 0, 0]) # Note [llx,lly,urx,ury] == [l,b,r,t]
-    intersect.upper_right = (min(box1.upper_right[0], box2.upper_right[0]),
-                            min(box1.upper_right[1], box2.upper_right[1]))
-    intersect.lower_left = (max(box1.lower_left[0], box2.lower_left[0]),
-                           max(box1.lower_left[1], box2.lower_left[1]))
-    return intersect
+    if not box1 and not box2:
+        return None
+    if not box1:
+        return box2
+    if not box2:
+        return box1
+    return box1.intersect(box2)
+    #intersect = RectangleObject([0, 0, 0, 0]) # Note [llx,lly,urx,ury] == [l,b,r,t]
+    #intersect.upper_right = (min(box1.upper_right[0], box2.upper_right[0]),
+    #                        min(box1.upper_right[1], box2.upper_right[1]))
+    #intersect.lower_left = (max(box1.lower_left[0], box2.lower_left[0]),
+    #                       max(box1.lower_left[1], box2.lower_left[1]))
+    #return intersect
 
 def mod_box_for_rotation(box, angle, undo=False):
     """The user sees left, bottom, right, and top margins on a page, but inside
@@ -223,7 +240,8 @@ def mod_box_for_rotation(box, angle, undo=False):
 
     def rotate_ninety_degrees_clockwise(box, n):
         """The `n` here is the number of 90deg rotations to do."""
-        if n == 0: return box
+        if n == 0:
+            return box
         box = rotate_ninety_degrees_clockwise(box, n-1)
         return [box[1], box[2], box[3], box[0]]
 
@@ -252,37 +270,59 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
 
     # Find the page rotation angle (degrees).
     # Note rotation is clockwise, and four values are allowed: 0 90 180 270
-    try:
-        rotation = page["/Rotate"].get_object() # this works, needs try
-        #rotation = page.get("/Rotate", 0) # from the PyPDF2 source, default 0
-    except KeyError:
-        rotation = 0
-    while rotation >= 360: rotation -= 360
-    while rotation < 0: rotation += 360
+    rotation = page.rotation
+    while rotation >= 360:
+        rotation -= 360
+    while rotation < 0:
+        rotation += 360
+
+    # TODO TODO pymupdf upgrade, chatgpt4 told me this:
+    # Documented here: https://pymupdf.readthedocs.io/en/latest/glossary.html
+    #
+    # The MediaBox is the only rectangle for which there is no difference between
+    # MuPDF and PDF coordinate systemsPage.mediabox will always show the same
+    # coordinates as the /MediaBox key in a page’s object definition1. For all other
+    # rectangles, MuPDF transforms y coordinates such that the top border is the
+    # point of reference.
+
+    print("xxxx pymupdf mediabox", page.mediabox)
+    print("xxxx mediabox pypdf2", get_box(page, "mediabox"))
+    print("xxxx pymupdf cropbox", page.cropbox)
+    print("xxxx cropbox pypdf2", get_box(page, "cropbox"))
+    print("xxxx page.rect", page.rect)
 
     # Save the rotation value in the page's namespace so we can restore it later.
     page.rotationAngle = rotation
 
     # Un-rotate the page, leaving it with an rotation of 0.
-    page.rotate(-rotation)
+    page.set_rotation(-rotation)
 
     # Save copies of some values in the page's namespace, to possibly restore later.
-    page.original_media_box = page.mediabox
-    page.original_crop_box = page.cropbox
+    # TODO pymupdf upgrade, apparently the cropbox does not reflect rotation, BUT rect does...
+    # https://pymupdf.readthedocs.io/en/latest/page.html#Page.set_mediabox
+    page.original_media_box = get_box(page, "mediabox")
+    page.original_crop_box = get_box(page, "cropbox")
+
+    #box_string = ["m", "c"] # TODO TODO pymupdf upgrade, temporarily so intersect is not used, may not work right...
 
     first_loop = True
     for box_string in args.fullPageBox:
-        if box_string == "m": f_box = page.mediabox
-        if box_string == "c": f_box = page.cropbox
-        if box_string == "t": f_box = page.trimbox
-        if box_string == "a": f_box = page.artbox
-        if box_string == "b": f_box = page.bleedbox
+        if box_string == "m":
+            f_box = get_box(page, "mediabox")
+        if box_string == "c":
+            f_box = get_box(page, "cropbox")
+        if box_string == "t":
+            f_box = get_box(page, "trimbox")
+        if box_string == "a":
+            f_box = get_box(page, "artbox")
+        if box_string == "b":
+            f_box = get_box(page, "bleedbox")
 
         # Take intersection over all chosen boxes.
         if first_loop:
             full_box = f_box
         else:
-            full_box = intersect_boxes(full_box, f_box)
+            full_box = intersect_pdf_boxes(full_box, f_box, page)
 
         first_loop = False
 
@@ -290,17 +330,46 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
         # Do any absolute pre-cropping specified for the page (after modifying any
         # absolutePreCrop4 arguments to take into account rotations to the page).
         precrop_box = mod_box_for_rotation(args.absolutePreCrop4, rotation)
-        full_box = RectangleObject([float(full_box.lower_left[0]) + precrop_box[0],
-                                    float(full_box.lower_left[1]) + precrop_box[1],
-                                    float(full_box.upper_right[0]) - precrop_box[2],
-                                    float(full_box.upper_right[1]) - precrop_box[3]])
+        # TODO pymupdf upgrade, had to swap from 3 position to 1 position, don't know why....
+        #
+        # ChatGPT says:
+        #    In PyPDF2, the origin of the coordinate system is located in the bottom-left
+        #    corner of the page, with positive x values going to the right and positive y
+        #    values going up1. This is different from PyMuPDF’s coordinate system, where the
+        #    origin is located at the top-left of the MediaBox and positive y values go
+        #    down.
+        #
+        # rotation stuff doesn't seem to make a difference....
 
-    page.mediabox = full_box
-    page.cropbox = full_box
+        # This is the original pdfCropMargins code...
+        print("xxxxx full_box before precrop", full_box)
+        full_box = [float(full_box[0]) + precrop_box[0],
+                    float(full_box[1]) + precrop_box[1],
+                    float(full_box[2]) - precrop_box[2],
+                    float(full_box[3]) - precrop_box[3],
+                    ]
+
+        ## Modified because in pymupdf the origin is at top, but in pypdf2 it is at bottom.
+        ## The Rect object uses the pymupdf conventions.
+        #full_box = [float(full_box.bottom_left[0]) + precrop_box[0],
+        #            float(full_box.top_right[1]) - precrop_box[3],
+        #            float(full_box.top_right[0]) - precrop_box[2],
+        #            float(full_box.bottom_left[1]) + precrop_box[1],
+        #            ]
+
+        print("xxxxx full_box after precrop values applied", full_box)
+
+    set_box(page, "mediabox", full_box)
+    #set_box(page, "cropbox", full_box) # TODO pymupdf upgrade, causes problem...
+    #page.set_cropbox(full_box) # TODO pymupdf upgrade: Reset all the other boxes???????
+    # See: https://pymupdf.readthedocs.io/en/latest/page.html#Page.set_mediabox
+    # It also returns other boxes to default values.  But when is artbox set for restore?
+    # Is there a better way now for version 3.0????
+    # Cannot set the cropbox after the mediabox...
 
     return full_box
 
-def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
+def get_full_page_box_list_assigning_media_and_crop(fixed_input_doc_mupdf_wrapper, quiet=False,
                                                     skip_pre_crop=False):
     """Get a list of all the full-page box values for each page.  The argument
     input_doc should be a `PdfReader` object.  The boxes on the list are in the
@@ -313,10 +382,10 @@ def get_full_page_box_list_assigning_media_and_crop(input_doc, quiet=False,
         print(f"\nOriginal full page sizes (rounded to "
               f"{DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES} digits) in PDF format (lbrt):")
 
-    for page_num in range(len(input_doc.pages)):
+    for page_num in range(fixed_input_doc_mupdf_wrapper.num_pages):
 
         # Get the current page and find the full-page box.
-        curr_page = input_doc.pages[page_num]
+        curr_page = fixed_input_doc_mupdf_wrapper.page_list[page_num]
         full_page_box = get_full_page_box_assigning_media_and_crop(curr_page,
                                                                    skip_pre_crop)
 
@@ -655,13 +724,18 @@ def check_producer_modifier(metadata_info):
         already_cropped_by_this_program = False
     return producer_mod, already_cropped_by_this_program
 
-def set_cropped_metadata_pymupdf(metadata_info, producer_mod):
+def set_cropped_metadata_pymupdf(document_wrapper_class, metadata_info, producer_mod):
     """Set the metadata for the output document.  Mostly unchanged, but
     "Producer" has a string appended to indicate that this program modified the
     file.  That allows for the undo operation to make sure that this
     program cropped the file in the first place."""
     metadata_info["producer"] = metadata_info["producer"] + producer_mod
+    print("xxxxxxxx", metadata_info)
+    document_wrapper_class.set_metadata(metadata_info)
+    print("XXXXXXXXXXXXx new producer string", metadata_info["producer"])
+    return metadata_info
 
+# TODO: pymupdf upgrade, delete this whole function, rename above version maybe
 def set_cropped_metadata(input_doc, output_doc, metadata_info, producer_mod):
     """Set the metadata for the output document.  Mostly just copied over, but
     "Producer" has a string appended to indicate that this program modified the
@@ -701,7 +775,7 @@ def set_cropped_metadata(input_doc, output_doc, metadata_info, producer_mod):
           NameObject("/Title"): create_string_object(st(metadata_info.title))
           })
 
-def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
+def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
                                           already_cropped_by_this_program):
     """Apply the crop list to the pages of the input `PdfReader` object."""
     if args.restore and not already_cropped_by_this_program:
@@ -722,44 +796,44 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
         f = open(args.writeCropDataToFile, "w")
 
     # Copy over each page, after modifying the appropriate PDF boxes.
-    for page_num in range(len(input_doc.pages)):
+    for page_num in range(fixed_input_doc_mupdf_wrapper.document.page_count):
 
-        curr_page = input_doc.pages[page_num]
+        curr_page = fixed_input_doc_mupdf_wrapper.page_list[page_num]
 
         # Restore any rotation which was originally on the page.
-        curr_page.rotate(curr_page.rotationAngle)
+        curr_page.set_rotation(curr_page.rotationAngle)
 
         # Only do the restore from ArtBox if '--restore' option was selected.
-        if args.restore:
+        if args.restore: # TODO pymupdf upgrade, not updated, not using set_mediabox for example...
             if not curr_page.artbox:
                 print("\nWarning from pdfCropMargins: Attempting to restore pages from"
                       "\nthe ArtBox in each page, but page", page_num, "has no readable"
                       "\nArtBox.  Leaving that page unchanged.", file=sys.stderr)
                 continue
-            curr_page.mediabox = curr_page.artbox
-            curr_page.cropbox = curr_page.artbox
+            set_box(curr_page, "mediabox", get_box(curr_page, "artbox"))
+            set_box(curr_page, "cropbox", get_box(curr_page, "artbox"))
             continue
 
         # Do the save to ArtBox if that option is chosen and Producer is set.
+        #args.noundosave = True # TODO TODO debug pymupdf upgrade, cannot save to artbox anymore??????????
         if not args.noundosave and not already_cropped_by_this_program:
-            curr_page.artbox = intersect_boxes(curr_page.original_media_box,
-                                               curr_page.original_crop_box)
+            set_box(curr_page, "artbox", intersect_pdf_boxes(curr_page.original_media_box,
+                                               curr_page.original_crop_box, curr_page))
 
         # Reset the CropBox and MediaBox to their saved original values
         # (they were saved by `get_full_page_box_assigning_media_and_crop`
         # in the `curr_page` object's namespace).
-        curr_page.mediabox = curr_page.original_media_box
-        curr_page.cropbox = curr_page.original_crop_box
+        set_box(curr_page, "mediabox", curr_page.original_media_box)
+        set_box(curr_page, "cropbox", curr_page.original_crop_box)
 
         # Copy the original page without further mods if it wasn't in the range
         # selected for cropping.
         if page_num not in page_nums_to_crop:
             continue
 
-        # Convert the computed "box to crop to" into a `RectangleObject` (for pyPdf).
-        rounded_values = [round(Decimal(f), DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES)
-                          for f in crop_list[page_num]] # RectangleObject converts to Decimal.
-        new_cropped_box = RectangleObject(rounded_values)
+        rounded_values = [round(f, DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES)
+                                for f in crop_list[page_num]]
+        new_cropped_box = rounded_values
 
         if args.verbose:
             print("\t"+str(page_num+1)+"\t", list(new_cropped_box)) # page numbering from 1
@@ -767,20 +841,21 @@ def apply_crop_list(crop_list, input_doc, page_nums_to_crop,
             print("\t"+str(page_num+1)+"\t", list(new_cropped_box), file=f)
 
         if not args.boxesToSet:
-            args.boxesToSet = ["m", "c"]
+            args.boxesToSet = ["m"] # TODO pymupdf upgrade, removed "c" from the list.... TODO
 
         # Now set any boxes which were selected to be set via the '--boxesToSet' option.
         if "m" in args.boxesToSet:
-            curr_page.mediabox = new_cropped_box
+            set_box(curr_page, "mediabox", new_cropped_box)
         if "c" in args.boxesToSet:
-            curr_page.cropbox = new_cropped_box
+            set_box(curr_page, "cropbox", new_cropped_box)
         if "t" in args.boxesToSet:
-            curr_page.trimbox = new_cropped_box
+            set_box(curr_page, "trimbox", new_cropped_box)
         if "a" in args.boxesToSet:
-            curr_page.artbox = new_cropped_box
+            set_box(curr_page, "artbox", new_cropped_box)
         if "b" in args.boxesToSet:
-            curr_page.bleedbox = new_cropped_box
+            set_box(curr_page, "bleedbox", new_cropped_box)
 
+    fixed_input_doc_mupdf_wrapper.document
     if args.writeCropDataToFile:
         f.close()
         ex.cleanup_and_exit(0)
@@ -916,7 +991,7 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info, producer_mod,
     ## cropped the document already.
     ##
 
-    output_doc.metadata = input_doc.metadata # assumes pymupdf set producer
+    output_doc.metadata = input_doc.metadata # assumes pymupdf set producer # TODO
     #set_cropped_metadata(input_doc, output_doc, metadata_info, producer_mod)
     return output_doc, tmp_output_doc
 
@@ -1159,13 +1234,13 @@ def process_command_line_arguments(parsed_args, cmd_parser):
 
 def open_file_in_pymupdf(fixed_input_doc_pathname):
     """Open the file in a `MuPdfDocument`."""
-    fixed_input_doc_mupdf = MuPdfDocument(args)
-    input_doc_num_pages = fixed_input_doc_mupdf.open_document(fixed_input_doc_pathname)
+    fixed_input_doc_mupdf_wrapper = MuPdfDocument(args)
+    input_doc_num_pages = fixed_input_doc_mupdf_wrapper.open_document(fixed_input_doc_pathname)
 
     if args.verbose:
         print(f"\nThe input document has {input_doc_num_pages} pages.")
 
-    metadata_info = fixed_input_doc_mupdf.get_metadata()
+    metadata_info = fixed_input_doc_mupdf_wrapper.get_metadata()
 
     if args.verbose and not metadata_info:
         print("\nNo readable metadata in the document.")
@@ -1186,8 +1261,9 @@ def open_file_in_pymupdf(fixed_input_doc_pathname):
             print("\nWarning: Could not write all the document's metadata to the screen."
                   "\nGot a KeyError or a UnicodeEncodeError.", file=sys.stderr)
 
-    return fixed_input_doc_mupdf, metadata_info, input_doc_num_pages
+    return fixed_input_doc_mupdf_wrapper, metadata_info, input_doc_num_pages
 
+# TODO: pymupdf upgrade, delete this whole function
 def open_file_in_pdfreader(fixed_input_doc_pathname):
     """Open the file in a `PdfFileReader` object and return readers for the input
     document, and the temp input document (bug workaround) as well as metadata
@@ -1331,6 +1407,7 @@ def get_set_of_page_numbers_to_crop(input_doc_num_pages):
         print("\nAll the pages of the document will be cropped.")
     return page_nums_to_crop
 
+# TODO: pymupdf upgrade, delete this whole function
 def write_pdf_file(output_doc_pathname, output_doc, tmp_output_doc, input_doc, tmp_input_doc,
                    metadata_info, producer_mod):
     """Write out the pdf file from `output_doc` to the file at `output_doc_filename`."""
@@ -1388,7 +1465,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     Returns the bounding box list."""
 
-    fixed_input_doc_mupdf, metadata_info, input_doc_num_pages = open_file_in_pymupdf(
+    fixed_input_doc_mupdf_wrapper, metadata_info, input_doc_num_pages = open_file_in_pymupdf(
                                                                    fixed_input_doc_pathname)
 
 
@@ -1403,10 +1480,11 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     producer_mod, already_cropped_by_this_program = check_producer_modifier(
                                                               metadata_info)
-    set_cropped_metadata_pymupdf(metadata_info, producer_mod)
+    metadata_info = set_cropped_metadata_pymupdf(fixed_input_doc_mupdf_wrapper,
+                                                 metadata_info, producer_mod)
 
     if args.prevCropped:
-        fixed_input_doc_file_object.close()
+        fixed_input_doc_file_object.close() # TODO TODO: this needs updating for pymupdf
         if already_cropped_by_this_program:
             #print("code 0")
             exit_code = 0
@@ -1435,12 +1513,6 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     page_nums_to_crop = get_set_of_page_numbers_to_crop(input_doc_num_pages)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # TODO from here down, start using the above pymupdf thing...
-    # NOTE TODO BUG: currently NOT setting/detecting the producer modifier change.
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    input_doc, tmp_input_doc, fixed_input_doc_file_object = fixed_input_doc_mupdf.return_pypdf_pdfreader()
-
     ##
     ## Get a list with the full-page boxes for each page: (left,bottom,right,top)
     ## This function also sets the MediaBox and CropBox of the pages to the
@@ -1449,11 +1521,20 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     ##
 
     full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(
-                                                          input_doc, skip_pre_crop=False)
+                                              fixed_input_doc_mupdf_wrapper, skip_pre_crop=False)
     # The below return values aren't used, but the function is called to replicate
     # its side-effects on `tmp_input_doc`.
-    tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
-                                            tmp_input_doc, quiet=True, skip_pre_crop=False)
+    #tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
+    #                                        tmp_input_doc, quiet=True, skip_pre_crop=False)
+
+
+    """
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # TODO from here down, start using the above pymupdf thing...
+    # NOTE TODO BUG: currently NOT setting/detecting the producer modifier change.
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    input_doc, tmp_input_doc, fixed_input_doc_file_object = fixed_input_doc_mupdf_wrapper.return_pypdf_pdfreader()
+    fixed_input_doc_mupdf_wrapper.close_document()
 
     ##
     ## Define a `PdfWriter` object and copy `input_doc` info over to it.
@@ -1461,32 +1542,20 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     output_doc, tmp_output_doc = setup_output_document(input_doc, tmp_input_doc,
                                                        metadata_info, producer_mod)
+    """
 
     ##
     ## Write out the PDF document again, with the CropBox and MediaBox reset.
     ## This temp version is ONLY used for calculating the bounding boxes of
-    ## pages.  Note we are writing from `tmp_output_doc` (due to an apparent bug
-    ## discussed above).  After this `tmp_input_doc` and `tmp_output_doc` are no
-    ## longer needed.
+    ## pages.
     ##
 
     if not bounding_box_list and not args.restore:
         doc_with_crop_and_media_boxes_name = ex.get_temporary_filename(".pdf")
-        with open(doc_with_crop_and_media_boxes_name, "wb"
-                                          ) as doc_with_crop_and_media_boxes_object:
-            if args.verbose:
-                print("\nWriting out the PDF with the CropBox and MediaBox redefined.")
 
-            try:
-                tmp_output_doc.write(doc_with_crop_and_media_boxes_object)
-            except (KeyboardInterrupt, EOFError):
-                raise
-            except PyPdfError: # PyPDF2 can raise various exceptions.
-                print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
-                      "\nwrite out a PDF file of the document.  The document may be"
-                      "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
-                      "\noption (assuming you are not already using it).", file=sys.stderr)
-                ex.cleanup_and_exit(1)
+        if args.verbose:
+            print("\nWriting out the PDF with the CropBox and MediaBox redefined.")
+            fixed_input_doc_mupdf_wrapper.save_document(doc_with_crop_and_media_boxes_name)
 
     ##
     ## Calculate the `bounding_box_list` containing tight page bounds for each page.
@@ -1494,7 +1563,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     if not bounding_box_list and not args.restore:
         bounding_box_list = get_bounding_box_list(doc_with_crop_and_media_boxes_name,
-                input_doc, full_page_box_list, page_nums_to_crop, args, PdfWriter)
+                fixed_input_doc_mupdf_wrapper, full_page_box_list, page_nums_to_crop, args, PdfWriter)
         if args.verbose:
             print("\nThe bounding boxes are:")
             for pNum, b in enumerate(bounding_box_list):
@@ -1520,17 +1589,16 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     ## These pages are copied to the PdfWriter output_doc.
     ##
 
-    apply_crop_list(crop_list, input_doc, page_nums_to_crop,
+    apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
                                           already_cropped_by_this_program)
 
     ##
     ## Write the final PDF out to a file.
     ##
 
-    write_pdf_file(output_doc_pathname, output_doc, tmp_output_doc, input_doc, tmp_input_doc,
-                                                               metadata_info, producer_mod)
+    fixed_input_doc_mupdf_wrapper.save_document(output_doc_pathname)
 
-    fixed_input_doc_file_object.close()
+    fixed_input_doc_mupdf_wrapper.close_document()
     return bounding_box_list, delta_page_nums
 
 def handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname):
