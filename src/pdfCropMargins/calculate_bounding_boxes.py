@@ -70,7 +70,7 @@ args = None # Command-line arguments; set in get_bounding_box_list.
 #
 
 def get_bounding_box_list(input_doc_fname, fixed_input_doc_mupdf_wrapper, full_page_box_list,
-                          set_of_page_nums_to_crop, argparse_args, chosen_PdfWriter):
+                          set_of_page_nums_to_crop, argparse_args):
     """Calculate a bounding box for each page in the document.  The
     `input_doc_fname` argument is the filename of the document's original PDF
     file, `input_doc` is the `PdfReader` for the document.  The argument
@@ -79,9 +79,7 @@ def get_bounding_box_list(input_doc_fname, fixed_input_doc_mupdf_wrapper, full_p
     `set_of_page_nums_to_crop` argument is the set of page numbers to crop; it
     is passed so that unnecessary calculations can be skipped.  The
     `argparse_args` argument should be passed the args parsed from the command
-    line by argparse.  The `chosen_PdfWriter` is the PdfWriter class
-    from whichever pyPdf package was chosen by the main program.  The function
-    returns the list of bounding boxes."""
+    line by argparse.  The function returns the list of bounding boxes."""
     global args
     args = argparse_args # Make args available to all funs in module, as a global.
 

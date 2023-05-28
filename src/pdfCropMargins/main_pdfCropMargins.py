@@ -30,6 +30,8 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 """
 
+# TODO: Negative percentage values don't seem to be working right???  Look into.
+
 # TODO: Make --evenodd option equalize the pages after separately calculating
 # the crops, just do the max over them.
 
@@ -74,31 +76,10 @@ except ImportError: # Not available on Windows.
 from . import __version__ # Get the version number from the __init__.py file.
 from .manpage_data import cmd_parser, DEFAULT_THRESHOLD_VALUE
 from .prettified_argparse import parse_command_line_arguments
-from .pymupdf_routines import has_mupdf, MuPdfDocument, get_box, set_box, Rect, intersect_pdf_boxes
+from .pymupdf_routines import has_mupdf, MuPdfDocument, get_box, set_box, Rect, intersect_pdf_boxes, convert_box_pdf_to_pymupdf, convert_box_pymupdf_to_pdf
 
 from . import external_program_calls as ex
 project_src_directory = ex.project_src_directory
-
-try:
-    from PyPDF2 import PdfWriter, PdfReader
-    from PyPDF2.generic import (NameObject, create_string_object, RectangleObject,
-                                FloatObject, IndirectObject)
-except ImportError:
-    print("\nError in pdfCropMargins: No system PyPDF2 Python package"
-          "\nwas found.  Reinstall pdfCropMargins via pip or install that"
-          "\ndependency ('pip install pypdf2').\n", file=sys.stderr)
-    ex.cleanup_and_exit(1)
-
-try:
-    from PyPDF2.errors import PdfReadError, ParseError, PyPdfError # Versions >= 2.0.
-except ImportError:
-    try:
-        from PyPDF2.utils import PdfReadError, ParseError, PyPdfError # Versions < 2.0.
-    except ImportError:
-        print("\nError in pdfCropMargins: The PdfReadError exception could not"
-              "\nbe found.  Try updating pdfCropMargins and/or PyPDF2 via pip.",
-              file=sys.stderr)
-        ex.cleanup_and_exit(1)
 
 from .calculate_bounding_boxes import get_bounding_box_list
 
@@ -211,24 +192,6 @@ def parse_page_ratio_argument(ratio_arg):
         raise ValueError
     return float_ratio
 
-# TODO pymuypdf upgrade, delete this function, not needed.
-def intersect_boxes(box1, box2):
-    """Takes two pyPdf boxes (such as page.mediabox) and returns the pyPdf
-    box which is their intersection."""
-    if not box1 and not box2:
-        return None
-    if not box1:
-        return box2
-    if not box2:
-        return box1
-    return box1.intersect(box2)
-    #intersect = RectangleObject([0, 0, 0, 0]) # Note [llx,lly,urx,ury] == [l,b,r,t]
-    #intersect.upper_right = (min(box1.upper_right[0], box2.upper_right[0]),
-    #                        min(box1.upper_right[1], box2.upper_right[1]))
-    #intersect.lower_left = (max(box1.lower_left[0], box2.lower_left[0]),
-    #                       max(box1.lower_left[1], box2.lower_left[1]))
-    #return intersect
-
 def mod_box_for_rotation(box, angle, undo=False):
     """The user sees left, bottom, right, and top margins on a page, but inside
     the PDF and in pyPdf the page may be rotated (such as in landscape mode).
@@ -254,7 +217,7 @@ def mod_box_for_rotation(box, angle, undo=False):
     else:
         return rotate_ninety_degrees_clockwise(box, undo_map[angle])
 
-def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
+def get_full_page_box_assigning_media_and_crop(page):
     """This returns whatever PDF box was selected (by the user option
     '--fullPageBox') to represent the full page size.  All cropping is done
     relative to this box.  The default selection option is the MediaBox
@@ -266,7 +229,6 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
     full-page size and saves the old values in the same page namespace, so it
     should only be called once for each page.  It returns a `RectangleObject`
     box."""
-    # Note skip_pre_crop option isn't used, may or may not be useful.
 
     # Find the page rotation angle (degrees).
     # Note rotation is clockwise, and four values are allowed: 0 90 180 270
@@ -284,7 +246,6 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
     # coordinates as the /MediaBox key in a page’s object definition1. For all other
     # rectangles, MuPDF transforms y coordinates such that the top border is the
     # point of reference.
-
     print("xxxx pymupdf mediabox", page.mediabox)
     print("xxxx mediabox pypdf2", get_box(page, "mediabox"))
     print("xxxx pymupdf cropbox", page.cropbox)
@@ -294,12 +255,10 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
     # Save the rotation value in the page's namespace so we can restore it later.
     page.rotationAngle = rotation
 
-    # Un-rotate the page, leaving it with an rotation of 0.
-    page.set_rotation(-rotation)
+    # Un-rotate the page, to a rotation of 0.
+    page.set_rotation(0) # TODO: Maybe offer an option to not perform this page rotation.  Here and/or mod_box_for_rotation.
 
     # Save copies of some values in the page's namespace, to possibly restore later.
-    # TODO pymupdf upgrade, apparently the cropbox does not reflect rotation, BUT rect does...
-    # https://pymupdf.readthedocs.io/en/latest/page.html#Page.set_mediabox
     page.original_media_box = get_box(page, "mediabox")
     page.original_crop_box = get_box(page, "cropbox")
 
@@ -326,51 +285,41 @@ def get_full_page_box_assigning_media_and_crop(page, skip_pre_crop=False):
 
         first_loop = False
 
-    if not skip_pre_crop:
-        # Do any absolute pre-cropping specified for the page (after modifying any
-        # absolutePreCrop4 arguments to take into account rotations to the page).
-        precrop_box = mod_box_for_rotation(args.absolutePreCrop4, rotation)
-        # TODO pymupdf upgrade, had to swap from 3 position to 1 position, don't know why....
-        #
-        # ChatGPT says:
-        #    In PyPDF2, the origin of the coordinate system is located in the bottom-left
-        #    corner of the page, with positive x values going to the right and positive y
-        #    values going up1. This is different from PyMuPDF’s coordinate system, where the
-        #    origin is located at the top-left of the MediaBox and positive y values go
-        #    down.
-        #
-        # rotation stuff doesn't seem to make a difference....
+    # Do any absolute pre-cropping specified for the page (after modifying any
+    # absolutePreCrop4 arguments to take into account rotations to the page).
+    return apply_precrop(rotation, full_box, page)
 
-        # This is the original pdfCropMargins code...
-        print("xxxxx full_box before precrop", full_box)
-        full_box = [float(full_box[0]) + precrop_box[0],
-                    float(full_box[1]) + precrop_box[1],
-                    float(full_box[2]) - precrop_box[2],
-                    float(full_box[3]) - precrop_box[3],
-                    ]
+def apply_precrop(rotation, full_box, page):
+    """Apply the precrop to the document's box settings."""
+    # Do any absolute pre-cropping specified for the page (after modifying any
+    # absolutePreCrop4 arguments to take into account rotations to the page).
+    precrop_box = mod_box_for_rotation(args.absolutePreCrop4, rotation)
 
-        ## Modified because in pymupdf the origin is at top, but in pypdf2 it is at bottom.
-        ## The Rect object uses the pymupdf conventions.
-        #full_box = [float(full_box.bottom_left[0]) + precrop_box[0],
-        #            float(full_box.top_right[1]) - precrop_box[3],
-        #            float(full_box.top_right[0]) - precrop_box[2],
-        #            float(full_box.bottom_left[1]) + precrop_box[1],
-        #            ]
+    print("\nxxxxx full_box before precrop", full_box)
+    print("xxxxx full_box before precrop, converted to pymupdf", convert_box_pdf_to_pymupdf(full_box, page))
+    full_box = [float(full_box[0]) + precrop_box[0],
+                float(full_box[1]) + precrop_box[1],
+                float(full_box[2]) - precrop_box[2],
+                float(full_box[3]) - precrop_box[3],
+                ]
 
-        print("xxxxx full_box after precrop values applied", full_box)
+    print("xxxxx full_box after precrop values applied", Rect(full_box))
+    print("xxxxx full_box after precrop values applied, converted to pymupdf", convert_box_pdf_to_pymupdf(Rect(full_box),page))
+    print()
 
     set_box(page, "mediabox", full_box)
-    #set_box(page, "cropbox", full_box) # TODO pymupdf upgrade, causes problem...
+    set_box(page, "cropbox", full_box) # TODO pymupdf upgrade, causes problem...
     #page.set_cropbox(full_box) # TODO pymupdf upgrade: Reset all the other boxes???????
     # See: https://pymupdf.readthedocs.io/en/latest/page.html#Page.set_mediabox
     # It also returns other boxes to default values.  But when is artbox set for restore?
     # Is there a better way now for version 3.0????
     # Cannot set the cropbox after the mediabox...
 
+    print("xxxx mediabox after being set on page, in pymupdf format:", page.mediabox)
+    print("xxxx mediabox after being set on page, in pdf format:", get_box(page, "mediabox"))
     return full_box
 
-def get_full_page_box_list_assigning_media_and_crop(fixed_input_doc_mupdf_wrapper, quiet=False,
-                                                    skip_pre_crop=False):
+def get_full_page_box_list_assigning_media_and_crop(fixed_input_doc_mupdf_wrapper, quiet=False):
     """Get a list of all the full-page box values for each page.  The argument
     input_doc should be a `PdfReader` object.  The boxes on the list are in the
     simple 4-float list format used by this program, not `RectangleObject` format."""
@@ -386,8 +335,7 @@ def get_full_page_box_list_assigning_media_and_crop(fixed_input_doc_mupdf_wrappe
 
         # Get the current page and find the full-page box.
         curr_page = fixed_input_doc_mupdf_wrapper.page_list[page_num]
-        full_page_box = get_full_page_box_assigning_media_and_crop(curr_page,
-                                                                   skip_pre_crop)
+        full_page_box = get_full_page_box_assigning_media_and_crop(curr_page)
 
         if args.verbose and not quiet:
             # want to display page num numbering from 1, so add one
@@ -735,46 +683,6 @@ def set_cropped_metadata_pymupdf(document_wrapper_class, metadata_info, producer
     print("XXXXXXXXXXXXx new producer string", metadata_info["producer"])
     return metadata_info
 
-# TODO: pymupdf upgrade, delete this whole function, rename above version maybe
-def set_cropped_metadata(input_doc, output_doc, metadata_info, producer_mod):
-    """Set the metadata for the output document.  Mostly just copied over, but
-    "Producer" has a string appended to indicate that this program modified the
-    file.  That allows for the undo operation to make sure that this
-    program cropped the file in the first place."""
-
-    # Setting metadata with pyPdf requires low-level pyPdf operations, see
-    # http://stackoverflow.com/questions/2574676/change-metadata-of-pdf-file-with-pypdf
-    #
-    # TODO: Later versions support metadata directly:
-    #    https://pypdf2.readthedocs.io/en/latest/user/metadata.html
-    if not metadata_info:
-        # In case it's null, just set values to empty strings.  This class just holds
-        # data temporary in the same format; this is not sent into PyPDF2.
-        class MetadataInfo:
-            author = ""
-            creator = ""
-            producer = ""
-            subject = ""
-            title = ""
-        metadata_info = MetadataInfo()
-
-    output_info_dict = output_doc._info.get_object()
-
-    # Note that all None metadata attributes are currently set to the empty string
-    # when passing along the metadata information.
-    def st(item):
-        if item is None: return ""
-        else: return item
-
-    output_info_dict.update({
-          NameObject("/Author"): create_string_object(st(metadata_info.author)),
-          NameObject("/Creator"): create_string_object(st(metadata_info.creator)),
-          NameObject("/Producer"): create_string_object(st(metadata_info.producer)
-                                                                 + producer_mod),
-          NameObject("/Subject"): create_string_object(st(metadata_info.subject)),
-          NameObject("/Title"): create_string_object(st(metadata_info.title))
-          })
-
 def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
                                           already_cropped_by_this_program):
     """Apply the crop list to the pages of the input `PdfReader` object."""
@@ -815,7 +723,7 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
             continue
 
         # Do the save to ArtBox if that option is chosen and Producer is set.
-        #args.noundosave = True # TODO TODO debug pymupdf upgrade, cannot save to artbox anymore??????????
+        args.noundosave = True # TODO TODO debug pymupdf upgrade, cannot save to artbox anymore??????????
         if not args.noundosave and not already_cropped_by_this_program:
             set_box(curr_page, "artbox", intersect_pdf_boxes(curr_page.original_media_box,
                                                curr_page.original_crop_box, curr_page))
@@ -825,6 +733,11 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
         # in the `curr_page` object's namespace).
         set_box(curr_page, "mediabox", curr_page.original_media_box)
         set_box(curr_page, "cropbox", curr_page.original_crop_box)
+
+        print("\nxxxx Set mediabox back to this value: ", curr_page.original_media_box)
+        print("xxxx Read this value back from mediabox, pymupdf format:", curr_page.mediabox)
+        print("xxxx Read this value back from mediabox, pdf format:", get_box(curr_page, "mediabox"))
+        print()
 
         # Copy the original page without further mods if it wasn't in the range
         # selected for cropping.
@@ -846,6 +759,10 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
         # Now set any boxes which were selected to be set via the '--boxesToSet' option.
         if "m" in args.boxesToSet:
             set_box(curr_page, "mediabox", new_cropped_box)
+            print("\nxxxxx Now setting mediabox to this cropped value:", new_cropped_box)
+            print("\nxxxxx Reading back mediabox for the cropped value, pymupdf format:", curr_page.mediabox)
+            print("\nxxxxx Reading back mediabox for the cropped value, pdf format:", get_box(curr_page, "mediabox"))
+            print()
         if "c" in args.boxesToSet:
             set_box(curr_page, "cropbox", new_cropped_box)
         if "t" in args.boxesToSet:
@@ -859,141 +776,6 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
     if args.writeCropDataToFile:
         f.close()
         ex.cleanup_and_exit(0)
-
-def setup_output_document(input_doc, tmp_input_doc, metadata_info, producer_mod,
-                                                    copy_document_catalog=True):
-    """Create the output `PdfWriter` objects and copy over the relevant info.
-    Returns the writer objects `output_doc`, `tmp_output_doc`, and the boolean
-    `already_cropped_by_this_program`.  This function also sets the metadata for
-    the cropped output file."""
-    # NOTE: Inserting pages from a PdfReader into multiple PdfWriters
-    # seems to cause problems (writer can hang on write), so only one is used.
-    # This is why the tmp_input_doc file was created earlier, to get copies of
-    # the page objects which are independent of those in input_doc.  An ugly
-    # hack for a nasty bug to track down.
-    #
-    # Possible thing to try, copying pages:
-    #    https://stackoverflow.com/questions/52315259
-
-    # NOTE: You can get the `_root_object` attribute (dict for the document
-    # catalog) from the output document after calling `cloneReaderDocumentRoot`
-    # or else you can just directly get it from the `input_doc.trailer dict`, as
-    # below (which is from the code for `cloneReaderDocumentRoot`), but you
-    # CANNOT set the full `_root_object` to be the `_root_object` attribute for
-    # the actual output_doc or else only blank pages show up in acroread (whether
-    # or not there is any attempt to explicitly copy the pages over).  The same
-    # is true for using `cloneDocumentFromReader` (which just calls
-    # `cloneReaderDocumentRoot` followed by `appendPagesFromReader`).  At least
-    # the '/Pages' key and value in `_root_object` cause problems, so they are
-    # skipped in the partial copy.  Probably a bug in PyPDF2.  See the original
-    # code for the routines on the github pages below.
-    #
-    # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/pdf.py
-    # https://github.com/mstamy2/PyPDF2/blob/master/PyPDF2/generic.py
-    #
-    # Files still can change zoom mode on clicking outline links, but that is
-    # an Adobe implementation problem, and happens even in the uncropped files:
-    #    https://superuser.com/questions/278302/
-
-    output_doc = PdfWriter()
-
-    def root_objects_not_indirect(input_doc, root_object):
-        """This can expand some of the `IndirectObject` objects in a root object to
-        see the actual values.  Currently only used for debugging.  May mess up the
-        input doc and require a temporary one."""
-        if isinstance(root_object, dict):
-            return {root_objects_not_indirect(input_doc, key):
-                    root_objects_not_indirect(input_doc, value) for
-                                                  key, value in root_object.items()}
-        elif isinstance(root_object, list):
-            return [root_objects_not_indirect(input_doc, item) for item in root_object]
-        elif isinstance(root_object, IndirectObject):
-            return input_doc.get_object(root_object)
-        else:
-            return root_object
-
-    doc_cat_whitelist = args.docCatWhitelist.split()
-    if "ALL" in doc_cat_whitelist:
-        doc_cat_whitelist = ["ALL"]
-
-    doc_cat_blacklist = args.docCatBlacklist.split()
-    if "ALL" in doc_cat_blacklist:
-        doc_cat_blacklist = ["ALL"]
-
-    # Partially copy over the document catalog data from input_doc to output_doc.
-    if not copy_document_catalog or (
-            not doc_cat_whitelist and doc_cat_blacklist == ["ALL"]):
-        # Check this first, to completely skip the possibly problematic code getting
-        # document catalog items when possible.  Does not print a skipped list, though.
-        if args.verbose:
-            print("\nNot copying any document catalog items to the cropped document.")
-    else:
-        # TODO: Try using the clone_reader_document_root function instead.
-        # https://pypdf2.readthedocs.io/en/latest/modules/PdfWriter.html#PyPDF2.PdfWriter.clone_reader_document_root
-        try:
-            root_object = input_doc.trailer["/Root"]
-
-            copied_items = []
-            skipped_items = []
-            for key, value in root_object.items():
-                # Some possible keys can be:
-                #
-                # /Type -- required, must have value /Catalog
-                # /Pages -- required, indirect ref to page tree; skip, will change
-                # /PageMode -- set to /UseNone, /UseOutlines, /UseThumbs, /Fullscreen,
-                #              /UseOC, or /UseAttachments, with /UseNone default.
-                # /OpenAction -- action to take when document is opened, like zooming
-                # /PageLayout -- set to /SinglePage, /OneColumn, /TwoColumnLeft,
-                #                /TwoColumnRight, /TwoPageLeft, /TwoPageRight
-                # /Names -- a name dictionary to avoid having to use object numbers
-                # /Outlines -- indirect ref to document outline, i.e., bookmarks
-                # /Dests -- a dict of destinations in the PDF
-                # /ViewerPreferences -- a viewer preferences dict
-                # /MetaData -- XMP metadata, as opposed to other metadata
-                # /PageLabels -- alternate numbering for pages, only affect PDF viewers
-                if key == "/Pages":
-                    skipped_items.append(key)
-                    continue
-                if doc_cat_whitelist != ["ALL"] and key not in doc_cat_whitelist:
-                    if doc_cat_blacklist == ["ALL"] or key in doc_cat_blacklist:
-                        skipped_items.append(key)
-                        continue
-                copied_items.append(key)
-                output_doc._root_object[NameObject(key)] = value
-
-            if args.verbose:
-                print("\nCopied these items from the document catalog:\n   ", end="")
-                print(*copied_items)
-                print("Skipped copy of these items from the document catalog:\n   ", end="")
-                print(*skipped_items)
-
-        except (KeyboardInterrupt, EOFError):
-            raise
-        except: # Just catch any errors here; don't know which might be raised.
-            # On exception just warn and get a new PdfWriter object, to be safe.
-            print("\nWarning: The document catalog data could not be copied to the"
-                  "\nnew, cropped document.  Try fixing the PDF document using"
-                  "\n'--gsFix' if you have Ghostscript installed.", file=sys.stderr)
-            output_doc = PdfWriter()
-
-    #output_doc.appendPagesFromReader(input_doc) # Works, but wait and test more.
-    for page in [input_doc.pages[i] for i in range(len(input_doc.pages))]:
-        output_doc.add_page(page)
-
-    tmp_output_doc = PdfWriter()
-    #tmp_output_doc.appendPagesFromReader(tmp_input_doc)  # Works, but test more.
-    for page in [tmp_input_doc.pages[i] for i in range(len(tmp_input_doc.pages))]:
-        tmp_output_doc.add_page(page)
-
-    ##
-    ## Copy the metadata from input_doc to output_doc, modifying the Producer string
-    ## if this program didn't already set it.  Get bool for whether this program
-    ## cropped the document already.
-    ##
-
-    output_doc.metadata = input_doc.metadata # assumes pymupdf set producer # TODO
-    #set_cropped_metadata(input_doc, output_doc, metadata_info, producer_mod)
-    return output_doc, tmp_output_doc
 
 ##############################################################################
 #
@@ -1263,120 +1045,6 @@ def open_file_in_pymupdf(fixed_input_doc_pathname):
 
     return fixed_input_doc_mupdf_wrapper, metadata_info, input_doc_num_pages
 
-# TODO: pymupdf upgrade, delete this whole function
-def open_file_in_pdfreader(fixed_input_doc_pathname):
-    """Open the file in a `PdfFileReader` object and return readers for the input
-    document, and the temp input document (bug workaround) as well as metadata
-    information, an open file object for the fixed input document, and the number
-    of pages in the document.  The open file object will need to be closed."""
-    ##
-    ## Open the input document in a PdfReader object.  Due to an apparent bug
-    ## in pyPdf we open two PdfReader objects for the file.  The time required
-    ## should still be small relative to finding the bounding boxes of pages.  The bug
-    ## is that writing a PdfWriter tends to hang on certain files if 1) pages from
-    ## the same PdfReader are shared between two PdfWriter objects, or 2)
-    ## the PdfWriter is written, the pages are modified, and there is an attempt
-    ## to write the same PdfWriter to a different file.
-    ##
-
-    # Open the input file object.
-    try:
-        fixed_input_doc_file_object = open(fixed_input_doc_pathname, "rb")
-    except OSError:
-        print("Error in pdfCropMargins: Could not open output document with "
-              "filename '{}'".format(fixed_input_doc_pathname))
-        ex.cleanup_and_exit(1)
-
-    try:
-        strict_mode = False
-        input_doc = PdfReader(fixed_input_doc_file_object, strict=strict_mode)
-        tmp_input_doc = PdfReader(fixed_input_doc_file_object, strict=strict_mode)
-    except (KeyboardInterrupt, EOFError):
-        raise
-    except Exception as e: # PyPDF2 can raise various, catch the rest here.
-        print("\nError in pdfCropMargins: The PyPDF2 module failed in an"
-              "\nattempt to read this input file:\n   {}\n"
-              "\nIs the file a PDF file?  If so then it may be corrupted."
-              "\nIf you have Ghostscript installed you can attempt to fix"
-              "\nthe document by using the pdfCropMargins option '--gsFix'"
-              "\n(assuming you are not using that option already).  That option"
-              "\ncan also convert some PostScript files to a readable format."
-              "\n\nThe error message was:\n   {}".format(fixed_input_doc_pathname, e),
-              file=sys.stderr)
-        ex.cleanup_and_exit(1)
-
-    # We're finished with this open file; close it and let temp dir removal delete it.
-    # Note that the PdfReader object has opened it, so be careful where it is closed.
-    fixed_input_doc_file_object.close()
-
-    ##
-    ## See if the document needs to be decrypted.
-    ##
-
-    if args.password:
-        try:
-            input_doc.decrypt(args.password)
-            tmp_input_doc.decrypt(args.password)
-        except KeyError:
-            print("\nDecrypting with the password from the '--password' option"
-                  "\nfailed.", file=sys.stderr)
-            ex.cleanup_and_exit(1)
-    else: # Try decrypting with an empty password.
-        try:
-            input_doc.decrypt("")
-            tmp_input_doc.decrypt("")
-        except (KeyError, PdfReadError):
-            pass # Document apparently wasn't encrypted with an empty password.
-
-    ##
-    ## Print out some data and metadata in verbose mode.
-    ##
-
-    try: # Note this is after decryption.
-        input_doc_num_pages = len(input_doc.pages) # Can raise PdfReadError.
-    except PdfReadError as e:
-        print("\nError in pdfCropMargins: The PyPDF2 module failed with a"
-              "\nPdfReadError in an attempt get the number of pages in input file:\n   {}\n"
-              "\nIs the file a PDF file?  If so then it may be corrupted."
-              "\nIf you have Ghostscript installed you can attempt to fix"
-              "\nthe document by using the pdfCropMargins option '--gsFix'"
-              "\n(assuming you are not using that option already).  That option"
-              "\ncan also convert some PostScript files to a readable format."
-              "\n\nThe error message was:\n   {}".format(fixed_input_doc_pathname, e),
-              file=sys.stderr)
-        ex.cleanup_and_exit(1)
-
-    if args.verbose:
-        print(f"\nThe input document has {input_doc_num_pages} pages.")
-
-    try: # This is needed because the call sometimes just raises an error.
-        metadata_info = input_doc.metadata
-    except (PdfReadError, ParseError):
-        print("\nWarning: Document metadata could not be read.", file=sys.stderr)
-        metadata_info = None
-
-    if args.verbose and not metadata_info:
-        print("\nNo readable metadata in the document.")
-    elif args.verbose:
-        try:
-            print("\nThe document's metadata, if set:\n")
-            print("   The Author attribute set in the input document is:\n      %s"
-                  % (metadata_info.author))
-            print("   The Creator attribute set in the input document is:\n      %s"
-                  % (metadata_info.creator))
-            print("   The Producer attribute set in the input document is:\n      %s"
-                  % (metadata_info.producer))
-            print("   The Subject attribute set in the input document is:\n      %s"
-                  % (metadata_info.subject))
-            print("   The Title attribute set in the input document is:\n      %s"
-                  % (metadata_info.title))
-        # Some metadata cannot be decoded or encoded, at least on Windows.  Could
-        # print from a function instead to write all the lines which can be written.
-        except (UnicodeDecodeError, UnicodeEncodeError):
-            print("\nWarning: Could not write all the document's metadata to the screen."
-                  "\nGot a UnicodeEncodeError or a UnicodeDecodeError.", file=sys.stderr)
-    return input_doc, tmp_input_doc, metadata_info, fixed_input_doc_file_object, input_doc_num_pages
-
 def get_set_of_page_numbers_to_crop(input_doc_num_pages):
     """Compute the set containing the pyPdf page number of all the pages
     which the user has selected for cropping from the command line."""
@@ -1406,53 +1074,6 @@ def get_set_of_page_numbers_to_crop(input_doc_num_pages):
     elif args.verbose:
         print("\nAll the pages of the document will be cropped.")
     return page_nums_to_crop
-
-# TODO: pymupdf upgrade, delete this whole function
-def write_pdf_file(output_doc_pathname, output_doc, tmp_output_doc, input_doc, tmp_input_doc,
-                   metadata_info, producer_mod):
-    """Write out the pdf file from `output_doc` to the file at `output_doc_filename`."""
-    if args.verbose:
-        print("\nWriting the cropped PDF file.")
-
-    try:
-        output_doc_stream = open(output_doc_pathname, "wb")
-    except OSError:
-        print("Error in pdfCropMargins: Could not open output document with "
-              "filename '{}'".format(output_doc_pathname))
-        ex.cleanup_and_exit(1)
-
-    try:
-        output_doc.write(output_doc_stream)
-    except (KeyboardInterrupt, EOFError):
-        raise
-    except PyPdfError: # PyPDF2 can raise various exceptions.
-        try:
-            # We know the write succeeded on tmp_output_doc or we wouldn't be here.
-            # Malformed document catalog info can cause write failures, so get
-            # a new output_doc without that data and try the write again.
-            print("\nWrite failure, trying one more time...", file=sys.stderr)
-            output_doc_stream.close()
-            output_doc_stream = open(output_doc_pathname, "wb")
-            output_doc, tmp_output_doc, setup_output_document(
-                    input_doc, tmp_input_doc, metadata_info, producer_mod,
-                    copy_document_catalog=False)
-            output_doc.write(output_doc_stream)
-            print("\nWarning: Document catalog data caused a write failure.  A retry"
-                  "\nwithout that data succeeded.  No document catalog information was"
-                  "\ncopied to the cropped output file.  Try fixing the PDF file.  If"
-                  "\nyou have ghostscript installed, run pdfCropMargins with the '--gsFix'"
-                  "\noption.  You can also try blacklisting some of the document catalog"
-                  "\nitems using the '--dcb' option.", file=sys.stderr)
-        except (KeyboardInterrupt, EOFError):
-            raise
-        except: # Give up... PyPDF2 can raise many errors for many reasons.
-            print("\nError in pdfCropMargins: The pyPdf program failed in trying to"
-                  "\nwrite out a PDF file of the document.  The document may be"
-                  "\ncorrupted.  If you have Ghostscript, try using the '--gsFix'"
-                  "\noption (assuming you are not already using it).", file=sys.stderr)
-            ex.cleanup_and_exit(1)
-
-    output_doc_stream.close()
 
 def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pathname,
                      bounding_box_list=None):
@@ -1521,28 +1142,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     ##
 
     full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(
-                                              fixed_input_doc_mupdf_wrapper, skip_pre_crop=False)
-    # The below return values aren't used, but the function is called to replicate
-    # its side-effects on `tmp_input_doc`.
-    #tmp_full_page_box_list, tmp_rotation_list = get_full_page_box_list_assigning_media_and_crop(
-    #                                        tmp_input_doc, quiet=True, skip_pre_crop=False)
-
-
-    """
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # TODO from here down, start using the above pymupdf thing...
-    # NOTE TODO BUG: currently NOT setting/detecting the producer modifier change.
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    input_doc, tmp_input_doc, fixed_input_doc_file_object = fixed_input_doc_mupdf_wrapper.return_pypdf_pdfreader()
-    fixed_input_doc_mupdf_wrapper.close_document()
-
-    ##
-    ## Define a `PdfWriter` object and copy `input_doc` info over to it.
-    ##
-
-    output_doc, tmp_output_doc = setup_output_document(input_doc, tmp_input_doc,
-                                                       metadata_info, producer_mod)
-    """
+                                              fixed_input_doc_mupdf_wrapper)
 
     ##
     ## Write out the PDF document again, with the CropBox and MediaBox reset.
@@ -1563,7 +1163,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     if not bounding_box_list and not args.restore:
         bounding_box_list = get_bounding_box_list(doc_with_crop_and_media_boxes_name,
-                fixed_input_doc_mupdf_wrapper, full_page_box_list, page_nums_to_crop, args, PdfWriter)
+                fixed_input_doc_mupdf_wrapper, full_page_box_list, page_nums_to_crop, args)
         if args.verbose:
             print("\nThe bounding boxes are:")
             for pNum, b in enumerate(bounding_box_list):
@@ -1585,8 +1185,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
         delta_page_nums = ("N/A","N/A","N/A","N/A")
 
     ##
-    ## Apply the calculated crops to the pages of the PdfReader input_doc.
-    ## These pages are copied to the PdfWriter output_doc.
+    ## Apply the calculated crops to the pages.
     ##
 
     apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
