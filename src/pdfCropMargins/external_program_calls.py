@@ -193,7 +193,6 @@ def get_temporary_filename(extension="", use_program_temp_dir=True):
     tmp_output_file.close() # This deletes the file, too, but it is empty in this case.
     return tmp_output_filename
 
-
 # The global directory that all temporary files are written to.  Other modules
 # all use the definition from this module.  This makes it easy to clean up all
 # the possibly large files, even on KeyboardInterrupt, by just deleting this

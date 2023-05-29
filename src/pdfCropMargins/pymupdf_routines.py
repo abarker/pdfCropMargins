@@ -227,6 +227,7 @@ New full page sizes after cropping, in PDF format (lbrt):
 
 def convert_box_pymupdf_to_pdf(box_pymupdf, page):
     """Convert a box from PyMuPDF format to PDF format."""
+    # TODO: Note these funs were not needed, but still make a copy and might be needed later.
     return fitz.Rect(box_pymupdf)
 
     # Below was not needed.
@@ -239,6 +240,7 @@ def convert_box_pymupdf_to_pdf(box_pymupdf, page):
 
 def convert_box_pdf_to_pymupdf(box_pdf, page):
     """Convert a box from PDF format to PyMuPDF format."""
+    # TODO: Note these funs were not needed, but still make a copy and might be needed later.
     return fitz.Rect(box_pdf)
 
     # Below was not needed.
@@ -273,25 +275,47 @@ def test_conversions():
 
 #test_conversions()
 
+# TODO pymupdf upgrade, need to adjust for other boxes than mediabox anymore??????????
 def get_box(page, boxstring):
     """Return the box for the specified box string, converted to PyPDF2 coordinates which
     assume that bottom-left is the origin.  Pymupdf uses the top-left (as does PDF itself).
     It also shifts all but the mediabox to have zero be the reference for the top y value
     (shifting it by the value of the mediabox top y value)."""
+    if boxstring != "mediabox":
+        mediabox = page.mediabox
     box = getattr(page, boxstring)
-    # TODO: Still need to shift for zeroing out of all but mediabox top coord? (see pymupdf glossary)
-    # https://pymupdf.readthedocs.io/en/latest/glossary.html#MediaBox
     converted_box = convert_box_pymupdf_to_pdf(box, page)
-    #converted_box[1], converted_box[3] = converted_box[3], converted_box[1] # fixes top/bottom prob but crops now negative of original...
+
+    # Need to shift for pymupdf zeroing out the top y coordinate of all
+    # but the mediabox. See the glossary:
+    # https://pymupdf.readthedocs.io/en/latest/glossary.html#MediaBox
+    if boxstring != "mediabox":
+        converted_box[1] += mediabox[1]
+        converted_box[3] += mediabox[1]
+
     return converted_box
 
 def set_box(page, boxstring, box):
     """Set the box for the specified box string, converted to PyPDF2 coordinates which
     assume that bottom-left is the origin.  See `get_box`."""
+    if boxstring != "mediabox":
+        mediabox = page.mediabox
     set_box_method = getattr(page, "set_" + boxstring)
     converted_box = convert_box_pdf_to_pymupdf(box, page)
-    #converted_box[1], converted_box[3] = converted_box[3], converted_box[1] # fixes top/bottom prob but crops now negative of original...
-    set_box_method(converted_box)
+
+    # Need to shift for pymupdf zeroing out the top y coordinate of all
+    # but the mediabox. See the glossary:
+    # https://pymupdf.readthedocs.io/en/latest/glossary.html#MediaBox
+    if boxstring != "mediabox":
+        converted_box[1] -= mediabox[1]
+        converted_box[3] -= mediabox[1]
+
+    try:
+        set_box_method(converted_box)
+    except ValueError:
+        print(f"\nWarning in pdfCropMargins: The {boxstring} could not be written"
+              f" to the page,\nprobably a conflict with the mediabox.",
+              file=sys.stdout)
 
 class MuPdfDocument:
     """Holds `pyMuPDF` document and PyMuPDF pages of the document for the GUI
