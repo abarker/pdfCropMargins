@@ -3,6 +3,18 @@
 History
 =======
 
+1.2.0 (2023-03-12)
+------------------
+
+Changes:
+
+* Added deprecation warnings for the options ``--docCatBlacklist``,
+  ``--docCatWhitelist``, ``--gsRender``, and ``--gsBbox``.  They will be
+  removed in version 3.0.  The latter two have equivalent ``-c`` options.  The
+  former two no longer work because the PyPDF2 dependency will be fully
+  replaced with PyMuPDF.  PyMuPDF by default copies over the full document
+  catalog and should be more compliant with PDF specifications.
+
 1.1.1[7-8] (2023-03-12)
 -----------------------
 
