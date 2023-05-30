@@ -661,15 +661,15 @@ cmd_parser.add_argument("-A", "--noundosave", action="store_true", help="""
 
 cmd_parser.add_argument("-gsf", "--gsFix", action="store_true", help="""
 
-   Attempt to repair the input PDF file with Ghostscript before it is read-in
-   with PyPdf.  This requires that Ghostscript be available.  (See the general
-   description text above for the actual command that is run.)  This can also
-   be used to automatically convert some PostScript files (.ps) to PDF for
-   cropping.  The repaired PDF is written to a temporary file; the original PDF
-   file is not modified.  The original filename is treated as usual as far as
-   automatic name-generation, the '--modify-original' option, and so forth.
-   This option is often helpful if the program hangs or raises an error due to
-   a corrupted PDF file.  Note that when re-cropping a file already cropped by
+   Attempt to repair the input PDF file with Ghostscript before it is read-in.
+   This requires that Ghostscript be available.  (See the general description
+   text above for the actual command that is run.)  This can also be used to
+   automatically convert some PostScript files (.ps) to PDF for cropping.  The
+   repaired PDF is written to a temporary file; the original PDF file is not
+   modified.  The original filename is treated as usual as far as automatic
+   name-generation, the '--modify-original' option, and so forth.  This option
+   is often helpful if the program hangs or raises an error due to a corrupted
+   PDF file.  Note that when re-cropping a file already cropped by
    pdfCropMargins this option is probably not necessary, and if it is used in a
    re-crop (at least with current versions of Ghostscript) it will reset the
    Producer metadata which the pdfCropMargins program uses to tell if the file

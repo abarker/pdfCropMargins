@@ -53,6 +53,7 @@ import os
 import shutil
 import time
 from decimal import Decimal
+from warnings import warn
 
 try:
     import readline # Makes prompts go to stdout rather than stderr.
@@ -830,6 +831,10 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info, producer_mod,
         else:
             return root_object
 
+    if args.docCatBlacklist or args.docCatWhitelist:
+        warn("\nThe blacklist and whitelist options for the document catalog are deprecated"
+                " and will be removed in version 3.0.", DeprecationWarning, 2)
+
     doc_cat_whitelist = args.docCatWhitelist.split()
     if "ALL" in doc_cat_whitelist:
         doc_cat_whitelist = ["ALL"]
@@ -1045,7 +1050,11 @@ def process_command_line_arguments(parsed_args, cmd_parser):
 
     if args.gsRender:
         args.calcbb = "gr" # Backward compat.
+        warn("\nThe --gsRender option is deprecated and will be removed in "
+                "version 3.0.  Use '-c gr' instead.", DeprecationWarning, 2)
     if args.gsBbox:
+        warn("\nThe --gsBbox option is deprecated and will be removed in "
+                "version 3.0.  Use '-c gb' instead.", DeprecationWarning, 2)
         args.calcbb = "gb" # Backward compat.
     if args.calcbb == "m" and not has_mupdf:
         print("Error in pdfCropMargins: The option '--calcbb m' was selected"
