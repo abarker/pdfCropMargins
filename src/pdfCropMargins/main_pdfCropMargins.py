@@ -42,12 +42,12 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 # Some general notes, useful for reading the code.
 #
-# Margins are conveniently described as left, bottom, right, and top (lbrt). Boxes
+# Margins are described as left, bottom, right, and top (lbrt). Boxes
 # in pypdf2 and PDF are defined by the lower-left point's x and y values
-# followed by the upper-right point's x and y values.  This is equivalent
-# information (since x and y is implicit in the margin names) but the viewpoint
-# is slightly different.  The origin is at the lower left. (Note that using
-# the top left as origin results in ltrb ordering.)
+# followed by the upper-right point's x and y values, which is equivalent
+# information (since x and y are implicit in the margin names).
+# The origin is at the lower left. The pymupdf program uses the top left
+# as origin, which results in ltrb ordering:
 #
 # From: https://github.com/pymupdf/PyMuPDF/issues/317
 #    (Py-)MuPDF always uses a page's top-left point as the origin (0,0) of its
@@ -65,7 +65,7 @@ Source code site: https://github.com/abarker/pdfCropMargins
 #
 # This program uses pymupdf, but uses the PDF and pypdf2 convention (mainly
 # because it originally used pypdf2).  All values are converted by a wrapper
-# around the pymupdf routines that are called (in pymupdf_routines).
+# around the pymupdf routines, which are in the module pymupdf_routines.
 
 import sys
 import os
@@ -267,7 +267,7 @@ def get_full_page_box_assigning_media_and_crop(page):
     page.original_media_box = get_box(page, "mediabox")
     page.original_crop_box = get_box(page, "cropbox")
 
-    #box_string = ["m", "c"] # TODO TODO pymupdf upgrade, temporarily so intersect is not used, may not work right...
+    box_string = ["m", "c"]
 
     first_loop = True
     for box_string in args.fullPageBox:
@@ -298,30 +298,14 @@ def apply_precrop(rotation, full_box, page):
     # absolutePreCrop4 arguments to take into account rotations to the page).
     precrop_box = mod_box_for_rotation(args.absolutePreCrop4, rotation)
 
-    # pymupdf upgrade
-    #print("\nxxxxx full_box before precrop", full_box)
-    #print("xxxxx full_box before precrop, converted to pymupdf", convert_box_pdf_to_pymupdf(full_box, page))
     full_box = [float(full_box[0]) + precrop_box[0],
                 float(full_box[1]) + precrop_box[1],
                 float(full_box[2]) - precrop_box[2],
                 float(full_box[3]) - precrop_box[3],
                 ]
 
-    # pymupdf upgrade
-    #print("xxxxx full_box after precrop values applied", Rect(full_box))
-    #print("xxxxx full_box after precrop values applied, converted to pymupdf", convert_box_pdf_to_pymupdf(Rect(full_box),page))
-    #print()
-
     set_box(page, "mediabox", full_box)
-    #set_box(page, "cropbox", full_box)
-    # TODO pymupdf upgrade, causes problem...
-    #page.set_cropbox(full_box) # TODO pymupdf upgrade: Reset all the other boxes???????
-    # See: https://pymupdf.readthedocs.io/en/latest/page.html#Page.set_mediabox
-    # It also returns other boxes to default values.  But when is artbox set for restore?
-    # Is there a better way now for version 3.0????
-    # Cannot set the cropbox after the mediabox...
-    #print("xxxx mediabox after being set on page, in pymupdf format:", page.mediabox)
-    #print("xxxx mediabox after being set on page, in pdf format:", get_box(page, "mediabox"))
+    set_box(page, "cropbox", full_box)
     return full_box
 
 def get_full_page_box_list_assigning_media_and_crop(fixed_input_doc_mupdf_wrapper, quiet=False):
@@ -681,16 +665,13 @@ def check_producer_modifier(metadata_info):
         already_cropped_by_this_program = False
     return producer_mod, already_cropped_by_this_program
 
-def set_cropped_metadata_pymupdf(document_wrapper_class, metadata_info, producer_mod):
+def set_cropped_metadata(document_wrapper_class, metadata_info, producer_mod):
     """Set the metadata for the output document.  Mostly unchanged, but
     "Producer" has a string appended to indicate that this program modified the
     file.  That allows for the undo operation to make sure that this
     program cropped the file in the first place."""
     metadata_info["producer"] = metadata_info["producer"] + producer_mod
-    print("xxxxxxxx", metadata_info)
     document_wrapper_class.set_metadata(metadata_info)
-    print("XXXXXXXXXXXXx new producer string", metadata_info["producer"])
-    return metadata_info
 
 def serialize_boxlist(boxlist):
     """Return the string for the list of boxes."""
@@ -711,32 +692,6 @@ def deserialize_boxlist(boxlist):
             return None # TODO, maybe delete while key...
     return deserialized_boxlist
 
-def get_xml_metadata(fixed_input_doc_mupdf_wrapper, key):
-    """Return the XML metadata with the given key, if available."""
-    # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
-    metadata = {}  # Make a local metadata dict.
-    what, value = doc.xref_get_key(-1, "Info")  # /Info key in the trailer
-    if what != "xref":
-        return None # No metadata.
-    else:
-        xref = int(value.replace("0 R", ""))  # Extract the metadata xref.
-        for key in doc.xref_get_keys(xref):
-            metadata[key] = doc.xref_get_key(xref, key)[1]
-    #pprint(metadata)
-    if key in metadata:
-        return metadata[key]
-    return None
-
-def set_xml_metadata(key, data_string):
-    """Set XML metadata with the arbitrary string `data_string` as the data.  Any
-    key can be used also, provided it is compliant with PDF specs.  To delete data
-    for a key set the key to have the string "null" as its data value."""
-    # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
-    what, value = doc.xref_get_key(-1, "Info")  # /Info key in the trailer
-    if what != "xref":
-        raise ValueError("PDF has no metadata")
-    xref = int(value.replace("0 R", ""))  # Extract the metadata xref.
-    doc.xref_set_key(xref, key, fitz.get_pdf_str(data_string)) # Add the data info.
 
 def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
                                           already_cropped_by_this_program):
@@ -1151,8 +1106,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
 
     producer_mod, already_cropped_by_this_program = check_producer_modifier(
                                                               metadata_info)
-    metadata_info = set_cropped_metadata_pymupdf(fixed_input_doc_mupdf_wrapper,
-                                                 metadata_info, producer_mod)
+    set_cropped_metadata(fixed_input_doc_mupdf_wrapper, metadata_info, producer_mod)
 
     if args.prevCropped:
         fixed_input_doc_file_object.close() # TODO TODO: this needs updating for pymupdf

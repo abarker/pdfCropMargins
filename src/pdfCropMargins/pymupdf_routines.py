@@ -25,41 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-#TODO
-"""
-
-https://www.phind.com/search?cache=8f133ae7-0754-494b-abc7-1ab6b670ed5e
-
-write a python method to convert a pymupdf document into a pypdf2 documentreader
-Answer
-
-To convert a PyMuPDF document into a PyPDF2 PdfFileReader object, you can use
-the following approach:
-
-    Save the PyMuPDF document to a temporary file.
-    Read the temporary file using PyPDF2 PdfFileReader.
-
-Here's a Python method that performs the conversion:
-
-This method takes a fitz.Document object as input and returns a
-PyPDF2.PdfFileReader object. It creates a temporary file to store the PyMuPDF
-document before reading it with PyPDF2.
-
-Pros:
-
-    Straightforward implementation
-    Works with both libraries
-
-Cons:
-
-    Requires saving the document to a temporary file, which might impact performance
-    May not preserve all features or formatting when converting between the two libraries
-
-Keep in mind that PyMuPDF and PyPDF2 have different feature sets, so some
-features or formatting might be lost during the conversion. If possible, it's
-better to choose one library and stick with it throughout your project.
-
-"""
 import sys
 import warnings
 import copy
@@ -92,164 +57,17 @@ def intersect_pdf_boxes(box1, box2, page):
     intersection = box1_pymupdf.intersect(box2_pymupdf)
     return convert_box_pymupdf_to_pdf(intersection, page)
 
-"""
-
-original box:
-bounding: 34 	 [127.0, 556.0, 534.0, 698.0]
-
-
-xxxx Set mediabox back to this value:  Rect(0.0, 0.0, 612.0, 792.0)
-xxxx Read this value back from mediabox, pymupdf format: Rect(0.0, 0.0, 612.0, 792.0)
-transformation_matrix Matrix(1.0, 0.0, 0.0, -1.0, 0.0, 792.0)
-xxxx Read this value back from mediabox, pdf format: Rect(0.0, 0.0, 612.0, 792.0)
-
-	34	 [114.3, 500.4, 541.8, 707.4]
-transformation_matrix Matrix(1.0, 0.0, 0.0, -1.0, 0.0, 792.0)
-
-xxxxx Now setting mediabox to this cropped value: [114.3, 500.4, 541.8, 707.4]
-
-xxxxx Reading back mediabox for the cropped value, pymupdf format: Rect(114.3, 84.6, 541.8, 291.6)
-transformation_matrix Matrix(1.0, 0.0, 0.0, -1.0, -114.30000305175781, 291.6000061035156)
-
-xxxxx Reading back mediabox for the cropped value, pdf format: Rect(228.60000610351562, 0.0, 656.0999755859375, 207.0)
-
-===original below==========
-
-Original full page sizes (rounded to 8 digits) in PDF format (lbrt):
-	1   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	2   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	3   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	4   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	5   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	6   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	7   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	8   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	9   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	10   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	11   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	12   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	13   rot = 90  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	14   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	15   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	16   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	17   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	18   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	19   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	20   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	21   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	22   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	23   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	24   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	25   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	26   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	27   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	28   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	29   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	30   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	31   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	32   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	33   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-	34   rot = 0  	 [0E-8, 0E-8, 612.00000000, 792.00000000]
-
-The bounding boxes are:
-	 1 	 [18.0, 101.0, 534.0, 732.0]
-	 2 	 [131.0, 99.0, 535.0, 698.0]
-	 3 	 [131.0, 134.0, 535.0, 698.0]
-	 4 	 [131.0, 98.0, 535.0, 698.0]
-	 5 	 [131.0, 107.0, 534.0, 698.0]
-	 6 	 [131.0, 115.0, 534.0, 698.0]
-	 7 	 [131.0, 103.0, 534.0, 698.0]
-	 8 	 [131.0, 98.0, 534.0, 698.0]
-	 9 	 [131.0, 217.0, 541.0, 698.0]
-	 10 	 [131.0, 103.0, 535.0, 698.0]
-	 11 	 [131.0, 99.0, 534.0, 698.0]
-	 12 	 [131.0, 101.0, 535.0, 698.0]
-	 13 	 [153.0, 75.0, 533.0, 698.0]
-	 14 	 [131.0, 110.0, 535.0, 698.0]
-	 15 	 [131.0, 101.0, 535.0, 698.0]
-	 16 	 [131.0, 101.0, 534.0, 698.0]
-	 17 	 [130.0, 99.0, 534.0, 698.0]
-	 18 	 [131.0, 61.0, 514.0, 698.0]
-	 19 	 [144.0, 111.0, 534.0, 698.0]
-	 20 	 [130.0, 101.0, 535.0, 698.0]
-	 21 	 [131.0, 99.0, 534.0, 698.0]
-	 22 	 [131.0, 99.0, 535.0, 698.0]
-	 23 	 [131.0, 101.0, 535.0, 698.0]
-	 24 	 [131.0, 99.0, 535.0, 698.0]
-	 25 	 [131.0, 104.0, 535.0, 698.0]
-	 26 	 [131.0, 99.0, 535.0, 698.0]
-	 27 	 [131.0, 99.0, 535.0, 698.0]
-	 28 	 [131.0, 99.0, 534.0, 698.0]
-	 29 	 [131.0, 99.0, 535.0, 698.0]
-	 30 	 [131.0, 99.0, 535.0, 698.0]
-	 31 	 [131.0, 99.0, 535.0, 698.0]
-	 32 	 [128.0, 99.0, 535.0, 698.0]
-	 33 	 [127.0, 106.0, 535.0, 698.0]
-	 34 	 [127.0, 556.0, 534.0, 698.0]
-
-New full page sizes after cropping, in PDF format (lbrt):
-	1	 [16.2, 90.9, 541.8, 738]
-	2	 [117.9, 89.1, 542.7, 707.4]
-	3	 [117.9, 120.6, 542.7, 707.4]
-	4	 [117.9, 88.2, 542.7, 707.4]
-	5	 [117.9, 96.3, 541.8, 707.4]
-	6	 [117.9, 103.5, 541.8, 707.4]
-	7	 [117.9, 92.7, 541.8, 707.4]
-	8	 [117.9, 88.2, 541.8, 707.4]
-	9	 [117.9, 195.3, 548.1, 707.4]
-	10	 [117.9, 92.7, 542.7, 707.4]
-	11	 [117.9, 89.1, 541.8, 707.4]
-	12	 [117.9, 90.9, 542.7, 707.4]
-	13	 [137.7, 67.5, 540.9, 707.4]
-	14	 [117.9, 99, 542.7, 707.4]
-	15	 [117.9, 90.9, 542.7, 707.4]
-	16	 [117.9, 90.9, 541.8, 707.4]
-	17	 [117, 89.1, 541.8, 707.4]
-	18	 [117.9, 54.9, 523.8, 707.4]
-	19	 [129.6, 99.9, 541.8, 707.4]
-	20	 [117, 90.9, 542.7, 707.4]
-	21	 [117.9, 89.1, 541.8, 707.4]
-	22	 [117.9, 89.1, 542.7, 707.4]
-	23	 [117.9, 90.9, 542.7, 707.4]
-	24	 [117.9, 89.1, 542.7, 707.4]
-	25	 [117.9, 93.6, 542.7, 707.4]
-	26	 [117.9, 89.1, 542.7, 707.4]
-	27	 [117.9, 89.1, 542.7, 707.4]
-	28	 [117.9, 89.1, 541.8, 707.4]
-	29	 [117.9, 89.1, 542.7, 707.4]
-	30	 [117.9, 89.1, 542.7, 707.4]
-	31	 [117.9, 89.1, 542.7, 707.4]
-	32	 [115.2, 89.1, 542.7, 707.4]
-	33	 [114.3, 95.4, 542.7, 707.4]
-	34	 [114.3, 500.4, 541.8, 707.4]
-
-"""
-
 def convert_box_pymupdf_to_pdf(box_pymupdf, page):
     """Convert a box from PyMuPDF format to PDF format."""
-    # TODO: Note these funs were not needed, but still make a copy and might be needed later.
+    # Note these funs were not needed; this still makes a copy and might be needed later.
+    # This issue with raw PDF values didn't matter: https://github.com/pymupdf/PyMuPDF/issues/317
     return fitz.Rect(box_pymupdf)
-
-    # Below was not needed.
-    # See: https://github.com/pymupdf/PyMuPDF/issues/317
-    transformation_matrix = page.transformation_matrix
-    #print("transformation_matrix", transformation_matrix)
-    box_pdf = fitz.Rect(box_pymupdf) * ~page.transformation_matrix # Note ~ takes inverse.
-    #box_pdf[1], box_pdf[3] = box_pdf[3], box_pdf[1]
-    return box_pdf
 
 def convert_box_pdf_to_pymupdf(box_pdf, page):
     """Convert a box from PDF format to PyMuPDF format."""
-    # TODO: Note these funs were not needed, but still make a copy and might be needed later.
+    # Note these funs were not needed; this still makes a copy and might be needed later.
+    # This issue with raw PDF values didn't matter: https://github.com/pymupdf/PyMuPDF/issues/317
     return fitz.Rect(box_pdf)
-
-    # Below was not needed.
-    # See: https://github.com/pymupdf/PyMuPDF/issues/317
-    transformation_matrix = page.transformation_matrix
-    #print("transformation_matrix", transformation_matrix)
-    box_pymupdf = fitz.Rect(box_pdf) * page.transformation_matrix
-    #box_pdf[1], box_pdf[3] = box_pdf[3], box_pdf[1]
-    return box_pymupdf
 
 def test_conversions():
     """Test the conversion from pymupdf format to pypdf2 format and back."""
@@ -275,7 +93,6 @@ def test_conversions():
 
 #test_conversions()
 
-# TODO pymupdf upgrade, need to adjust for other boxes than mediabox anymore??????????
 def get_box(page, boxstring):
     """Return the box for the specified box string, converted to PyPDF2 coordinates which
     assume that bottom-left is the origin.  Pymupdf uses the top-left (as does PDF itself).
@@ -431,8 +248,6 @@ class MuPdfDocument:
         """Save a document, possibly repairing/cleaning it."""
         # See here:
         #    https://pymupdf.readthedocs.io/en/latest/document.html#Document.save
-
-        # TODO: pymupdf upgrade, add a try/except around this.
         self.document.save(file_path)
 
     def close_document(self):
@@ -582,4 +397,31 @@ class MuPdfDocument:
         image_ppm = pixmap.tobytes("png")  # Make PPM image from pixmap for tkinter.
         image_tl = clip.tl # Clip position (top left).
         return image_ppm, image_tl, image_height, image_width
+
+    def get_xml_metadata(self, key):
+        """Return the XML metadata with the given key, if available."""
+        # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
+        metadata = {}  # Make a local metadata dict.
+        what, value = self.document.xref_get_key(-1, "Info")  # /Info key in the trailer
+        if what != "xref":
+            return None # No metadata.
+        else:
+            xref = int(value.replace("0 R", ""))  # Extract the metadata xref.
+            for key in self.document.xref_get_keys(xref):
+                metadata[key] = self.document.xref_get_key(xref, key)[1]
+        #pprint(metadata)
+        if key in metadata:
+            return metadata[key]
+        return None
+
+    def set_xml_metadata(self, key, data_string):
+        """Set XML metadata with the arbitrary string `data_string` as the data.  Any
+        key can be used also, provided it is compliant with PDF specs.  To delete data
+        for a key set the key to have the string "null" as its data value."""
+        # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
+        what, value = self.document.xref_get_key(-1, "Info")  # /Info key in the trailer
+        if what != "xref":
+            raise ValueError("PDF has no metadata")
+        xref = int(value.replace("0 R", ""))  # Extract the metadata xref.
+        self.document.xref_set_key(xref, key, fitz.get_pdf_str(data_string)) # Add the data info.
 
