@@ -39,7 +39,6 @@ try: # Extra dependencies for the GUI version.  Make sure they are installed.
         from fitz import Rect
         import os
         import tempfile # Maybe later write to the regular tmp dir...
-        from PyPDF2 import PdfFileReader
     if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 16, 17]:
         has_mupdf = False
         MuPdfDocument = None
@@ -255,45 +254,6 @@ class MuPdfDocument:
         self.page_list = []
         self.document.close()
         self.clear_cache()
-
-    def return_pypdf_pdfreader(self):
-        """Return a PyPDF `PdfReader` class instance for the current document.  Does not
-        close the document."""
-        from PyPDF2 import PdfReader
-
-        doc = self.document
-
-        # Save the PyMuPDF document to a temporary file
-        tmp_path = ex.get_temporary_filename()
-        doc.save(tmp_path)
-
-        # Read the temporary file using PyPDF2 PdfFileReader
-        try:
-            input_doc_file_object = open(tmp_path, "rb")
-        except OSError:
-            print("Error in pdfCropMargins: Could not open output document with "
-                  "filename '{}'".format(tmp_path))
-            ex.cleanup_and_exit(1)
-
-        try:
-            strict_mode = False
-            input_doc = PdfReader(input_doc_file_object, strict=strict_mode)
-            tmp_input_doc = PdfReader(input_doc_file_object, strict=strict_mode)
-        except (KeyboardInterrupt, EOFError):
-            raise
-        except Exception as e: # PyPDF2 can raise various, catch the rest here.
-            print("\nError in pdfCropMargins: The PyPDF2 module failed in an"
-                  "\nattempt to read this input file:\n   {}\n"
-                  "\nIs the file a PDF file?  If so then it may be corrupted."
-                  "\nIf you have Ghostscript installed you can attempt to fix"
-                  "\nthe document by using the pdfCropMargins option '--gsFix'"
-                  "\n(assuming you are not using that option already).  That option"
-                  "\ncan also convert some PostScript files to a readable format."
-                  "\n\nThe error message was:\n   {}".format(tmp_path, e),
-                  file=sys.stderr)
-            ex.cleanup_and_exit(1)
-
-        return input_doc, tmp_input_doc, input_doc_file_object
 
     def get_page_ppm_for_crop(self, page_num, cache=False):
         """Return an unscaled and unclipped `.ppm` file suitable for cropping the page.

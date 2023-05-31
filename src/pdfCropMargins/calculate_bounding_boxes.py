@@ -69,15 +69,15 @@ args = None # Command-line arguments; set in get_bounding_box_list.
 # The main functions of the module.
 #
 
-def get_bounding_box_list(input_doc_fname, fixed_input_doc_mupdf_wrapper, full_page_box_list,
+def get_bounding_box_list(input_doc_fname, input_doc_mupdf_wrapper, full_page_box_list,
                           set_of_page_nums_to_crop, argparse_args):
     """Calculate a bounding box for each page in the document.  The
     `input_doc_fname` argument is the filename of the document's original PDF
-    file, `input_doc` is the `PdfReader` for the document.  The argument
-    `full_page_box_list` is a list of the full-page-size boxes (which is used
-    to correct for any nonzero origins in the PDF coordinates).  The
-    `set_of_page_nums_to_crop` argument is the set of page numbers to crop; it
-    is passed so that unnecessary calculations can be skipped.  The
+    file, `input_doc_mupdf_wrapper` is a class wrapping the PyMuPDF document.
+    The argument `full_page_box_list` is a list of the full-page-size boxes
+    (which is used to correct for any nonzero origins in the PDF coordinates).
+    The `set_of_page_nums_to_crop` argument is the set of page numbers to crop;
+    it is passed so that unnecessary calculations can be skipped.  The
     `argparse_args` argument should be passed the args parsed from the command
     line by argparse.  The function returns the list of bounding boxes."""
     global args
@@ -96,7 +96,8 @@ def get_bounding_box_list(input_doc_fname, fixed_input_doc_mupdf_wrapper, full_p
                   "\nhave Ghostscript installed.", file=sys.stderr)
             ex.cleanup_and_exit(1)
 
-        bbox_list = get_bounding_box_list_render_image(input_doc_fname, fixed_input_doc_mupdf_wrapper)
+        bbox_list = get_bounding_box_list_render_image(input_doc_fname,
+                                                       input_doc_mupdf_wrapper)
 
     # Now we need to use the full page boxes to translate for non-zero origin.
     bbox_list = correct_bounding_box_list_for_nonzero_origin(bbox_list, full_page_box_list)
@@ -119,9 +120,9 @@ def correct_bounding_box_list_for_nonzero_origin(bbox_list, full_box_list):
                                  bbox[2]+left_x, bbox[3]+lower_y])
     return corrected_box_list
 
-def get_bounding_box_list_render_image(pdf_file_name, fixed_input_doc_mupdf_wrapper):
+def get_bounding_box_list_render_image(pdf_file_name, input_doc_mupdf_wrapper):
     """Calculate the bounding box list by directly rendering each page of the PDF as
-    an image file.  The MediaBox and CropBox values in `fixed_input_doc_mupdf_wrapper`
+    an image file.  The MediaBox and CropBox values in `input_doc_mupdf_wrapper`
     media boxex should have already been set to the chosen page size before the rendering."""
     if args.calcbb == "m":
         program_to_use = "mupdf"
@@ -166,7 +167,7 @@ def get_bounding_box_list_render_image(pdf_file_name, fixed_input_doc_mupdf_wrap
     bounding_box_list = []
 
     for page_num, tmp_image_file_name in enumerate(outfiles):
-        curr_page = fixed_input_doc_mupdf_wrapper.document[page_num]
+        curr_page = input_doc_mupdf_wrapper.document[page_num]
 
         # Open the image in Pillow.  Retry a few times on fail in case race conditions.
         if program_to_use == "mupdf":

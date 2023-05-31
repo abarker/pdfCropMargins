@@ -243,20 +243,6 @@ def get_full_page_box_assigning_media_and_crop(page):
     while rotation < 0:
         rotation += 360
 
-    # TODO TODO pymupdf upgrade, chatgpt4 told me this:
-    # Documented here: https://pymupdf.readthedocs.io/en/latest/glossary.html
-    #
-    # The MediaBox is the only rectangle for which there is no difference between
-    # MuPDF and PDF coordinate systemsPage.mediabox will always show the same
-    # coordinates as the /MediaBox key in a page’s object definition1. For all other
-    # rectangles, MuPDF transforms y coordinates such that the top border is the
-    # point of reference.
-    print("xxxx pymupdf mediabox", page.mediabox)
-    print("xxxx mediabox pypdf2", get_box(page, "mediabox"))
-    print("xxxx pymupdf cropbox", page.cropbox)
-    print("xxxx cropbox pypdf2", get_box(page, "cropbox"))
-    print("xxxx page.rect", page.rect)
-
     # Save the rotation value in the page's namespace so we can restore it later.
     page.rotationAngle = rotation
 
