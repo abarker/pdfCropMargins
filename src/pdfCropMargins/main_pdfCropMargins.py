@@ -831,6 +831,12 @@ def setup_output_document(input_doc, tmp_input_doc, metadata_info, producer_mod,
         else:
             return root_object
 
+    if args.pdftoppmLocal:
+        warn("\nThe local copy of pdftoppm will no longer be bundled with pdfCropMargins"
+                "\nin some later version after 3.0.  The default option to use MuPDF"
+                "\nshould work on Windows in the same way, or choose another '-c' option.",
+                DeprecationWarning, 2)
+
     if args.docCatBlacklist or args.docCatWhitelist:
         warn("\nThe blacklist and whitelist options for the document catalog are deprecated"
                 " and will be removed in version 3.0.", DeprecationWarning, 2)
