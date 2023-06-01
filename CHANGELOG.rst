@@ -3,6 +3,15 @@
 History
 =======
 
+2.0 (2023-xx-xx)
+----------------
+
+Changes:
+
+* All internal PDF processing is now done with PyMuPDF.  The PyPDF dependency
+  has been removed.
+
+
 1.1.1[7-8] (2023-03-12)
 -----------------------
 

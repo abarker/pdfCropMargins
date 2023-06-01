@@ -48,37 +48,13 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-**New in recent versions (Mar 2023):**
+** PdfCropMargins 2.0 is now out. (June 2023).**
 
-* The minimimum Python version is now Python 3.7 due to several dependencies
-  requiring it.
+* The program now uses PyMuPDF for all internal PDF processing instead of
+  PyPDF.  The PyPDF dependency has been removed.
 
-* You can now use either ``pdf-crop-margins`` or ``pdfcropmargins`` to launch the
-  program from the command line.
-
-* The GUI layout has been updated for more intuitive use of the options that take
-  four values, for the left, bottom, right, and top margins.
-
-* The GUI now displays the smallest delta values on each crop
-  as buttons that take you to the page.  This is useful for fine-tuning crops
-  to not chop off useful information.
-
-* There is now a new ``--cropSafe`` (``-cs``) option which ensures that crops
-  do not exceed the bounding box size when enabled.  The ``--cropSafeMin4``
-  (``-csm4``) option, if set, allows a user-specified extra amount of safe
-  margin beyond the bounding box.
-
-* The new options ``--keepHorizCenter`` (``-khz``) and ``--keepVertCenter``
-  (``-kvc``) have been added.  They force equal cropping on the left and right
-  or top and bottom pages, respectively.  The minimum of the delta values is
-  used on each page.
-
-* Added an option ``--prevCropped`` (``-pc``) which just tests whether or not
-  the document was previously cropped with pdfCropMargins.  This is meant for
-  scripting use.
-
-* The PDF preview in the GUI now resizes properly when the window is reconfigured.
-  The new ``--guiFontSize`` argument can be used to size the font.
+* The options ``--docCatBlacklist`` and ``--docCatWhitelist`` have been removed
+  since PyMuPDF automatically retains the full document catalog.
 
 Installing 
 ==========

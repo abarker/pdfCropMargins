@@ -81,7 +81,8 @@ except ImportError: # Not available on Windows.
 from . import __version__ # Get the version number from the __init__.py file.
 from .manpage_data import cmd_parser, DEFAULT_THRESHOLD_VALUE
 from .prettified_argparse import parse_command_line_arguments
-from .pymupdf_routines import has_mupdf, MuPdfDocument, get_box, set_box, Rect, intersect_pdf_boxes, convert_box_pdf_to_pymupdf, convert_box_pymupdf_to_pdf
+from .pymupdf_routines import (has_mupdf, MuPdfDocument, get_box, set_box, Rect,
+        intersect_pdf_boxes, fitz)
 
 from . import external_program_calls as ex
 project_src_directory = ex.project_src_directory
@@ -634,17 +635,23 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 def check_producer_modifier(metadata_info):
     """Check Producer metadata attribute to see if this program cropped document before.
     Returns the new producer modifier string to add to the producer metadata along with
-    a boolean `already_cropped_by_this_program`."""
-    producer_mod = PRODUCER_MODIFIER # String added to the producer metadata, marks when cropped.
+    a variable `already_cropped_by_this_program`.  That variable can either be `False`
+    or have the value string `"<3.0"` or `">=3.0"."""
+    producer_mod = PRODUCER_MODIFIER_3 # String added to the producer metadata, marks when cropped.
     if metadata_info:
         old_producer_string = metadata_info["producer"]
     else:
         return PRODUCER_MODIFIER, False # Can't read metadata, but maybe can set it.
-    if old_producer_string and old_producer_string.endswith(producer_mod):
+    if old_producer_string and old_producer_string.endswith(PRODUCER_MODIFIER):
         producer_mod = "" # No need to pile up suffixes each time on Producer.
         if args.verbose:
             print("\nThe document was already cropped at least once by pdfCropMargins.")
-        already_cropped_by_this_program = True
+        already_cropped_by_this_program = "<3.0"
+    elif old_producer_string and old_producer_string.endswith(PRODUCER_MODIFIER_3):
+        producer_mod = "" # No need to pile up suffixes each time on Producer.
+        if args.verbose:
+            print("\nThe document was already cropped at least once by pdfCropMargins>=3.0.")
+        already_cropped_by_this_program = ">=3.0"
     else:
         if args.verbose:
             print("\nThe document was not previously cropped by pdfCropMargins.")
@@ -714,27 +721,28 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
                       "\nthe ArtBox in each page, but page", page_num, "has no readable"
                       "\nArtBox.  Leaving that page unchanged.", file=sys.stderr)
                 continue
-            set_box(curr_page, "mediabox", get_box(curr_page, "artbox"))
-            set_box(curr_page, "cropbox", get_box(curr_page, "artbox"))
+            if already_cropped_by_this_program == "<3.0":
+                set_box(curr_page, "mediabox", get_box(curr_page, "artbox"))
+                set_box(curr_page, "cropbox", get_box(curr_page, "artbox"))
+            elif already_cropped_by_this_program == ">=3.0":
+                saved_boxes = fixed_input_doc_mupdf_wrapper.get_xml_metadata(RESTORE_METADATA_KEY)
+                # TODO: finish up here, convert back to Rects.  MOVE NEW RESTORE STUFF OUT OF LOOP!!!
+                pass # TODO pymupdf upgrade, here we get the metadata for the key and set page...
             continue
 
         # Do the save to ArtBox if that option is chosen and Producer is set.
-        args.noundosave = True # TODO TODO debug pymupdf upgrade, cannot save to artbox anymore??????????
         if not args.noundosave and not already_cropped_by_this_program:
-            set_box(curr_page, "artbox", intersect_pdf_boxes(curr_page.original_media_box,
-                                               curr_page.original_crop_box, curr_page))
+            if already_cropped_by_this_program == "<3.0":
+                set_box(curr_page, "artbox", intersect_pdf_boxes(curr_page.original_media_box,
+                                                   curr_page.original_crop_box, curr_page))
+            elif already_cropped_by_this_program == ">=3.0":
+                pass # pymupdf upgrade, here is where we set the metadata for the pages, move this part out of loop!!
 
         # Reset the CropBox and MediaBox to their saved original values
         # (they were saved by `get_full_page_box_assigning_media_and_crop`
         # in the `curr_page` object's namespace).
         set_box(curr_page, "mediabox", curr_page.original_media_box)
         set_box(curr_page, "cropbox", curr_page.original_crop_box)
-
-        # pymupdf upgrade
-        #print("\nxxxx Set mediabox back to this value: ", curr_page.original_media_box)
-        #print("xxxx Read this value back from mediabox, pymupdf format:", curr_page.mediabox)
-        #print("xxxx Read this value back from mediabox, pdf format:", get_box(curr_page, "mediabox"))
-        #print()
 
         # Copy the original page without further mods if it wasn't in the range
         # selected for cropping.
@@ -795,6 +803,7 @@ def process_command_line_arguments(parsed_args, cmd_parser):
         print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
         print("Python version:", ex.python_version)
         print("System type:", ex.system_os)
+        print(fitz.__doc__) # Print out PyMuPDF version info.
 
     if len(args.pdf_input_doc) > 1:
         print("\nError in pdfCropMargins: Only one input PDF document is allowed."

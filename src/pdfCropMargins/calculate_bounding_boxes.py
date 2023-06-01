@@ -31,6 +31,7 @@ import sys
 import os
 import glob
 import time
+import io
 from . import external_program_calls as ex
 from . import pymupdf_routines
 
@@ -134,6 +135,10 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc_mupdf_wrapper):
         raise ValueError("Attempting render pages when no rendering method was specified"
                 "\nPassed 'calcbb' argument of '{}'.".format(args.calcbb))
 
+    #
+    # Render all the pages to images.
+    #
+
     if args.verbose:
         print("\nRendering the PDF to images using the " + program_to_use + " program,"
               "\nthis may take a while...")
@@ -166,12 +171,15 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc_mupdf_wrapper):
 
     bounding_box_list = []
 
+    #
+    # Loop over each page and calculate the bounding box for the rendered image.
+    #
+
     for page_num, tmp_image_file_name in enumerate(outfiles):
         curr_page = input_doc_mupdf_wrapper.document[page_num]
 
         # Open the image in Pillow.  Retry a few times on fail in case race conditions.
         if program_to_use == "mupdf":
-            import io
             image = image_list[page_num]
             # Opening directly in Pillow: https://github.com/pymupdf/PyMuPDF/issues/322
             pil_im = Image.open(io.BytesIO(image))
