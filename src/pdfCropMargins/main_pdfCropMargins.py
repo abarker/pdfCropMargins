@@ -300,6 +300,8 @@ def apply_precrop(rotation, full_box, page):
                 float(full_box[3]) - precrop_box[3],
                 ]
 
+    # Note that MediaBox is set FIRST, since PyMuPDF will reset all other boxes
+    # when it is set.
     set_box(page, "mediabox", full_box)
     set_box(page, "cropbox", full_box)
     return full_box
@@ -731,7 +733,9 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
             # Restore any rotation which was originally on the page.
             curr_page.set_rotation(curr_page.rotationAngle)
 
-            # Restore the MediaBox and CropBox to the saved values.
+            # Restore the MediaBox and CropBox to the saved values.  Note that
+            # MediaBox is set FIRST, since PyMuPDF will reset all other boxes
+            # when it is set.
             set_box(curr_page, "mediabox", saved_boxes_list[page_num])
             set_box(curr_page, "cropbox", saved_boxes_list[page_num])
             if args.writeCropDataToFile:
@@ -760,9 +764,11 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
             #set_box(curr_page, "artbox", box) # TODO, old way,
             boxes_to_save_list.append(box)
 
-        # Reset the CropBox and MediaBox to their saved original values
-        # (they were saved by `get_full_page_box_assigning_media_and_crop`
-        # in the `curr_page` object's namespace).
+        # Reset the CropBox and MediaBox to their saved original values (they
+        # were saved by `get_full_page_box_assigning_media_and_crop` in the
+        # `curr_page` object's namespace).  Restore the MediaBox and CropBox to
+        # the saved values.  Note that MediaBox is set FIRST, since PyMuPDF
+        # will reset all other boxes when it is set.
         set_box(curr_page, "mediabox", curr_page.original_media_box)
         set_box(curr_page, "cropbox", curr_page.original_crop_box)
 
@@ -785,12 +791,8 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
 
         # Now set any boxes which were selected to be set via the '--boxesToSet' option.
         if "m" in args.boxesToSet:
+            # Note the MediaBox is always set FIRST, since it resets the other boxes.
             set_box(curr_page, "mediabox", new_cropped_box)
-            # pymupdf upgrade
-            #print("\nxxxxx Now setting mediabox to this cropped value:", new_cropped_box)
-            #print("\nxxxxx Reading back mediabox for the cropped value, pymupdf format:", curr_page.mediabox)
-            #print("\nxxxxx Reading back mediabox for the cropped value, pdf format:", get_box(curr_page, "mediabox"))
-            #print()
         if "c" in args.boxesToSet:
             set_box(curr_page, "cropbox", new_cropped_box)
         if "t" in args.boxesToSet:
