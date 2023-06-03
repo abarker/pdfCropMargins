@@ -32,8 +32,12 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 # TODO: Look at XML data directly to detect if previously cropped, maybe?
 # Doesn't depend on setting Producer string, anyway.  How should it work?
-#
 # Consider automatically converting artbox saves to XML saves.
+
+# TODO: Maybe delete the XML data on restore operations...  Ignore the
+# ArtBoxes, they probably aren't a problem.  They should be fixed by pyMyPDF
+# when MediaBox is set (look up again..)   Might want an option to
+# delete the XML save data.
 
 # TODO: search on xxxxx or zzzzz or DEBUG to get prints to delete after working
 

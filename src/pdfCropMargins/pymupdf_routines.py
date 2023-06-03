@@ -7,6 +7,15 @@ conventions, such as the origin of coordinates and shifting of box
 values other than the MediaBox.  The wrapper converts between the
 formats to return the PyPDF format that the main code expects.
 
+Note that the PyMuPDF program resets all the other boxes when the
+`set_mediabox` method is called.  All other boxes must be fully contained
+within the mediabox for consistency:
+    https://pymupdf.readthedocs.io/en/latest/page.html#Page.set_mediabox
+
+See the `get_box` and `set_box` function comments for other PyMuPDF behavior
+that needs to be taken into account (all but mediabox are translated to start
+at zero, for example).
+
 =========================================================================
 
 Copyright (C) 2020 Allen Barker (Allen.L.Barker@gmail.com)
