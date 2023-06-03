@@ -1,11 +1,13 @@
 """
 
-Code that calls pyMuPDF.
+This module contains a wrapper class, `MuPdfDocument`, which provides
+a wrapper for the PyMuPDF library functions.  The program was originally
+written to use the PyPDF library.  Those libraries use some different
+conventions, such as the origin of coordinates and shifting of box
+values other than the MediaBox.  The wrapper converts between the
+formats to return the PyPDF format that the main code expects.
 
 =========================================================================
-
-Some of this code is heavily modified from the GPL example/demo code found here:
-https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Viewer.py
 
 Copyright (C) 2020 Allen Barker (Allen.L.Barker@gmail.com)
 Source code site: https://github.com/abarker/pdfCropMargins
@@ -22,6 +24,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Some of this code is heavily modified from the GPL example/demo code found here:
+https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Viewer.py
 
 """
 
@@ -47,10 +52,14 @@ except ImportError:
     has_mupdf = False
     MuPdfDocument = None
 
+#
+# Utility functions.
+#
+
 def intersect_pdf_boxes(box1, box2, page):
     """Return the intersection of PDF-style boxes by converting to
-    pymupdf and using its intersection function, then converting
-    back."""
+    pymupdf `Rect`, using its intersection function, and then
+    converting back."""
     box1_pymupdf = convert_box_pdf_to_pymupdf(box1, page)
     box2_pymupdf = convert_box_pdf_to_pymupdf(box2, page)
     intersection = box1_pymupdf.intersect(box2_pymupdf)
@@ -68,33 +77,9 @@ def convert_box_pdf_to_pymupdf(box_pdf, page):
     # This issue with raw PDF values didn't matter: https://github.com/pymupdf/PyMuPDF/issues/317
     return fitz.Rect(box_pdf)
 
-def test_conversions():
-    """Test the conversion from pymupdf format to pypdf2 format and back."""
-    class page:
-        transformation_matrix = fitz.Matrix(1.0, 0.0, 0.0, -1.0, -9.0, 761.0)
-
-    test_box = fitz.Rect(0.0, 0.0, 1006.0, 750.0)
-
-    test_box_pdf = convert_box_pymupdf_to_pdf(test_box, page)
-
-    print("test_box:", test_box)
-    print("test_box_pdf:", test_box_pdf)
-    assert test_box_pdf == Rect(9.0, 11.0, 1015.0, 761.0)
-
-    test_box_pdf_from_matrix = test_box * ~page.transformation_matrix
-    print("test_box_pdf_from_matrix:", test_box_pdf_from_matrix)
-    assert test_box_pdf == test_box_pdf_from_matrix
-
-    test_box_recovered = convert_box_pdf_to_pymupdf(test_box_pdf, page)
-    print("test_box_recovered:", test_box_recovered)
-
-    assert test_box_recovered == test_box
-
-#test_conversions()
-
 def get_box(page, boxstring):
-    """Return the box for the specified box string, converted to PyPDF2 coordinates which
-    assume that bottom-left is the origin.  Pymupdf uses the top-left (as does PDF itself).
+    """Return the box for the specified box string, converted to PyPDF2/PDF coordinates which
+    assume that bottom-left is the origin. (Pymupdf uses the top-left as the origin).
     It also shifts all but the mediabox to have zero be the reference for the top y value
     (shifting it by the value of the mediabox top y value)."""
     if boxstring != "mediabox":
@@ -113,7 +98,8 @@ def get_box(page, boxstring):
 
 def set_box(page, boxstring, box):
     """Set the box for the specified box string, converted to PyPDF2 coordinates which
-    assume that bottom-left is the origin.  See `get_box`."""
+    assume that bottom-left is the origin.  (PyMuPDF uses the top-left as the origin.
+    See `get_box`."""
     if boxstring != "mediabox":
         mediabox = page.mediabox
     set_box_method = getattr(page, "set_" + boxstring)
@@ -132,6 +118,10 @@ def set_box(page, boxstring, box):
         print(f"\nWarning in pdfCropMargins: The {boxstring} could not be written"
               f" to the page,\nprobably a conflict with the mediabox.",
               file=sys.stdout)
+
+#
+# The main class.
+#
 
 class MuPdfDocument:
     """Holds `pyMuPDF` document and PyMuPDF pages of the document for the GUI
