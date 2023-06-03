@@ -214,10 +214,10 @@ tree, provided the dependencies are installed.  Just clone the repo and run the
 program ``pdfCropMargins.py`` located in the ``bin`` directory.
 
 To pip install the program and its dependencies from the cloned repo rather
-than from PyPI just go to the root of the source directory and run ``pip
-install .`` for the GUI version or ``pip install .`` for the non-GUI
-version.  (As usual, for code development use the ``-e`` option to make the
-code editable.)
+than from PyPI just go to the root of the source directory and run ``pip install .``
+for the GUI version or ``pip install .`` for the non-GUI version.
+(As usual, for code development use the ``-e`` option to make the code
+editable.)
 
 Getting good crops
 ------------------
