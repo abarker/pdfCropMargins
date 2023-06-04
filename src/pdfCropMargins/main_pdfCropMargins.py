@@ -41,6 +41,8 @@ Source code site: https://github.com/abarker/pdfCropMargins
 # ArtBoxes, they probably aren't a problem.  They should be fixed by pyMyPDF
 # when MediaBox is set (look up again..)
 
+# TODO: In verbose mode, make a note of whether the PDF is repaired.
+
 # Might want an option to delete the XML save data.
 
 # TODO: search on xxxxx or zzzzz or DEBUG to get prints to delete after working
@@ -662,7 +664,7 @@ def check_producer_modifier(metadata_info):
     if old_producer_string and old_producer_string.endswith(PRODUCER_MODIFIER):
         producer_mod = "" # No need to pile up suffixes each time on Producer.
         if args.verbose:
-            print("\nThe document was already cropped at least once by pdfCropMargins.")
+            print("\nThe document was already cropped at least once by pdfCropMargins<3.0.")
         already_cropped_by_this_program = "<3.0"
     elif old_producer_string and old_producer_string.endswith(PRODUCER_MODIFIER_3):
         producer_mod = "" # No need to pile up suffixes each time on Producer.

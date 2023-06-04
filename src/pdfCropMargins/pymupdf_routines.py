@@ -39,6 +39,9 @@ https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Vie
 
 """
 
+# TODO: Maybe have an option to repair/clean-up corrupt PDFs.
+#    https://pymupdf.readthedocs.io/en/latest/recipes-common-issues-and-their-solutions.html#how-to-dynamically-clean-up-corrupt-pdfs
+
 import sys
 import warnings
 import copy
@@ -53,7 +56,9 @@ try: # Extra dependencies for the GUI version.  Make sure they are installed.
         from fitz import Rect
         import os
         import tempfile # Maybe later write to the regular tmp dir...
-    if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 16, 17]:
+    # Need at least 1.19.4 for setting MediaBox resetting all other boxes behavior.
+    # Version 1.19.6 is the last one supporting Python 3.6.
+    if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 19, 4]:
         has_mupdf = False
         MuPdfDocument = None
 
