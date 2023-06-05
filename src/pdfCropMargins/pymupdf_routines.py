@@ -371,10 +371,8 @@ class MuPdfDocument:
         """Set the standard metadata dict for the document."""
         self.document.set_metadata(metadata_dict)
 
-    def get_xml_metadata(self, key):
-        """Return the XML metadata with the given key, if available."""
-        # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
-        metadata = {}  # Make a local metadata dict.
+    def has_xml_metadata_key(self, key):
+        """Return a boolean indicating if the XML metadata dict has the key `key`."""
         data_type, value = self.document.xref_get_key(-1, "Info")  # /Info key in the trailer
         if data_type != "xref":
             return None # No metadata at all.
@@ -382,10 +380,31 @@ class MuPdfDocument:
             xref = int(value.replace("0 R", ""))  # Extract the metadata xref.
             for key in self.document.xref_get_keys(xref):
                 metadata[key] = self.document.xref_get_key(xref, key)[1]
-        #pprint(metadata)
+
+    def get_xml_metadata(self, key):
+        """Return the XML metadata with the given key, if available.  Returns `None`
+        if there is no metadata or if the key is not present in the dict.  Also
+        returns a variable `has_xml_metadata` and `has_key` so failures can be
+        diagnosed."""
+        # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
+        data_value = None
+        has_xml_metadata = False
+        has_key = False
+        metadata = {}  # Make a local metadata dict.
+
+        data_type, value = self.document.xref_get_key(-1, "Info")  # /Info key in the trailer
+        if data_type != "xref":
+            return data_value, has_xml_metadata, has_key # No metadata at all.
+        else:
+            has_xml_metadata = True
+            xref = int(value.replace("0 R", ""))  # Extract the metadata xref.
+            for key in self.document.xref_get_keys(xref):
+                metadata[key] = self.document.xref_get_key(xref, key)[1]
+
         if key in metadata:
-            return metadata[key]
-        return None
+            has_key = True
+            data_value = metadata[key]
+        return data_value, has_xml_metadata, has_key
 
     def set_xml_metadata(self, key, data_string):
         """Set XML metadata with the arbitrary string `data_string` as the data.  Any
