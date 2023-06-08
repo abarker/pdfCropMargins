@@ -362,12 +362,12 @@ class MuPdfDocument:
         image_tl = clip.tl # Clip position (top left).
         return image_ppm, image_tl, image_height, image_width
 
-    def get_metadata(self):
+    def get_standard_metadata(self):
         """Return the standard metadata from the document."""
         metadata_info = self.document.metadata
         return metadata_info
 
-    def set_metadata(self, metadata_dict):
+    def set_standard_metadata(self, metadata_dict):
         """Set the standard metadata dict for the document."""
         self.document.set_metadata(metadata_dict)
 
@@ -378,35 +378,46 @@ class MuPdfDocument:
             return None # No metadata at all.
         else:
             xref = int(value.replace("0 R", ""))  # Extract the metadata xref.
-            for key in self.document.xref_get_keys(xref):
-                metadata[key] = self.document.xref_get_key(xref, key)[1]
+            if key in self.document.xref_get_keys(xref):
+                return True
+            return False
 
-    def get_xml_metadata(self, key):
-        """Return the XML metadata with the given key, if available.  Returns `None`
-        if there is no metadata or if the key is not present in the dict.  Also
-        returns a variable `has_xml_metadata` and `has_key` so failures can be
-        diagnosed."""
+    def get_xml_metadata(self):
+        """Return a copy of the XML metadata dict with all the items, not just the
+        standard ones."""
         # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
-        data_value = None
-        has_xml_metadata = False
-        has_key = False
         metadata = {}  # Make a local metadata dict.
 
         data_type, value = self.document.xref_get_key(-1, "Info")  # /Info key in the trailer
         if data_type != "xref":
-            return data_value, has_xml_metadata, has_key # No metadata at all.
+            has_xml_metadata = False # No metadata at all.
         else:
             has_xml_metadata = True
             xref = int(value.replace("0 R", ""))  # Extract the metadata xref.
             for key in self.document.xref_get_keys(xref):
                 metadata[key] = self.document.xref_get_key(xref, key)[1]
 
+        return has_xml_metadata, metadata
+
+    def get_xml_metadata_value(self, key):
+        """Return the XML metadata with the given key, if available.  Returns `None`
+        if there is no metadata or if the key is not present in the dict.  Also
+        returns booleans `has_xml_metadata` and `has_key` so failures can be
+        diagnosed."""
+        # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
+        data_value = None
+        has_key = False
+        has_xml_metadata, metadata = self.get_xml_metadata()
+
+        if not has_xml_metadata:
+            return data_value, has_xml_metadata, has_key # No metadata at all.
+
         if key in metadata:
             has_key = True
             data_value = metadata[key]
         return data_value, has_xml_metadata, has_key
 
-    def set_xml_metadata(self, key, data_string):
+    def set_xml_metadata_item(self, key, data_string):
         """Set XML metadata with the arbitrary string `data_string` as the data.  Any
         key can be used also, provided it is compliant with PDF specs.  To delete data
         for a key set the key to have the string "null" as its data value."""
@@ -414,13 +425,13 @@ class MuPdfDocument:
         data_type, value = self.document.xref_get_key(-1, "Info")  # /Info key in the trailer
         if data_type != "xref":
             raise ValueError("PDF has no metadata, cannot set XML metadata.")
+
         xref = int(value.replace("0 R", ""))  # Extract the metadata xref.
-        print("\nXXXXXXXXXXXXX data_string", data_string)
-        pdf_data_string = fitz.get_pdf_str(data_string) # Add the data info.
-        print("\nXXXXXXXXXXXXX pdf_data_string", pdf_data_string)
+        pdf_data_string = fitz.get_pdf_str(data_string) # Convert the string format.
+
         self.document.xref_set_key(xref, key, pdf_data_string) # Add the data info.
 
-    def delete_xml_metadata(self, key):
+    def delete_xml_metadata_item(self, key):
         """Delete the key `key` and the data associated with it."""
         self.set_xml_metadata(key, "null")
 
