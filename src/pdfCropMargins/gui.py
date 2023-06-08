@@ -422,6 +422,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
     ## Code for uniformOrderStat options.
     ##
 
+    uniformOrderStat_spinner_values = tuple(range(0, num_pages))
     if args.uniformOrderStat:
         args_dict["uniformOrderStat"] = args.uniformOrderStat
     else:
@@ -442,14 +443,14 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
 
     text_uniformOrderStat = sg.Text("uniformOrderStat",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat"))
-    input_text_uniformOrderStat = sg.Spin(values=spinner_values,
+    input_text_uniformOrderStat = sg.Spin(values=uniformOrderStat_spinner_values,
                                  initial_value=args_dict["uniformOrderStat"][0], pad=(0,0),
                                  size=(5, 1), enable_events=True, key="uniformOrderStat")
 
     # Code for uniformOrderStat4.
     text_uniformOrderStat4 = sg.Text("uniformOrderStat4",
                       tooltip=get_help_text_string_for_tooltip(cmd_parser, "uniformOrderStat4"))
-    input_text_uniformOrderStat4 = [sg.Spin(values=spinner_values,
+    input_text_uniformOrderStat4 = [sg.Spin(values=uniformOrderStat_spinner_values,
                                     initial_value=args_dict["uniformOrderStat4"][i], size=(5, 1),
                                     enable_events=True, key=f"uniformOrderStat4_{i}", pad=(1,0))
                                     for i in [0,1,2,3]]

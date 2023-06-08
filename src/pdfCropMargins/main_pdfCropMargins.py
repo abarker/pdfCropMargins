@@ -43,11 +43,12 @@ Source code site: https://github.com/abarker/pdfCropMargins
 # is failing.
 
 # TODO: Maybe add option to see the MuPdf warnings, use fitz.TOOLS.mupdf_warnings()
+#       first to empty warnings and then to get warnings, see
 #       https://github.com/pymupdf/PyMuPDF/discussions/1501
 
 # Might want an option to delete the XML save data.
 
-# TODO GUI spinners for orderstat can exceed num_pages-1.  May cause bug also in setting cropbox?
+# TODO GUI options not error-checked, repaired on arg reprocessing, uniformOrderStat
 
 # TODO: what if no XML data for restore?  Can you create it, or just don't bother???
 
@@ -866,7 +867,7 @@ def process_command_line_arguments(parsed_args, cmd_parser):
         args.verbose = False # Wants to eval the text in Bash script.
 
     if args.verbose:
-        print("\nProcessing the PDF with pdfCropMargins (version", __version__+")...")
+        print(f"\nProcessing the PDF with pdfCropMargins (version {__version__})...")
         print("Python version:", ex.python_version)
         print("System type:", ex.system_os)
         print(fitz.__doc__) # Print out PyMuPDF version info.
@@ -951,6 +952,9 @@ def process_command_line_arguments(parsed_args, cmd_parser):
         print("\nThe absolute offsets to be applied to each margin, in units of bp,"
               " are:\n   ", args.absoluteOffset4)
 
+    # TODO: Note that these verbose messages are NOT printed when the GUI is used, since
+    # the processing only calls process_pdf_file.  Similarly, range checks and repairs
+    # for uniformOrderStat are not processed when entered directly into the GUI.
     if args.uniformOrderStat and not args.uniformOrderStat4:
         args.uniformOrderStat4 = args.uniformOrderStat * 4 # expand to 4 offsets
     if args.verbose:
