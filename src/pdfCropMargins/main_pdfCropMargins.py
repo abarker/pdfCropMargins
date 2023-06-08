@@ -30,32 +30,23 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 """
 
-# TODO: Consider automatically converting artbox saves to XML saves -- NO,
-# cannot, because we may have artboxes that are pre-existing in the document!
-# Maybe as an option, but probably not worth it.
-
-# TODO: Maybe delete the XML data on restore operations...  Ignore the
-# ArtBoxes, they probably aren't a problem.  They should be fixed by pyMyPDF
-# when MediaBox is set (look up again..)
-
-# TODO: pymupdf_routines.py doesn't seem to fold correctly, check alone and
-# as second page on right with main_ module.  Option to unfold outer class
-# is failing.
-
 # TODO: Maybe add option to see the MuPdf warnings, use fitz.TOOLS.mupdf_warnings()
 #       first to empty warnings and then to get warnings, see
 #       https://github.com/pymupdf/PyMuPDF/discussions/1501
 
 # Might want an option to delete the XML save data.
 
-# TODO GUI options not error-checked, repaired on arg reprocessing, uniformOrderStat
-
-# TODO: what if no XML data for restore?  Can you create it, or just don't bother???
+# TODO GUI options not error-checked/repaired on arg reprocessing, uniformOrderStat
 
 # TODO: Maybe use _restored and restored_ prefix and suffix for restore ops???
+#       Need a new option --stringRestored.
 
 # TODO: Make --evenodd option equalize the pages after separately calculating
 # the crops, just do the max over them.
+
+# TODO: Deleting metadata on restore doesn't seem to remove key like docs say.
+#       So restored document still registers as already cropped.
+#       https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
 
 # Some general notes, useful for reading the code.
 #
@@ -111,9 +102,9 @@ from .calculate_bounding_boxes import get_bounding_box_list
 ##
 
 # The string which is appended to Producer metadata in cropped PDFs.
-PRODUCER_MODIFIER = " (Cropped by pdfCropMargins.)"
-PRODUCER_MODIFIER_2 = " (Cropped by pdfCropMargins>=2.0.)"
-RESTORE_METADATA_KEY = "pdfCropMarginsRestoreData"
+PRODUCER_MODIFIER = " (Cropped by pdfCropMargins.)" # String for older versions.
+PRODUCER_MODIFIER_2 = " (Cropped by pdfCropMargins>=2.0.)" # Added to Producer metadata.
+RESTORE_METADATA_KEY = "pdfCropMarginsRestoreData" # Key for XML dict restore data.
 
 # Limit precision to some reasonable amount to prevent problems in some PDF viewers.
 DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES = 8
@@ -315,7 +306,7 @@ def apply_precrop(rotation, full_box, page):
     set_box(page, "cropbox", full_box)
     return full_box
 
-def get_full_page_box_list_assigning_media_and_crop(fixed_input_doc_mupdf_wrapper, quiet=False):
+def get_full_page_box_list_assigning_media_and_crop(input_doc_mupdf_wrapper, quiet=False):
     """Get a list of all the full-page box values for each page.  The boxes on
     the list are in the simple 4-float list format used by this program, not
     `RectangleObject` format."""
@@ -327,10 +318,10 @@ def get_full_page_box_list_assigning_media_and_crop(fixed_input_doc_mupdf_wrappe
         print(f"\nOriginal full page sizes (rounded to "
               f"{DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES} digits) in PDF format (lbrt):")
 
-    for page_num in range(fixed_input_doc_mupdf_wrapper.num_pages):
+    for page_num in range(input_doc_mupdf_wrapper.num_pages):
 
         # Get the current page and find the full-page box.
-        curr_page = fixed_input_doc_mupdf_wrapper.page_list[page_num]
+        curr_page = input_doc_mupdf_wrapper.page_list[page_num]
         rotation, full_box, page = get_full_page_box_assigning_media_and_crop(curr_page)
 
         # Do any absolute pre-cropping specified for the page (after modifying any
@@ -660,7 +651,6 @@ def check_and_set_crop_metadata(document_wrapper_class, metadata_info):
 
     The "Producer" metadata then has a string appended (if not already there)
     to indicate that this program modified the file."""
-    producer_mod = "" # String to be added to the producer metadata, marks when cropped.
     has_xml_restore_data = False
 
     if metadata_info:
@@ -668,43 +658,27 @@ def check_and_set_crop_metadata(document_wrapper_class, metadata_info):
     else:
         return PRODUCER_MODIFIER, False # Can't read metadata, but maybe can set it.
 
-    if old_producer_string and old_producer_string.endswith(PRODUCER_MODIFIER):
-        # TODO: pymupdf upgrade, note that updating from old save to new is not so
-        # obvious.  We cannot assume that the artboxes represent saved data and not
-        # actual artboxes.  If we do not change the producer modifier, at least the
-        # old version would be detected, BUT the artboxes go away when MediaBox is
-        # set and we cannot guarantee they'll be settable again!  So we NEED to migrage
-        # to the new method of save.  We have to ASSUME that the artboxes represent
-        # saved data if the old producer modifier is present.  May need a new option
-        # to avoid problems, however rare.
-        #
-        # Have an option, maybe, to not migrate saved artbox data to the new XML method.
-        # Then always migrate the data.  A more general option to just save the current
-        # as the saved would work as well, and be usable in other circumstances!!!!!!!!
-        if args.verbose:
-            print("\nThe document was already cropped at least once by pdfCropMargins<2.0.")
-        already_cropped_by_this_program = "<2.0"
-
-    elif document_wrapper_class.has_xml_metadata_key(RESTORE_METADATA_KEY):
+    if document_wrapper_class.has_xml_metadata_key(RESTORE_METADATA_KEY):
         if args.verbose:
             print("\nThe document was already cropped at least once by pdfCropMargins>=2.0.")
         already_cropped_by_this_program = ">=2.0"
         has_xml_restore_data = True
 
-    elif old_producer_string and old_producer_string.endswith(PRODUCER_MODIFIER_2):
+    elif old_producer_string and old_producer_string.endswith(PRODUCER_MODIFIER):
         if args.verbose:
-            print("\nThe document was already cropped at least once by pdfCropMargins>=2.0.")
-        already_cropped_by_this_program = ">=2.0"
+            print("\nThe document was already cropped at least once by pdfCropMargins<2.0.")
+        already_cropped_by_this_program = "<2.0"
+        # Update the Producer suffix to the the new PRODUCER_MODIFIER_2.
+        new_producer_string = old_producer_string.replace(PRODUCER_MODIFIER, PRODUCER_MODIFIER_2)
+        metadata_info["producer"] = new_producer_string
 
     else:
         if args.verbose:
             print("\nThe document was not previously cropped by pdfCropMargins.")
-        producer_mod = PRODUCER_MODIFIER_2 # Only change when already unmodified.
+        metadata_info["producer"] = metadata_info["producer"] + PRODUCER_MODIFIER_2
         already_cropped_by_this_program = False
 
-    metadata_info["producer"] = metadata_info["producer"] + producer_mod
     document_wrapper_class.set_standard_metadata(metadata_info)
-
     return already_cropped_by_this_program
 
 def serialize_boxlist(boxlist):
@@ -723,27 +697,31 @@ def deserialize_boxlist(boxlist_string):
         try:
             deserialized_boxlist.append([float(v) for v in values])
         except ValueError:
-            return None # TODO, pymupdf upgrade, maybe delete key and data here (or on return)
+            return None
     return deserialized_boxlist
 
-def save_old_boxes_for_restore(fixed_input_doc_mupdf_wrapper, original_mediabox_list,
-                               original_cropbox_list, already_cropped_by_this_program):
+def save_old_boxes_for_restore(input_doc_mupdf_wrapper, original_mediabox_list,
+                               original_cropbox_list, original_artbox_list,
+                               already_cropped_by_this_program):
     """Save the intersection of the cropbox and the mediabox."""
-    old_boxes_to_save_list = [] # Save list of old boxes to possibly save for later restore.
-    for page_num in range(fixed_input_doc_mupdf_wrapper.document.page_count):
-        curr_page = fixed_input_doc_mupdf_wrapper.page_list[page_num]
+    if already_cropped_by_this_program == "<2.0":
+        old_boxes_to_save_list = original_artbox_list
+    else:
+        old_boxes_to_save_list = [] # Save list of old boxes to possibly save for later restore.
+        for page_num in range(input_doc_mupdf_wrapper.document.page_count):
+            curr_page = input_doc_mupdf_wrapper.page_list[page_num]
 
-        # Do the save for later restore if that option is chosen and Producer is not set.
-        box = intersect_pdf_boxes(original_mediabox_list[page_num],
-                                  original_cropbox_list[page_num], curr_page)
-        old_boxes_to_save_list.append(box)
+            # Do the save for later restore if that option is chosen and Producer is not set.
+            box = intersect_pdf_boxes(original_mediabox_list[page_num],
+                                      original_cropbox_list[page_num], curr_page)
+            old_boxes_to_save_list.append(box)
 
     serialized_saved_boxes_list = serialize_boxlist(old_boxes_to_save_list)
-    fixed_input_doc_mupdf_wrapper.set_xml_metadata_item(RESTORE_METADATA_KEY,
+    input_doc_mupdf_wrapper.set_xml_metadata_item(RESTORE_METADATA_KEY,
                                                         serialized_saved_boxes_list)
 
-def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
-                    original_artbox_list, already_cropped_by_this_program):
+def apply_crop_list(crop_list, input_doc_mupdf_wrapper, page_nums_to_crop,
+                    already_cropped_by_this_program):
     """Apply the crop list to the pages of the input document."""
     if args.writeCropDataToFile:
         args.writeCropDataToFile = ex.get_expanded_path(args.writeCropDataToFile)
@@ -755,8 +733,8 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
         print("\nNew full page sizes after cropping, in PDF format (lbrt):")
 
     # Set the appropriate PDF boxes on each page.
-    for page_num in range(fixed_input_doc_mupdf_wrapper.document.page_count):
-        curr_page = fixed_input_doc_mupdf_wrapper.page_list[page_num]
+    for page_num in range(input_doc_mupdf_wrapper.document.page_count):
+        curr_page = input_doc_mupdf_wrapper.page_list[page_num]
 
         # Restore any rotation which was originally on the page.
         curr_page.set_rotation(curr_page.rotationAngle)
@@ -803,7 +781,7 @@ def apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
         f.close()
         ex.cleanup_and_exit(0)
 
-def apply_restore_operation(already_cropped_by_this_program, fixed_input_doc_mupdf_wrapper,
+def apply_restore_operation(already_cropped_by_this_program, input_doc_mupdf_wrapper,
                             original_artbox_list):
     """Restore the saved page boxes to the document."""
     if args.writeCropDataToFile:
@@ -812,39 +790,42 @@ def apply_restore_operation(already_cropped_by_this_program, fixed_input_doc_mup
     else:
         f = None
 
-    if args.restore:
-        # Apply a restore operation if selected.
-        # TODO: pymupdf upgrade, make sure LENGTH of the saved data is the same.
-        # TODO: pymupdf upgrade Consider automatic conversion to new method if old save/restore method detected...
-        #
-        # TODO: factor out at least the call to get_xml_metadata_value, but maybe whole thing if possible.
-        # TODO: IDEA, just pass in the full metadata dict???  Get the full thing instead of the partial
-        #       one that is gotten now!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if already_cropped_by_this_program == ">=2.0":
-            saved_boxes, has_xml_metadata, xml_metadata_has_key = (
-                    fixed_input_doc_mupdf_wrapper.get_xml_metadata_value(RESTORE_METADATA_KEY))
-            saved_boxes_list = deserialize_boxlist(saved_boxes)
-            if not saved_boxes_list:
-                print("\nError in pdfCropMargins: Could not deserialize the data saved for the"
-                        "\nrestore operation.  Deleting the key and the data.", file=sys.stderr)
-                fixed_input_doc_mupdf_wrapper.delete_xml_metadata_item(RESTORE_METADATA_KEY)
+    if already_cropped_by_this_program == ">=2.0":
+        saved_boxes, has_xml_metadata, xml_metadata_has_key = (
+                input_doc_mupdf_wrapper.get_xml_metadata_value(RESTORE_METADATA_KEY))
+        saved_boxes_list = deserialize_boxlist(saved_boxes)
+        if not saved_boxes_list:
+            print("\nError in pdfCropMargins: Could not deserialize the data saved for the"
+                    "\nrestore operation.  Deleting the key and the data.", file=sys.stderr)
+            input_doc_mupdf_wrapper.delete_xml_metadata_item(RESTORE_METADATA_KEY)
 
-        elif already_cropped_by_this_program == "<2.0":
-            saved_boxes_list = original_artbox_list
+    elif already_cropped_by_this_program == "<2.0":
+        saved_boxes_list = original_artbox_list
 
-        for page_num in range(fixed_input_doc_mupdf_wrapper.document.page_count):
-            curr_page = fixed_input_doc_mupdf_wrapper.page_list[page_num]
+    if not saved_boxes_list or len(saved_boxes_list) != input_doc_mupdf_wrapper.num_pages:
+        print("\nError in pdfCropMargins: The number of pages in the saved restore"
+              "\ndata is not the same as the number of pages in the document.  The"
+              "\nrestore operation will be ignored.", file=sys.stderr)
+        return
 
-            # Restore any rotation which was originally on the page.
-            curr_page.set_rotation(curr_page.rotationAngle)
+    for page_num in range(input_doc_mupdf_wrapper.document.page_count):
+        curr_page = input_doc_mupdf_wrapper.page_list[page_num]
 
-            # Restore the MediaBox and CropBox to the saved values.  Note that
-            # MediaBox is set FIRST, since PyMuPDF will reset all other boxes
-            # when it is set.
-            set_box(curr_page, "mediabox", saved_boxes_list[page_num])
-            set_box(curr_page, "cropbox", saved_boxes_list[page_num])
-            if args.writeCropDataToFile:
-                print("\t"+str(page_num+1)+"\t", saved_boxes_list[page_num], file=f)
+        # Restore any rotation which was originally on the page.
+        curr_page.set_rotation(curr_page.rotationAngle)
+
+        # Restore the MediaBox and CropBox to the saved values.  Note that
+        # MediaBox is set FIRST, since PyMuPDF will reset all other boxes
+        # when it is set.
+        set_box(curr_page, "mediabox", saved_boxes_list[page_num])
+        set_box(curr_page, "cropbox", saved_boxes_list[page_num])
+        if args.writeCropDataToFile:
+            print("\t"+str(page_num+1)+"\t", saved_boxes_list[page_num], file=f)
+
+    # The saved restore data is no longer needed.
+    if args.verbose:
+        print("\nDeleting the saved restore metadata since it is no longer needed.")
+    input_doc_mupdf_wrapper.delete_xml_metadata_item(RESTORE_METADATA_KEY)
 
     if args.writeCropDataToFile:
         f.close()
@@ -1093,18 +1074,19 @@ def process_command_line_arguments(parsed_args, cmd_parser):
 
 def open_file_in_pymupdf(fixed_input_doc_pathname):
     """Open the file in a `MuPdfDocument`."""
-    fixed_input_doc_mupdf_wrapper = MuPdfDocument(args)
-    input_doc_num_pages = fixed_input_doc_mupdf_wrapper.open_document(fixed_input_doc_pathname)
+    input_doc_mupdf_wrapper = MuPdfDocument(args)
+    input_doc_num_pages = input_doc_mupdf_wrapper.open_document(fixed_input_doc_pathname)
 
     if args.verbose:
         print(f"\nThe input document has {input_doc_num_pages} pages.")
-        if fixed_input_doc_mupdf_wrapper.document.is_repaired:
+        if input_doc_mupdf_wrapper.document.is_repaired:
             print("\nThe document was repaired by PyMuPDF on being read.")
         else:
             print("\nThe document was not repaired by PyMuPDF on being read.")
 
-    # TODO pymupdf upgrade, consider just getting the FULL dict here and using that...
-    metadata_info = fixed_input_doc_mupdf_wrapper.get_standard_metadata()
+    # Note this is only the standard metadata, not any additional metadata like
+    # any restore metadata.
+    metadata_info = input_doc_mupdf_wrapper.get_standard_metadata()
 
     if args.verbose and not metadata_info:
         print("\nNo readable metadata in the document.")
@@ -1125,7 +1107,7 @@ def open_file_in_pymupdf(fixed_input_doc_pathname):
             print("\nWarning: Could not write all the document's metadata to the screen."
                   "\nGot a KeyError or a UnicodeEncodeError.", file=sys.stderr)
 
-    return fixed_input_doc_mupdf_wrapper, metadata_info, input_doc_num_pages
+    return input_doc_mupdf_wrapper, metadata_info, input_doc_num_pages
 
 def get_set_of_page_numbers_to_crop(input_doc_num_pages):
     """Compute the set containing the page number of all the pages
@@ -1170,28 +1152,30 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     Returns the bounding box list and data about the minimum cropping deltas
     for each margins."""
 
-    fixed_input_doc_mupdf_wrapper, metadata_info, input_doc_num_pages = open_file_in_pymupdf(
+    input_doc_mupdf_wrapper, metadata_info, input_doc_num_pages = open_file_in_pymupdf(
                                                                    fixed_input_doc_pathname)
 
     # Get any necessary page boxes BEFORE the MediaBox is set.  The pyMuPDF
     # program will reset the other boxes when setting the MediaBox if they're
     # not fully contained.  For the ArtBox this is for backward compatibility
     # with the earlier PyPDF restore option.
-    original_mediabox_list = fixed_input_doc_mupdf_wrapper.get_box_list("mediabox")
-    original_cropbox_list = fixed_input_doc_mupdf_wrapper.get_box_list("cropbox")
-    original_artbox_list = fixed_input_doc_mupdf_wrapper.get_box_list("artbox")
-    original_trimbox_list = fixed_input_doc_mupdf_wrapper.get_box_list("trimbox")
-    original_bleedbox_list = fixed_input_doc_mupdf_wrapper.get_box_list("bleedbox")
+    original_mediabox_list = input_doc_mupdf_wrapper.get_box_list("mediabox")
+    original_cropbox_list = input_doc_mupdf_wrapper.get_box_list("cropbox")
+    original_artbox_list = input_doc_mupdf_wrapper.get_box_list("artbox")
+    #original_trimbox_list = input_doc_mupdf_wrapper.get_box_list("trimbox")
+    #original_bleedbox_list = input_doc_mupdf_wrapper.get_box_list("bleedbox")
 
-    already_cropped_by_this_program = check_and_set_crop_metadata(fixed_input_doc_mupdf_wrapper,
+    already_cropped_by_this_program = check_and_set_crop_metadata(input_doc_mupdf_wrapper,
                                                                   metadata_info)
 
-    if not args.noundosave and not already_cropped_by_this_program:
-        save_old_boxes_for_restore(fixed_input_doc_mupdf_wrapper, original_mediabox_list,
-                                   original_cropbox_list, already_cropped_by_this_program)
+    if not args.noundosave:
+        if already_cropped_by_this_program == "<2.0" or not already_cropped_by_this_program:
+            save_old_boxes_for_restore(input_doc_mupdf_wrapper, original_mediabox_list,
+                                       original_cropbox_list, original_artbox_list,
+                                       already_cropped_by_this_program)
 
     if args.prevCropped:
-        fixed_input_doc_file_object.close() # TODO TODO: this needs updating for pymupdf
+        input_doc_mupdf_wrapper.close_document()
         if already_cropped_by_this_program:
             #print("code 0")
             exit_code = 0
@@ -1229,7 +1213,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     ##
 
     full_page_box_list, rotation_list = get_full_page_box_list_assigning_media_and_crop(
-                                              fixed_input_doc_mupdf_wrapper)
+                                              input_doc_mupdf_wrapper)
 
     ##
     ## Write out the PDF document again, with the CropBox and MediaBox reset.
@@ -1244,7 +1228,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
                 # TODO Consider writing this to a memory file rather than to disk.
                 print("\nWriting out the PDF with the CropBox and MediaBox redefined"
                         "\n(so pre-crops are included in the bounding box calculations).")
-            fixed_input_doc_mupdf_wrapper.save_document(doc_with_crop_and_media_boxes_name)
+            input_doc_mupdf_wrapper.save_document(doc_with_crop_and_media_boxes_name)
 
     ##
     ## Calculate the `bounding_box_list` containing tight page bounds for each page.
@@ -1253,7 +1237,7 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     if not args.restore:
         if not bounding_box_list:
             bounding_box_list = get_bounding_box_list(doc_with_crop_and_media_boxes_name,
-                    fixed_input_doc_mupdf_wrapper, full_page_box_list, page_nums_to_crop, args)
+                    input_doc_mupdf_wrapper, full_page_box_list, page_nums_to_crop, args)
             if args.verbose:
                 print("\nThe bounding boxes are:")
                 for pNum, b in enumerate(bounding_box_list):
@@ -1283,25 +1267,26 @@ def process_pdf_file(input_doc_pathname, fixed_input_doc_pathname, output_doc_pa
     if args.restore:
         if args.verbose:
             print("\nRestoring the document to margins saved for each page.")
+
         if not already_cropped_by_this_program:
-            print("\nWarning from pdfCropMargins: The Producer string indicates that"
-                  "\neither this document was not previously cropped by pdfCropMargins"
+            print("\nWarning from pdfCropMargins: The Producer string and metadata indicate"
+                  "\nthat either this document was not previously cropped by pdfCropMargins"
                   "\nor else it was modified by another program after that and cannot"
                   "\nbe restored.  Ignoring the restore operation.", file=sys.stderr)
         else:
             apply_restore_operation(already_cropped_by_this_program,
-                                    fixed_input_doc_mupdf_wrapper, original_artbox_list)
+                                    input_doc_mupdf_wrapper, original_artbox_list)
 
     else:
-        apply_crop_list(crop_list, fixed_input_doc_mupdf_wrapper, page_nums_to_crop,
-                        original_artbox_list, already_cropped_by_this_program)
+        apply_crop_list(crop_list, input_doc_mupdf_wrapper, page_nums_to_crop,
+                        already_cropped_by_this_program)
 
     ##
     ## Write the final PDF out to a file.
     ##
 
-    fixed_input_doc_mupdf_wrapper.save_document(output_doc_pathname)
-    fixed_input_doc_mupdf_wrapper.close_document()
+    input_doc_mupdf_wrapper.save_document(output_doc_pathname)
+    input_doc_mupdf_wrapper.close_document()
 
     return bounding_box_list, delta_page_nums
 

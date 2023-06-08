@@ -39,9 +39,6 @@ https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Vie
 
 """
 
-# TODO: Maybe have an option to repair/clean-up corrupt PDFs.
-#    https://pymupdf.readthedocs.io/en/latest/recipes-common-issues-and-their-solutions.html#how-to-dynamically-clean-up-corrupt-pdfs
-
 import sys
 import warnings
 import copy
@@ -74,6 +71,7 @@ def intersect_pdf_boxes(box1, box2, page):
     """Return the intersection of PDF-style boxes by converting to
     pymupdf `Rect`, using its intersection function, and then
     converting back."""
+    # TODO: page argument no longer required, here or in "conversion" routines, maybe remove.
     box1_pymupdf = convert_box_pdf_to_pymupdf(box1, page)
     box2_pymupdf = convert_box_pdf_to_pymupdf(box2, page)
     intersection = box1_pymupdf.intersect(box2_pymupdf)
@@ -433,5 +431,7 @@ class MuPdfDocument:
 
     def delete_xml_metadata_item(self, key):
         """Delete the key `key` and the data associated with it."""
-        self.set_xml_metadata(key, "null")
+        # TODO: This doesn't seem to delete the key like the docs say, only the metadata.
+        # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
+        self.set_xml_metadata_item(key, "null")
 
