@@ -325,17 +325,13 @@ The output of that command follows::
         In order to reduce the number of copies of a document which must be
         saved, a basic '--restore' option is provided. When cropping a file not
         produced by the pdfCropMargins program the default is to save the
-        intersection of the MediaBox and any existing CropBox in the ArtBox.
-        This saves the "usual" view of the original document in programs like
-        Acrobat Reader. Subsequent crops of a file produced by pdfCropMargins
-        do not by default alter the ArtBox. The restore option simply copies
-        the saved values back to the MarginBox and CropBox. Note that this
-        assumes the ArtBox is unused (it is rarely used, and this feature can
-        be turned off with the -A option). So, for example, you can make
-        annotations to a file with cropped margins and still produce a version
-        with the annotations which viewers display as the original margins.
-        Programs which change the "Producer" string in the PDF may interfere
-        with this feature.
+        intersections of the MediaBox and any existing CropBox for each page as
+        XML metadata. This saves the "usual" view of the original document in
+        programs like Acrobat Reader. Subsequent crops of a file produced by
+        pdfCropMargins do not by default alter the saved data. The restore
+        option simply copies the saved values back to the MediaBox and CropBox.
+        (Old versions of the program saved to the ArtBox; if these are cropped
+        again the data is migrated to XML metadata.)
 
         Below are several examples using more of the command-line options, each
         applied to an input file called doc.pdf. The output filename is
@@ -704,19 +700,16 @@ The output of that command follows::
      -c [d|m|p|gr|gb|o], --calcbb [d|m|p|gr|gb|o]
                   Choose the method to calculate bounding boxes (or to render the
                   PDF pages in order to calculate the boxes). The default option
-                  'd' will choose the MuPDF rendering option if the PyMuPDF
-                  dependency is installed, otherwise it will use pdftoppm
-                  rendering or Ghostscript rendering, in that order, if the
-                  external programs can be located. The options to force a
-                  particular method are MuPDF ('m'), pdftoppm ('p'), or
-                  Ghostscript ('gr') for rendering, or direct Ghostscript
-                  bounding-box calculation ('gb'). For pdftoppm or Ghostscript
-                  options the corresponding program must be installed and
-                  locatable (see the path-setting options below if the default
-                  locator fails). Only the explicit rendering methods will work
-                  for scanned pages (see '--gsBbox'). Choosing 'o' reverts to the
-                  old default behavior of first looking for pdftoppm and then
-                  looking for Ghostscript for rendering.
+                  'd' will currently choose the MuPDF rendering option. The
+                  options to force a particular method are MuPDF ('m'), pdftoppm
+                  ('p'), or Ghostscript ('gr') for rendering, or direct
+                  Ghostscript bounding-box calculation ('gb'). For pdftoppm or
+                  Ghostscript options the corresponding program must be installed
+                  and locatable (see the path-setting options below if the
+                  default locator fails). Only the explicit rendering methods
+                  will work for scanned pages (see '--gsBbox'). Choosing 'o'
+                  reverts to the old default behavior of first looking for
+                  pdftoppm and then looking for Ghostscript for rendering.
 
      -gs, --gsBbox
                   This option is maintained for backward compatibility; using '-c
@@ -793,7 +786,7 @@ The output of that command follows::
      -gf INT, --guiFontSize INT
                   Choose the GUI font size. Making this smaller than the default
                   of 11 can also make the GUI smaller if it does not fit on a
-                  smaller monitor. +0+0".
+                  smaller monitor.
 
      -b [m|c|t|a|b], --boxesToSet [m|c|t|a|b]
                   By default the pdfCropMargins program sets both the MediaBox
@@ -804,7 +797,11 @@ The output of that command follows::
                   letter (lowercase) of a type of box. The choices are MediaBox
                   (m), CropBox (c), TrimBox (t), ArtBox (a), and BleedBox (b).
                   This option overrides the default and can be repeated multiple
-                  times to set several box types.
+                  times to set several box types. Note that the program now uses
+                  PyMuPDF to set the boxes, and it will refuse to set any non-
+                  MediaBox boxes unless they are fully contained in the MediaBox.
+                  In that case a warning will be issued and the box will not be
+                  set.
 
      -f [m|c|t|a|b], --fullPageBox [m|c|t|a|b]
                   By default the program first (before any cropping is
@@ -828,33 +825,30 @@ The output of that command follows::
      -r, --restore
                   This is a simple undo operation which essentially undoes all
                   the crops ever made by pdfCropMargins and returns to the
-                  original margins (provided no other program modified the
-                  Producer metadata or ArtBoxes). By default, whenever this
+                  original margins (provided no other program modified the saved
+                  XML data for the pdfCropMargins key). By default, whenever this
                   program crops a file for the first time it saves the MediaBox
-                  intersected with the CropBox as the new ArtBox (since the
-                  ArtBox is rarely used). The Producer metadata is checked to see
-                  if this was the first time. If so, the ArtBox for each page is
-                  simply copied to the MediaBox and the CropBox for the page.
-                  This restores the earlier view of the document, such as in
-                  Acrobat Reader (but does not completely restore the previous
-                  condition in cases where the MediaBox and CropBox differed or
-                  the ArtBox had a previous value). Any options such as '-u',
-                  '-p', and '-a' which do not make sense in a restore operation
-                  are ignored. Note that as far as default filenames the
-                  operation is treated as just another crop operation (the
-                  default-generated output filename still has a "_cropped.pdf"
-                  suffix). The '--modifyOriginal' option (or its query variant)
-                  can be used with this option. Saving in the ArtBoxes can be
-                  disabled by using the '--noundosave' option.
+                  intersected with the CropBox for each page as XML metadata. The
+                  XML metadata is is checked to see if there is any existing
+                  restore data. If so, the saved metadata for each page is simply
+                  copied to the MediaBox and the CropBox for the page. This
+                  restores the earlier view of the document, such as in Acrobat
+                  Reader (but does not completely restore the previous condition
+                  in cases where the MediaBox and CropBox differed). Any options
+                  such as '-u', '-p', and '-a' which do not make sense in a
+                  restore operation are ignored. Note that as far as default
+                  filenames the operation is treated as just another crop
+                  operation (the default-generated output filename still has a
+                  "_cropped.pdf" suffix). The '--modifyOriginal' option (or its
+                  query variant) can be used with this option. Saving restore
+                  data as XML metadata can be disabled by using the '--
+                  noundosave' option.
 
      -A, --noundosave
-                  Do not save any restore data in the ArtBox. This option will
-                  need to be selected if the document actually uses the ArtBox
-                  for anything important (which is rare). Note that the '--
+                  Do not save any restore data as XML metadata. Note that the '--
                   restore' operation will not work correctly for the cropped
-                  document if this option is included in the cropping command.
-                  (The program does not currently check for this when doing a
-                  restore.)
+                  document later if this option is included in the cropping
+                  command.
 
      -gsf, --gsFix
                   Attempt to repair the input PDF file with Ghostscript before it
@@ -1026,14 +1020,14 @@ The output of that command follows::
                   Windows).
 
      -pdl, --pdftoppmLocal
-                  Use a locally-packaged pdftoppm executable rather than the
-                  system version. This option is only available on Windows
-                  machines; it is ignored otherwise. By default the first
-                  pdftoppm executable found in the directories in the PATH
-                  environment variable is used. On Windows the program will
-                  revert to this option if PDF image-rendering is required,
-                  PyMuPDF is not installed, and no system pdftoppm or Ghostscript
-                  executable can be found.
+                  This option is deprecated. Use a locally-packaged pdftoppm
+                  executable rather than the system version. This option is only
+                  available on Windows machines; it is ignored otherwise. By
+                  default the first pdftoppm executable found in the directories
+                  in the PATH environment variable is used. On Windows the
+                  program will revert to this option if PDF image-rendering is
+                  required, PyMuPDF is not installed, and no system pdftoppm or
+                  Ghostscript executable can be found.
 
      -gsp PATH, --ghostscriptPath PATH
                   Pass in a pathname to the ghostscript executable that the
