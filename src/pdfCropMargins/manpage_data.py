@@ -94,17 +94,13 @@ Description:
 
    In order to reduce the number of copies of a document which must be saved, a
    basic '--restore' option is provided.  When cropping a file not produced by
-   the pdfCropMargins program the default is to save the intersection of the
-   MediaBox and any existing CropBox in the ArtBox.  This saves the "usual"
+   the pdfCropMargins program the default is to save the intersections of the
+   MediaBox and any existing CropBox for each page as XML metadata.  This saves the "usual"
    view of the original document in programs like Acrobat Reader.  Subsequent
    crops of a file produced by pdfCropMargins do not by default alter the
-   ArtBox.  The restore option simply copies the saved values back to the
-   MarginBox and CropBox.  Note that this assumes the ArtBox is unused (it is
-   rarely used, and this feature can be turned off with the -A option).  So,
-   for example, you can make annotations to a file with cropped margins and
-   still produce a version with the annotations which viewers display as the
-   original margins.  Programs which change the "Producer" string in the PDF
-   may interfere with this feature.
+   saved data.  The restore option simply copies the saved values back to the
+   MediaBox and CropBox.  (Old versions of the program saved to the ArtBox;
+   if these are cropped again the data is migrated to XML metadata.)
 
    Below are several examples using more of the command-line options, each
    applied to an input file called doc.pdf.  The output filename is unspecified
@@ -260,7 +256,6 @@ else:
         formatter_class=formatter_class,
         description=description, epilog=epilog,
         prog="pdf-crop-margins")
-
 
 cmd_parser.add_argument("pdf_input_doc", nargs="+", metavar="PDF_FILE", help="""
 
@@ -504,17 +499,15 @@ cmd_parser.add_argument("-c", "--calcbb", choices=["d", "m", "p", "gr", "gb", "o
                        metavar="[d|m|p|gr|gb|o]", default="d", help="""
 
    Choose the method to calculate bounding boxes (or to render the PDF pages in
-   order to calculate the boxes).  The default option 'd' will choose the MuPDF
-   rendering option if the PyMuPDF dependency is installed, otherwise it will
-   use pdftoppm rendering or Ghostscript rendering, in that order, if the
-   external programs can be located.  The options to force a particular method
-   are MuPDF ('m'), pdftoppm ('p'), or Ghostscript ('gr') for rendering, or
-   direct Ghostscript bounding-box calculation ('gb').  For pdftoppm or
-   Ghostscript options the corresponding program must be installed and
-   locatable (see the path-setting options below if the default locator fails).
-   Only the explicit rendering methods will work for scanned pages (see
-   '--gsBbox').  Choosing 'o' reverts to the old default behavior of first
-   looking for pdftoppm and then looking for Ghostscript for rendering.^^n""")
+   order to calculate the boxes).  The default option 'd' will currently choose
+   the MuPDF rendering option.  The options to force a particular method are
+   MuPDF ('m'), pdftoppm ('p'), or Ghostscript ('gr') for rendering, or direct
+   Ghostscript bounding-box calculation ('gb').  For pdftoppm or Ghostscript
+   options the corresponding program must be installed and locatable (see the
+   path-setting options below if the default locator fails).  Only the explicit
+   rendering methods will work for scanned pages (see '--gsBbox').  Choosing
+   'o' reverts to the old default behavior of first looking for pdftoppm and
+   then looking for Ghostscript for rendering.^^n""")
 
 cmd_parser.add_argument("-gs", "--gsBbox", action="store_true", help="""
 
@@ -595,8 +588,7 @@ cmd_parser.add_argument("-sr", "--screenRes", default=None, metavar="STR", help=
 cmd_parser.add_argument("-gf", "--guiFontSize", default=None, metavar="INT", help="""
 
    Choose the GUI font size.  Making this smaller than the default of 11 can
-   also make the GUI smaller if it does not fit on a smaller monitor.
-   +0+0".^^n""")
+   also make the GUI smaller if it does not fit on a smaller monitor.^^n""")
 
 cmd_parser.add_argument("-b", "--boxesToSet", choices=["m", "c", "t", "a", "b"],
                         metavar="[m|c|t|a|b]", action="append", default=[], help="""
@@ -608,7 +600,10 @@ cmd_parser.add_argument("-b", "--boxesToSet", choices=["m", "c", "t", "a", "b"],
    the first letter (lowercase) of a type of box.  The choices are MediaBox
    (m), CropBox (c), TrimBox (t), ArtBox (a), and BleedBox (b).  This option
    overrides the default and can be repeated multiple times to set several box
-   types.^^n""")
+   types.  Note that the program now uses PyMuPDF to set the boxes, and it
+   will refuse to set any non-MediaBox boxes unless they are fully contained
+   in the MediaBox.  In that case a warning will be issued and the box will
+   not be set.^^n""")
 
 cmd_parser.add_argument("-f", "--fullPageBox", choices=["m", "c", "t", "a", "b"],
                         metavar="[m|c|t|a|b]", action="append", default=[], help="""
@@ -632,32 +627,26 @@ cmd_parser.add_argument("-r", "--restore", action="store_true", help="""
 
    This is a simple undo operation which essentially undoes all the crops ever
    made by pdfCropMargins and returns to the original margins (provided no
-   other program modified the Producer metadata or ArtBoxes).  By default,
-   whenever this program crops a file for the first time it saves the MediaBox
-   intersected with the CropBox as the new ArtBox (since the ArtBox is rarely
-   used).  The Producer metadata is checked to see if this was the first time.
-   If so, the ArtBox for each page is simply copied to the MediaBox and the
-   CropBox for the page.  This restores the earlier view of the document, such
-   as in Acrobat Reader (but does not completely restore the previous condition
-   in cases where the MediaBox and CropBox differed or the ArtBox had a
-   previous value).  Any options such as '-u', '-p', and '-a' which do not make
-   sense in a restore operation are ignored.  Note that as far as default
-   filenames the operation is treated as just another crop operation (the
-   default-generated output filename still has a "_cropped.pdf" suffix).  The
-   '--modifyOriginal' option (or its query variant) can be used with this
-   option.  Saving in the ArtBoxes can be disabled by using the '--noundosave'
-   option.^^n""")
+   other program modified the saved XML data for the pdfCropMargins key).  By
+   default, whenever this program crops a file for the first time it saves the
+   MediaBox intersected with the CropBox for each page as XML metadata.  The
+   XML metadata is is checked to see if there is any existing restore data.  If
+   so, the saved metadata for each page is simply copied to the MediaBox and
+   the CropBox for the page.  This restores the earlier view of the document,
+   such as in Acrobat Reader (but does not completely restore the previous
+   condition in cases where the MediaBox and CropBox differed).  Any options
+   such as '-u', '-p', and '-a' which do not make sense in a restore operation
+   are ignored.  Note that as far as default filenames the operation is treated
+   as just another crop operation (the default-generated output filename still
+   has a "_cropped.pdf" suffix).  The '--modifyOriginal' option (or its query
+   variant) can be used with this option.  Saving restore data as XML metadata
+   can be disabled by using the '--noundosave' option.^^n""")
 
-# Maybe later: an option to choose which box to save to, or none, rather
-# than just turn off ArtBox.
 cmd_parser.add_argument("-A", "--noundosave", action="store_true", help="""
 
-   Do not save any restore data in the ArtBox.  This option will need to be
-   selected if the document actually uses the ArtBox for anything important
-   (which is rare).  Note that the '--restore' operation will not work
-   correctly for the cropped document if this option is included in the
-   cropping command.  (The program does not currently check for this when doing
-   a restore.)^^n""")
+   Do not save any restore data as XML metadata.  Note that the '--restore'
+   operation will not work correctly for the cropped document later if this
+   option is included in the cropping command.^^n""")
 
 cmd_parser.add_argument("-gsf", "--gsFix", action="store_true", help="""
 
@@ -769,6 +758,13 @@ cmd_parser.add_argument("-ss", "--stringSeparator", default="_", metavar="STR",
    appending or prepending string values to automatically generate filenames.
    The default value is "_".^^n""")
 
+cmd_parser.add_argument("-sr", "--stringRestore", default="restored",
+                        metavar="STR", help="""
+
+   This option can be used to set the string which will be appended (or
+   prepended) to the document filename when automatically generating the output
+   filename for a restored document.  The default value is "restored".^^n""")
+
 cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
 
    Specify a password to be used to decrypt an encrypted PDF file.  Note that
@@ -848,12 +844,13 @@ cmd_parser.add_argument("-i", "--showImages", action="store_true", help="""
 
 cmd_parser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
 
-   Use a locally-packaged pdftoppm executable rather than the system version.
-   This option is only available on Windows machines; it is ignored otherwise.
-   By default the first pdftoppm executable found in the directories in the
-   PATH environment variable is used.  On Windows the program will revert to
-   this option if PDF image-rendering is required, PyMuPDF is not installed,
-   and no system pdftoppm or Ghostscript executable can be found.^^n""")
+   This option is deprecated.  Use a locally-packaged pdftoppm executable
+   rather than the system version.  This option is only available on Windows
+   machines; it is ignored otherwise.  By default the first pdftoppm executable
+   found in the directories in the PATH environment variable is used.  On
+   Windows the program will revert to this option if PDF image-rendering is
+   required, PyMuPDF is not installed, and no system pdftoppm or Ghostscript
+   executable can be found.^^n""")
 
 cmd_parser.add_argument("-gsp", "--ghostscriptPath", type=str, metavar="PATH",
                         default="", help="""
