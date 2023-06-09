@@ -16,7 +16,6 @@ Features
   in two-up).
 - Works on Linux, Windows, Cygwin, and OS X/Darwin.
 - Has an optional graphical user interface (GUI) for interactive cropping.
-- A version of pdftoppm for Windows is included.
 - Renders and analyzes page images to find the bounding boxes, which allows it
   to deal with noisy scanned PDFs.
 - A rudimentary 'undo' capability is implemented by default. 
@@ -48,7 +47,7 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-**PdfCropMargins 2.0.0 is now out. (June 2023).**
+**PdfCropMargins 2.0.0 is now out (June 2023).**
 
 * The program now uses PyMuPDF for all internal PDF processing instead of
   PyPDF.  The PyPDF dependency has been removed, and PyMuPDF is a required
@@ -83,10 +82,9 @@ Installing
 
 The easiest way to install the pdfCropMargins program is by using pip.
 
-The basic features work out of the box with the GUI install, but the default
-install and some of the options require either the external program
-pdftoppm or Ghostscript.  For information on installing those programs on Linux
-and Windows, see: `Installing pdftoppm and/or Ghostscript
+The basic features work out of the box, some of the options require either the
+external program pdftoppm or Ghostscript.  For information on installing those
+programs on Linux and Windows, see: `Installing pdftoppm and/or Ghostscript
 <https://github.com/abarker/pdfCropMargins/tree/master/doc/installing_pdftoppm_and_ghostscript.rst>`_
 .
 
@@ -95,12 +93,13 @@ Linux/Ubuntu
 
 If you are installing via pip with the ``--user`` option be sure
 ``$HOME/.local/bin`` is in your system ``PATH``.  (To install system-wide
-without ``--user`` the ``pip3`` command below would also need to be run with
+without ``--user`` the ``pip3`` command below would need to be run with
 ``sudo``.)
 
 .. code-block:: sh
 
-   sudo apt install python3-pip ghostscript poppler-utils python3-setuptools python3-tk
+   sudo apt install python3-pip python3-setuptools python3-tk
+   sudo apt install ghostscript poppler-utils # Optional for pdftoppm and Ghostscript.
    pip3 install pdfCropMargins --user --upgrade
 
 **Troubleshooting:** If you have problems with the install of PyMuPDF, the
@@ -112,7 +111,7 @@ retry:
    pip3 install pip --upgrade --user
 
 If you still get an error "Failed building wheel for pymupdf" with the GUI
-install you can try forcing a binary install of pyMuPDF:
+install you can try forcing a binary install of PyMuPDF:
 
 .. code-block:: sh
 
@@ -128,7 +127,7 @@ The install command is:
    pip install pdfCropMargins --upgrade
 
 The ``pip`` program should be automatically installed along with Python.  If
-you cannot find the pip executable you can usually run pip like this:
+you cannot find the pip executable you can usually run it like this:
 
 .. code-block:: sh
 
@@ -137,7 +136,7 @@ you cannot find the pip executable you can usually run pip like this:
 Note that on some Windows installs the executable for Python is ``py`` rather
 than ``python``.
 
-In order for the command ``pdf-crop-margins`` to work from the command line the
+In order for the command ``pdfcropmargins`` to work from the command line the
 Python ``bin`` directory must be on the Windows ``Path``.  The system-wide
 Python ``bin`` directory should already be on the path if you checked the box
 to modify ``Path`` when you installed Python; otherwise it should be added.
@@ -154,11 +153,11 @@ Running from the command line
 -----------------------------
 
 After installation via pip the program can be run with either the command
-``pdf-crop-margins`` or the command ``pdfcropmargins``.  For example:
+``pdfcropmargins`` or the command ``pdf-crop-margins``.  For example:
 
 .. code-block:: sh
 
-   pdf-crop-margins -v -s -u your-file.pdf
+   pdfcropmargins -v -s -u your-file.pdf
 
 That command prints verbose output, forces all pages to be the same size
 (``-s``) and then crops each page by the same amount (``-u``) for a uniform
@@ -167,13 +166,13 @@ same command with the GUI for fine-tuning, use:
 
 .. code-block:: sh
 
-   pdf-crop-margins -v -s -u -gui your-file.pdf
+   pdfcropmargins -v -s -u -gui your-file.pdf
 
 For help and to see the many command-line options that are available, run:
 
 .. code-block:: sh
 
-   pdf-crop-margins -h | more
+   pdfcropmargins -h | more
 
 The full output of that command is also listed below, at the bottom of this
 page.  On Windows you may need to explicitly put the Python distribution's
@@ -214,13 +213,24 @@ code may call ``sys.exit``, so checking for ``SystemExit`` or ``BaseException`` 
 be required.
 
 The ``crop`` function always returns four values, some of which may be set to
-``None``: the output file path, the exit code, the text written to standard
-input, and the text written to standard output.  If the keyword argument
-``string_io`` is set true then standard output and standard error streams are
-temporarily redirected to capture any output text as strings, which are
-returned as the final two arguments.  Otherwise those values are set to
-``None``.  The keyword argument ``quiet`` implies the ``string_io`` argument,
-but does not echo anything to the terminal while the ``crop`` function runs.
+``None``:
+
+* the output file path,
+
+* the exit code,
+
+* the text written to standard input,
+
+* the text written to standard output.
+
+If the keyword argument ``string_io`` is set true (the default is false) then
+standard output and standard error streams are temporarily redirected to
+capture any output text as strings, which are returned as the final two
+arguments.  Otherwise those values are set to ``None``.  The keyword argument
+``quiet`` implies the ``string_io`` argument, but does not echo anything to the
+terminal while the ``crop`` function runs.
+
+An example usage:
 
 .. code-block:: python
 
@@ -237,7 +247,6 @@ program ``pdfCropMargins.py`` located in the ``bin`` directory.
 
 To pip install the program and its dependencies from the cloned repo rather
 than from PyPI just go to the root of the source directory and run ``pip install .``
-for the GUI version or ``pip install .`` for the non-GUI version.
 (As usual, for code development use the ``-e`` option to make the code
 editable.)
 
@@ -280,9 +289,8 @@ The output of that command follows::
                            [-f [m|c|t|a|b]] [-r] [-A] [-gsf] [-nc] [-pv PROG]
                            [-mo] [-q] [-nco] [-pf] [-sc STR] [-su STR] [-ss STR]
                            [-pw PASSWD] [-pc] [-khc] [-kvc] [-spr FLOAT:FLOAT]
-                           [-prw FLOAT FLOAT FLOAT FLOAT] [-dcb STR] [-dcw STR]
-                           [-i] [-pdl] [-gsp PATH] [-ppp PATH] [--version]
-                           [-wcdf FILEPATH]
+                           [-prw FLOAT FLOAT FLOAT FLOAT] [-i] [-pdl] [-gsp PATH]
+                           [-ppp PATH] [--version] [-wcdf FILEPATH]
                            PDF_FILE [PDF_FILE ...]
 
    Description:
@@ -850,25 +858,24 @@ The output of that command follows::
 
      -gsf, --gsFix
                   Attempt to repair the input PDF file with Ghostscript before it
-                  is read-in with PyPdf. This requires that Ghostscript be
-                  available. (See the general description text above for the
-                  actual command that is run.) This can also be used to
-                  automatically convert some PostScript files (.ps) to PDF for
-                  cropping. The repaired PDF is written to a temporary file; the
-                  original PDF file is not modified. The original filename is
-                  treated as usual as far as automatic name-generation, the '--
-                  modify-original' option, and so forth. This option is often
-                  helpful if the program hangs or raises an error due to a
-                  corrupted PDF file. Note that when re-cropping a file already
-                  cropped by pdfCropMargins this option is probably not
-                  necessary, and if it is used in a re-crop (at least with
-                  current versions of Ghostscript) it will reset the Producer
-                  metadata which the pdfCropMargins program uses to tell if the
-                  file was already cropped by the program (so the '--restore'
-                  option will not work in combination with this option). This
-                  option is not recommended as something to use by default unless
-                  you encounter many corrupted PDF files and do not need to
-                  restore back to the original margins.
+                  is read-in. This requires that Ghostscript be available. (See
+                  the general description text above for the actual command that
+                  is run.) This can also be used to automatically convert some
+                  PostScript files (.ps) to PDF for cropping. The repaired PDF is
+                  written to a temporary file; the original PDF file is not
+                  modified. The original filename is treated as usual as far as
+                  automatic name-generation, the '--modify-original' option, and
+                  so forth. This option is often helpful if the program hangs or
+                  raises an error due to a corrupted PDF file. Note that when re-
+                  cropping a file already cropped by pdfCropMargins this option
+                  is probably not necessary, and if it is used in a re-crop (at
+                  least with current versions of Ghostscript) it will reset the
+                  Producer metadata which the pdfCropMargins program uses to tell
+                  if the file was already cropped by the program (so the '--
+                  restore' option will not work in combination with this option).
+                  This option is not recommended as something to use by default
+                  unless you encounter many corrupted PDF files and do not need
+                  to restore back to the original margins.
 
      -nc, --noclobber
                   Never overwrite an existing file with the cropped output
@@ -1009,36 +1016,6 @@ The output of that command follows::
                   necessary to achieve the target page ratio is added to the
                   corresponding margin. All weights must be greater than zero.
 
-     -dcb STR, --docCatBlacklist STR
-                  Data associated with the full document, such as outlines,
-                  bookmarks, and modes, is saved in the document catalog of the
-                  PDF file. By default it is all copied over to the cropped
-                  document if possible (with some exceptions, e.g., "/Pages" will
-                  be modified by cropping). If this is not wanted, or if it
-                  causes problems for a document, this option specifies a
-                  blacklist of document catalog items that will never be copied.
-                  The arguments should be passed as a single, quoted, whitespace-
-                  separated string, for example "/Outlines /PageMode
-                  /OpenAction". The special value "ALL" blacklists everything. An
-                  empty string blacklists nothing, and is the default. As an
-                  example, it can be useful to blacklist "/OpenAction" if on
-                  opening the PDF it does something like zooming which is not
-                  desired. Blacklisting `/PageMode` can also be useful to, for
-                  example, not open the outline by default. Running in verbose
-                  mode '-v' will show which document catalog items are and are
-                  not being copied for a document.
-
-     -dcw STR, --docCatWhitelist STR
-                  See the '--docCatBlacklist' option. This is just a whitelist
-                  that essentially works the same way. The whitelist takes
-                  precedence over the blacklist. It specifies a list of items
-                  which will always be copied over even if they are in the
-                  blacklist. Useful combined with setting the blacklist to "ALL"
-                  if you only want one or two of the items. The default value is
-                  the empty string, which whitelists nothing and so only the
-                  blacklist is used. Setting to "ALL" guarantees that everything
-                  possible is copied over.
-
      -i, --showImages
                   When explicitly rendering PDF files to image files, display the
                   inverse image files that are used to find the bounding boxes.
@@ -1079,3 +1056,4 @@ The output of that command follows::
 
    The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.
    Released under the GNU GPL license, version 3 or later.
+

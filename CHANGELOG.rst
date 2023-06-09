@@ -3,13 +3,36 @@
 History
 =======
 
-2.0 (2023-xx-xx)
-----------------
+2.0.0 (2023-xx-xx)
+------------------
 
 Changes:
 
 * All internal PDF processing is now done with PyMuPDF.  The PyPDF dependency
   has been removed.
+
+* The program now uses PyMuPDF for all internal PDF processing instead of
+  PyPDF.  The PyPDF dependency has been removed, and PyMuPDF is a required
+  depencency.
+
+* The PyMuPDF program is much stricter about setting page boxes than PyPDF, in
+  order to avoid inconsistent situations.  Setting the MediaBox automatically
+  resets all the other boxes (CropBox, etc.) to their defaults.  The MediaBox
+  is always set first.  By default crops still set the MediaBox and CropBox,
+  but the other boxes will be reset.
+
+* All the other boxes must be completely contained in the MediaBox to be set.
+  If not (when using the ``--boxesToSet`` option) a warning will be issued and
+  the action will be ignored.
+
+* The ArtBox can no longer be used to save restore information.  The restore
+  information is instead saved in the XML metadata.  Documents that were
+  cropped by earlier versions will automatically have their ArtBox data
+  transferred to XML restore metadata unless the ``--noundosave`` option is
+  used.
+
+* The options ``--docCatBlacklist`` and ``--docCatWhitelist`` have been removed
+  since PyMuPDF automatically retains the full document catalog.
 
 1.2.0 (2023-03-12)
 ------------------
