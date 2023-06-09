@@ -30,22 +30,23 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 """
 
-# TODO: Maybe add option to see the MuPdf warnings, use fitz.TOOLS.mupdf_warnings()
-#       first to empty warnings and then to get warnings, see
-#       https://github.com/pymupdf/PyMuPDF/discussions/1501
-
 # Might want an option to delete the XML save data.
 
 # TODO GUI options not error-checked/repaired on arg reprocessing, uniformOrderStat
 
+# TODO: Maybe add option to see the MuPdf warnings, use
+# fitz.TOOLS.mupdf_warnings() first to empty warnings and then to get warnings,
+# see https://github.com/pymupdf/PyMuPDF/discussions/1501
+
 # TODO: Maybe use _restored and restored_ prefix and suffix for restore ops???
-#       Need a new option --stringRestored.
+# Need a new option --stringRestored.
 
 # TODO: Make --evenodd option equalize the pages after separately calculating
 # the crops, just do the max over them.
 
 # TODO: Deleting metadata on restore doesn't seem to remove key like docs say.
 #       So restored document still registers as already cropped.
+#       See the `check_and_set_crop_metadata` function.
 #       https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
 
 # Some general notes, useful for reading the code.
@@ -257,7 +258,7 @@ def get_full_page_box_assigning_media_and_crop(page):
     page.rotationAngle = rotation
 
     # Un-rotate the page, to a rotation of 0.
-    page.set_rotation(0) # TODO: Maybe offer an option to not perform this page rotation.  Here and/or mod_box_for_rotation.
+    page.set_rotation(0)
 
     # Save copies of some values in the page's namespace, to possibly restore later.
     page.original_media_box = get_box(page, "mediabox")
@@ -651,18 +652,28 @@ def check_and_set_crop_metadata(document_wrapper_class, metadata_info):
 
     The "Producer" metadata then has a string appended (if not already there)
     to indicate that this program modified the file."""
-    has_xml_restore_data = False
+    def has_xml_restore_data():
+        """This function is a workaround because setting the XML metadata key
+        to "null" doesn't seem to delete the key itself like the docs say.  Need
+        to look at the value to determine if there is data there to determine
+        `already_cropped_by_this_program` since value is set null on restore."""
+        # TODO: Should be able to just check key with `doc_wrap.has_xml_metadata_key`
+        # but doesn't work.
+        data_value, has_xml_metadata, has_key = document_wrapper_class.get_xml_metadata_value(
+                                                                         RESTORE_METADATA_KEY)
+        if has_key:
+            return data_value[0] == "["
+        return False
 
     if metadata_info:
         old_producer_string = metadata_info["producer"]
     else:
         return PRODUCER_MODIFIER, False # Can't read metadata, but maybe can set it.
 
-    if document_wrapper_class.has_xml_metadata_key(RESTORE_METADATA_KEY):
+    if has_xml_restore_data(): # See note in function.
         if args.verbose:
             print("\nThe document was already cropped at least once by pdfCropMargins>=2.0.")
         already_cropped_by_this_program = ">=2.0"
-        has_xml_restore_data = True
 
     elif old_producer_string and old_producer_string.endswith(PRODUCER_MODIFIER):
         if args.verbose:

@@ -239,7 +239,6 @@ class MuPdfDocument:
     def get_box_list(self, boxstring):
         """Get a list of all the boxes of the type `boxstring`, e.g. `"artbox"`
         or `"mediabox"`."""
-        # TODO, pymupdf upgrade, might be somewhere in program where this also simplifies code...
         boxlist = []
         for page in self.document:
             boxlist.append(get_box(page, boxstring))
