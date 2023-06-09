@@ -131,7 +131,6 @@ def update_value_and_return_it(input_text_element, value=None, fun_to_apply=None
     3) Update the text back to the new value.
 
     If `value` is passed in it will be used in place of the text from step 1)."""
-    print("XXXXXXXXXXXXXXX", input_text_element, max_val, min_val)
     if value is None:
         value = input_text_element.Get()
     if fun_to_apply:
