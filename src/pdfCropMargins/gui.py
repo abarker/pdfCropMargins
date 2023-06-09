@@ -123,17 +123,23 @@ def str_to_bool(string):
               file=sys.stderr)
         ex.cleanup_and_exit(1)
 
-def update_value_and_return_it(input_text_element, value=None, fun_to_apply=None):
+def update_value_and_return_it(input_text_element, value=None, fun_to_apply=None,
+                               max_val=None, min_val=None):
     """
     1) Get the text in the `InputText` element `input_text_element`.
     2) Apply the function `fun_to_apply` to it (if one is passed in).
     3) Update the text back to the new value.
 
     If `value` is passed in it will be used in place of the text from step 1)."""
+    print("XXXXXXXXXXXXXXX", input_text_element, max_val, min_val)
     if value is None:
         value = input_text_element.Get()
     if fun_to_apply:
         value = fun_to_apply(value)
+    if max_val is not None and not isinstance(value, str):
+        value = min(value, max_val)
+    if min_val is not None and not isinstance(value, str):
+        value = max(value, min_val)
     input_text_element.Update(value)
     return value
 
@@ -157,13 +163,15 @@ def update_checkbox(values_dict, element, element_key, args, attr, fun_to_apply=
         element_value = fun_to_apply(element_value)
     setattr(args, attr, element_value)
 
-def update_4_values(element_list, attr, args_dict, values_dict, value_type=float):
+def update_4_values(element_list, attr, args_dict, values_dict, value_type=float,
+                    max_val=None, min_val=None):
     """Update four values from a 4-value argument to argparse."""
     args_attr = args_dict[attr]
 
     def update_all_from_args_dict():
         for i in [0,1,2,3]:
-            update_value_and_return_it(element_list[i], value=args_attr[i])
+            update_value_and_return_it(element_list[i], value=args_attr[i],
+                                       max_val=max_val, min_val=min_val)
 
     try:
         # This comprehension is just to test that the format is correct and casts work.
@@ -174,14 +182,15 @@ def update_4_values(element_list, attr, args_dict, values_dict, value_type=float
 
     for i in [0,1,2,3]:
         args_attr[i] = update_value_and_return_it(element_list[i],
-                                                    fun_to_apply=value_type)
+                                                  fun_to_apply=value_type,
+                                                  max_val=max_val, min_val=min_val)
 
     # Update all, to convert forms like 5 to 5.0 (which were equal above).
     update_all_from_args_dict()
 
 def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
                                  values_dict, value_type=to_float_or_NA,
-                                 value_type4=float):
+                                 value_type4=float, max_val=None, min_val=None):
     """Update all the value for pairs such as `percentRetain` and
     `percentRetain4`, keeping the versions with one vs. four arguments
     synchronized."""
@@ -189,9 +198,11 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
     args_attr4 = args_dict[attr4]
 
     def update_all_from_args_dict():
-        update_value_and_return_it(element, value=args_attr[0])
+        update_value_and_return_it(element, value=args_attr[0],
+                                   max_val=max_val, min_val=min_val)
         for i in [0,1,2,3]:
-            update_value_and_return_it(element_list4[i], value=args_attr4[i])
+            update_value_and_return_it(element_list4[i], value=args_attr4[i],
+                                       max_val=max_val, min_val=min_val)
 
     try:
         element_text = str(value_type(element.Get()))
@@ -202,18 +213,22 @@ def update_paired_1_and_4_values(element, element_list4, attr, attr4, args_dict,
         return
     # See if the element value changed.
     if value_type(element_text) != args_attr[0] and element_text != "N/A":
-        args_attr[0] = update_value_and_return_it(element, fun_to_apply=value_type)
+        args_attr[0] = update_value_and_return_it(element, fun_to_apply=value_type,
+                                                  max_val=max_val, min_val=min_val)
         for i in [0,1,2,3]:
             args_attr4[i] = update_value_and_return_it(element_list4[i],
-                                                       value=args_attr[0])
+                                                       value=args_attr[0],
+                                                       max_val=max_val, min_val=min_val)
 
     # See if any of the element_list4 values changed.
     elif any(value_type4(element_text4[i]) != args_attr4[i] for i in [0,1,2,3]):
         for i in [0,1,2,3]:
             args_attr4[i] = update_value_and_return_it(element_list4[i],
-                                                       fun_to_apply=value_type4)
+                                                       fun_to_apply=value_type4,
+                                                       max_val=max_val, min_val=min_val)
         if len(set(args_attr4)) == 1: # All are the same value.
-            args_attr[0] = update_value_and_return_it(element, value=args_attr4[0])
+            args_attr[0] = update_value_and_return_it(element, value=args_attr4[0],
+                                                      max_val=max_val, min_val=min_val)
         else:
             args_attr[0] = update_value_and_return_it(element, value="N/A")
 
@@ -460,7 +475,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
         update_paired_1_and_4_values(input_text_uniformOrderStat,
               input_text_uniformOrderStat4, "uniformOrderStat",
               "uniformOrderStat4", args_dict, values_dict,
-              value_type=to_int_or_NA, value_type4=int)
+              value_type=to_int_or_NA, value_type4=int, max_val=num_pages-1, min_val=0)
         # Copy backing values to the actual args object.
         args.uniformOrderStat = [] # Not needed with uniformOrderStat4 always set.
         if all(i == 0 for i in args_dict["uniformOrderStat4"]):
@@ -693,6 +708,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             return
         try:
             value = int(values_dict["threshold"])
+            value = min(max(value, 0),  255)
             args_dict["threshold"] = value
         except ValueError:
             value = args_dict["threshold"]
@@ -720,6 +736,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             return
         try:
             value = int(values_dict["numBlurs"])
+            value = max(value, 0)
             args_dict["numBlurs"] = value
         except ValueError:
             value = args_dict["numBlurs"]
@@ -747,6 +764,7 @@ def create_gui(input_doc_fname, fixed_input_doc_fname, output_doc_fname,
             return
         try:
             value = int(values_dict["numSmooths"])
+            value = max(value, 0)
             args_dict["numSmooths"] = value
         except ValueError:
             value = args_dict["numSmooths"]
