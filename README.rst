@@ -48,37 +48,35 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-**New in recent versions (Mar 2023):**
+**PdfCropMargins 2.0.0 is now out. (June 2023).**
 
-* The minimimum Python version is now Python 3.7 due to several dependencies
-  requiring it.
+* The program now uses PyMuPDF for all internal PDF processing instead of
+  PyPDF.  The PyPDF dependency has been removed, and PyMuPDF is a required
+  depencency.
 
-* You can now use either ``pdf-crop-margins`` or ``pdfcropmargins`` to launch the
-  program from the command line.
+* PyMuPDF always tries to repair documents on reading them, which should reduce
+  some problems with corrupted documents.
 
-* The GUI layout has been updated for more intuitive use of the options that take
-  four values, for the left, bottom, right, and top margins.
+**BREAKING CHANGES**:
 
-* The GUI now displays the smallest delta values on each crop
-  as buttons that take you to the page.  This is useful for fine-tuning crops
-  to not chop off useful information.
+* The PyMuPDF program is much stricter about setting page boxes than PyPDF, in
+  order to avoid inconsistent situations.  Setting the MediaBox automatically
+  resets all the other boxes (CropBox, etc.) to their defaults.  The MediaBox
+  is always set first.  By default crops still set the MediaBox and CropBox,
+  but the other boxes will be reset.
 
-* There is now a new ``--cropSafe`` (``-cs``) option which ensures that crops
-  do not exceed the bounding box size when enabled.  The ``--cropSafeMin4``
-  (``-csm4``) option, if set, allows a user-specified extra amount of safe
-  margin beyond the bounding box.
+* All the other boxes must be completely contained in the MediaBox to be set.
+  If not (when using the ``--boxesToSet`` option) a warning will be issued and
+  the action will be ignored.
 
-* The new options ``--keepHorizCenter`` (``-khz``) and ``--keepVertCenter``
-  (``-kvc``) have been added.  They force equal cropping on the left and right
-  or top and bottom pages, respectively.  The minimum of the delta values is
-  used on each page.
+* The ArtBox can no longer be used to save restore information.  The restore
+  information is instead saved in the XML metadata.  Documents that were
+  cropped by earlier versions will automatically have their ArtBox data
+  transferred to XML restore metadata unless the ``--noundosave`` option is
+  used.
 
-* Added an option ``--prevCropped`` (``-pc``) which just tests whether or not
-  the document was previously cropped with pdfCropMargins.  This is meant for
-  scripting use.
-
-* The PDF preview in the GUI now resizes properly when the window is reconfigured.
-  The new ``--guiFontSize`` argument can be used to size the font.
+* The options ``--docCatBlacklist`` and ``--docCatWhitelist`` have been removed
+  since PyMuPDF automatically retains the full document catalog.
 
 Installing 
 ==========
@@ -238,10 +236,10 @@ tree, provided the dependencies are installed.  Just clone the repo and run the
 program ``pdfCropMargins.py`` located in the ``bin`` directory.
 
 To pip install the program and its dependencies from the cloned repo rather
-than from PyPI just go to the root of the source directory and run ``pip
-install .`` for the GUI version or ``pip install .`` for the non-GUI
-version.  (As usual, for code development use the ``-e`` option to make the
-code editable.)
+than from PyPI just go to the root of the source directory and run ``pip install .``
+for the GUI version or ``pip install .`` for the non-GUI version.
+(As usual, for code development use the ``-e`` option to make the code
+editable.)
 
 Getting good crops
 ------------------

@@ -31,6 +31,7 @@ import sys
 import os
 import glob
 import time
+import io
 from . import external_program_calls as ex
 from . import pymupdf_routines
 
@@ -69,19 +70,17 @@ args = None # Command-line arguments; set in get_bounding_box_list.
 # The main functions of the module.
 #
 
-def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
-                          set_of_page_nums_to_crop, argparse_args, chosen_PdfWriter):
+def get_bounding_box_list(input_doc_fname, input_doc_mupdf_wrapper, full_page_box_list,
+                          set_of_page_nums_to_crop, argparse_args):
     """Calculate a bounding box for each page in the document.  The
     `input_doc_fname` argument is the filename of the document's original PDF
-    file, `input_doc` is the `PdfReader` for the document.  The argument
-    `full_page_box_list` is a list of the full-page-size boxes (which is used
-    to correct for any nonzero origins in the PDF coordinates).  The
-    `set_of_page_nums_to_crop` argument is the set of page numbers to crop; it
-    is passed so that unnecessary calculations can be skipped.  The
+    file, `input_doc_mupdf_wrapper` is a class wrapping the PyMuPDF document.
+    The argument `full_page_box_list` is a list of the full-page-size boxes
+    (which is used to correct for any nonzero origins in the PDF coordinates).
+    The `set_of_page_nums_to_crop` argument is the set of page numbers to crop;
+    it is passed so that unnecessary calculations can be skipped.  The
     `argparse_args` argument should be passed the args parsed from the command
-    line by argparse.  The `chosen_PdfWriter` is the PdfWriter class
-    from whichever pyPdf package was chosen by the main program.  The function
-    returns the list of bounding boxes."""
+    line by argparse.  The function returns the list of bounding boxes."""
     global args
     args = argparse_args # Make args available to all funs in module, as a global.
 
@@ -98,7 +97,8 @@ def get_bounding_box_list(input_doc_fname, input_doc, full_page_box_list,
                   "\nhave Ghostscript installed.", file=sys.stderr)
             ex.cleanup_and_exit(1)
 
-        bbox_list = get_bounding_box_list_render_image(input_doc_fname, input_doc)
+        bbox_list = get_bounding_box_list_render_image(input_doc_fname,
+                                                       input_doc_mupdf_wrapper)
 
     # Now we need to use the full page boxes to translate for non-zero origin.
     bbox_list = correct_bounding_box_list_for_nonzero_origin(bbox_list, full_page_box_list)
@@ -121,10 +121,10 @@ def correct_bounding_box_list_for_nonzero_origin(bbox_list, full_box_list):
                                  bbox[2]+left_x, bbox[3]+lower_y])
     return corrected_box_list
 
-def get_bounding_box_list_render_image(pdf_file_name, input_doc):
+def get_bounding_box_list_render_image(pdf_file_name, input_doc_mupdf_wrapper):
     """Calculate the bounding box list by directly rendering each page of the PDF as
-    an image file.  The MediaBox and CropBox values in `input_doc` should have
-    already been set to the chosen page size before the rendering."""
+    an image file.  The MediaBox and CropBox values in `input_doc_mupdf_wrapper`
+    media boxex should have already been set to the chosen page size before the rendering."""
     if args.calcbb == "m":
         program_to_use = "mupdf"
     elif args.calcbb == "p":
@@ -134,6 +134,10 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
     else:
         raise ValueError("Attempting render pages when no rendering method was specified"
                 "\nPassed 'calcbb' argument of '{}'.".format(args.calcbb))
+
+    #
+    # Render all the pages to images.
+    #
 
     if args.verbose:
         print("\nRendering the PDF to images using the " + program_to_use + " program,"
@@ -167,18 +171,21 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
 
     bounding_box_list = []
 
+    #
+    # Loop over each page and calculate the bounding box for the rendered image.
+    #
+
     for page_num, tmp_image_file_name in enumerate(outfiles):
-        curr_page = input_doc.pages[page_num]
+        curr_page = input_doc_mupdf_wrapper.document[page_num]
 
         # Open the image in Pillow.  Retry a few times on fail in case race conditions.
         if program_to_use == "mupdf":
-            import io
             image = image_list[page_num]
             # Opening directly in Pillow: https://github.com/pymupdf/PyMuPDF/issues/322
             pil_im = Image.open(io.BytesIO(image))
 
         else:
-            max_num_tries = 3
+            max_num_tr:ies = 3
             time_between_tries = 1
             curr_num_tries = 0
             while True:
@@ -225,7 +232,8 @@ def get_bounding_box_list_render_image(pdf_file_name, input_doc):
             pil_im.show() # usually for debugging or param-setting
 
         # Calculate the bounding box of the negative image, and append to list.
-        bounding_box = calculate_bounding_box_from_image(pil_im, curr_page)
+        bounding_box = calculate_bounding_box_from_image(pil_im,
+                                 pymupdf_routines.get_box(curr_page, "mediabox"))
         bounding_box_list.append(bounding_box)
 
         # Clean up the image files after they are no longer needed.
@@ -281,7 +289,7 @@ def get_image_list_mupdf(pdf_file_name):
     page_images = [document_pages.get_page_ppm_for_crop(i) for i in range(num_pages)]
     return page_images
 
-def calculate_bounding_box_from_image(im, curr_page):
+def calculate_bounding_box_from_image(im, curr_page_mediabox):
     """This function uses a Pillow routine to get the bounding box, in bp, of
     the rendered image."""
     x_max, y_max = im.size
@@ -297,13 +305,13 @@ def calculate_bounding_box_from_image(im, curr_page):
     bounding_box[1] = y_max - bounding_box[1]
     bounding_box[3] = y_max - bounding_box[3]
 
-    full_page_box = curr_page.mediabox # Should have been set already to chosen box.
+    full_page_box = curr_page_mediabox # Should have been set already to chosen box.
 
     # Convert pixel units to PDF's bp units.
-    convert_x = float(full_page_box.right
-                    - full_page_box.left) / x_max
-    convert_y = float(full_page_box.top
-                    - full_page_box.bottom) / y_max
+    convert_x = float(full_page_box.x1
+                    - full_page_box.x0) / x_max
+    convert_y = float(full_page_box.y1
+                    - full_page_box.y0) / y_max
 
     # Get final box; note conversion to lower-left point, upper-right point format.
     final_box = [bounding_box[0] * convert_x,
