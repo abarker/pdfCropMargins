@@ -33,13 +33,16 @@ Source code site: https://github.com/abarker/pdfCropMargins
 # Might want an option to delete the XML save data.
 
 # TODO GUI options not error-checked/repaired on arg reprocessing, uniformOrderStat
+# Separate out the parts of `process_command_line_arguments` that can be re-run from
+# the top of `process_pdf_file` each time it is called.  Also allows implementing
+# the `--stringRestored` option, which is commented out in manpage file.
+
+# TODO: Maybe use _restored and restored_ prefix and suffix for restore ops???
+# Need a new option --stringRestored.
 
 # TODO: Maybe add option to see the MuPdf warnings, use
 # fitz.TOOLS.mupdf_warnings() first to empty warnings and then to get warnings,
 # see https://github.com/pymupdf/PyMuPDF/discussions/1501
-
-# TODO: Maybe use _restored and restored_ prefix and suffix for restore ops???
-# Need a new option --stringRestored.
 
 # TODO: Make --evenodd option equalize the pages after separately calculating
 # the crops, just do the max over them.

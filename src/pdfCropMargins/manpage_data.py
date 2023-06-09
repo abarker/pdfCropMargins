@@ -758,12 +758,25 @@ cmd_parser.add_argument("-ss", "--stringSeparator", default="_", metavar="STR",
    appending or prepending string values to automatically generate filenames.
    The default value is "_".^^n""")
 
-cmd_parser.add_argument("-sr", "--stringRestore", default="restored",
-                        metavar="STR", help="""
-
-   This option can be used to set the string which will be appended (or
-   prepended) to the document filename when automatically generating the output
-   filename for a restored document.  The default value is "restored".^^n""")
+# TODO: These options would be easy to add, except that they currently wouldn't
+# work with the GUI since they are done at file open time.  Need to separate
+# out the processing that can be redone each time for `process_pdf_file`.  Also
+# good for `uniformOrderStat` arg checking.
+#
+#cmd_parser.add_argument("-sr", "--stringRestored", default="restored",
+#                        metavar="STR", help="""
+#
+#   This option can be used to set the string which will be appended (or
+#   prepended) to the document filename when automatically generating the output
+#   filename for a restored document.  The default value is "restored".^^n""")
+#
+#cmd_parser.add_argument("-sr", "--stringUnrestored", default="unrestored",
+#                        metavar="STR", help="""
+#
+#   This option can be used to set the string which will be appended (or
+#   prepended) to the document filename when automatically generating the output
+#   filename for the original, cropped file.  The default value is
+#   "restored".^^n""")
 
 cmd_parser.add_argument("-pw", "--password", metavar="PASSWD", help="""
 
