@@ -69,10 +69,9 @@ recent changes and new features.
   the action will be ignored.
 
 * The ArtBox can no longer be used to save restore information.  The restore
-  information is instead saved in the XML metadata.  Documents that were
-  cropped by earlier versions will automatically have their ArtBox data
-  transferred to XML restore metadata unless the ``--noundosave`` option is
-  used.
+  information is instead saved as XML metadata.  Documents that were cropped by
+  earlier versions will automatically have their ArtBox data transferred to XML
+  restore metadata unless the ``--noundosave`` option is used.
 
 * The options ``--docCatBlacklist`` and ``--docCatWhitelist`` have been removed
   since PyMuPDF automatically retains the full document catalog.
@@ -98,8 +97,8 @@ without ``--user`` the ``pip3`` command below would need to be run with
 
 .. code-block:: sh
 
-   sudo apt install python3-pip python3-setuptools python3-tk
-   sudo apt install ghostscript poppler-utils # Optional for pdftoppm and Ghostscript.
+   sudo apt install python3-tk
+   sudo apt install ghostscript poppler-utils # Optional, for ghostscript and pdftoppm.
    pip3 install pdfCropMargins --user --upgrade
 
 **Troubleshooting:** If you have problems with the install of PyMuPDF, the
