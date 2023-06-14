@@ -73,7 +73,7 @@ def get_window_size(scaling):
         width *= .90
         height *= .90
     elif os == "Windows":
-        width, height = get_window_size_sg(scaling)
+        width, height = get_window_size_pysimplegui_zoomed(scaling)
         width *= .90
         height *= .90
     else:
@@ -89,7 +89,7 @@ def get_window_size(scaling):
 
     return width, height
 
-def get_window_size_sg(scaling):
+def get_window_size_pysimplegui_zoomed(scaling):
     """Get size from a big pySimpleGui window.  Not recommended for non-Windows
     because sg uses fullscreen mode there instead of zoomed mode for `maximize`,
     which doesn't account for taskbar size."""
@@ -150,6 +150,7 @@ def get_window_size_tk(scaling):
     # Mac, Linux, Windows attributes here: https://wiki.tcl-lang.org/page/wm+attributes
 
     root = tk.Tk()
+    #root.geometry("1x1")
     # Info on scaling: https://github.com/PySimpleGUI/PySimpleGUI/issues/1907
     root.tk.call('tk', 'scaling', scaling)
 
