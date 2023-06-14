@@ -268,7 +268,8 @@ def get_full_page_box_assigning_media_and_crop(page):
     page.original_media_box = get_box(page, "mediabox")
     page.original_crop_box = get_box(page, "cropbox")
 
-    box_string = ["m", "c"]
+    # Note: The default value of empty args.fullPageBox are set when processing the
+    # command-line args.  Set to ["m", "c"] unless Ghostscript box-finding is selected.
 
     first_loop = True
     for box_string in args.fullPageBox:
