@@ -763,7 +763,10 @@ def apply_crop_list(crop_list, input_doc_mupdf_wrapper, page_nums_to_crop,
         # the saved values.  Note that MediaBox is set FIRST, since PyMuPDF
         # will reset all other boxes when it is set.
         set_box(curr_page, "mediabox", curr_page.original_media_box)
-        set_box(curr_page, "cropbox", curr_page.original_crop_box)
+        # TODO: Below causes problems to reset the old one, inconsistent sometimes...,
+        # but not really needed since setting MediaBox in PyMuPDF now resets it anyway...
+        # Delete where it is set, also, if deleting this code.  Maybe need a copy when set?
+        #set_box(curr_page, "cropbox", curr_page.original_crop_box)
 
         # Copy the original page without further mods if it wasn't in the range
         # selected for cropping.
