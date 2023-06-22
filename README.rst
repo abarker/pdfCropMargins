@@ -282,19 +282,20 @@ To see the documentation, run::
 
 The output of that command follows::
 
-   Usage: pdf-crop-margins [-h] [-o OUTFILE_PATH_OR_DIR] [-v] [-gui] [-p PCT]
-                           [-p4 PCT PCT PCT PCT] [-pt] [-a BP] [-a4 BP BP BP BP]
-                           [-cs] [-csm4 BP BP BP BP] [-ap BP] [-ap4 BP BP BP BP]
-                           [-u] [-m INT] [-m4 INT INT INT INT] [-mp INT] [-s]
-                           [-ms INT] [-e] [-g PAGESTR] [-c [d|m|p|gr|gb|o]] [-gs]
-                           [-gsr] [-t BYTEVAL] [-nb INT] [-ns INT] [-x DPI]
-                           [-y DPI] [-sr STR] [-gf INT] [-b [m|c|t|a|b]]
-                           [-f [m|c|t|a|b]] [-r] [-A] [-gsf] [-nc] [-pv PROG]
-                           [-mo] [-q] [-nco] [-pf] [-sc STR] [-su STR] [-ss STR]
-                           [-pw PASSWD] [-pc] [-khc] [-kvc] [-spr FLOAT:FLOAT]
-                           [-prw FLOAT FLOAT FLOAT FLOAT] [-i] [-pdl] [-gsp PATH]
-                           [-ppp PATH] [--version] [-wcdf FILEPATH]
-                           PDF_FILE [PDF_FILE ...]
+   Usage: pdfcropmargins [-h] [-o OUTFILE_PATH_OR_DIR] [-v] [-gui] [-p PCT]
+                         [-p4 PCT PCT PCT PCT] [-pt] [-a BP] [-a4 BP BP BP BP]
+                         [-cs] [-csm4 BP BP BP BP] [-ap BP] [-ap4 BP BP BP BP]
+                         [-u] [-m INT] [-m4 INT INT INT INT] [-mp INT] [-s]
+                         [-ms INT] [-ssp FLOAT FLOAT FLOAT FLOAT] [-e]
+                         [-g PAGESTR] [-c [d|m|p|gr|gb|o]] [-gs] [-gsr]
+                         [-t BYTEVAL] [-nb INT] [-ns INT] [-x DPI] [-y DPI]
+                         [-sr STR] [-gf INT] [-b [m|c|t|a|b]] [-f [m|c|t|a|b]]
+                         [-r] [-A] [-gsf] [-nc] [-pv PROG] [-mo] [-q] [-nco]
+                         [-pf] [-sc STR] [-su STR] [-ss STR] [-pw PASSWD] [-pc]
+                         [-khc] [-kvc] [-spr FLOAT:FLOAT]
+                         [-prw FLOAT FLOAT FLOAT FLOAT] [-i] [-pdl] [-gsp PATH]
+                         [-ppp PATH] [--version] [-wcdf FILEPATH]
+                         PDF_FILE [PDF_FILE ...]
 
    Description:
 
@@ -312,10 +313,10 @@ The output of that command follows::
         writing the cropped output-document to a file named
         croppedDocument.pdf:
 
-           pdf-crop-margins document.pdf -o croppedDocument.pdf
+           pdfcropmargins document.pdf -o croppedDocument.pdf
 
-        The alias 'pdfcropmargins' can also be used to launch the program in
-        place of 'pdf-crop-margins'. If no destination is provided a filename
+        The alias 'pdf-crop-margins' can also be used to launch the program in
+        place of 'pdfcropmargins'. If no destination is provided a filename
         will be automatically generated from the name of the source file (see
         below).
 
@@ -349,71 +350,71 @@ The output of that command follows::
         for each page; if the pages do not have the same size to begin with they
         will not have the same size afterward unless the '-s' option is also used.
 
-           pdf-crop-margins -u -s doc.pdf
+           pdfcropmargins -u -s doc.pdf
 
         2) Crop each page of doc.pdf individually (i.e., not uniformly), keeping 50%
         of the existing margins.
 
-           pdf-crop-margins -p 50 doc.pdf
+           pdfcropmargins -p 50 doc.pdf
 
         3) Crop doc.pdf uniformly, keeping 50% of the left margin, 20% of the bottom
         margin, 40% of the right margin, and 10% of the top margin.
 
-           pdf-crop-margins -u -p4 50 20 40 10 doc.pdf
+           pdfcropmargins -u -p4 50 20 40 10 doc.pdf
 
         4) Crop doc.pdf retaining 20% of the margins, and then reduce the right page
         margins only by an absolute 12 points.
 
-           pdf-crop-margins -p 20 -a4 0 0 12 0 doc.pdf
+           pdfcropmargins -p 20 -a4 0 0 12 0 doc.pdf
 
         5) Add a constant 5bp around the bare bounding boxes on all pages (note the
         negative value passed to the `-a` option, which adds space rather than
         removing it).
 
-           pdf-crop-margins -p 0 -a -5 doc.pdf
+           pdfcropmargins -p 0 -a -5 doc.pdf
 
         6) Pre-crop the document by 5bp on each side before computing the bounding
         boxes.  Then crop retaining 50% of the computed margins.  This can be
         useful for difficult documents such as scanned books with page-edge noise
         or other "features" inside the current margins.
 
-           pdf-crop-margins -ap 5 -p 50 doc.pdf
+           pdfcropmargins -ap 5 -p 50 doc.pdf
 
         7) Crop doc.pdf, re-naming the cropped output file to doc.pdf and backing
         up the original file in a file named backup_doc.pdf.
 
-           pdf-crop-margins -mo -pf -su "backup" doc.pdf
+           pdfcropmargins -mo -pf -su "backup" doc.pdf
 
         8) Crop the margins of doc.pdf to 120% of their original size, increasing
         the margins.  Use Ghostscript to find the bounding boxes without explicit
         rendering by pdfCropMargins.
 
-           pdf-crop-margins -p 120 -c gb doc.pdf
+           pdfcropmargins -p 120 -c gb doc.pdf
 
         9) Crop the margins of doc.pdf ignoring the 10 largest margins on each edge
         (over the whole document).  This is especially good for noisy documents
         where all the pages have very similar margins, or when you want to ignore
         marginal annotations which only occur on a few pages.
 
-           pdf-crop-margins -m 10 doc.pdf
+           pdfcropmargins -m 10 doc.pdf
 
         10) Crop doc.pdf, launch the acroread viewer on the cropped output, and then
         query as to whether or not to rename the cropped file doc.pdf and back up
         the original file as doc_uncropped.pdf.
 
-           pdf-crop-margins -mo -q doc.pdf
+           pdfcropmargins -mo -q doc.pdf
 
         11) Crop pages 1-100 of doc.pdf, cropping all even pages uniformly and all odd
         pages uniformly.
 
-           pdf-crop-margins -g 1-100 -e doc.pdf
+           pdfcropmargins -g 1-100 -e doc.pdf
 
         12) Try to restore doc.pdf to its original margins, assuming it was cropped
         with pdfCropMargins previously.  Note that the default output filename is
         still named doc_cropped.pdf, even though it is the recovered file.  Use the
         '-mo' option to modify doc.pdf and backup the previous version.
 
-           pdf-crop-margins -r doc.pdf
+           pdfcropmargins -r doc.pdf
 
         There are many different ways to use this program. After finding a
         method which works well for a particular task or workflow pattern it is
@@ -681,6 +682,16 @@ The output of that command follows::
                   calculated independently. This is an order statistic for
                   selecting the uniform size to make the pages. Note that this
                   will cut off parts of some pages if n>0.
+
+     -ssp FLOAT FLOAT FLOAT FLOAT, --setSamePageSize FLOAT FLOAT FLOAT FLOAT
+                  This option is like the '--samePageSize' option except the page
+                  size to set is passed in as four floating point arguments
+                  rather than being calculated. The numbers should represent the
+                  left, bottom, right, and top margin values, respectively. The
+                  origin is at the lower left. The numbers should be in points
+                  and are absolute, i.e., not relative to any current margins.
+                  The `--samePageSize` option will override this option if it is
+                  set.
 
      -e, --evenodd
                   Crop all the odd pages uniformly, and all the even pages
@@ -1053,4 +1064,3 @@ The output of that command follows::
 
    The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.
    Released under the GNU GPL license, version 3 or later.
-
