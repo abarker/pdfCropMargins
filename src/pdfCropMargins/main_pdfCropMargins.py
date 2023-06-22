@@ -32,11 +32,6 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 # Might want an option to delete the XML save data.
 
-# TODO GUI options not error-checked/repaired on arg reprocessing, uniformOrderStat
-# Separate out the parts of `process_command_line_arguments` that can be re-run from
-# the top of `process_pdf_file` each time it is called.  Also allows implementing
-# the `--stringRestored` option, which is commented out in manpage file.
-
 # TODO: Maybe use _restored and restored_ prefix and suffix for restore ops???
 # Need a new option --stringRestored.
 
@@ -44,8 +39,8 @@ Source code site: https://github.com/abarker/pdfCropMargins
 # fitz.TOOLS.mupdf_warnings() first to empty warnings and then to get warnings,
 # see https://github.com/pymupdf/PyMuPDF/discussions/1501
 
-# TODO: Make --evenodd option equalize the pages after separately calculating
-# the crops, just do the max over them.
+# TODO: Make --evenodd option equalize the page WIDTHS after separately
+# calculating the crops, just do the max over them.
 
 # TODO: Deleting metadata on restore doesn't seem to remove key like docs say.
 #       So restored document still registers as already cropped.
@@ -63,7 +58,7 @@ Source code site: https://github.com/abarker/pdfCropMargins
 #
 # From: https://github.com/pymupdf/PyMuPDF/issues/317
 #    (Py-)MuPDF always uses a page's top-left point as the origin (0,0) of its
-#    coordinate system - for whatever reason, prresumably because it does not
+#    coordinate system - for whatever reason, presumably because it does not
 #    only deal with PDF, but also other document types.  PDF uses a page's
 #    bottom-left point as (0,0).
 #
@@ -384,7 +379,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         order_n = max(order_n, 0)
 
     if args.samePageSize or args.setSamePageSize:
-        if args.samePageSize:
+        if args.samePageSize: # Calculate the page containing all the other selected pages.
             if args.verbose:
                 print("\nSetting each page size to the smallest box bounding all the pages.")
                 if order_n != 0:
@@ -958,7 +953,8 @@ def process_command_line_arguments(parsed_args, cmd_parser):
 
     # TODO: Note that these verbose messages are NOT printed when the GUI is used, since
     # the processing only calls process_pdf_file.  Similarly, range checks and repairs
-    # for uniformOrderStat are not processed when entered directly into the GUI.
+    # for uniformOrderStat are not processed when entered directly into the GUI (the
+    # GUI separately checks).
     if args.uniformOrderStat and not args.uniformOrderStat4:
         args.uniformOrderStat4 = args.uniformOrderStat * 4 # expand to 4 offsets
     if args.verbose:

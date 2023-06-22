@@ -477,15 +477,6 @@ cmd_parser.add_argument("-ms", "--samePageSizeOrderStat", nargs=1, type=int,
    order statistic for selecting the uniform size to make the pages.  Note that
    this will cut off parts of some pages if n>0.^^n""")
 
-cmd_parser.add_argument("-ssp", "--setSamePageSize", nargs=4, type=float,
-                        default=[], metavar="FLOAT", help="""
-
-   This option is like the '--samePageSize' option, but the page size to set is
-   passed in as four floating point arguments rather than being calculated.
-   The numbers should represent the left, bottom, right, and top margin values,
-   respectively.  The origin is at the lower left.  The `--samePageSize` option
-   will override this option if it is set.^^n""")
-
 cmd_parser.add_argument("-e", "--evenodd", action="store_true", help="""
 
    Crop all the odd pages uniformly, and all the even pages uniformly.  The
@@ -768,7 +759,7 @@ cmd_parser.add_argument("-ss", "--stringSeparator", default="_", metavar="STR",
    The default value is "_".^^n""")
 
 # TODO: These options would be easy to add, except that they currently wouldn't
-# work with the GUI since they are done at file open time.  Need to separate
+# work with the GUI because they are done at file open time.  Need to separate
 # out the processing that can be redone each time for `process_pdf_file`.  Also
 # good for `uniformOrderStat` arg checking.
 #

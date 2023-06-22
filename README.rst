@@ -47,7 +47,11 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
-**PdfCropMargins 2.0.0 is now out (June 2023).**
+* New in version 2.0.1, the option ``--setSamePageSize`` (``-ssp``) allows a
+  custom page box size to be passed in rather than having the program calculate
+  the largest containing box size.
+
+**pdfCropMargins 2.0.0 is now out (June 2023).**
 
 * The program now uses PyMuPDF for all internal PDF processing instead of
   PyPDF.  The PyPDF dependency has been removed, and PyMuPDF is a required

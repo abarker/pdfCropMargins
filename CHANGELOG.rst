@@ -3,7 +3,16 @@
 History
 =======
 
-2.0.0 (2023-xx-xx)
+2.0.1 (2023-xx-xx)
+------------------
+
+New features:
+
+* Added the option ``--setSamePageSize`` (``-ssp``) which sets all the page
+  boxes to user-passed values instead of calculating the containing page
+  size.
+
+2.0.0 (2023-06-14)
 ------------------
 
 Changes:
