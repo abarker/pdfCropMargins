@@ -47,6 +47,10 @@ Source code site: https://github.com/abarker/pdfCropMargins
 #       See the `check_and_set_crop_metadata` function.
 #       https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
 
+# TODO: Rename `get_full_page_box_list_assigning_media_and_crop` and its page
+# version to `get_full_page_box_list_saving_mediabox`, since cropbox no longer
+# reset, assuming the change is kept.
+
 # Some general notes, useful for reading the code.
 #
 # Margins are described as left, bottom, right, and top (lbrt). Boxes
@@ -261,7 +265,7 @@ def get_full_page_box_assigning_media_and_crop(page):
 
     # Save copies of some values in the page's namespace, to possibly restore later.
     page.original_media_box = get_box(page, "mediabox")
-    page.original_crop_box = get_box(page, "cropbox")
+    #page.original_crop_box = get_box(page, "cropbox") # TODO, see other place where this was used.
 
     # Note: The default value of empty args.fullPageBox are set when processing the
     # command-line args.  Set to ["m", "c"] unless Ghostscript box-finding is selected.
@@ -766,6 +770,8 @@ def apply_crop_list(crop_list, input_doc_mupdf_wrapper, page_nums_to_crop,
         # TODO: Below causes problems to reset the old one, inconsistent sometimes...,
         # but not really needed since setting MediaBox in PyMuPDF now resets it anyway...
         # Delete where it is set, also, if deleting this code.  Maybe need a copy when set?
+        # Note that --boxesToUse was updated to say that only MediaBox is set (to
+        # intersection of old MediaBox and CropBox).
         #set_box(curr_page, "cropbox", curr_page.original_crop_box)
 
         # Copy the original page without further mods if it wasn't in the range
@@ -838,6 +844,7 @@ def apply_restore_operation(already_cropped_by_this_program, input_doc_mupdf_wra
         # Restore the MediaBox and CropBox to the saved values.  Note that
         # MediaBox is set FIRST, since PyMuPDF will reset all other boxes
         # when it is set.
+        # TODO: Should restore respect the --boxesToSet option?
         set_box(curr_page, "mediabox", saved_boxes_list[page_num])
         set_box(curr_page, "cropbox", saved_boxes_list[page_num])
         if args.writeCropDataToFile:

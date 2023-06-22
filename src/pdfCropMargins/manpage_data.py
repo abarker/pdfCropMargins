@@ -619,19 +619,18 @@ cmd_parser.add_argument("-f", "--fullPageBox", choices=["m", "c", "t", "a", "b"]
                         metavar="[m|c|t|a|b]", action="append", default=[], help="""
 
    By default the program first (before any cropping is calculated) sets the
-   MediaBox and CropBox of each page in (a copy of) the document to the
-   intersection of its previous MediaBox and CropBox.   This ensures that the
-   cropping is relative to the usual document-view in programs like Acrobat
-   Reader.   This essentially defines what is assumed to be the full size of
-   pages in the document, and all cropping is then performed relative to that
-   full-page size.  This option can be used to alternately use the MediaBox,
-   the CropBox, the TrimBox, the ArtBox, or the BleedBox in defining the
-   full-page size.  The option takes one argument, which is the first letter
-   (lowercase) of the type of box to use.  If the option is repeated then the
-   intersection of all the box arguments is used.  Only one choice is allowed
-   in combination with the '-gs' option since Ghostscript does its own internal
-   rendering when finding bounding boxes.  The default with '-gs' is the
-   CropBox.^^n""")
+   MediaBox of each page in (a copy of) the document to the intersection of its
+   previous MediaBox and CropBox.   This ensures that the cropping is relative
+   to the usual document-view in programs like Acrobat Reader.   This
+   essentially defines what is assumed to be the full size of pages in the
+   document, and all cropping is then performed relative to that full-page
+   size.  This option can be used to alternately use the MediaBox, the CropBox,
+   the TrimBox, the ArtBox, or the BleedBox in defining the full-page size.
+   The option takes one argument, which is the first letter (lowercase) of the
+   type of box to use.  If the option is repeated then the intersection of all
+   the box arguments is used.  Only one choice is allowed in combination with
+   the '-gs' option since Ghostscript does its own internal rendering when
+   finding bounding boxes.  The default with '-gs' is the CropBox.^^n""")
 
 cmd_parser.add_argument("-r", "--restore", action="store_true", help="""
 
