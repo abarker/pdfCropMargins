@@ -480,11 +480,12 @@ cmd_parser.add_argument("-ms", "--samePageSizeOrderStat", nargs=1, type=int,
 cmd_parser.add_argument("-ssp", "--setSamePageSize", nargs=4, type=float,
                         default=[], metavar="FLOAT", help="""
 
-   This option is like the '--samePageSize' option except the page size to set is
-   passed in as four floating point arguments rather than being calculated.
+   This option is like the '--samePageSize' option except the page size to set
+   is passed in as four floating point arguments rather than being calculated.
    The numbers should represent the left, bottom, right, and top margin values,
-   respectively.  The origin is at the lower left.  The `--samePageSize` option
-   will override this option if it is set.^^n""")
+   respectively.  The origin is at the lower left.  The numbers should be in
+   points and are absolute, i.e., not relative to any current margins.  The
+   `--samePageSize` option will override this option if it is set.^^n""")
 
 cmd_parser.add_argument("-e", "--evenodd", action="store_true", help="""
 
