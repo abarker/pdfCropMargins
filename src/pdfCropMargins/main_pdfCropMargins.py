@@ -383,22 +383,29 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         order_n = min(args.samePageSizeOrderStat[0], num_pages_to_crop - 1)
         order_n = max(order_n, 0)
 
-    if args.samePageSize:
-        if args.verbose:
-            print("\nSetting each page size to the smallest box bounding all the pages.")
-            if order_n != 0:
-                print("But ignoring the largest {} pages in calculating each edge."
-                        .format(order_n))
+    if args.samePageSize or args.setSamePageSize:
+        if args.samePageSize:
+            if args.verbose:
+                print("\nSetting each page size to the smallest box bounding all the pages.")
+                if order_n != 0:
+                    print("But ignoring the largest {} pages in calculating each edge."
+                            .format(order_n))
 
-        same_size_bounding_box = [
-              # We want the smallest of the left and bottom edges.
-              sorted(full_page_box_list[pg][0] for pg in page_nums_to_crop),
-              sorted(full_page_box_list[pg][1] for pg in page_nums_to_crop),
-              # We want the largest of the right and top edges.
-              sorted((full_page_box_list[pg][2] for pg in page_nums_to_crop), reverse=True),
-              sorted((full_page_box_list[pg][3] for pg in page_nums_to_crop), reverse=True)
-              ]
-        same_size_bounding_box = [sortlist[order_n] for sortlist in same_size_bounding_box]
+            same_size_bounding_box = [
+                  # We want the smallest of the left and bottom edges.
+                  sorted(full_page_box_list[pg][0] for pg in page_nums_to_crop),
+                  sorted(full_page_box_list[pg][1] for pg in page_nums_to_crop),
+                  # We want the largest of the right and top edges.
+                  sorted((full_page_box_list[pg][2] for pg in page_nums_to_crop), reverse=True),
+                  sorted((full_page_box_list[pg][3] for pg in page_nums_to_crop), reverse=True)
+                  ]
+            same_size_bounding_box = [sortlist[order_n] for sortlist in same_size_bounding_box]
+
+        else: # Set the page size to the box passed in (ignored if `--samePageSize` is set).
+            same_size_bounding_box = [float(f) for f in args.setSamePageSize]
+            if args.verbose:
+                print("\nSetting each page size to the bounding box passed in:"
+                      f"\n   {same_size_bounding_box}")
 
         new_full_page_box_list = []
         for p_num, box in enumerate(full_page_box_list):

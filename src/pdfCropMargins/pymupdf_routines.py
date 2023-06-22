@@ -87,7 +87,11 @@ def convert_box_pdf_to_pymupdf(box_pdf, page):
     """Convert a box from PDF format to PyMuPDF format."""
     # Note these funs were not needed; this still makes a copy and might be needed later.
     # This issue with raw PDF values didn't matter: https://github.com/pymupdf/PyMuPDF/issues/317
-    return fitz.Rect(box_pdf)
+
+    # Normalizing replaces the rectangle with its valid version.
+    # https://pymupdf.readthedocs.io/en/latest/rect.html#Rect.normalize
+    box = fitz.Rect(box_pdf).normalize()
+    return box
 
 def get_box(page, boxstring):
     """Return the box for the specified box string, converted to PyPDF2/PDF coordinates which
@@ -126,9 +130,9 @@ def set_box(page, boxstring, box):
 
     try:
         set_box_method(converted_box)
-    except ValueError:
+    except ValueError as e:
         print(f"\nWarning in pdfCropMargins: The {boxstring} could not be written"
-              f" to the page,\nprobably a conflict with the mediabox.",
+              f" to page {page.number}.  The error is:\n   {str(e)}",
               file=sys.stdout)
 
 #
