@@ -34,8 +34,8 @@ import io
 
 def main():
     """Crop with the arguments in `sys.argv`, catching any exceptions and cleaning
-    up the temp directory.  Called as the entry point for `pdf-crop-margins` script.
-    Only use for running as a standalone script.
+    up the temp directory.  Called as the entry point for the `pdfcropmargins` script
+    and its alias `pdf-crop-margins`.  Only use for running as a standalone script.
 
     This function calls the `crop` routine that is the exposed API of pdfCropMargins
     but adds checks for various exceptions and signals in order to work robustuly as

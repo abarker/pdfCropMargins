@@ -50,7 +50,7 @@ from .pymupdf_routines import has_mupdf, MuPdfDocument
 
 if not has_mupdf:
     print("\nError in pdfCropMargins: The GUI feature requires a recent PyMuPDF version."
-          "\n\nExiting pdf-crop-margins...")
+          "\n\nExiting pdfcropmargins...")
     ex.cleanup_and_exit(1)
 
 try:
@@ -60,7 +60,7 @@ try:
     import tkinter as tk
 except ImportError:
     print("\nError in pdfCropMargins: The GUI feature requires {}."
-          "\n\nExiting pdf-crop-margins...".format(requires), file=sys.stderr)
+          "\n\nExiting pdfcropmargins...".format(requires), file=sys.stderr)
     ex.cleanup_and_exit(1)
 
 from .get_window_sizing_info import (get_usable_image_size, get_window_size,

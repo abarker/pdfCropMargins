@@ -256,7 +256,7 @@ def cleanup_and_exit(exit_code, stack_frame=None):
     is the signal number."""
     uninterrupted_remove_program_temp_directory()
     if stack_frame is not None:
-        print("\nThe process of pdf-crop-margins was killed by signal {}..."
+        print("\nThe process of pdfCropMargins was killed by signal {}..."
                 .format(exit_code), file=sys.stderr)
     sys.exit(exit_code)
 
