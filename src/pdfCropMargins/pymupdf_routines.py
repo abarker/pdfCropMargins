@@ -41,7 +41,6 @@ https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Vie
 
 import sys
 import warnings
-import copy
 from . import external_program_calls as ex
 
 has_mupdf = True
@@ -50,9 +49,6 @@ try: # Extra dependencies for the GUI version.  Make sure they are installed.
     with warnings.catch_warnings():
         #warnings.filterwarnings("ignore",category=DeprecationWarning)
         import fitz
-        from fitz import Rect
-        import os
-        import tempfile # Maybe later write to the regular tmp dir...
     # Need at least 1.19.4 for setting MediaBox resetting all other boxes behavior.
     # Version 1.19.6 is the last one supporting Python 3.6.
     if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 19, 4]:
@@ -62,6 +58,14 @@ try: # Extra dependencies for the GUI version.  Make sure they are installed.
 except ImportError:
     has_mupdf = False
     MuPdfDocument = None
+
+# The string which is appended to Producer metadata in cropped PDFs.
+PRODUCER_MODIFIER = " (Cropped by pdfCropMargins.)" # String for older versions.
+PRODUCER_MODIFIER_2 = " (Cropped by pdfCropMargins>=2.0.)" # Added to Producer metadata.
+RESTORE_METADATA_KEY = "pdfCropMarginsRestoreData" # Key for XML dict restore data.
+
+# Limit precision to some reasonable amount to prevent problems in some PDF viewers.
+DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES = 8
 
 #
 # Utility functions.
@@ -134,6 +138,49 @@ def set_box(page, boxstring, box):
         print(f"\nWarning in pdfCropMargins: The {boxstring} could not be written"
               f" to page {page.number}.  The error is:\n   {str(e)}",
               file=sys.stdout)
+
+def mod_box_for_rotation(box, angle, undo=False):
+    """The user sees left, bottom, right, and top margins on a page, but inside
+    the PDF and in pyPdf the page may be rotated (such as in landscape mode).
+    In the case of 90 degree clockwise rotation the left really modifies the
+    top, the top really modifies right, and so forth.  In order for the options
+    like '--percentRetain4' and '--absoluteOffset4' to work as expected the
+    values need to be shifted to match any "hidden" rotations on any page.
+    The `box` argument is a 4-tuple of left, bottom, right, top values."""
+    def rotate_ninety_degrees_clockwise(box, n):
+        """The `n` here is the number of 90deg rotations to do."""
+        if n == 0:
+            return box
+        box = rotate_ninety_degrees_clockwise(box, n-1)
+        return [box[1], box[2], box[3], box[0]]
+
+    # These are for clockwise, swap do and undo to reverse.
+    do_map = {0: 0, 90: 1, 180: 2, 270: 3} # Map angle to num of 90deg rotations.
+    undo_map = {0: 0, 90: 3, 180: 2, 270: 1}
+
+    if not undo:
+        return rotate_ninety_degrees_clockwise(box, do_map[angle])
+    else:
+        return rotate_ninety_degrees_clockwise(box, undo_map[angle])
+
+def serialize_boxlist(boxlist):
+    """Return the string for the list of boxes."""
+    return str([list(b) for b in boxlist])
+
+def deserialize_boxlist(boxlist_string):
+    """Return the string for the list of boxes."""
+    if boxlist_string[0] != "[" or boxlist_string[-1] != "]":
+        return None
+    boxlist_string = boxlist_string[2:-2]
+    split_list = boxlist_string.split("], [")
+    deserialized_boxlist = []
+    for box in split_list:
+        values = box.split(",")
+        try:
+            deserialized_boxlist.append([float(v) for v in values])
+        except ValueError:
+            return None
+    return deserialized_boxlist
 
 #
 # The main class.
@@ -257,8 +304,8 @@ class MuPdfDocument:
     def close_document(self):
         """Close the document and clear its pages."""
         self.page_list = []
-        self.document.close()
         self.clear_cache()
+        self.document.close()
 
     def get_page_ppm_for_crop(self, page_num, cache=False):
         """Return an unscaled and unclipped `.ppm` file suitable for cropping the page.
@@ -293,7 +340,7 @@ class MuPdfDocument:
         # PyMuPDF Pixmap: https://pymupdf.readthedocs.io/en/latest/pixmap.html#Pixmap.__init__
         # PyMuPDF get_pixmap: https://pymupdf.readthedocs.io/en/latest/page.html#Page.getPixmap
 
-        mat_0 = fitz.Matrix(1, 1)
+        #mat_0 = fitz.Matrix(1, 1)
         # New in PyMuPDF version 1.16.0, annots kwarg for whether to ignore them.
         pixmap = page_crop_display_list.get_pixmap(matrix=fitz.Identity,
                                                   colorspace=colorspace,
@@ -363,6 +410,119 @@ class MuPdfDocument:
         image_tl = clip.tl # Clip position (top left).
         return image_ppm, image_tl, image_height, image_width
 
+    def get_full_page_box_list_assigning_media_and_crop(self, quiet=False):
+        """Get a list of all the full-page box values for each page.  The boxes on
+        the list are in the simple 4-float list format used by this program, not
+        `RectangleObject` format."""
+
+        def get_full_page_box_assigning_media_and_crop(page):
+            """This returns whatever PDF box was selected (by the user option
+            '--fullPageBox') to represent the full page size.  All cropping is done
+            relative to this box.  The default selection option is the MediaBox
+            intersected with the CropBox so multiple crops work as expected.
+
+            The argument page should be a pyPdf page object.
+
+            This function also sets the MediaBox and CropBox of the page to the
+            full-page size and saves the old values in the same page namespace, so it
+            should only be called once for each page.  It returns a `RectangleObject`
+            box."""
+
+            # Find the page rotation angle (degrees).
+            # Note rotation is clockwise, and four values are allowed: 0 90 180 270
+            rotation = page.rotation
+            while rotation >= 360:
+                rotation -= 360
+            while rotation < 0:
+                rotation += 360
+
+            # Save the rotation value in the page's namespace so we can restore it later.
+            page.rotationAngle = rotation
+
+            # Un-rotate the page, to a rotation of 0.
+            page.set_rotation(0)
+
+            # Save copies of some values in the page's namespace, to possibly restore later.
+            page.original_media_box = get_box(page, "mediabox")
+            #page.original_crop_box = get_box(page, "cropbox") # TODO, see other place where this was used.
+
+            # Note: The default value of empty args.fullPageBox are set when processing the
+            # command-line args.  Set to ["m", "c"] unless Ghostscript box-finding is selected.
+
+            first_loop = True
+            for box_string in self.args.fullPageBox:
+                if box_string == "m":
+                    f_box = get_box(page, "mediabox")
+                if box_string == "c":
+                    f_box = get_box(page, "cropbox")
+                if box_string == "t":
+                    f_box = get_box(page, "trimbox")
+                if box_string == "a":
+                    f_box = get_box(page, "artbox")
+                if box_string == "b":
+                    f_box = get_box(page, "bleedbox")
+
+                # Take intersection over all chosen boxes.
+                if first_loop:
+                    full_box = f_box
+                else:
+                    full_box = intersect_pdf_boxes(full_box, f_box, page)
+
+                first_loop = False
+
+            return rotation, full_box, page
+
+        def apply_precrop(rotation, full_box, page):
+            """Apply the precrop to the document's box settings."""
+            # Do any absolute pre-cropping specified for the page (after modifying any
+            # absolutePreCrop4 arguments to take into account rotations to the page).
+            precrop_box = mod_box_for_rotation(self.args.absolutePreCrop4, rotation)
+
+            full_box = [float(full_box[0]) + precrop_box[0],
+                        float(full_box[1]) + precrop_box[1],
+                        float(full_box[2]) - precrop_box[2],
+                        float(full_box[3]) - precrop_box[3],
+                        ]
+
+            # Note that MediaBox is set FIRST, since PyMuPDF will reset all other boxes
+            # when it is set.
+            set_box(page, "mediabox", full_box)
+            set_box(page, "cropbox", full_box)
+            return full_box
+
+        full_page_box_list = []
+        rotation_list = []
+
+        if self.args.verbose and not quiet:
+            print(f"\nOriginal full page sizes (rounded to "
+                  f"{DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES} digits) in PDF format (lbrt):")
+
+        for page_num in range(self.num_pages):
+
+            # Get the current page and find the full-page box.
+            curr_page = self.page_list[page_num]
+            rotation, full_box, page = get_full_page_box_assigning_media_and_crop(curr_page)
+
+            # Do any absolute pre-cropping specified for the page (after modifying any
+            # absolutePreCrop4 arguments to take into account rotations to the page).
+            full_page_box = apply_precrop(rotation, full_box, page)
+
+            if self.args.verbose and not quiet:
+                # want to display page num numbering from 1, so add one
+                rounded_box_string = ", ".join([str(round(f,
+                            DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES)) for f in full_page_box])
+                print(f"\t{str(page_num+1)}   rot = "
+                      f"{curr_page.rotationAngle}  \t [{rounded_box_string}]")
+
+            # Convert the `RectangleObject` to floats in an ordinary list and append.
+            ordinary_box = [float(b) for b in full_page_box]
+            full_page_box_list.append(ordinary_box)
+
+            # Append the rotation value to the rotation_list.
+            rotation_list.append(curr_page.rotationAngle)
+
+        return full_page_box_list, rotation_list
+
     def get_standard_metadata(self):
         """Return the standard metadata from the document."""
         metadata_info = self.document.metadata
@@ -371,6 +531,54 @@ class MuPdfDocument:
     def set_standard_metadata(self, metadata_dict):
         """Set the standard metadata dict for the document."""
         self.document.set_metadata(metadata_dict)
+
+    def check_and_set_crop_metadata(self, metadata_info):
+        """First check the producer metadata attribute to see if this program was
+        cropped document before.  Returns the variable
+        `already_cropped_by_this_program` which is either `False` or has the value
+        string `"<2.0"` or `">=2.0".
+
+        The "Producer" metadata then has a string appended (if not already there)
+        to indicate that this program modified the file."""
+        def has_xml_restore_data():
+            """This function is a workaround because setting the XML metadata key
+            to "null" doesn't seem to delete the key itself like the docs say.  Need
+            to look at the value to determine if there is data there to determine
+            `already_cropped_by_this_program` since value is set null on restore."""
+            # TODO: Should be able to just check key with `doc_wrap.has_xml_metadata_key`
+            # but doesn't work.
+            data_value, has_xml_metadata, has_key = self.get_xml_metadata_value(
+                                                                RESTORE_METADATA_KEY)
+            if has_key:
+                return data_value[0] == "["
+            return False
+
+        if metadata_info:
+            old_producer_string = metadata_info["producer"]
+        else:
+            return PRODUCER_MODIFIER, False # Can't read metadata, but maybe can set it.
+
+        if has_xml_restore_data(): # See note in function.
+            if self.args.verbose:
+                print("\nThe document was already cropped at least once by pdfCropMargins>=2.0.")
+            already_cropped_by_this_program = ">=2.0"
+
+        elif old_producer_string and old_producer_string.endswith(PRODUCER_MODIFIER):
+            if self.args.verbose:
+                print("\nThe document was already cropped at least once by pdfCropMargins<2.0.")
+            already_cropped_by_this_program = "<2.0"
+            # Update the Producer suffix to the the new PRODUCER_MODIFIER_2.
+            new_producer_string = old_producer_string.replace(PRODUCER_MODIFIER, PRODUCER_MODIFIER_2)
+            metadata_info["producer"] = new_producer_string
+
+        else:
+            if self.args.verbose:
+                print("\nThe document was not previously cropped by pdfCropMargins.")
+            metadata_info["producer"] = metadata_info["producer"] + PRODUCER_MODIFIER_2
+            already_cropped_by_this_program = False
+
+        self.set_standard_metadata(metadata_info)
+        return already_cropped_by_this_program
 
     def has_xml_metadata_key(self, key):
         """Return a boolean indicating if the XML metadata dict has the key `key`."""
@@ -437,4 +645,142 @@ class MuPdfDocument:
         # TODO: This doesn't seem to delete the key like the docs say, only the metadata.
         # https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
         self.set_xml_metadata_item(key, "null")
+
+    def save_old_boxes_for_restore(self, original_mediabox_list,
+                                   original_cropbox_list, original_artbox_list,
+                                   already_cropped_by_this_program):
+        """Save the intersection of the cropbox and the mediabox."""
+        if already_cropped_by_this_program == "<2.0":
+            old_boxes_to_save_list = original_artbox_list
+        else:
+            old_boxes_to_save_list = [] # Save list of old boxes to possibly save for later restore.
+            for page_num in range(self.document.page_count):
+                curr_page = self.page_list[page_num]
+
+                # Do the save for later restore if that option is chosen and Producer is not set.
+                box = intersect_pdf_boxes(original_mediabox_list[page_num],
+                                          original_cropbox_list[page_num], curr_page)
+                old_boxes_to_save_list.append(box)
+
+        serialized_saved_boxes_list = serialize_boxlist(old_boxes_to_save_list)
+        self.set_xml_metadata_item(RESTORE_METADATA_KEY,
+                                                            serialized_saved_boxes_list)
+
+    def apply_restore_operation(self, already_cropped_by_this_program, original_artbox_list):
+        """Restore the saved page boxes to the document."""
+        if self.args.writeCropDataToFile:
+            self.args.writeCropDataToFile = ex.get_expanded_path(self.args.writeCropDataToFile)
+            f = open(self.args.writeCropDataToFile, "w")
+        else:
+            f = None
+
+        if already_cropped_by_this_program == ">=2.0":
+            saved_boxes, has_xml_metadata, xml_metadata_has_key = (
+                    self.get_xml_metadata_value(RESTORE_METADATA_KEY))
+            saved_boxes_list = deserialize_boxlist(saved_boxes)
+            if not saved_boxes_list:
+                print("\nError in pdfCropMargins: Could not deserialize the data saved for the"
+                        "\nrestore operation.  Deleting the key and the data.", file=sys.stderr)
+                self.delete_xml_metadata_item(RESTORE_METADATA_KEY)
+
+        elif already_cropped_by_this_program == "<2.0":
+            saved_boxes_list = original_artbox_list
+
+        if not saved_boxes_list or len(saved_boxes_list) != self.num_pages:
+            print("\nError in pdfCropMargins: The number of pages in the saved restore"
+                  "\ndata is not the same as the number of pages in the document.  The"
+                  "\nrestore operation will be ignored.", file=sys.stderr)
+            return
+
+        for page_num in range(self.document.page_count):
+            curr_page = self.page_list[page_num]
+
+            # Restore any rotation which was originally on the page.
+            curr_page.set_rotation(curr_page.rotationAngle)
+
+            # Restore the MediaBox and CropBox to the saved values.  Note that
+            # MediaBox is set FIRST, since PyMuPDF will reset all other boxes
+            # when it is set.
+            # TODO: Should restore respect the --boxesToSet option?
+            set_box(curr_page, "mediabox", saved_boxes_list[page_num])
+            set_box(curr_page, "cropbox", saved_boxes_list[page_num])
+            if self.args.writeCropDataToFile:
+                print("\t"+str(page_num+1)+"\t", saved_boxes_list[page_num], file=f)
+
+        # The saved restore data is no longer needed.
+        if self.args.verbose:
+            print("\nDeleting the saved restore metadata since it is no longer needed.")
+        self.delete_xml_metadata_item(RESTORE_METADATA_KEY)
+
+        if self.args.writeCropDataToFile:
+            f.close()
+            ex.cleanup_and_exit(0)
+
+    def apply_crop_list(self, crop_list, page_nums_to_crop, already_cropped_by_this_program):
+        """Apply the crop list to the pages of the input document."""
+        args = self.args
+
+        if args.writeCropDataToFile:
+            args.writeCropDataToFile = ex.get_expanded_path(args.writeCropDataToFile)
+            f = open(args.writeCropDataToFile, "w")
+        else:
+            f = None
+
+        if args.verbose:
+            print("\nNew full page sizes after cropping, in PDF format (lbrt):")
+
+        # Set the appropriate PDF boxes on each page.
+        for page_num in range(self.document.page_count):
+            curr_page = self.page_list[page_num]
+
+            # Restore any rotation which was originally on the page.
+            curr_page.set_rotation(curr_page.rotationAngle)
+
+            # Reset the CropBox and MediaBox to their saved original values (they
+            # were saved by `get_full_page_box_assigning_media_and_crop` in the
+            # `curr_page` object's namespace).  Restore the MediaBox and CropBox to
+            # the saved values.  Note that MediaBox is set FIRST, since PyMuPDF
+            # will reset all other boxes when it is set.
+            set_box(curr_page, "mediabox", curr_page.original_media_box)
+            # TODO: Below causes problems to reset the old one, inconsistent sometimes...,
+            # but not really needed since setting MediaBox in PyMuPDF now resets it anyway...
+            # Delete where it is set, also, if deleting this code.  Maybe need a copy when set?
+            # Note that --boxesToUse was updated to say that only MediaBox is set (to
+            # intersection of old MediaBox and CropBox).
+            #set_box(curr_page, "cropbox", curr_page.original_crop_box)
+
+            # Copy the original page without further mods if it wasn't in the range
+            # selected for cropping.
+            if page_num not in page_nums_to_crop:
+                continue
+
+            rounded_values = [round(f, DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES)
+                                    for f in crop_list[page_num]]
+            new_cropped_box = rounded_values
+
+            if args.verbose:
+                print("\t"+str(page_num+1)+"\t", list(new_cropped_box)) # page numbering from 1
+            if args.writeCropDataToFile:
+                print("\t"+str(page_num+1)+"\t", list(new_cropped_box), file=f)
+
+            if not args.boxesToSet:
+                args.boxesToSet = ["m", "c"]
+
+            # Now set any boxes which were selected to be set via the '--boxesToSet' option.
+            if "m" in args.boxesToSet:
+                # Note the MediaBox is always set FIRST, since it resets the other boxes.
+                set_box(curr_page, "mediabox", new_cropped_box)
+            if "c" in args.boxesToSet:
+                set_box(curr_page, "cropbox", new_cropped_box)
+            if "t" in args.boxesToSet:
+                set_box(curr_page, "trimbox", new_cropped_box)
+            if "a" in args.boxesToSet:
+                set_box(curr_page, "artbox", new_cropped_box)
+            if "b" in args.boxesToSet:
+                set_box(curr_page, "bleedbox", new_cropped_box)
+
+        if args.writeCropDataToFile:
+            f.close()
+            ex.cleanup_and_exit(0)
+
 
