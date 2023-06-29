@@ -32,9 +32,12 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 # Might want an option to delete the XML save data.
 
-# TODO: Resource warning on socket is raised when the --modifyOriginal
-# is set, and when the --queryModifyOriginal is set.  Only with the GUI,
-# maybe multiple saves to the same filename causes it?
+# TODO: Resource warning on socket is raised when delay introduced in
+# main_crop before handling options on file, but only when GUI also used.
+# Try in a simple pymupdf thing???
+
+# TODO: In get_image_list_mupdf in the calculate_bounding_boxes module try to pass
+# the current MuPdfDocument rather than creating a new one temporarily.
 
 # TODO: Maybe use _restored and restored_ prefix and suffix for restore ops???
 # Need a new option --stringRestored.
@@ -998,7 +1001,7 @@ def handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname):
 
         while True: # Loop until we get an allowed response.
             query_string = "\nModify the original file to the cropped file " \
-                "(saving the original)? [yn] "
+                           "(saving the original)? [yn] "
             query_result = input(query_string).strip()
             if query_result in ["y", "Y"]:
                 args.modifyOriginal = True
@@ -1084,11 +1087,14 @@ def main_crop(argv_list=None):
                               fixed_input_doc_pathname, output_doc_pathname,
                               cmd_parser, parsed_args)
         if did_crop:
+            #time.sleep(8)  # TODO: This alone causes resource bug!! queryModifyOriginal wait does the same.
+            #               # But only in combination with the gui...
             handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname)
     else:
         bounding_box_list, delta_page_nums = process_pdf_file(input_doc_pathname,
                                                               fixed_input_doc_pathname,
                                                               output_doc_pathname)
+        #time.sleep(8)  # TODO: This doesn't cause the error...
         handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname)
 
     return output_doc_pathname

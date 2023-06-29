@@ -282,11 +282,13 @@ def render_pdf_file_to_image_files(pdf_file_name, output_filename_root, program_
 def get_image_list_mupdf(pdf_file_name):
     """Get the bounding boxes by rendering the pages with PyMuPDF and calculating
     them."""
+    # TODO: This seems inefficient since we already have a document open for GUI
     document_pages = pymupdf_routines.MuPdfDocument(args)
     num_pages = document_pages.open_document(pdf_file_name)
 
     # Note that the images here are PPM bytes objects.
     page_images = [document_pages.get_page_ppm_for_crop(i) for i in range(num_pages)]
+    document_pages.close_document()
     return page_images
 
 def calculate_bounding_box_from_image(im, curr_page_mediabox):
