@@ -3,6 +3,11 @@
 History
 =======
 
+2.0.3 (2023-07-04)
+------------------
+
+* Work on a resource warning that appeared at times.
+
 2.0.[12] (2023-06-22)
 ---------------------
 

@@ -1088,7 +1088,7 @@ def main_crop(argv_list=None):
                               cmd_parser, parsed_args)
         if did_crop:
             #time.sleep(8)  # TODO: This alone causes resource bug!! queryModifyOriginal wait does the same.
-            #               # But only in combination with the gui...
+            #               # But only in combination with the gui...  May be fixed now?
             handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname)
     else:
         bounding_box_list, delta_page_nums = process_pdf_file(input_doc_pathname,
