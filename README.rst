@@ -58,7 +58,7 @@ recent changes and new features.
   depencency.
 
 * PyMuPDF always tries to repair documents on reading them, which should reduce
-  some problems with corrupted documents.
+  some problems with corrupted documents.  Links are now correctly handled.
 
 **BREAKING CHANGES**:
 
