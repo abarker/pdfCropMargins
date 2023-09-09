@@ -109,7 +109,12 @@ def get_box(page, boxstring):
 
     # Need to shift for pymupdf zeroing out the top y coordinate of all
     # but the mediabox. See the glossary:
-    # https://pymupdf.readthedocs.io/en/latest/glossary.html#MediaBox
+    #    https://pymupdf.readthedocs.io/en/latest/glossary.html#MediaBox
+    #
+    # Maybe consider using mediabox.y1 to access?  Maybe round values or take
+    # max/min with the original values to deal with inexact issues?  Force it
+    # to be inside mediabox to avoid "rect not in mediabox" error?
+    #    https://github.com/pymupdf/PyMuPDF/issues/1616
     if boxstring != "mediabox":
         converted_box[1] += mediabox[1]
         converted_box[3] += mediabox[1]
@@ -127,7 +132,12 @@ def set_box(page, boxstring, box):
 
     # Need to shift for pymupdf zeroing out the top y coordinate of all
     # but the mediabox. See the glossary:
-    # https://pymupdf.readthedocs.io/en/latest/glossary.html#MediaBox
+    #    https://pymupdf.readthedocs.io/en/latest/glossary.html#MediaBox
+    #       "MediaBox is the only rectangle, for which there is no difference
+    #       between MuPDF and PDF coordinate systems: Page.mediabox will always
+    #       show the same coordinates as the /MediaBox key in a page’s object
+    #       definition. For all other rectangles, MuPDF transforms y coordinates
+    #       such that the top border is the point of reference.
     if boxstring != "mediabox":
         converted_box[1] -= mediabox[1]
         converted_box[3] -= mediabox[1]
@@ -299,6 +309,8 @@ class MuPdfDocument:
         """Save a document, possibly repairing/cleaning it."""
         # See here:
         #    https://pymupdf.readthedocs.io/en/latest/document.html#Document.save
+        # TODO: Consider adding a garbage-collection option, maybe garbage=1 instead
+        # of the default 0.
         self.document.save(file_path)
 
     def close_document(self):
@@ -412,8 +424,8 @@ class MuPdfDocument:
 
     def get_full_page_box_list_assigning_media_and_crop(self, quiet=False):
         """Get a list of all the full-page box values for each page.  The boxes on
-        the list are in the simple 4-float list format used by this program, not
-        `RectangleObject` format."""
+        the list are in the simple 4-float list format.  This is also where any
+        pre-crop is applied."""
 
         def get_full_page_box_assigning_media_and_crop(page):
             """This returns whatever PDF box was selected (by the user option
@@ -508,7 +520,7 @@ class MuPdfDocument:
             full_page_box = apply_precrop(rotation, full_box, page)
 
             if self.args.verbose and not quiet:
-                # want to display page num numbering from 1, so add one
+                # Want to display page num numbering from 1, so add one.
                 rounded_box_string = ", ".join([str(round(f,
                             DECIMAL_PRECISION_FOR_MARGIN_POINT_VALUES)) for f in full_page_box])
                 print(f"\t{str(page_num+1)}   rot = "
