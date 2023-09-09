@@ -121,14 +121,15 @@ def get_box(page, boxstring):
 
     return converted_box
 
-def set_box(page, boxstring, box):
+def set_box(page, boxstring, box, intersect_with_mediabox=False):
     """Set the box for the specified box string, converted to PyPDF2 coordinates which
     assume that bottom-left is the origin.  (PyMuPDF uses the top-left as the origin.
     See `get_box`."""
-    if boxstring != "mediabox":
-        mediabox = page.mediabox
     set_box_method = getattr(page, "set_" + boxstring)
     converted_box = convert_box_pdf_to_pymupdf(box, page)
+
+    if intersect_with_mediabox: # TODO: If true negative absolute crops after first crop do nothing...
+        converted_box = intersect_pdf_boxes(page.mediabox, converted_box, page)
 
     # Need to shift for pymupdf zeroing out the top y coordinate of all
     # but the mediabox. See the glossary:
@@ -139,8 +140,8 @@ def set_box(page, boxstring, box):
     #       definition. For all other rectangles, MuPDF transforms y coordinates
     #       such that the top border is the point of reference.
     if boxstring != "mediabox":
-        converted_box[1] -= mediabox[1]
-        converted_box[3] -= mediabox[1]
+        converted_box[1] -= page.mediabox[1]
+        converted_box[3] -= page.mediabox[1]
 
     try:
         set_box_method(converted_box)
@@ -455,7 +456,7 @@ class MuPdfDocument:
             page.set_rotation(0)
 
             # Save copies of some values in the page's namespace, to possibly restore later.
-            page.original_media_box = get_box(page, "mediabox")
+            page.original_media_box = get_box(page, "mediabox") # TODO: Why was this necessary in the first place?
             #page.original_crop_box = get_box(page, "cropbox") # TODO, see other place where this was used.
 
             # Note: The default value of empty args.fullPageBox are set when processing the
@@ -526,7 +527,6 @@ class MuPdfDocument:
                 print(f"\t{str(page_num+1)}   rot = "
                       f"{curr_page.rotationAngle}  \t [{rounded_box_string}]")
 
-            # Convert the `RectangleObject` to floats in an ordinary list and append.
             ordinary_box = [float(b) for b in full_page_box]
             full_page_box_list.append(ordinary_box)
 
