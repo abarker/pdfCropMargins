@@ -3,6 +3,19 @@
 History
 =======
 
+2.1.0 (2024-04-29)
+------------------
+
+Changes:
+
+* The version of pySimpleGui to install is restricted to less than version 5,
+  since it started requiring registration at that point.
+
+* The default for what boxes to set is now by default only the mediabox.  This
+  is because of unknown problems causing "cropbox could not be written"
+  exceptions from PyMuPDF.  It will try writing the boxes, if they are
+  selected with ``--boxesToSet``, but may or may not actually set them.
+
 2.0.3 (2023-07-04)
 ------------------
 

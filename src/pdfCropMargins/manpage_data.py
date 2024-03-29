@@ -603,17 +603,16 @@ cmd_parser.add_argument("-gf", "--guiFontSize", default=None, metavar="INT", hel
 cmd_parser.add_argument("-b", "--boxesToSet", choices=["m", "c", "t", "a", "b"],
                         metavar="[m|c|t|a|b]", action="append", default=[], help="""
 
-   By default the pdfCropMargins program sets both the MediaBox and the CropBox
-   for each page of the cropped PDF document to the new, cropped page size.
-   This default setting is usually sufficient, but this option can be used to
-   select different PDF boxes to set.  The option takes one argument, which is
-   the first letter (lowercase) of a type of box.  The choices are MediaBox
-   (m), CropBox (c), TrimBox (t), ArtBox (a), and BleedBox (b).  This option
-   overrides the default and can be repeated multiple times to set several box
-   types.  Note that the program now uses PyMuPDF to set the boxes, and it
-   will refuse to set any non-MediaBox boxes unless they are fully contained
-   in the MediaBox.  In that case a warning will be issued and the box will
-   not be set.^^n""")
+   By default the pdfCropMargins program sets the MediaBox for each page of the
+   cropped PDF document to the new, cropped page size.  This default setting is
+   usually sufficient, but this option can be used to select different PDF
+   boxes to set.  The option takes one argument, which is the first letter
+   (lowercase) of a type of box.  The choices are MediaBox (m), CropBox (c),
+   TrimBox (t), ArtBox (a), and BleedBox (b).  This option overrides the
+   default and can be repeated multiple times to set several box types.  Note
+   that the program now uses PyMuPDF to set the boxes, and it will refuse to
+   set any non-MediaBox boxes unless they are fully contained in the MediaBox.
+   In that case a warning will be issued and the box will not be set.^^n""")
 
 cmd_parser.add_argument("-f", "--fullPageBox", choices=["m", "c", "t", "a", "b"],
                         metavar="[m|c|t|a|b]", action="append", default=[], help="""

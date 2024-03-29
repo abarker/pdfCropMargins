@@ -54,6 +54,11 @@ Source code site: https://github.com/abarker/pdfCropMargins
 #       See the `check_and_set_crop_metadata` method of the pymupdf wrapper.
 #       https://pymupdf.readthedocs.io/en/latest/recipes-low-level-interfaces.html#how-to-extend-pdf-metadata
 
+# TODO: Consider the case where user saved with old pdfCropMargins but
+#       chose NOT to save restore information.  If such a file has artbox
+#       set then those will (check) be converted to new format.  Any way
+#       to detect that case?
+
 # Some general notes, useful for reading the code.
 #
 # Margins are described as left, bottom, right, and top (lbrt). Boxes

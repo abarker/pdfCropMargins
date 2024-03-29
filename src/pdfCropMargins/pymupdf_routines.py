@@ -116,8 +116,11 @@ def get_box(page, boxstring):
     # to be inside mediabox to avoid "rect not in mediabox" error?
     #    https://github.com/pymupdf/PyMuPDF/issues/1616
     if boxstring != "mediabox":
-        converted_box[1] += mediabox[1]
-        converted_box[3] += mediabox[1]
+        converted_box[3] = converted_box[3] - converted_box[1]
+        converted_box[1] = 0
+        #converted_box[1] += mediabox[1]
+        #converted_box[3] += mediabox[1]
+    #print(f"\nconverted box is {converted_box}") # DEBUG
 
     return converted_box
 
@@ -125,8 +128,11 @@ def set_box(page, boxstring, box, intersect_with_mediabox=False):
     """Set the box for the specified box string, converted to PyPDF2 coordinates which
     assume that bottom-left is the origin.  (PyMuPDF uses the top-left as the origin.
     See `get_box`."""
+    #print(f"\n\n====================\nSetting box {boxstring} to value {box}") # DEBUG
+    #print_page_boxes(page) # DEBUG
     set_box_method = getattr(page, "set_" + boxstring)
     converted_box = convert_box_pdf_to_pymupdf(box, page)
+    #print(f"\nconverted box is {converted_box}") # DEBUG
 
     if intersect_with_mediabox: # TODO: If true negative absolute crops after first crop do nothing...
         converted_box = intersect_pdf_boxes(page.mediabox, converted_box, page)
@@ -145,6 +151,7 @@ def set_box(page, boxstring, box, intersect_with_mediabox=False):
 
     try:
         set_box_method(converted_box)
+        #print_page_boxes(page) # DEBUG
     except ValueError as e:
         print(f"\nWarning in pdfCropMargins: The {boxstring} could not be written"
               f" to page {page.number}.  The error is:\n   {str(e)}",
@@ -192,6 +199,20 @@ def deserialize_boxlist(boxlist_string):
         except ValueError:
             return None
     return deserialized_boxlist
+
+def print_page_boxes(page):
+    """Debugging routine."""
+    mediabox = page.rect
+    print(f" MediaBox: {mediabox}")
+    cropbox = page.cropbox
+    print(f" CropBox: {cropbox}")
+    if page.bleedbox:
+        print(f" BleedBox: {page.bleedbox}")
+    if page.trimbox:
+        print(f" TrimBox: {page.trimbox}")
+    if page.artbox:
+        print(f" ArtBox: {page.artbox}")
+    print() # Add a newline for readability
 
 #
 # The main class.
@@ -776,7 +797,7 @@ class MuPdfDocument:
                 print("\t"+str(page_num+1)+"\t", list(new_cropped_box), file=f)
 
             if not args.boxesToSet:
-                args.boxesToSet = ["m", "c"]
+                args.boxesToSet = ["m"]
 
             # Now set any boxes which were selected to be set via the '--boxesToSet' option.
             if "m" in args.boxesToSet:
