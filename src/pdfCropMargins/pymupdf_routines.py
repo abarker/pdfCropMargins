@@ -116,11 +116,8 @@ def get_box(page, boxstring):
     # to be inside mediabox to avoid "rect not in mediabox" error?
     #    https://github.com/pymupdf/PyMuPDF/issues/1616
     if boxstring != "mediabox":
-        converted_box[3] = converted_box[3] - converted_box[1]
-        converted_box[1] = 0
-        #converted_box[1] += mediabox[1]
-        #converted_box[3] += mediabox[1]
-    #print(f"\nconverted box is {converted_box}") # DEBUG
+        converted_box[1] += mediabox[1]
+        converted_box[3] += mediabox[1]
 
     return converted_box
 
