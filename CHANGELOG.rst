@@ -3,6 +3,14 @@
 History
 =======
 
+2.1.2 (2024-XX-XX)
+------------------
+
+Bug fixes:
+
+* Fixed a bug in ``--keepVertCenter`` and ``--keepHorizCenter`` when cropping is restricted
+  to certain pages.
+
 2.1.[0-1] (2024-04-29)
 ----------------------
 
