@@ -61,12 +61,12 @@ Source code site: https://github.com/abarker/pdfCropMargins
 
 # Some general notes, useful for reading the code.
 #
-# Margins are described as left, bottom, right, and top (lbrt). Boxes
-# in pypdf2 and PDF are defined by the lower-left point's x and y values
+# Margins are described as left, bottom, right, and top (lbrt). Boxes in pypdf2
+# (formerly used) and PDF are defined by the lower-left point's x and y values
 # followed by the upper-right point's x and y values, which is equivalent
-# information (since x and y are implicit in the margin names).
-# The origin is at the lower left. The pymupdf program uses the top left
-# as origin, which results in ltrb ordering:
+# information (since x and y are implicit in the margin names).  The origin is
+# at the lower left. The pymupdf program uses the top left as origin, which
+# results in ltrb ordering:
 #
 # From: https://github.com/pymupdf/PyMuPDF/issues/317
 #    (Py-)MuPDF always uses a page's top-left point as the origin (0,0) of its
@@ -251,7 +251,6 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                 if order_n != 0:
                     print("But ignoring the largest {} pages in calculating each edge."
                             .format(order_n))
-
             same_size_bounding_box = [
                   # We want the smallest of the left and bottom edges.
                   sorted(full_page_box_list[pg][0] for pg in page_nums_to_crop),
@@ -268,10 +267,11 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                 print("\nSetting each page size to the bounding box passed in:"
                       f"\n   {same_size_bounding_box}")
 
+        # Set `full_page_box_list` to `same_size_bounding_box` for the pages selected.
         new_full_page_box_list = []
-        for p_num, box in enumerate(full_page_box_list):
+        for p_num, f_box in enumerate(full_page_box_list):
             if p_num not in page_nums_to_crop:
-                new_full_page_box_list.append(box)
+                new_full_page_box_list.append(f_box)
             else:
                 new_full_page_box_list.append(same_size_bounding_box)
         full_page_box_list = new_full_page_box_list
@@ -408,7 +408,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
             skip_pages_lower = set(sorted_lower_vals[:m_values[1]])
             skip_pages_right = set(sorted_right_vals[:m_values[2]])
             skip_pages_upper = set(sorted_upper_vals[:m_values[3]])
-            # Here we convert the +1 pages meant for display into internal 0-based page numbers.
+            # Here we convert the +1 page nums meant for display into internal 0-based page nums.
             if skip_pages_left:
                 skip_pages_left = {d[1] - 1 for d in skip_pages_left}
             if skip_pages_lower:
@@ -443,12 +443,10 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                            sorted_right_vals[0][1], sorted_upper_vals[0][1]]
 
     if args.keepHorizCenter:
-        delta_list = [(min(d[0],d[2]), d[1], min(d[0],d[2]), d[3])
-                      for p, d in enumerate(delta_list) if p in page_nums_to_crop]
+        delta_list = [(min(d[0],d[2]), d[1], min(d[0],d[2]), d[3]) for d in delta_list]
 
     if args.keepVertCenter:
-        delta_list = [(d[0], min(d[1],d[3]), d[2], min(d[1],d[3]))
-                      for p, d in enumerate(delta_list) if p in page_nums_to_crop]
+        delta_list = [(d[0], min(d[1],d[3]), d[2], min(d[1],d[3])) for d in delta_list]
 
     # Apply the delta modifications to the full boxes to get the final sizes.
     final_crop_list = []
@@ -1012,13 +1010,13 @@ def handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname):
                 args.modifyOriginal = True
                 print("\nModifying the original file.")
                 break
-            elif query_result in ["n", "N"]:
+            elif query_result in ["n", "N", "q", "Q"]:
                 print("\nNot modifying the original file.  The cropped file is saved"
                       " as:\n   {}".format(output_doc_pathname))
                 args.modifyOriginal = False
                 break
             else:
-                print("Response must be in the set {y,Y,n,N}, none recognized.")
+                print("Response must be in the set {y,Y,n,N,q,Q}, none recognized.")
                 continue
 
     # Handle the '--modifyOriginal' option.
