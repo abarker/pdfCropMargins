@@ -6,6 +6,12 @@ History
 2.1.2 (2024-XX-XX)
 ------------------
 
+New features:
+
+* Added the options ``--centerText``,  ``--centerTextHoriz``,
+  ``--centerTextVert``,  and ``--centeringStrict`` to center text on the pages
+  after cropping.
+
 Bug fixes:
 
 * Fixed a bug in ``--keepVertCenter`` and ``--keepHorizCenter`` when cropping is restricted
