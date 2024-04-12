@@ -441,11 +441,14 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         delta_page_nums = [sorted_left_vals[m_values[0]][1], sorted_lower_vals[m_values[1]][1],
                            sorted_right_vals[m_values[2]][1], sorted_upper_vals[m_values[3]][1]]
 
-        for p in range(num_pages):
-            unused_orderstat_pages_left[p] = sorted_left_vals[m_values[0]][1]-1
-            unused_orderstat_pages_right[p] = sorted_right_vals[m_values[2]][1]-1
-            unused_orderstat_pages_bottom[p] = sorted_lower_vals[m_values[1]][1]-1
-            unused_orderstat_pages_top[p] = sorted_upper_vals[m_values[3]][1]-1
+        for m in range(m_values[0]):
+            unused_orderstat_pages_left[m] = sorted_left_vals[m_values[0]][1]-1
+        for m in range(m_values[2]):
+            unused_orderstat_pages_right[m] = sorted_right_vals[m_values[2]][1]-1
+        for m in range(m_values[1]):
+            unused_orderstat_pages_bottom[m] = sorted_lower_vals[m_values[1]][1]-1
+        for m in range(m_values[3]):
+            unused_orderstat_pages_top[m] = sorted_upper_vals[m_values[3]][1]-1
 
         if args.verbose:
             print("\nThe smallest delta values actually used to set the uniform"
@@ -457,7 +460,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
         delta_page_nums = [sorted_left_vals[0][1], sorted_lower_vals[0][1],
                            sorted_right_vals[0][1], sorted_upper_vals[0][1]]
 
-    if args.keepHorizCenter:
+    if args.keepHorizCenter: # TODO: Double check this formula and placement.
         delta_list = [(min(d[0],d[2]), d[1], min(d[0],d[2]), d[3]) for d in delta_list]
 
     if args.keepVertCenter:
@@ -528,24 +531,32 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                                                   right, top + difference * top_weight))
         final_crop_list = new_ratio_based_crop_list
 
-    args.centerText = True
-    args.centerTextHoriz = False # DEBUG, make into new options!!!!
-    args.centerTextVert = False # same
     if args.centerText:
         args.centerTextHoriz = args.centerTextVert = True
     if args.centerTextHoriz or args.centerTextVert:
+        if args.verbose and args.centeringStrict:
+            print(f"\nStrictly centering the bounding boxes on the pages...")
+        else:
+            print(f"\nCentering the bounding boxes on the pages...")
+
         new_centered_text_crop_list = []
         for pnum, (left, bottom, right, top) in enumerate(final_crop_list):
             if pnum not in page_nums_to_crop:
                 new_centered_text_crop_list.append((left, bottom, right, top))
                 continue
 
-            # Use the mapping saved earlier to get the bbox the page was cropped relative
-            # to.  This takes '--uniformOrderStat' into account.
-            b_left = bounding_box_list[unused_orderstat_pages_left[pnum]][0]
-            b_right = bounding_box_list[unused_orderstat_pages_right[pnum]][2]
-            b_bottom = bounding_box_list[unused_orderstat_pages_bottom[pnum]][1]
-            b_top = bounding_box_list[unused_orderstat_pages_top[pnum]][3]
+            if args.centeringStrict:
+                b_left = bounding_box_list[pnum][0]
+                b_right = bounding_box_list[pnum][2]
+                b_bottom = bounding_box_list[pnum][1]
+                b_top = bounding_box_list[pnum][3]
+            else:
+                # Use the mapping saved earlier to get the bbox the page was cropped relative
+                # to.  This takes '--uniformOrderStat' into account.
+                b_left = bounding_box_list[unused_orderstat_pages_left[pnum]][0]
+                b_right = bounding_box_list[unused_orderstat_pages_right[pnum]][2]
+                b_bottom = bounding_box_list[unused_orderstat_pages_bottom[pnum]][1]
+                b_top = bounding_box_list[unused_orderstat_pages_top[pnum]][3]
 
             left_delta = b_left - left
             right_delta = right - b_right

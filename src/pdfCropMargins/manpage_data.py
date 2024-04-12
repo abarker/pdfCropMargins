@@ -855,6 +855,39 @@ cmd_parser.add_argument("-prw", "--pageRatioWeights", nargs=4, type=float,
    necessary to achieve the target page ratio is added to the corresponding
    margin.  All weights must be greater than zero.^^n""")
 
+cmd_parser.add_argument("-ce", "--centerText", action="store_true",
+                        help="""
+
+   Center the text horizontally and vertically after cropping.  The crop for
+   each page is adjusted so that the tight bounding box is centered in the page
+   (if possible).   If an order statistic method like '--uniformOrderStat' is
+   applied then, for ignored edges, the bounding box edge that was actually
+   used to calculate the crop values is used.  If the '--centeringStrict' flag
+   is set then each page will be centered regardless of any order statistic
+   calculation.^^n""")
+
+cmd_parser.add_argument("-ch", "--centerTextHoriz", action="store_true",
+                        help="""
+
+   This is the same as '--centerText' except pages are only centered
+   horizontally.^^n""")
+
+
+cmd_parser.add_argument("-cv", "--centerTextVert", action="store_true",
+                        help="""
+
+   This is the same as '--centerText' except pages are only centered
+   vertically.^^n""")
+
+cmd_parser.add_argument("-cst", "--centeringStrict", action="store_true",
+                        help="""
+
+   This flag modifies the behavior of bounding-box-centering options
+   like '--centerText'.  Normally pages ignored for order statistic
+   operations like '--uniformOrderStat'  are also ignored for centering
+   and the page actually used for cropping is used for centering.  This
+   option forces strict centering of each page.^^n""")
+
 cmd_parser.add_argument("-i", "--showImages", action="store_true", help="""
 
    When explicitly rendering PDF files to image files, display the inverse
