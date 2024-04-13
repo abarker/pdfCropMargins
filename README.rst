@@ -268,8 +268,9 @@ The output of that command follows::
                          [-r] [-A] [-gsf] [-nc] [-pv PROG] [-mo] [-q] [-nco]
                          [-pf] [-sc STR] [-su STR] [-ss STR] [-pw PASSWD] [-pc]
                          [-khc] [-kvc] [-spr FLOAT:FLOAT]
-                         [-prw FLOAT FLOAT FLOAT FLOAT] [-i] [-pdl] [-gsp PATH]
-                         [-ppp PATH] [--version] [-wcdf FILEPATH]
+                         [-prw FLOAT FLOAT FLOAT FLOAT] [-ct] [-ch] [-cv] [-cst]
+                         [-i] [-pdl] [-gsp PATH] [-ppp PATH] [--version]
+                         [-wcdf FILEPATH]
                          PDF_FILE [PDF_FILE ...]
 
    Description:
@@ -778,15 +779,15 @@ The output of that command follows::
                   smaller monitor.
 
      -b [m|c|t|a|b], --boxesToSet [m|c|t|a|b]
-                  By default the pdfCropMargins program sets both the MediaBox
-                  and the CropBox for each page of the cropped PDF document to
-                  the new, cropped page size. This default setting is usually
-                  sufficient, but this option can be used to select different PDF
-                  boxes to set. The option takes one argument, which is the first
-                  letter (lowercase) of a type of box. The choices are MediaBox
-                  (m), CropBox (c), TrimBox (t), ArtBox (a), and BleedBox (b).
-                  This option overrides the default and can be repeated multiple
-                  times to set several box types. Note that the program now uses
+                  By default the pdfCropMargins program sets the MediaBox for
+                  each page of the cropped PDF document to the new, cropped page
+                  size. This default setting is usually sufficient, but this
+                  option can be used to select different PDF boxes to set. The
+                  option takes one argument, which is the first letter
+                  (lowercase) of a type of box. The choices are MediaBox (m),
+                  CropBox (c), TrimBox (t), ArtBox (a), and BleedBox (b). This
+                  option overrides the default and can be repeated multiple times
+                  to set several box types. Note that the program now uses
                   PyMuPDF to set the boxes, and it will refuse to set any non-
                   MediaBox boxes unless they are fully contained in the MediaBox.
                   In that case a warning will be issued and the box will not be
@@ -794,15 +795,15 @@ The output of that command follows::
 
      -f [m|c|t|a|b], --fullPageBox [m|c|t|a|b]
                   By default the program first (before any cropping is
-                  calculated) sets the MediaBox and CropBox of each page in (a
-                  copy of) the document to the intersection of its previous
-                  MediaBox and CropBox. This ensures that the cropping is
-                  relative to the usual document-view in programs like Acrobat
-                  Reader. This essentially defines what is assumed to be the full
-                  size of pages in the document, and all cropping is then
-                  performed relative to that full-page size. This option can be
-                  used to alternately use the MediaBox, the CropBox, the TrimBox,
-                  the ArtBox, or the BleedBox in defining the full-page size. The
+                  calculated) sets the MediaBox of each page in (a copy of) the
+                  document to the intersection of its previous MediaBox and
+                  CropBox. This ensures that the cropping is relative to the
+                  usual document-view in programs like Acrobat Reader. This
+                  essentially defines what is assumed to be the full size of
+                  pages in the document, and all cropping is then performed
+                  relative to that full-page size. This option can be used to
+                  alternately use the MediaBox, the CropBox, the TrimBox, the
+                  ArtBox, or the BleedBox in defining the full-page size. The
                   option takes one argument, which is the first letter
                   (lowercase) of the type of box to use. If the option is
                   repeated then the intersection of all the box arguments is
@@ -998,6 +999,32 @@ The output of that command follows::
                   determine what proportion of the total height(width) increase
                   necessary to achieve the target page ratio is added to the
                   corresponding margin. All weights must be greater than zero.
+
+     -ct, --centerText
+                  Center the text horizontally and vertically after cropping. The
+                  crop for each page is adjusted so that the tight bounding box
+                  is centered in the page (if possible). If an order statistic
+                  method like '--uniformOrderStat' is applied then, for ignored
+                  edges, the bounding box edge that was actually used to
+                  calculate the crop values is used. If the '--centeringStrict'
+                  flag is set then each page will be centered regardless of any
+                  order statistic calculation.
+
+     -ch, --centerTextHoriz
+                  This is the same as '--centerText' except pages are only
+                  centered horizontally.
+
+     -cv, --centerTextVert
+                  This is the same as '--centerText' except pages are only
+                  centered vertically.
+
+     -cst, --centeringStrict
+                  This flag modifies the behavior of bounding-box-centering
+                  options like '--centerText'. Normally pages ignored for order
+                  statistic operations like '--uniformOrderStat' are also ignored
+                  for centering and the page actually used for cropping is used
+                  for centering. This option forces strict centering of each
+                  page.
 
      -i, --showImages
                   When explicitly rendering PDF files to image files, display the
