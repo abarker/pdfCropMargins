@@ -855,7 +855,7 @@ cmd_parser.add_argument("-prw", "--pageRatioWeights", nargs=4, type=float,
    necessary to achieve the target page ratio is added to the corresponding
    margin.  All weights must be greater than zero.^^n""")
 
-cmd_parser.add_argument("-ce", "--centerText", action="store_true",
+cmd_parser.add_argument("-ct", "--centerText", action="store_true",
                         help="""
 
    Center the text horizontally and vertically after cropping.  The crop for

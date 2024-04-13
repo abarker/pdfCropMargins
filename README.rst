@@ -47,38 +47,13 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
+* Version 2.1.2 has new options to center text on the pages after cropping.
+  They are ``--centerText``,  ``--centerTextHoriz``, ``--centerTextVert``,  and
+  ``--centeringStrict``.
+
 * New in version 2.0.1, the option ``--setSamePageSize`` (``-ssp``) allows a
   custom page box size to be passed in rather than having the program calculate
   the largest containing box size.
-
-**pdfCropMargins 2.0.0 is now out (June 2023).**
-
-* The program now uses PyMuPDF for all internal PDF processing instead of
-  PyPDF.  The PyPDF dependency has been removed, and PyMuPDF is a required
-  depencency.
-
-* PyMuPDF always tries to repair documents on reading them, which should reduce
-  some problems with corrupted documents.  Links are now correctly handled.
-
-**BREAKING CHANGES**:
-
-* The PyMuPDF program is much stricter about setting page boxes than PyPDF, in
-  order to avoid inconsistent situations.  Setting the MediaBox automatically
-  resets all the other boxes (CropBox, etc.) to their defaults.  The MediaBox
-  is always set first.  By default crops still set the MediaBox and CropBox,
-  but the other boxes will be reset.
-
-* All the other boxes must be completely contained in the MediaBox to be set.
-  If not (when using the ``--boxesToSet`` option) a warning will be issued and
-  the action will be ignored.
-
-* The ArtBox can no longer be used to save restore information.  The restore
-  information is instead saved as XML metadata.  Documents that were cropped by
-  earlier versions will automatically have their ArtBox data transferred to XML
-  restore metadata unless the ``--noundosave`` option is used.
-
-* The options ``--docCatBlacklist`` and ``--docCatWhitelist`` have been removed
-  since PyMuPDF automatically retains the full document catalog.
 
 Installing 
 ==========
