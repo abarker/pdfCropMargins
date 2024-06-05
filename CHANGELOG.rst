@@ -3,6 +3,14 @@
 History
 =======
 
+2.1.3 (2024-XX-XX)
+------------------
+
+Bug fixes:
+
+* Vendorized the LGPL version 4 of PySimpleGUI since it changed license and
+  took down older versions from PyPI.
+
 2.1.2 (2024-04-13)
 ------------------
 

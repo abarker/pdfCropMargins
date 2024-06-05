@@ -13,7 +13,7 @@ to open a test window, zoom it, get window the sizing info, and destroy it.
 import sys
 import tkinter as tk
 import warnings
-import PySimpleGUI as sg
+from pdfCropMargins.vendor.pysimplegui_4_foss import PySimpleGUI as sg
 from . import external_program_calls as ex
 
 # This is the initial test size for a PDF image, before it is recalculated.  The

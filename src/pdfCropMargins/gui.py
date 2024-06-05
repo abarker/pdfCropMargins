@@ -55,10 +55,11 @@ if not has_mupdf:
 
 try:
     requires = "PySimpleGUI"
-    import PySimpleGUI as sg
+    from pdfCropMargins.vendor.pysimplegui_4_foss import PySimpleGUI as sg
     requires = "tkinter"
     import tkinter as tk
 except ImportError:
+    raise
     print("\nError in pdfCropMargins: The GUI feature requires {}."
           "\n\nExiting pdfcropmargins...".format(requires), file=sys.stderr)
     ex.cleanup_and_exit(1)

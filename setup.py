@@ -47,7 +47,7 @@ with codecs.open(os.path.join(current_dir, "README.rst"), encoding="utf-8") as f
 
 install_requires = ["wheel",
                     "pillow>=10.1.0", # Security issues on older.
-                    "PySimpleGUI>=4.19.0.6,<=4.60.5", # 4.19.0.6 needed for tooltip font size changes.
+                    #"PySimpleGUI>=4.19.0.6,<=4.60.5", # 4.19.0.6 needed for tooltip font size changes.
                     "PyMuPDF>=1.19.6", # Last version supporting Python 3.6.
                     ]
 

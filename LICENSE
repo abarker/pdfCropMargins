@@ -4,6 +4,9 @@ executable) which is covered by the GNU General Public License (GPL), version
 2.  Directory is in the pdfCropMargins directory so pip/setup.py can set it up
 as package_data.
 
+A copy of PySimpleGUI version 4, under the LGPL, is packaged in the 'vendor'
+directory.  See the license there.
+
 Everything else is covered by the GNU GPL license, version 3 or later. 
 
 =======================================================================
