@@ -3,6 +3,14 @@
 History
 =======
 
+2.1.4 (2024-XX-XX)
+------------------
+
+New features:
+
+* Added the option ``--replaceOriginal`` which implies the ``--modifyOriginal`` option
+  but removes the file instead of replacing it.
+
 2.1.3 (2024-06-05)
 ------------------
 

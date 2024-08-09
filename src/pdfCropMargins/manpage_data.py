@@ -276,15 +276,17 @@ cmd_parser.add_argument("-o", "--outfile", nargs=1,
    An optional argument specifying the directory or file path that the cropped
    output document should be written to.  If this option is not given the
    program will generate an output filename from the input filename and write
-   to the current working directory.  By default the string "_cropped" is
-   appended to the input filename just before the file extension.  (If the
-   extension is not '.pdf' or '.PDF' then '.pdf' is also appended to the
-   extension.)  The options '--usePrefix', '--stringCropped' and
-   '--stringSeparator' can be used to customize the generated filenames.  By
-   default any existing file with the same name will be silently overwritten;
-   this can be avoided with the '--noclobber' option.  Globbing of wildcards
-   and shell variable expansions are performed on the directory path but not on
-   the filename part.^^n""")
+   to the current working directory.  If only a directory is given the
+   generated filename will be written in that directory instead.  By default
+   the string "_cropped" is appended to the input filename just before the file
+   extension.  (If the extension is not '.pdf' or '.PDF' then '.pdf' is also
+   appended to the extension.)  The options '--usePrefix', '--stringCropped'
+   and '--stringSeparator' can be used to customize the generated filenames.
+   By default any existing file with the same name will be silently
+   overwritten; this can be avoided with the '--noclobber' option.  Globbing of
+   wildcards and shell variable expansions are performed on the directory path
+   but not on the filename part.  The output file path cannot be the same as
+   the input document path (see instead the '--modifyOriginal' option).^^n""")
 
 cmd_parser.add_argument("-v", "--verbose", action="store_true", help="""
 
@@ -664,7 +666,7 @@ cmd_parser.add_argument("-gsf", "--gsFix", action="store_true", help="""
    automatically convert some PostScript files (.ps) to PDF for cropping.  The
    repaired PDF is written to a temporary file; the original PDF file is not
    modified.  The original filename is treated as usual as far as automatic
-   name-generation, the '--modify-original' option, and so forth.  This option
+   name-generation, the '--modifyOriginal' option, and so forth.  This option
    is often helpful if the program hangs or raises an error due to a corrupted
    PDF file.  Note that when re-cropping a file already cropped by
    pdfCropMargins this option is probably not necessary, and if it is used in a
@@ -708,21 +710,31 @@ cmd_parser.add_argument("-mo", "--modifyOriginal", action="store_true", help="""
    '--stringUncropped', and '--stringSeparator' options can all be used to
    customize the generated backup filename.  If an output path is specified via
    the '--outfile' ('-o') option then the backup document is written to that
-   directory (the same directory the cropped file was first written to).  This
-   operation is performed last, so if a previous operation fails the original
-   document will be unchanged.  Be warned that running pdfCropMargins twice on
-   the same source path with this option will modify the backed-up original
-   file; the '--noclobberOriginal' option can be used to avoid this.^^n""")
+   pathname (in the same directory the cropped file was first written to if
+   only a filename is provided).  This operation is performed last, so if a
+   previous operation fails the original document will be unchanged.  Be warned
+   that running pdfCropMargins twice on the same source path with this option
+   will modify the backed-up original file; the '--noclobberOriginal' option
+   can be used to avoid this.^^n""")
 
 cmd_parser.add_argument("-q", "--queryModifyOriginal", action="store_true",
                         help="""
 
    This option selects the '--modifyOriginal' option, but queries the user
    about whether to actually do the final move operation.  This works well with
-   the '--preview' or '--gui' options: if the preview looks good you can opt to
+   the '--preview' and/or '--gui' options: if the preview looks good you can opt to
    modify the original file (keeping a copy of the original). If you decline
    then the files are not swapped (and are just as if the '--modifyOriginal'
    option had not been set).^^n""")
+
+cmd_parser.add_argument("-ro", "--replaceOriginal", action="store_true",
+                        help="""
+
+   This option implies the '--modifyOriginal' option and works the same except
+   that no backup copy is made.  The original file is deleted and the cropped
+   file is moved to the original filename.  This option can be used in
+   combination with the '--queryModifyOriginal' and works the same except
+   that the original file is replaced, without a backup copy.^^n""")
 
 cmd_parser.add_argument("-nco", "--noclobberOriginal", action="store_true",
                         help="""

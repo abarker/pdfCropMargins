@@ -1060,6 +1060,9 @@ def handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname):
         ex.show_preview(viewer, output_doc_pathname)
         return
 
+    if args.replaceOriginal:
+        args.modifyOriginal = True
+
     # Handle the '--queryModifyOriginal' option.
     if args.queryModifyOriginal:
         if args.preview:
@@ -1118,20 +1121,28 @@ def handle_options_on_cropped_file(input_doc_pathname, output_doc_pathname):
                     file=sys.stderr)
                 args.modifyOriginal = False # Failed.
 
-        # Move the original file to the name for uncropped files.  Silently do nothing
-        # if the file exists (should have been removed above).
-        if not os.path.exists(generated_uncropped_filepath):
-            if args.verbose: print("\nDoing a file move:\n   ", input_doc_pathname,
-                                   "\nis moving to:\n   ", generated_uncropped_filepath)
-            shutil.move(input_doc_pathname, generated_uncropped_filepath)
+        if args.modifyOriginal: # Set false above if blocked by an existing file.
+            # Move the original file to the name for uncropped files.
+            if args.replaceOriginal:
+                if args.verbose:
+                    print("\nRemoving the original file at:\n   ", input_doc_pathname)
+                os.remove(input_doc_pathname)
+            else:
+                if args.verbose:
+                    print("\nDoing a file move:\n   ", input_doc_pathname,
+                          "\nis moving to:\n   ", generated_uncropped_filepath)
+                shutil.move(input_doc_pathname, generated_uncropped_filepath)
 
-        # Move the cropped file to the original file's name.  Silently do nothing if
-        # the file exists (should have been moved above).
-        if not os.path.exists(input_doc_pathname):
-            if args.verbose: print("\nDoing a file move:\n   ", output_doc_pathname,
-                                   "\nis moving to:\n   ", input_doc_pathname)
-            shutil.move(output_doc_pathname, input_doc_pathname)
-            final_output_document_name = input_doc_pathname
+            # Move the cropped file to the original file's name.
+            if not os.path.exists(input_doc_pathname):
+                if args.verbose:
+                    print("\nDoing a file move:\n   ", output_doc_pathname,
+                          "\nis moving to:\n   ", input_doc_pathname)
+                shutil.move(output_doc_pathname, input_doc_pathname)
+                final_output_document_name = input_doc_pathname
+            else:
+                print("\nWarning: Failed to remove the original file or move it to the"
+                      " uncropped filename.", file=sys.stderr)
 
     # Handle any previewing which still needs to be done.
     if args.preview and not args.queryModifyOriginal: # queryModifyOriginal does its own.
