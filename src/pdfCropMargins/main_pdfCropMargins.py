@@ -448,9 +448,6 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                            sorted_right_vals[m_values[2]][1], sorted_upper_vals[m_values[3]][1]]
 
         # Handle the --uniform4 option by replacing the margins not selected with original values.
-        # TODO TODO: This seems to work but has barely been tested... STILL need to check whether
-        # the cropsafe option will need modification (probably).  Should just be another function
-        # call of combine_tuple_lists_with_mask function.  Consider any other interactions.
         def combine_tuple_lists_with_mask(mask, default_list, optional_list):
             """The mask is a four-tuple of strings 't' or 'f' for replacing elements
             of `default_list` with the corresponding elements of `optional_list`.
