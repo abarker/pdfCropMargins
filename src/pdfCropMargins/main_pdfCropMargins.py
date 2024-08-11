@@ -337,6 +337,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     delta_list = []
     for p_num, (b_box, f_box) in enumerate(zip(bounding_box_list, full_page_box_list)):
+
         # Calculate margin percentages.
         pct_fracs = [rotated_percent_retain[p_num][m_val] / 100.0 for m_val in range(4)]
         deltas = [abs(b_box[m_val] - f_box[m_val]) for m_val in range(4)]
@@ -394,11 +395,13 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     if args.uniform or args.uniformOrderStat4:
         if args.verbose:
             print("\nAll the selected pages will be uniformly cropped.")
+
         # Handle order stats; m_values are the four index values into the sorted
         # delta lists, one per margin.
         m_values = [0, 0, 0, 0]
         if args.uniformOrderStat4:
             m_values = args.uniformOrderStat4
+
         bounded_m_values = []
         for m_val in m_values:
             if m_val < 0 or m_val >= num_pages_to_crop:
@@ -409,6 +412,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                 if m_val < 0:
                     m_val = 0
             bounded_m_values.append(m_val)
+
         m_values = bounded_m_values
 
         if args.cropSafe:
@@ -435,12 +439,45 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                   "smallest delta values over the selected pages\nwill be ignored"
                   " when choosing common, uniform delta values.")
 
+        # Here is where the uniform cropping is applied to make all four deltas equal.
+        orig_delta_list = delta_list
         delta_list = [[sorted_left_vals[m_values[0]][0], sorted_lower_vals[m_values[1]][0],
                       sorted_right_vals[m_values[2]][0], sorted_upper_vals[m_values[3]][0]]] * num_pages
 
         delta_page_nums = [sorted_left_vals[m_values[0]][1], sorted_lower_vals[m_values[1]][1],
                            sorted_right_vals[m_values[2]][1], sorted_upper_vals[m_values[3]][1]]
 
+        # Handle the --uniform4 option by replacing the margins not selected with original values.
+        # TODO TODO: This seems to work but has barely been tested... STILL need to check whether
+        # the cropsafe option will need modification (probably).  Should just be another function
+        # call of combine_tuple_lists_with_mask function.  Consider any other interactions.
+        def combine_tuple_lists_with_mask(mask, default_list, optional_list):
+            """The mask is a four-tuple of strings 't' or 'f' for replacing elements
+            of `default_list` with the corresponding elements of `optional_list`.
+            Used mainly for processing the 'uniform4' option."""
+            final_list = []
+            for default_tuple, optional_tuple in zip(default_list,
+                                                     optional_list):
+                new_default_tuple = list(default_tuple)
+                for index, char in enumerate(mask):
+                    if char == "t":
+                        new_default_tuple[index] = optional_tuple[index]
+                final_list.append(tuple(new_default_tuple))
+
+            return final_list
+
+        if args.uniform4:
+            delta_list = combine_tuple_lists_with_mask(args.uniform4,
+                                                       orig_delta_list,
+                                                       delta_list)
+            delta_page_nums_nonuniform = [sorted_left_vals[0][1], sorted_lower_vals[0][1],
+                                          sorted_right_vals[0][1], sorted_upper_vals[0][1]]
+            delta_page_nums = combine_tuple_lists_with_mask(args.uniform4,
+                                                            [delta_page_nums_nonuniform],
+                                                            [delta_page_nums])
+            delta_page_nums = delta_page_nums[0]
+
+        # Update pages not used in orderstat, to use for the centerText options below.
         for m in range(m_values[0]):
             unused_orderstat_pages_left[m] = sorted_left_vals[m_values[0]][1]-1
         for m in range(m_values[2]):
@@ -456,7 +493,9 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                   " not cropped) were\nfound on these pages, numbered from 1:\n   ",
                   delta_page_nums)
             print("\nThe uniform delta values (and page numbers) are:\n   ", delta_list_paged[0])
+
     else: # Use the smallest, leftmost sorted value for the non-uniform case.
+        # TODO can this else safely move to above conditional????
         delta_page_nums = [sorted_left_vals[0][1], sorted_lower_vals[0][1],
                            sorted_right_vals[0][1], sorted_upper_vals[0][1]]
 
@@ -486,15 +525,23 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
             if page not in ignored_pages_upper and final_crops[3] < bounding_box[3]+csm3:
                 final_crops[3] = bounding_box[3]+csm3
             safe_final_crop_list.append(tuple(final_crops))
+
         if args.uniform or args.uniformOrderStat4:
-            sfcl = safe_final_crop_list # Shorter alias for below.
-            final_crop_list = [(min(sfcl[p][0] for p in page_nums_to_crop if p not in ignored_pages_left),
-                                min(sfcl[p][1] for p in page_nums_to_crop if p not in ignored_pages_lower),
-                                max(sfcl[p][2] for p in page_nums_to_crop if p not in ignored_pages_right),
-                                max(sfcl[p][3] for p in page_nums_to_crop if p not in ignored_pages_upper)
+            sfcl = safe_final_crop_list # Shorter alias for below comprehensions.
+            uniform_crop_list = [(min(sfcl[p][0] for p in page_nums_to_crop if p not in ignored_pages_left),
+                                  min(sfcl[p][1] for p in page_nums_to_crop if p not in ignored_pages_lower),
+                                  max(sfcl[p][2] for p in page_nums_to_crop if p not in ignored_pages_right),
+                                  max(sfcl[p][3] for p in page_nums_to_crop if p not in ignored_pages_upper)
                                )] * num_pages
-        else:
-            final_crop_list = safe_final_crop_list
+
+            if args.uniform4:
+                safe_final_crop_list = combine_tuple_lists_with_mask(args.uniform4,
+                                                                     safe_final_crop_list,
+                                                                     uniform_crop_list)
+            else:
+                safe_final_crop_list = uniform_crop_list
+
+        final_crop_list = safe_final_crop_list
 
     # Set the page ratios if user chose that option.
     if args.setPageRatios:
@@ -504,11 +551,13 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
             print("\nSetting all page width to height ratios to:", ratio)
             print("The weights per margin are:",
                     left_weight, bottom_weight, right_weight, top_weight)
+
         new_ratio_based_crop_list = []
         for pnum, (left, bottom, right, top) in enumerate(final_crop_list):
             if pnum not in page_nums_to_crop:
                 new_ratio_based_crop_list.append((left, bottom, right, top))
                 continue
+
             # Pad out left/right or top/bottom margins; padding amount is scaled.
             width = right - left
             height = top - bottom
@@ -533,6 +582,7 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
 
     if args.centerText:
         args.centerTextHoriz = args.centerTextVert = True
+
     if args.centerTextHoriz or args.centerTextVert:
         if args.verbose and args.centeringStrict:
             print(f"\nStrictly centering the bounding boxes on the pages...")
@@ -667,6 +717,9 @@ def process_command_line_arguments(parsed_args, cmd_parser):
     # Process some args with both regular and per-page 4-param forms.  Note that
     # in all these cases the 4-param version takes precedence.
     #
+
+    if args.uniform4:
+        args.uniform = True
 
     if args.absolutePreCrop and not args.absolutePreCrop4:
         args.absolutePreCrop4 = args.absolutePreCrop * 4 # expand to 4 offsets

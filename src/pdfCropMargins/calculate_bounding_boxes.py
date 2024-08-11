@@ -49,11 +49,11 @@ except ImportError:
 
 if has_pillow:
     pillow_version_tuple = tuple(int(i) for i in pillow_version.split("."))
-    if pillow_version_tuple < (7,1,0):
+    if pillow_version_tuple < (10,1,0):
         from warnings import warn
-        w = ("Your installed pillow version {} is < 7.1.0. "
+        w = ("Your installed pillow version {} is < 10.1.0. "
              "There are several moderate-severity security vulnerabilities "
-             "in Pillow 6.2.2 which have since been fixed.  Python 2 support was "
+             "in Pillow which have since been fixed.  Python 2 support was "
              "dropped for Pillow versions after 7.0.0, however.  If you cannot upgrade to "
              "Python 3 it is recommended to use the '--calcbb gb' option to find bounding "
              "boxes.  (Unfortunately, that method does not work with scanned documents.)"

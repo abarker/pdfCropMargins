@@ -418,6 +418,13 @@ cmd_parser.add_argument("-u", "--uniform", action="store_true", help="""
    size.  The '--samePageSize' option can be used in combination with this
    option to force all pages to be the same size after cropping.^^n""")
 
+cmd_parser.add_argument("-u4", "--uniform4", nargs=4, choices=["t", "f"], help="""
+
+   This experimental option is the same as '--uniform' except it is only
+   applied to selected margins.  The four arguments should be the characters
+   't' or 'f', to select or deselect the left, bottom, right, and top margins
+   respectively.  .^^n""")
+
 cmd_parser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
                         default=[], metavar="INT", help="""
 
