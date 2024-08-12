@@ -230,6 +230,22 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     # tight bounding box, and so part of the text within the tight bounding box
     # will also be cropped (unless absolute offsets are used to counter that).
 
+    def combine_tuple_lists_with_mask(mask, default_list, optional_list):
+        """A utility function used below.  The mask is a four-tuple of strings
+        't' or 'f' for replacing elements of `default_list` with the
+        corresponding elements of `optional_list`.  Used mainly for processing
+        the 'uniform4' option."""
+        final_list = []
+        for default_tuple, optional_tuple in zip(default_list,
+                                                 optional_list):
+            new_default_tuple = list(default_tuple)
+            for index, char in enumerate(mask):
+                if char == "t":
+                    new_default_tuple[index] = optional_tuple[index]
+            final_list.append(tuple(new_default_tuple))
+
+        return final_list
+
     num_pages = len(bounding_box_list)
     page_range = range(num_pages)
     num_pages_to_crop = len(page_nums_to_crop)
@@ -267,13 +283,20 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                 print("\nSetting each page size to the bounding box passed in:"
                       f"\n   {same_size_bounding_box}")
 
+        same_size_bounding_box_list = [same_size_bounding_box] * num_pages
+
+        if args.samePageSize4:
+            same_size_bounding_box_list = combine_tuple_lists_with_mask(args.samePageSize4,
+                                                                        full_page_box_list,
+                                                                        same_size_bounding_box_list)
+
         # Set `full_page_box_list` to `same_size_bounding_box` for the pages selected.
         new_full_page_box_list = []
         for p_num, f_box in enumerate(full_page_box_list):
             if p_num not in page_nums_to_crop:
                 new_full_page_box_list.append(f_box)
             else:
-                new_full_page_box_list.append(same_size_bounding_box)
+                new_full_page_box_list.append(same_size_bounding_box_list[p_num])
         full_page_box_list = new_full_page_box_list
 
     # Handle the '--evenodd' option if it was selected.
@@ -448,21 +471,6 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
                            sorted_right_vals[m_values[2]][1], sorted_upper_vals[m_values[3]][1]]
 
         # Handle the --uniform4 option by replacing the margins not selected with original values.
-        def combine_tuple_lists_with_mask(mask, default_list, optional_list):
-            """The mask is a four-tuple of strings 't' or 'f' for replacing elements
-            of `default_list` with the corresponding elements of `optional_list`.
-            Used mainly for processing the 'uniform4' option."""
-            final_list = []
-            for default_tuple, optional_tuple in zip(default_list,
-                                                     optional_list):
-                new_default_tuple = list(default_tuple)
-                for index, char in enumerate(mask):
-                    if char == "t":
-                        new_default_tuple[index] = optional_tuple[index]
-                final_list.append(tuple(new_default_tuple))
-
-            return final_list
-
         if args.uniform4:
             delta_list = combine_tuple_lists_with_mask(args.uniform4,
                                                        orig_delta_list,
@@ -717,6 +725,9 @@ def process_command_line_arguments(parsed_args, cmd_parser):
 
     if args.uniform4:
         args.uniform = True
+
+    if args.samePageSize4:
+        args.samePageSize = True
 
     if args.absolutePreCrop and not args.absolutePreCrop4:
         args.absolutePreCrop4 = args.absolutePreCrop * 4 # expand to 4 offsets

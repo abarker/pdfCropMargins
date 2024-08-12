@@ -420,10 +420,9 @@ cmd_parser.add_argument("-u", "--uniform", action="store_true", help="""
 
 cmd_parser.add_argument("-u4", "--uniform4", nargs=4, choices=["t", "f"], help="""
 
-   This experimental option is the same as '--uniform' except it is only
-   applied to selected margins.  The four arguments should be the characters
-   't' or 'f', to select or deselect the left, bottom, right, and top margins
-   respectively.  .^^n""")
+   This option is the same as '--uniform' except it is only applied to selected
+   margins.  The four arguments should be the characters 't' or 'f', to select
+   (t) or deselect (f) the left, bottom, right, and top margins respectively.^^n""")
 
 cmd_parser.add_argument("-m", "--uniformOrderStat", nargs=1, type=int,
                         default=[], metavar="INT", help="""
@@ -475,6 +474,13 @@ cmd_parser.add_argument("-s", "--samePageSize", action="store_true", help="""
    unless '--uniform' is also selected to force the cropping amounts to be the
    same for each page.  If pages are selected with '--pages' then this option
    is only applied to those selected pages.^^n""")
+
+cmd_parser.add_argument("-s4", "--samePageSize4", nargs=4, choices=["t", "f"], help="""
+
+   This option is the same as '--samePageSize' except it is only applied to
+   selected margins.  The four arguments should be the characters 't' or 'f',
+   to either select (t) or deselect (f) the left, bottom, right, and top
+   margins respectively.^^n""")
 
 cmd_parser.add_argument("-ms", "--samePageSizeOrderStat", nargs=1, type=int,
                         default=[], metavar="INT", help="""
