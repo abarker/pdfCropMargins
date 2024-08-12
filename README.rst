@@ -47,6 +47,11 @@ See the `CHANGELOG
 <https://github.com/abarker/pdfCropMargins/blob/master/CHANGELOG.rst>`_ for
 recent changes and new features.
 
+* Version 2.1.4 extends the uniform and same page size options to allow selecting
+  individual margins.  The options are ``--uniform4`` and ``--samePageSize4``, which
+  both take four characters of either 't' or 'f'.  It also adds the ``--replaceOriginal``
+  option which is the same as ``--modifyOriginal`` but does not create a backup copy.
+
 * Version 2.1.2 has new options to center text on the pages after cropping.
   They are ``--centerText``,  ``--centerTextHoriz``, ``--centerTextVert``,  and
   ``--centeringStrict``.
@@ -260,17 +265,18 @@ The output of that command follows::
    Usage: pdfcropmargins [-h] [-o OUTFILE_PATH_OR_DIR] [-v] [-gui] [-p PCT]
                          [-p4 PCT PCT PCT PCT] [-pt] [-a BP] [-a4 BP BP BP BP]
                          [-cs] [-csm4 BP BP BP BP] [-ap BP] [-ap4 BP BP BP BP]
-                         [-u] [-m INT] [-m4 INT INT INT INT] [-mp INT] [-s]
-                         [-ms INT] [-ssp FLOAT FLOAT FLOAT FLOAT] [-e]
-                         [-g PAGESTR] [-c [d|m|p|gr|gb|o]] [-gs] [-gsr]
-                         [-t BYTEVAL] [-nb INT] [-ns INT] [-x DPI] [-y DPI]
-                         [-sr STR] [-gf INT] [-b [m|c|t|a|b]] [-f [m|c|t|a|b]]
-                         [-r] [-A] [-gsf] [-nc] [-pv PROG] [-mo] [-q] [-nco]
-                         [-pf] [-sc STR] [-su STR] [-ss STR] [-pw PASSWD] [-pc]
-                         [-khc] [-kvc] [-spr FLOAT:FLOAT]
-                         [-prw FLOAT FLOAT FLOAT FLOAT] [-ct] [-ch] [-cv] [-cst]
-                         [-i] [-pdl] [-gsp PATH] [-ppp PATH] [--version]
-                         [-wcdf FILEPATH]
+                         [-u] [-u4 {t,f} {t,f} {t,f} {t,f}] [-m INT]
+                         [-m4 INT INT INT INT] [-mp INT] [-s]
+                         [-s4 {t,f} {t,f} {t,f} {t,f}] [-ms INT]
+                         [-ssp FLOAT FLOAT FLOAT FLOAT] [-e] [-g PAGESTR]
+                         [-c [d|m|p|gr|gb|o]] [-gs] [-gsr] [-t BYTEVAL] [-nb INT]
+                         [-ns INT] [-x DPI] [-y DPI] [-sr STR] [-gf INT]
+                         [-b [m|c|t|a|b]] [-f [m|c|t|a|b]] [-r] [-A] [-gsf] [-nc]
+                         [-pv PROG] [-mo] [-q] [-ro] [-nco] [-pf] [-sc STR]
+                         [-su STR] [-ss STR] [-pw PASSWD] [-pc] [-khc] [-kvc]
+                         [-spr FLOAT:FLOAT] [-prw FLOAT FLOAT FLOAT FLOAT] [-ct]
+                         [-ch] [-cv] [-cst] [-i] [-pdl] [-gsp PATH] [-ppp PATH]
+                         [--version] [-wcdf FILEPATH]
                          PDF_FILE [PDF_FILE ...]
 
    Description:
@@ -459,8 +465,7 @@ The output of that command follows::
                   variable expansions are performed on the path.
 
 
-   Optional arguments:
-
+   options:
      -h, --help   Show this help message and exit.
 
      -o OUTFILE_PATH_OR_DIR, --outfile OUTFILE_PATH_OR_DIR
@@ -468,16 +473,20 @@ The output of that command follows::
                   the cropped output document should be written to. If this
                   option is not given the program will generate an output
                   filename from the input filename and write to the current
-                  working directory. By default the string "_cropped" is appended
-                  to the input filename just before the file extension. (If the
-                  extension is not '.pdf' or '.PDF' then '.pdf' is also appended
-                  to the extension.) The options '--usePrefix', '--stringCropped'
-                  and '--stringSeparator' can be used to customize the generated
+                  working directory. If only a directory is given the generated
+                  filename will be written in that directory instead. By default
+                  the string "_cropped" is appended to the input filename just
+                  before the file extension. (If the extension is not '.pdf' or
+                  '.PDF' then '.pdf' is also appended to the extension.) The
+                  options '--usePrefix', '--stringCropped' and '--
+                  stringSeparator' can be used to customize the generated
                   filenames. By default any existing file with the same name will
                   be silently overwritten; this can be avoided with the '--
                   noclobber' option. Globbing of wildcards and shell variable
                   expansions are performed on the directory path but not on the
-                  filename part.
+                  filename part. The output file path cannot be the same as the
+                  input document path (see instead the '--modifyOriginal'
+                  option).
 
      -v, --verbose
                   Print more information about the program's actions and
@@ -599,6 +608,12 @@ The output of that command follows::
                   option can be used in combination with this option to force all
                   pages to be the same size after cropping.
 
+     -u4 {t,f} {t,f} {t,f} {t,f}, --uniform4 {t,f} {t,f} {t,f} {t,f}
+                  This option is the same as '--uniform' except it is only
+                  applied to selected margins. The four arguments should be the
+                  characters 't' or 'f', to select (t) or deselect (f) the left,
+                  bottom, right, and top margins respectively.
+
      -m INT, --uniformOrderStat INT
                   Choosing this option implies the '--uniform' option, but the
                   smallest delta value over all the pages is no longer chosen.
@@ -649,6 +664,12 @@ The output of that command follows::
                   is also selected to force the cropping amounts to be the same
                   for each page. If pages are selected with '--pages' then this
                   option is only applied to those selected pages.
+
+     -s4 {t,f} {t,f} {t,f} {t,f}, --samePageSize4 {t,f} {t,f} {t,f} {t,f}
+                  This option is the same as '--samePageSize' except it is only
+                  applied to selected margins. The four arguments should be the
+                  characters 't' or 'f', to either select (t) or deselect (f) the
+                  left, bottom, right, and top margins respectively.
 
      -ms INT, --samePageSizeOrderStat INT
                   Choosing this option implies the '--samePageSize' option, but
@@ -848,7 +869,7 @@ The output of that command follows::
                   PostScript files (.ps) to PDF for cropping. The repaired PDF is
                   written to a temporary file; the original PDF file is not
                   modified. The original filename is treated as usual as far as
-                  automatic name-generation, the '--modify-original' option, and
+                  automatic name-generation, the '--modifyOriginal' option, and
                   so forth. This option is often helpful if the program hangs or
                   raises an error due to a corrupted PDF file. Note that when re-
                   cropping a file already cropped by pdfCropMargins this option
@@ -897,21 +918,30 @@ The output of that command follows::
                   options can all be used to customize the generated backup
                   filename. If an output path is specified via the '--outfile'
                   ('-o') option then the backup document is written to that
-                  directory (the same directory the cropped file was first
-                  written to). This operation is performed last, so if a previous
-                  operation fails the original document will be unchanged. Be
-                  warned that running pdfCropMargins twice on the same source
-                  path with this option will modify the backed-up original file;
-                  the '--noclobberOriginal' option can be used to avoid this.
+                  pathname (in the same directory the cropped file was first
+                  written to if only a filename is provided). This operation is
+                  performed last, so if a previous operation fails the original
+                  document will be unchanged. Be warned that running
+                  pdfCropMargins twice on the same source path with this option
+                  will modify the backed-up original file; the '--
+                  noclobberOriginal' option can be used to avoid this.
 
      -q, --queryModifyOriginal
                   This option selects the '--modifyOriginal' option, but queries
                   the user about whether to actually do the final move operation.
-                  This works well with the '--preview' or '--gui' options: if the
-                  preview looks good you can opt to modify the original file
+                  This works well with the '--preview' and/or '--gui' options: if
+                  the preview looks good you can opt to modify the original file
                   (keeping a copy of the original). If you decline then the files
                   are not swapped (and are just as if the '--modifyOriginal'
                   option had not been set).
+
+     -ro, --replaceOriginal
+                  This option implies the '--modifyOriginal' option and works the
+                  same except that no backup copy is made. The original file is
+                  deleted and the cropped file is moved to the original filename.
+                  This option can be used in combination with the '--
+                  queryModifyOriginal' and works the same except that the
+                  original file is replaced, without a backup copy.
 
      -nco, --noclobberOriginal
                   If the '--modifyOriginal' option is selected, do not ever
@@ -1066,3 +1096,4 @@ The output of that command follows::
 
    The pdfCropMargins program is Copyright (c) 2014 by Allen Barker.
    Released under the GNU GPL license, version 3 or later.
+
