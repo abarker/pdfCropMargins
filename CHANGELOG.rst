@@ -11,6 +11,12 @@ New features:
 * Added the option ``--replaceOriginal`` which implies the ``--modifyOriginal`` option
   but removes the file instead of replacing it.
 
+* Added the option ``--uniform4`` which allows for selecting which margins the
+  uniform cropping is applied to.
+
+* Added the option ``--samePageSize4`` which allows for selecting which margins
+  the same page size option is applied to.
+
 2.1.3 (2024-06-05)
 ------------------
 
