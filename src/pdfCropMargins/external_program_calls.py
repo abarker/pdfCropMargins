@@ -405,7 +405,7 @@ def set_pdftoppm_executable_to_string(pdftoppm_executable_path):
     global pdftoppm_executable
     pdftoppm_executable = pdftoppm_executable_path
 
-def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
+def init_and_test_pdftoppm_executable():
     """Find a pdftoppm executable and test it.  If a good one is found, set
     this module's global pdftoppm_executable variable to that path and return
     that string.  Otherwise return None.  Any path string set from the
@@ -420,63 +420,21 @@ def init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=False):
                               pdftoppm_executables, ["-v"], "pdftoppm",
                               ignore_called_process_errors=ignore_called_process_errors)
 
-    # If we're on Windows and either no pdftoppm was found or prefer_local was
-    # specified then use the local pdftoppm.exe distributed with the project.
-    # The local pdftoppm.exe can be tested on Linux with Wine.  Just hardcode
-    # the system type to "Windows" and it automatically runs Wine on the exe.
-    if prefer_local or (not pdftoppm_executable and system_os == "Windows"):
-        if not prefer_local:
-            print("\nWarning from pdfCropMargins: No system pdftoppm was found."
-                  "\nReverting to an older, locally-packaged executable.  To silence"
-                  "\nthis warning use the '--pdftoppmLocal' (or '-pdl') flag.",
-                  file=sys.stderr)
-
-        # NOTE: When updating xpdf version, change here and ALSO in setup.py, near top.
-        path = os.path.join(project_src_directory, "pdfCropMargins",
-                                                   "pdftoppm_windows_local",
-                                                   "xpdf_tools_win_4_01_01")
-
-        # Paths to the package_data Windows executables, made part of the package
-        # with __init__.py files.
-        pdftoppm_executable32 = os.path.join(path, "bin32", "pdftoppm.exe")
-        pdftoppm_executable64 = os.path.join(path, "bin64", "pdftoppm.exe")
-        # Cygwin is not needed below for now, but left in case something gets fixed
-        # to allow the local version to run from there.
-        pdftoppm_local_execs = (("Windows", pdftoppm_executable64, pdftoppm_executable32),
-                                ("Cygwin",  pdftoppm_executable64, pdftoppm_executable32),)
-
-        if not (os.path.exists(pdftoppm_executable32) and
-                    os.path.exists(pdftoppm_executable64)):
-            print("Error in pdfCropMargins: The locally packaged executable files were"
-                  " not found.", file=sys.stderr)
-            if exit_on_fail:
-                cleanup_and_exit(1)
-
-        ignore_called_process_errors = True # Local Windows pdftoppm returns code 99 but works.
-        local_pdftoppm_executable = find_and_test_executable(
-                              pdftoppm_local_execs, ["-v"], "pdftoppm",
-                              ignore_called_process_errors=ignore_called_process_errors)
-        if not local_pdftoppm_executable:
-            print("\nWarning from pdfCropMargins: The local pdftoppm.exe program failed"
-                  "\nto execute correctly or was not found (see additional error"
-                  " message if not found).", file=sys.stderr)
-        else:
-            pdftoppm_executable = local_pdftoppm_executable
-
-    if exit_on_fail and not pdftoppm_executable:
+    if not pdftoppm_executable:
         print("Error in pdfCropMargins (detected in external_program_calls.py):"
               "\nNo pdftoppm executable was found.  Be sure your PATH is set"
               "\ncorrectly.  You can explicitly set the path from the command"
               "\nline with the `--pdftoppmPath` option.", file=sys.stderr)
         cleanup_and_exit(1)
 
-    if pdftoppm_executable: # Found a version of pdftoppm, see if it's ancient or recent.
-        cmd = [pdftoppm_executable, "--help"]
-        run_output = get_external_subprocess_output(cmd, split_lines=False,
-                               ignore_called_process_errors=ignore_called_process_errors)
-        if not "-singlefile " in run_output or not "-rx " in run_output:
-            global old_pdftoppm_version
-            old_pdftoppm_version = True
+    # Found a version of pdftoppm, see if it's ancient or recent.
+    cmd = [pdftoppm_executable, "--help"]
+    run_output = get_external_subprocess_output(cmd, split_lines=False,
+                           ignore_called_process_errors=ignore_called_process_errors)
+    if not "-singlefile " in run_output or not "-rx " in run_output:
+        global old_pdftoppm_version
+        old_pdftoppm_version = True
+
     return pdftoppm_executable
 
 def find_and_test_executable(executables, argument_list, string_to_look_for,
@@ -604,7 +562,7 @@ def render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name, root_output_file_
         extra_args = []
 
     if not pdftoppm_executable:
-        init_and_test_pdftoppm_executable(prefer_local=False, exit_on_fail=True)
+        init_and_test_pdftoppm_executable()
 
     if old_pdftoppm_version:
         # We only have -r, not -rx and -ry.

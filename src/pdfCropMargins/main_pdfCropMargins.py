@@ -824,8 +824,7 @@ def process_command_line_arguments(parsed_args, cmd_parser):
     gs_render_fallback_set = False # Set True if we switch to gs option as a fallback.
     if args.calcbb in ["p", "o"]:
         # Note that after this block, the `--calcbb o` option is converted to 'p' or 'gr'.
-        found_pdftoppm = ex.init_and_test_pdftoppm_executable(
-                                                   prefer_local=args.pdftoppmLocal)
+        found_pdftoppm = ex.init_and_test_pdftoppm_executable()
         if args.verbose:
             print("\nFound pdftoppm program at:", found_pdftoppm)
         if found_pdftoppm:

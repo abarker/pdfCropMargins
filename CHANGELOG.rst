@@ -3,7 +3,18 @@
 History
 =======
 
-2.1.4 (2024-XX-XX)
+2.2.0 (2024-XX-XX)
+------------------
+
+Removed:
+
+* The deprecated option ``--pdftoppmLocal`` to use a local copy of pdftoppm has
+  been removed, along with the packaged binaries.  The program can still use
+  pdftoppm, but it has to be installed locally.  This option was redundant
+  anyway after the switch to PyMuPDF, since it can handle rendering the pages
+  to ppm.
+
+2.1.4 (2024-08-12)
 ------------------
 
 New features:

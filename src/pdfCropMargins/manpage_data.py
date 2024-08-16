@@ -551,10 +551,10 @@ cmd_parser.add_argument("-gs", "--gsBbox", action="store_true", help="""
 cmd_parser.add_argument("-gsr", "--gsRender", action="store_true", help="""
 
    This is maintained for backward compatibility; using '-c gr' is now
-   preferred.  Use Ghostscript to render the PDF pages to images.  By default
-   the pdftoppm program will be preferred for the rendering, if it is found.
-   Note that this option has no effect if '--gsBbox' is chosen, since then no
-   explicit rendering is done.^^n""")
+   preferred.  Use Ghostscript to render the PDF pages to images.  (By default
+   the PyMuPDF program will be preferred for the rendering.)  Note that this
+   option has no effect if '--gsBbox' is chosen, since then no explicit
+   rendering is done.^^n""")
 
 cmd_parser.add_argument("-t", "--threshold", type=int, nargs=1,
                default=[DEFAULT_THRESHOLD_VALUE], metavar="BYTEVAL", help="""
@@ -920,16 +920,6 @@ cmd_parser.add_argument("-i", "--showImages", action="store_true", help="""
    and for choosing some of the other parameters (such as the threshold).  This
    option requires a default external viewer program selected by the Pillow
    image manipulation package (xv on Unix, and usually Paint on Windows).^^n""")
-
-cmd_parser.add_argument("-pdl", "--pdftoppmLocal", action="store_true", help="""
-
-   This option is deprecated.  Use a locally-packaged pdftoppm executable
-   rather than the system version.  This option is only available on Windows
-   machines; it is ignored otherwise.  By default the first pdftoppm executable
-   found in the directories in the PATH environment variable is used.  On
-   Windows the program will revert to this option if PDF image-rendering is
-   required, PyMuPDF is not installed, and no system pdftoppm or Ghostscript
-   executable can be found.^^n""")
 
 cmd_parser.add_argument("-gsp", "--ghostscriptPath", type=str, metavar="PATH",
                         default="", help="""
