@@ -3,10 +3,8 @@ Installing pdftoppm and/or Ghostscript
 ======================================
 
 Some options of pdfCropMargins depend on either the Ghostscript program or the
-pdftoppm program being installed (and locatable) on the system.  For Windows
-users a version of a pdftoppm binary (xpdf 4.01.01) is packaged with the
-program and will be used as a fallback if no other version can be found.
- 
+pdftoppm program being installed (and locatable) on the system.
+
 pdftoppm
 --------
 
