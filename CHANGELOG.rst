@@ -6,6 +6,11 @@ History
 2.2.0 (2024-XX-XX)
 ------------------
 
+Changes:
+
+* The ``setup.py`` and ``setup.cfg`` files have been replaced by the newer
+  ``pyproject.toml``.
+
 Removed:
 
 * The deprecated option ``--pdftoppmLocal`` to use a local copy of pdftoppm has
