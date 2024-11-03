@@ -774,7 +774,7 @@ def process_command_line_arguments(parsed_args, cmd_parser):
     if args.pageRatioWeights:
         for w in args.pageRatioWeights:
             if w <= 0:
-                print("\nError in pdfCropMargins: Negative weight argument passed "
+                print("\nError in pdfCropMargins: Non-positive weight argument passed "
                       "to pageRatiosWeights.", file=sys.stderr)
                 ex.cleanup_and_exit(1)
 
