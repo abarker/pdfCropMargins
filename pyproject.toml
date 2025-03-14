@@ -1,20 +1,30 @@
 [build-system]
+
 requires = ["setuptools >= 61.0"]
+
 build-backend = "setuptools.build_meta"
 
 [project]
+
 name = "pdfCropMargins"
+
 dynamic = ["version"]
+
 description = "A command-line program to crop the margins of PDF files, with many options."
+
 readme = "README.rst"
+
 license = { file = "LICENSE" }
+
 authors = [
     { name = "Allen Barker", email = "Allen.L.Barker@gmail.com" }, ]
+
 keywords = [
     "crop",
     "margins",
     "pdf",
     "resize", ]
+
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: End Users/Desktop",
@@ -31,18 +41,22 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
     "Programming Language :: Python :: 3.10",
     "Topic :: Utilities", ]
+
 dependencies = [
     "pillow>=10.1.0",
     "PyMuPDF>=1.19.6",
     "wheel", ]
 
 [project.scripts]
+
 pdf-crop-margins = "pdfCropMargins.pdfCropMargins:main"
 pdfcropmargins = "pdfCropMargins.pdfCropMargins:main"
 
 [project.urls]
+
 Homepage = "https://github.com/abarker/pdfCropMargins"
 
 [tool.setuptools.dynamic]
+
 version = {attr = "pdfCropMargins.__init__.__version__"}
 
