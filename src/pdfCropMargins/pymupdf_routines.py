@@ -43,21 +43,19 @@ import sys
 import warnings
 from . import external_program_calls as ex
 
-has_mupdf = True
-
 try: # Extra dependencies for the GUI version.  Make sure they are installed.
     with warnings.catch_warnings():
         #warnings.filterwarnings("ignore",category=DeprecationWarning)
         import fitz
     # Need at least 1.19.4 for setting MediaBox resetting all other boxes behavior.
     # Version 1.19.6 is the last one supporting Python 3.6.
-    if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 19, 4]:
-        has_mupdf = False
-        MuPdfDocument = None
+    if not [int(i) for i in fitz.VersionBind.split(".")] >= [1, 19, 4]: # Compare the lists.
+        print("Error: PyMuPDF version is too old.  Cannot be used.", file=sys.stderr)
+        raise ImportError
 
 except ImportError:
-    has_mupdf = False
-    MuPdfDocument = None
+    print("Error: cannot import PyMuPDF.", file=sys.stderr)
+    raise
 
 # The string which is appended to Producer metadata in cropped PDFs.
 PRODUCER_MODIFIER = " (Cropped by pdfCropMargins.)" # String for older versions.

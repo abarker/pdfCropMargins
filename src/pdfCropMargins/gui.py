@@ -46,12 +46,7 @@ from types import SimpleNamespace
 from PIL import Image
 
 from . import external_program_calls as ex
-from .pymupdf_routines import has_mupdf, MuPdfDocument
-
-if not has_mupdf:
-    print("\nError in pdfCropMargins: The GUI feature requires a recent PyMuPDF version."
-          "\n\nExiting pdfcropmargins...")
-    ex.cleanup_and_exit(1)
+from .pymupdf_routines import MuPdfDocument
 
 try:
     requires = "PySimpleGUI"

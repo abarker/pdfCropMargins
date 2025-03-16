@@ -100,7 +100,7 @@ except ImportError: # Not available on Windows.
 from . import __version__ # Get the version number from the __init__.py file.
 from .manpage_data import cmd_parser, DEFAULT_THRESHOLD_VALUE
 from .prettified_argparse import parse_command_line_arguments
-from .pymupdf_routines import (has_mupdf, MuPdfDocument, intersect_pdf_boxes,
+from .pymupdf_routines import (MuPdfDocument, intersect_pdf_boxes,
                                mod_box_for_rotation, fitz)
 
 from . import external_program_calls as ex
@@ -790,13 +790,7 @@ def process_command_line_arguments(parsed_args, cmd_parser):
         warn("\nThe --gsBbox option is deprecated and will be removed in "
                 "version 3.0.  Use '-c gb' instead.", DeprecationWarning, 2)
         args.calcbb = "gb" # Backward compat.
-    if args.calcbb == "m" and not has_mupdf:
-        print("Error in pdfCropMargins: The option '--calcbb m' was selected"
-              "\nbut PyMuPDF (at least v1.14.5) was not installed in Python."
-              "\nInstalling pdfCropMargins with the GUI option will include that"
-              "\ndependency.", file=sys.stderr)
-        ex.cleanup_and_exit(1)
-    if args.calcbb == "d" and has_mupdf:
+    if args.calcbb == "d":
         args.calcbb = "m" # Default to PyMuPDF.
     elif args.calcbb == "d": # Rendering without PyMuPDF.
         args.calcbb = "o"     # Revert to old method.
