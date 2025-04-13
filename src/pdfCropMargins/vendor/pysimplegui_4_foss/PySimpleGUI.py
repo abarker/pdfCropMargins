@@ -4,7 +4,7 @@ version = __version__ = "4.61.0.206 Unreleased"
 
 _change_log = """
     Changelog since 4.60.0 released to PyPI on 8-May-2022
-    
+
     4.61.0.1
         main_open_github_issue - prefill the "Details" using the platform module (thank you macdeport!)
             Fills Mac, Windows and Linux with details
@@ -17,7 +17,7 @@ _change_log = """
             The default is this feature is OFF
     4.61.0.4
         New location parameter option for Windows. Setting location=None tells PySimpleGUI to not set any location when window is created. It's up to the OS to decide.
-            The docstring for Window has been changed, but not all the other places (like popup). Want to make sure this works before making all those changes.            
+            The docstring for Window has been changed, but not all the other places (like popup). Want to make sure this works before making all those changes.
     4.61.0.5
         Added check for None invalid values parm when creating a Listbox element
     4.61.0.6
@@ -49,7 +49,7 @@ _change_log = """
     4.61.0.18
         Added ubiquitious Edit Me to the right click menu
     4.61.0.19
-        PySimpleGUI Anniversary sale on Udemy course coupon 
+        PySimpleGUI Anniversary sale on Udemy course coupon
     4.61.0.20
         Fix for bind_return_key - if a button has been disabled, then the event shouldn't be generated for the return key being pressed
     4.61.0.21
@@ -57,7 +57,7 @@ _change_log = """
     4.61.0.22
         Better error handling for table element's new justification list. If a bad value is found, will use the default value
     4.61.0.23
-        Additional mac filetype testing.... added more combinations that specify 
+        Additional mac filetype testing.... added more combinations that specify
     4.61.0.24
         Added * *.* to the Mac filetypes to check for
     4.61.0.25
@@ -65,7 +65,7 @@ _change_log = """
     4.61.0.26
         Docstring update - TabGroup visible parameter marked as deprecated .  Use a Column element to make a TabGroup invisible
     4.61.0.27
-        Docstring update for the pin helper function that describes the shrinking of the container that it helps provide.  
+        Docstring update for the pin helper function that describes the shrinking of the container that it helps provide.
         Also added explanation that it's the elements you want to make visible/invisible that are what you want to pin
     4.61.0.28
         Applied same Mac file_types fix to popup_get_file
@@ -86,7 +86,7 @@ _change_log = """
             User will have to close the window with the "X"
     4.61.0.34
         popup_scrolled - added button_justification parameter. Wanted to make scrolled popups consistent with other popups which have left justified
-            buttons.  But since they've been right justified in the past, want to give users the ability to retain that look. 
+            buttons.  But since they've been right justified in the past, want to give users the ability to retain that look.
             Since the Sizegrip works correctly now, it increases the changes of accidently clicking a button if it's right justified.
     4.61.0.35
         Added default_color to ColorChooser button
@@ -130,7 +130,7 @@ _change_log = """
     4.61.0.52
         justification parameter added to Listbox (default is left.. can be right and center now too)
     4.61.0.53
-        Made settings dictionary multiline in test harness write-only.  New coupon code                
+        Made settings dictionary multiline in test harness write-only.  New coupon code
     4.61.0.54
         alpha_channel added to set_options.  This sets the default value for the alpha_channel for all windows both user generated and PySimpleGUI generated (such as popups).
     4.61.0.55
@@ -161,15 +161,15 @@ _change_log = """
         Addition of checklist item when logging new issue to  GitHub - upgraded to latest version of PySimpleGUI on PyPI
         Listbox justification parameter found to not be implemented on some early verions of tkinter so had to protect this situation. This new feature crashed on the Pi for example
     4.61.0.64
-        Allow set_options(window_location=None) to indicate the OS should provide the window location.  
+        Allow set_options(window_location=None) to indicate the OS should provide the window location.
             This will stop the Alpha channel being set to 0 when the window is created
     4.61.0.65
         Addition of new Mac Control Panel option and emergency patch for MacOS version 12.3+
             If MacOS version 12.3 or greater than option is ON by default
-            When ON, the default Alpha channel for all windows is set to 0.99. 
+            When ON, the default Alpha channel for all windows is set to 0.99.
             This can either be turned off, or can be overridden by calling set_options in your application
     4.61.0.65
-        Bumping version number to avoid confusion.  An emergency 4.60.2 release was posted to PyPI. This change was added to this current GitHub version of PySimpleGUI.  
+        Bumping version number to avoid confusion.  An emergency 4.60.2 release was posted to PyPI. This change was added to this current GitHub version of PySimpleGUI.
     4.61.0.66
         Fixed bug in checking Mac OS version number that is being released as 4.60.3
     4.61.0.67
@@ -177,13 +177,13 @@ _change_log = """
     4.61.0.68
         Roll in the changes being released to PyPI as 4.60.3
     4.61.0.69
-        Test to see if the additional pack of Notebook in Tab code was causing expansion problems        
+        Test to see if the additional pack of Notebook in Tab code was causing expansion problems
     4.61.0.70
         Debug Print - fix for bug caused by no_button being set with non_blocking... a lesson in thorough testing... assumption was either blocking OR no_button (or else app would
             close without seeing the output... unless something else blocked. (DOH)
     4.61.0.71
         "Window closed" check added to update methods for elements. This will prevent a crash and instead show an error popup
-            Will be helpful for users that forget to check for closed window event in their event loop and try to call update after window closed. 
+            Will be helpful for users that forget to check for closed window event in their event loop and try to call update after window closed.
     4.61.0.72
         Output element now automatically sets auto_refresh to True.   Should this not be desired, switch to using the Multiline element.  There will likely be
             no impact to this change as it seems like the windows are alredy refreshing OK, but adding it just to be sure.
@@ -203,9 +203,9 @@ _change_log = """
     4.61.0.78
         Custom Titlebar - Support added to Window.minimize, Window.maximize, and Window.normal
     4.61.0.79
-        Fix for Mulitline showing constant error messages after a Window is closed. 
+        Fix for Mulitline showing constant error messages after a Window is closed.
         Fix for correctly restoring stdout, stderr after they've been rerouted. THIS CODE IS NOT YET COMPLETE! Shooting for this weekend to get it done!
-        Image element - more speicific with tkinter when chaning to a new image so that pypy would stop crashing due to garbage collect not running. 
+        Image element - more speicific with tkinter when chaning to a new image so that pypy would stop crashing due to garbage collect not running.
             This change didn't fix the pypy problem but it also didn't hurt the code to have it
     4.61.0.80
         Quick and dirty addition of Alt-shortcuts for Buttons (like exists for Menus)
@@ -261,11 +261,11 @@ _change_log = """
     4.61.0.101
         Added Window.is_hidden method.  Returns True if the window is currently hidden
     4.61.0.102
-        Fixed error in the main test harness "not modal" popup test.  Was setting the "Force Modal" setting to true after the popup test. 
+        Fixed error in the main test harness "not modal" popup test.  Was setting the "Force Modal" setting to true after the popup test.
     4.61.0.103
-        Trinket is detected using a new mechansim now.  The previous one was waayyy too simnple and as a result has broken in the past week.  
+        Trinket is detected using a new mechansim now.  The previous one was waayyy too simnple and as a result has broken in the past week.
     4.61.0.104
-        Version bump to keep up with the PyPI emergency 4.60.4 release 
+        Version bump to keep up with the PyPI emergency 4.60.4 release
     4.61.0.105
         Added SYMBOL_BULLET character
     4.61.0.106
@@ -293,7 +293,7 @@ _change_log = """
             Note that zoom and subsample can BOTH be used. This enables fractional scaling. Want 2/3 the size of the image? subsample=3, zoom=2
             Tab is the remaining element this is being added to
             The Buttons implemented as functions need this addition as well
-        Addition of the image_source parameter to Button and Button.update. This way of specifying images is commonly used in other elements 
+        Addition of the image_source parameter to Button and Button.update. This way of specifying images is commonly used in other elements
         Fixed ButtonMenu bug - subsample was not being applied to initial image in the layout
     4.61.0.117
         Fix for set_vscroll_position not working correctly for a scrollable Column
@@ -315,7 +315,7 @@ _change_log = """
     4.61.0.124
         Multiline Element docstring fixes
     4.61.0.125
-        Addition of 2 overrides to Window.find_element so that more control is available to applications wishing to perform special key lookups 
+        Addition of 2 overrides to Window.find_element so that more control is available to applications wishing to perform special key lookups
     4.61.0.126
         Made button_color parameter's docstring value consistent across all calls.  Now set to - (str, str) | str
     4.61.0.127
@@ -330,7 +330,7 @@ _change_log = """
     4.61.0.131
         Window timers feature added.  Get a single or repeating timer events for your Window by calling window.timer_start
     4.61.0.132
-        Added the Window.stop_all method to stop all timers for a window 
+        Added the Window.stop_all method to stop all timers for a window
     4.61.0.133
         Added Window.timer_get_active_timers to get a list of the active timers for the window
     4.61.0.134
@@ -370,11 +370,11 @@ _change_log = """
     4.61.0.151
         Fixed problem with TabGroups when the text was blank for a Tab. Was not correctly identifying the active tab in the Values dictionary
     4.61.0.152
-        Updated TabGroup.get to use the same method to find the currently active tab that was just added above. 
+        Updated TabGroup.get to use the same method to find the currently active tab that was just added above.
     4.61.0.153
         Updated layout error messages to include "sometimes" in the description of what may be causing error
     4.61.0.154
-        Updated Window.start_timer docstring to include the constants EVENT_TIMER and TIMER_KEY since the call reference doesn't show the variable names but rather the string value. 
+        Updated Window.start_timer docstring to include the constants EVENT_TIMER and TIMER_KEY since the call reference doesn't show the variable names but rather the string value.
     4.61.0.155
         Multiline new parameter autoscroll_only_at_bottom. When True, the element will autoscroll (keep scrollbar at the bottom) only if the scrollbar is already at the bottom.
     4.61.0.156
@@ -463,7 +463,7 @@ _change_log = """
     4.61.0.195
         New Udemy Coupon
     4.61.0.196
-        Added highlight colors to the set_index_color method. Parms highlight_text_color & highlight_background_color control changing the highlight colors 
+        Added highlight colors to the set_index_color method. Parms highlight_text_color & highlight_background_color control changing the highlight colors
     4.61.0.197
         Made Table Element Header mouse-over and clicked be the inverse of the normal header colors. Makes for a much nicer experience
     4.61.0.198
@@ -484,7 +484,7 @@ _change_log = """
         Fixed docstring for execute_command_subprocess.  The command description was incorrect
     4.61.0.206
         New Udemy Coupon code
-    
+
 
     """
 
@@ -533,11 +533,11 @@ port = 'PySimpleGUI'
 
     Now available - "The Official PySimpleGUI Course" on Udemy!
     https://www.udemy.com/pysimplegui
-    
+
     Watch for a coupon codes in the documentation on PySimpleGUI.org
 
     Please consider sponsoring all open source developers that make software you or your business use. They need your help.
-    
+
 
     This software is available for your use under a LGPL3+ license
 
@@ -545,14 +545,14 @@ port = 'PySimpleGUI'
 
 
 
-    888      .d8888b.  8888888b.  888      .d8888b.          
-    888     d88P  Y88b 888   Y88b 888     d88P  Y88b         
+    888      .d8888b.  8888888b.  888      .d8888b.
+    888     d88P  Y88b 888   Y88b 888     d88P  Y88b
     888     888    888 888    888 888          .d88P
-    888     888        888   d88P 888         8888"    888   
-    888     888  88888 8888888P"  888          "Y8b. 8888888 
-    888     888    888 888        888     888    888   888   
-    888     Y88b  d88P 888        888     Y88b  d88P         
-    88888888 "Y8888P88 888        88888888 "Y8888P"          
+    888     888        888   d88P 888         8888"    888
+    888     888  88888 8888888P"  888          "Y8b. 8888888
+    888     888    888 888        888     888    888   888
+    888     Y88b  d88P 888        888     Y88b  d88P
+    88888888 "Y8888P88 888        88888888 "Y8888P"
 
 
     In addition to the normal publishing requirements of LGPL3+, these also apply:
@@ -561,7 +561,7 @@ port = 'PySimpleGUI'
        1. GitHub - (http://www.PySimpleGUI.com) currently pointing at:
           https://github.com/PySimpleGUI/PySimpleGUI
        2. PyPI - pip install PySimpleGUI is the customary way of obtaining the latest release
-    
+
        THE official documentation location is:
           https://www.PySimpleGUI.org - Main documentation
        There are also a lot of subdomains... many of which you can guess..
@@ -577,20 +577,20 @@ port = 'PySimpleGUI'
           https://Issues.PySimpleGUI.org - Open a new issue on GitHub
           https://Bugs.PySimpleGUI.org - Open a new issue on GitHub
           etc.....
-                
+
        If you've obtained this software in any other way, then those listed here, then SUPPORT WILL NOT BE PROVIDED.
     3. If you use PySimpleGUI in your project/product, a notice of its use needs to be displayed in your readme file as per the license agreement
 
     -----------------------------------------------------------------------------------------------------------------
 
 
-    The first bit of good news for you is that literally 100s of pages of documentation await you. 
+    The first bit of good news for you is that literally 100s of pages of documentation await you.
     300 Demo Programs have been written as a "jump start" mechanism to get your running as quickly as possible.
 
     Some general bits of advice:
     Upgrade your software!  python -m pip install --upgrade --no-cache-dir PySimpleGUI
     If you're thinking of filing an Issue or posting a problem, Upgrade your software first
-    There are constantly something new and interesting coming out of this project so stay current if you can 
+    There are constantly something new and interesting coming out of this project so stay current if you can
 
     The FASTEST WAY to learn PySimpleGUI is to begin to use it in conjunction with the materials provided by the project.
     http://www.PySimpleGUI.org
@@ -600,14 +600,14 @@ port = 'PySimpleGUI'
     The User Manual and the Cookbook are both designed to paint some nice looking GUIs on your screen within 5 minutes of you deciding to PySimpleGUI out.
 
     A final note from mike...
-    
-        “Don’t aim at success. The more you aim at it and make it a target, the more you are going to miss it. 
+
+        “Don’t aim at success. The more you aim at it and make it a target, the more you are going to miss it.
         For success, like happiness, cannot be pursued; it must ensue, and it only does so as the unintended side effect of one’s personal dedication to a cause greater.”
             — Viktor Frankl
-    
+
         I first saw this quote in a truncated format:
-            "Happiness, cannot be pursued; it must ensue, and it only does so as the unintended side effect of one’s personal dedication to a cause greater."    
-    
+            "Happiness, cannot be pursued; it must ensue, and it only does so as the unintended side effect of one’s personal dedication to a cause greater."
+
         Everyone is different, but my experience with the PySimpleGUI project matches this theory.  It's taken a lifetime of trying and "failing" and trying
         to find happiness before I finally figured this truth-for-me out.  If I do a long list of things, and live life in a kind & loving way, then the
         result is happiness.  It's a biproduct, not a directly produced thing.  This should be taught in school.  Or maybe it can't.
@@ -879,8 +879,8 @@ def running_replit():
 
     It's a mess.... really... it's a mess internally... it's the external-facing interfaces that
     are not a mess.  The Elements and the methods for them are well-designed.
-    PEP8 - this code is far far from PEP8 compliant. 
-    It was written PRIOR to learning that PEP8 existed. 
+    PEP8 - this code is far far from PEP8 compliant.
+    It was written PRIOR to learning that PEP8 existed.
 
     I'll be honest.... started learning Python in Nov 2017, started writing PySimpleGUI in Feb 2018.
     Released PySimpleGUI in July 2018.  I knew so little about Python that my parameters were all named
@@ -888,14 +888,14 @@ def running_replit():
     parameters to lower case.  Unfortunately, the internal naming conventions have been set.  Mixing them
     with PEP8 at this moment would be even MORE confusing.
 
-    Code I write now, outside PySimpleGUI, IS PEP8 compliant.  
+    Code I write now, outside PySimpleGUI, IS PEP8 compliant.
 
     The variable and function naming in particular are not compliant.  There is
     liberal use of CamelVariableAndFunctionNames, but for anything externally facing, there are aliases
     available for all functions.  If you've got a serious enough problem with 100% PEP8 compliance
     that you'll pass on this package, then that's your right and I invite you to do so.  However, if
     perhaps you're a practical thinker where it's the results that matter, then you'll have no
-    trouble with this code base.  There is consisency however.  
+    trouble with this code base.  There is consisency however.
 
     I truly hope you get a lot of enjoyment out of using PySimpleGUI.  It came from good intentions.
 """
@@ -7284,7 +7284,7 @@ class Graph(Element):
         Not called by the user.  It's called from another method/function that tkinter calledback
 
         :param event: (event) event info from tkinter. Contains the x and y coordinates of a click
-        :type event:  
+        :type event:
         """
 
         self.ClickPosition = self._convert_canvas_xy_to_xy(event.x, event.y)
@@ -12681,7 +12681,11 @@ class Window:
 
         if self.thread_strvar is None:
             self.thread_strvar = tk.StringVar()
-            self.thread_strvar.trace('w', self._window_tkvar_changed_callback)
+            if tk.TkVersion < 9:
+                # alb: issue #67 fix, originally conditional was just this line.
+                self.thread_strvar.trace('w', self._window_tkvar_changed_callback)
+            else:
+                self.thread_strvar.trace_add('write', self._window_tkvar_changed_callback)
 
     def write_event_value(self, key, value):
         """
@@ -12965,8 +12969,8 @@ class Window:
         You can provide your own key or a default key will be used.  The default key is defined
         with the constants EVENT_TIMER or TIMER_KEY.  They both equal the same value.
         The values dictionary will contain the timer ID that is returned from this function.
-        
-        :param frequency_ms:    How often to generate timer events in milliseconds 
+
+        :param frequency_ms:    How often to generate timer events in milliseconds
         :type frequency_ms:     int
         :param key:             Key to be returned as the timer event
         :type key:              str | int | tuple | object
@@ -23675,14 +23679,14 @@ def user_settings_object():
  ##:::::::: ##:. ##:: ##::::::: ##::: ##: ##:::: ##:::: ##:::: ##:::::::
  ########: ##:::. ##: ########:. ######::. #######::::: ##:::: ########:
 ........::..:::::..::........:::......::::.......::::::..:::::........::
-:::'###::::'########::'####::'######::                                  
-::'## ##::: ##.... ##:. ##::'##... ##:                                  
-:'##:. ##:: ##:::: ##:: ##:: ##:::..::                                  
-'##:::. ##: ########::: ##::. ######::                                  
- #########: ##.....:::: ##:::..... ##:                                  
- ##.... ##: ##::::::::: ##::'##::: ##:                                  
- ##:::: ##: ##::::::::'####:. ######::                                  
-..:::::..::..:::::::::....:::......:::        
+:::'###::::'########::'####::'######::
+::'## ##::: ##.... ##:. ##::'##... ##:
+:'##:. ##:: ##:::: ##:: ##:: ##:::..::
+'##:::. ##: ########::: ##::. ######::
+ #########: ##.....:::: ##:::..... ##:
+ ##.... ##: ##::::::::: ##::'##::: ##:
+ ##:::: ##: ##::::::::'####:. ######::
+..:::::..::..:::::::::....:::......:::
 
 
 
@@ -24008,7 +24012,7 @@ def execute_get_editor():
 '''
 The Mac problems have been significant enough to warrant the addition of a series of settings that allow
 users to turn specific patches and features on or off depending on their setup.  There is not enough information
-available to make this process more atuomatic.  
+available to make this process more atuomatic.
 
 '''
 
@@ -24135,7 +24139,7 @@ def main_mac_feature_control():
  ##:::: ##: ##...:::: ##.... ##: ##:::: ##: ##::: ##:: ##::: ##:: ##...:::: ##.. ##:::
  ##:::: ##: ##::::::: ##:::: ##: ##:::: ##: ##::: ##:: ##::: ##:: ##::::::: ##::. ##::
  ########:: ########: ########::. #######::. ######:::. ######::: ########: ##:::. ##:
-........:::........::........::::.......::::......:::::......::::........::..:::::..::                                                                    
+........:::........::........::::.......::::......:::::......::::........::..:::::..::
 '''
 
 #####################################################################################################
@@ -24413,7 +24417,7 @@ class _Debugger:
         #       #    # #####  #    # #####     #  #  # # #  # # #    # #    # # ## #
         #       #    # #      #    # #         #  #  # # #   ## #    # #    # ##  ##
         #        ####  #       ####  #          ## ##  # #    # #####   ####  #    #
-    
+
         ######                                    #                     #     #
         #     # #    # #    # #####   ####       # #   #      #         #     #   ##   #####   ####
         #     # #    # ##  ## #    # #          #   #  #      #         #     #  #  #  #    # #
@@ -24459,7 +24463,7 @@ class _Debugger:
        #       #    # #    # #    #      # #         #  #  # ######   #   #      #    #
        #     # #    # #    # #    # #    # #         #  #  # #    #   #   #    # #    #
         #####  #    #  ####   ####   ####  ######     ## ##  #    #   #    ####  #    #
-    
+
         #     #                                                       #     #
         #     #   ##   #####  #   ##   #####  #      ######  ####     #  #  # # #    #
         #     #  #  #  #    # #  #  #  #    # #      #      #         #  #  # # ##   #
@@ -24534,7 +24538,7 @@ class _Debugger:
         #     # #    # # #      #    #    #       #      #    # ######   #   # #  # # #  ###
         #     # #    # # #      #    #    #       #      #    # #    #   #   # #   ## #    #
         ######   ####  # ###### #####     #       ######  ####  #    #   #   # #    #  ####
-    
+
         #     #
         #  #  # # #    # #####   ####  #    #
         #  #  # # ##   # #    # #    # #    #
@@ -24607,7 +24611,7 @@ class _Debugger:
         #   #   #      #      #####  #           # #    #
         #    #  #      #      #   #  #      #    # #    #
         #     # ###### #      #    # ######  ####  #    #
-    
+
         #######
         #       #       ####    ##   ##### # #    #  ####
         #       #      #    #  #  #    #   # ##   # #    #
@@ -24615,7 +24619,7 @@ class _Debugger:
         #       #      #    # ######   #   # #  # # #  ###
         #       #      #    # #    #   #   # #   ## #    #
         #       ######  ####  #    #   #   # #    #  ####
-    
+
         #     #
         #  #  # # #    # #####   ####  #    #
         #  #  # # ##   # #    # #    # #    #
@@ -24981,29 +24985,29 @@ def _random_happy_emoji():
 
 
 '''
-M"""""`'"""`YM                            
-M  mm.  mm.  M                            
-M  MMM  MMM  M .d8888b. 88d888b. .d8888b. 
-M  MMM  MMM  M 88'  `88 88'  `88 88ooood8 
-M  MMM  MMM  M 88.  .88 88       88.  ... 
-M  MMM  MMM  M `88888P' dP       `88888P' 
-MMMMMMMMMMMMMM                            
-                                          
-M#"""""""'M                             .d8888P dP   dP 
-##  mmmm. `M                            88'     88   88 
-#'        .M .d8888b. .d8888b. .d8888b. 88baaa. 88aaa88 
-M#  MMMb.'YM 88'  `88 Y8ooooo. 88ooood8 88` `88      88 
-M#  MMMM'  M 88.  .88       88 88.  ... 8b. .d8      88 
-M#       .;M `88888P8 `88888P' `88888P' `Y888P'      dP 
-M#########M                                             
-                                                        
-M""M                                                
-M  M                                                
-M  M 88d8b.d8b. .d8888b. .d8888b. .d8888b. .d8888b. 
-M  M 88'`88'`88 88'  `88 88'  `88 88ooood8 Y8ooooo. 
-M  M 88  88  88 88.  .88 88.  .88 88.  ...       88 
-M  M dP  dP  dP `88888P8 `8888P88 `88888P' `88888P' 
-MMMM                          .88                   
+M"""""`'"""`YM
+M  mm.  mm.  M
+M  MMM  MMM  M .d8888b. 88d888b. .d8888b.
+M  MMM  MMM  M 88'  `88 88'  `88 88ooood8
+M  MMM  MMM  M 88.  .88 88       88.  ...
+M  MMM  MMM  M `88888P' dP       `88888P'
+MMMMMMMMMMMMMM
+
+M#"""""""'M                             .d8888P dP   dP
+##  mmmm. `M                            88'     88   88
+#'        .M .d8888b. .d8888b. .d8888b. 88baaa. 88aaa88
+M#  MMMb.'YM 88'  `88 Y8ooooo. 88ooood8 88` `88      88
+M#  MMMM'  M 88.  .88       88 88.  ... 8b. .d8      88
+M#       .;M `88888P8 `88888P' `88888P' `Y888P'      dP
+M#########M
+
+M""M
+M  M
+M  M 88d8b.d8b. .d8888b. .d8888b. .d8888b. .d8888b.
+M  M 88'`88'`88 88'  `88 88'  `88 88ooood8 Y8ooooo.
+M  M 88  88  88 88.  .88 88.  .88 88.  ...       88
+M  M dP  dP  dP `88888P8 `8888P88 `88888P' `88888P'
+MMMM                          .88
                           d8888P
 '''
 
@@ -25033,20 +25037,20 @@ GREEN_CHECK_BASE64 = b'iVBORw0KGgoAAAANSUhEUgAAAFoAAABaCAYAAAA4qEECAAAJV0lEQVR4n
 
 
 '''
-M""MMMMM""M                                           dP          
-M  MMMMM  M                                           88          
-M  MMMMM  M 88d888b. .d8888b. 88d888b. .d8888b. .d888b88 .d8888b. 
-M  MMMMM  M 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88ooood8 
-M  `MMM'  M 88.  .88 88.  .88 88       88.  .88 88.  .88 88.  ... 
-Mb       dM 88Y888P' `8888P88 dP       `88888P8 `88888P8 `88888P' 
-MMMMMMMMMMM 88            .88                                     
-            dP        d8888P                                      
-MP""""""`MM                            oo                   
-M  mmmmm..M                                                 
-M.      `YM .d8888b. 88d888b. dP   .dP dP .d8888b. .d8888b. 
-MMMMMMM.  M 88ooood8 88'  `88 88   d8' 88 88'  `"" 88ooood8 
-M. .MMM'  M 88.  ... 88       88 .88'  88 88.  ... 88.  ... 
-Mb.     .dM `88888P' dP       8888P'   dP `88888P' `88888P' 
+M""MMMMM""M                                           dP
+M  MMMMM  M                                           88
+M  MMMMM  M 88d888b. .d8888b. 88d888b. .d8888b. .d888b88 .d8888b.
+M  MMMMM  M 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88ooood8
+M  `MMM'  M 88.  .88 88.  .88 88       88.  .88 88.  .88 88.  ...
+Mb       dM 88Y888P' `8888P88 dP       `88888P8 `88888P8 `88888P'
+MMMMMMMMMMM 88            .88
+            dP        d8888P
+MP""""""`MM                            oo
+M  mmmmm..M
+M.      `YM .d8888b. 88d888b. dP   .dP dP .d8888b. .d8888b.
+MMMMMMM.  M 88ooood8 88'  `88 88   d8' 88 88'  `"" 88ooood8
+M. .MMM'  M 88.  ... 88       88 .88'  88 88.  ... 88.  ...
+Mb.     .dM `88888P' dP       8888P'   dP `88888P' `88888P'
 MMMMMMMMMMM
 '''
 
@@ -25331,7 +25335,7 @@ def _github_issue_post_make_markdown(issue_type, operating_system, os_ver, psg_p
 
 ----------------------------------------
 
-## Environment 
+## Environment
 
 #### Operating System
 
@@ -25750,33 +25754,33 @@ def main_open_github_issue():
 
 
 '''
-MM'"""""`MM oo   dP   M""MMMMM""MM          dP       
-M' .mmm. `M      88   M  MMMMM  MM          88       
-M  MMMMMMMM dP d8888P M         `M dP    dP 88d888b. 
-M  MMM   `M 88   88   M  MMMMM  MM 88    88 88'  `88 
-M. `MMM' .M 88   88   M  MMMMM  MM 88.  .88 88.  .88 
-MM.     .MM dP   dP   M  MMMMM  MM `88888P' 88Y8888' 
-MMMMMMMMMMM           MMMMMMMMMMMM                   
-                                                     
-M""MMMMM""M                                           dP          
-M  MMMMM  M                                           88          
-M  MMMMM  M 88d888b. .d8888b. 88d888b. .d8888b. .d888b88 .d8888b. 
-M  MMMMM  M 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88ooood8 
-M  `MMM'  M 88.  .88 88.  .88 88       88.  .88 88.  .88 88.  ... 
-Mb       dM 88Y888P' `8888P88 dP       `88888P8 `88888P8 `88888P' 
-MMMMMMMMMMM 88            .88                                     
+MM'"""""`MM oo   dP   M""MMMMM""MM          dP
+M' .mmm. `M      88   M  MMMMM  MM          88
+M  MMMMMMMM dP d8888P M         `M dP    dP 88d888b.
+M  MMM   `M 88   88   M  MMMMM  MM 88    88 88'  `88
+M. `MMM' .M 88   88   M  MMMMM  MM 88.  .88 88.  .88
+MM.     .MM dP   dP   M  MMMMM  MM `88888P' 88Y8888'
+MMMMMMMMMMM           MMMMMMMMMMMM
+
+M""MMMMM""M                                           dP
+M  MMMMM  M                                           88
+M  MMMMM  M 88d888b. .d8888b. 88d888b. .d8888b. .d888b88 .d8888b.
+M  MMMMM  M 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88ooood8
+M  `MMM'  M 88.  .88 88.  .88 88       88.  .88 88.  .88 88.  ...
+Mb       dM 88Y888P' `8888P88 dP       `88888P8 `88888P8 `88888P'
+MMMMMMMMMMM 88            .88
             dP        d8888P
 
 '''
 
 
 '''
-M""""""""M dP                                        dP 
-Mmmm  mmmM 88                                        88 
-MMMM  MMMM 88d888b. 88d888b. .d8888b. .d8888b. .d888b88 
-MMMM  MMMM 88'  `88 88'  `88 88ooood8 88'  `88 88'  `88 
-MMMM  MMMM 88    88 88       88.  ... 88.  .88 88.  .88 
-MMMM  MMMM dP    dP dP       `88888P' `88888P8 `88888P8 
+M""""""""M dP                                        dP
+Mmmm  mmmM 88                                        88
+MMMM  MMMM 88d888b. 88d888b. .d8888b. .d8888b. .d888b88
+MMMM  MMMM 88'  `88 88'  `88 88ooood8 88'  `88 88'  `88
+MMMM  MMMM 88    88 88       88.  ... 88.  .88 88.  .88
+MMMM  MMMM dP    dP dP       `88888P' `88888P8 `88888P8
 MMMMMMMMMM
 '''
 

@@ -3,6 +3,13 @@
 History
 =======
 
+2.2.1 (2025-XX-XX)
+------------------
+
+Bug fixes:
+
+* Fixed issue #67 for GUI in versions installed with homebrew and pipx.
+
 2.2.0 (2024-12-22)
 ------------------
 
