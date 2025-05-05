@@ -100,6 +100,19 @@ install you can try forcing a binary install of PyMuPDF:
 
    pip3 install pdfCropMargins --user --upgrade --only-binary pymupdf
 
+Linux/Arch
+----------
+
+Once installed, you can execute the pdfCropMargins binaries from the $HOME/.venv path without activating the python virtual environment. Be sure ``$HOME/.venv/bin`` is in your system ``PATH``. Replace $HOME/.venv depending on where you run the ``python`` command below:
+
+.. code-block:: sh
+   sudo pacman -Syu tk 
+   sudo pacman -Syu poppler ghostscript # Optional, for ghostscript and pdftoppm. 
+   python -m venv .venv; source .venv/bin/activate
+   pip3 install pdfCropMargins
+   deactivate
+   rehash
+
 Windows
 -------
 
